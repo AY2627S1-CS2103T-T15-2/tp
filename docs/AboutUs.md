@@ -35,8 +35,8 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/yangjieloh)]
 
-* Role: Documentation
-* Responsibilities: Responsible for the quality of various project documents.
+* Role: Developer
+* Responsibilities: Documentation
 
 ### Jean Doe
 
