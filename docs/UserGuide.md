@@ -75,7 +75,6 @@ Shows a message explaining how to access the help page.
 
 Format: `help`
 
-
 ### Adding a person: `add`
 
 Adds a person to the address book.
@@ -129,6 +128,22 @@ Examples:
 * `find John` returns `john` and `John Doe`
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
+
+### Adding or removing a remark: `remark`
+
+Adds or replaces the remark of a person in the displayed list.
+
+Format: `remark INDEX r/REMARK`
+
+* `INDEX` must be a positive integer from the currently displayed list.
+* The new remark replaces any existing remark without changing the person's other details.
+* Use `remark INDEX r/` (or `remark INDEX`) to clear the remark.
+* Remarks are shown on the person's card and saved with the address book.
+* After the command succeeds, the full list is shown again.
+
+Examples:
+* `remark 1 r/Likes baseball` adds or replaces the first person's remark.
+* `remark 1 r/` removes that remark.
 
 ### Deleting a person: `delete`
 
@@ -192,6 +207,8 @@ _Details coming soon ..._
 --------------------------------------------------------------------------------------------------------------------
 
 ## Command summary
+
+To add a remark, use `remark INDEX r/REMARK`; to clear it, use `remark INDEX r/`.
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
