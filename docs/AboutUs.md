@@ -11,42 +11,32 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ## Project team
 
-### John Doe
+### Seah Jia Le
 
 <img src="images/seahjiale.png" width="200px">
 
 [[github](https://github.com/seahjiale)]
 
-* Role: Project Advisor
+* Role: Developer
+* Responsibilities : Scheduling and tracking 
 
-### Jane Doe
+### Lu Ziyue
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/luziyue525.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
-
-* Role: Team Lead
-* Responsibilities: UI
-
-### Johnny Doe
-
-<img src="images/johndoe.png" width="200px">
-
-[[github](http://github.com/johndoe)] [[portfolio](team/johndoe.md)]
+[[github](https://github.com/luziyue525)]
 
 * Role: Developer
-* Responsibilities: Data
+* Responsibilities: Testing
 
-### Jean Doe
+### Yang Jie Loh
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/yangjieloh.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/yangjieloh)]
 
 * Role: Developer
-* Responsibilities: Dev Ops + Threading
+* Responsibilities: Documentation
 
 ### Loh Yang Zhi
 
@@ -56,3 +46,12 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 * Responsibilities: Integration
+
+### Jeff Lim
+
+<img src="images/lim-04.png" width="200px">
+
+[[github](http://github.com/lim-04)]
+
+* Role: Developer
+* Responsibilities: Code Quality
