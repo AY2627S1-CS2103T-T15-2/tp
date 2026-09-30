@@ -11,13 +11,14 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ## Project team
 
-### John Doe
+### Seah Jia Le
 
 <img src="images/seahjiale.png" width="200px">
 
 [[github](https://github.com/seahjiale)]
 
-* Role: Project Advisor
+* Role: Developer
+* Responsibilities : Scheduling and tracking 
 
 ### Jane Doe
 
