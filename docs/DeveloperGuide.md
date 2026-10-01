@@ -334,7 +334,13 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 ### Glossary
 
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Contact**: A person record in TutorRoster that represents either a student or a guardian
+* **Student**: A learner who receives or previously received tuition from the private tutor
+* **Guardian**: An adult responsible for a student and whom the private tutor may contact regarding the student
+* **Primary guardian**: The guardian designated as the private tutor's first point of contact for a student
+* **Active student**: A student who is currently receiving tuition from the private tutor
+* **Former student**: A student who is no longer receiving tuition but whose contact record is retained
+* **Tutoring context**: Concise information about a student, such as the student's education level or subject
 
 --------------------------------------------------------------------------------------------------------------------
 
