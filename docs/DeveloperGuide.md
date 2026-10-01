@@ -269,30 +269,51 @@ _{Explain here how the data archiving feature will be implemented}_
 ### Product scope
 
 **Target user profile**:
+* are independent private tutors personally managing contact information for a small group of secondary school or junior college students and their guardians
+* need to retrieve and update student and guardian details quickly
+* need to record tutoring context and relationships between students and guardians
+* prefer using a desktop application that stores their contacts locally on a single device
+* can type quickly and prefer keyboard-driven commands to mouse interactions
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
-
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: TutorRoster helps independent private tutors keep student and guardian contact information organised and up to date, allowing them to retrieve accurate details quickly when communicating with students and families.
 
 
 ### User stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
-
-*{More to be added}*
+| Priority | As a …                                                    | I want to …                                                       | So that I can …                                                              |
+|----------|-----------------------------------------------------------|-------------------------------------------------------------------|------------------------------------------------------------------------------|
+| `* * *`  | private tutor taking on a new student                     | add a student contact                                             | store the student's contact details                                          |
+| `* * *`  | private tutor                                             | add a guardian contact                                            | know whom to contact when necessary                                          |
+| `* *`    | private tutor who communicates through different channels | record multiple contact methods for a student or guardian         | have alternative ways to contact them                                        |
+| `* *`    | private tutor                                             | add notes to a contact                                            | record useful information that does not fit into the standard contact fields |
+| `* *`    | private tutor teaching different levels and subjects      | record concise tutoring context such as education level or subject | distinguish students quickly                                                 |
+| `* * *`  | private tutor                                             | record the relationship between a student and guardian            | know which contacts are related                                              |
+| `* *`    | private tutor                                             | associate multiple guardians with a student                       | keep track of all relevant contacts for that student                         |
+| `* *`    | private tutor                                             | designate a student's primary guardian                            | know whom to contact first when necessary                                    |
+| `* *`    | private tutor                                             | unlink an incorrect or outdated student-guardian association      | avoid confusion caused by inaccurate relationships                           |
+| `* * *`  | private tutor                                             | view the guardian linked to a student                             | identify whom to contact without searching separately                        |
+| `* *`    | private tutor teaching siblings                           | view all students linked to a guardian                            | manage families with multiple students efficiently                           |
+| `* *`    | private tutor                                             | search for a contact by name                                      | find the person quickly                                                      |
+| `* *`    | busy private tutor                                        | filter contacts using tutoring-related information                | retrieve the relevant contacts efficiently                                   |
+| `* * *`  | private tutor                                             | view a student's complete contact record                          | retrieve the information needed for communication                            |
+| `* * *`  | private tutor                                             | view a guardian's complete contact record                         | retrieve the information needed to contact the appropriate adult             |
+| `* *`    | private tutor with contacts who have identical names      | view identifying information for contacts with identical names    | select the correct person                                                    |
+| `* *`    | private tutor                                             | update outdated contact information                               | keep my records accurate                                                     |
+| `* *`    | private tutor                                             | mark a student as active or former                                | prevent old records from cluttering my daily use                             |
+| `*`      | cautious private tutor                                    | receive warnings about potential duplicate contacts               | avoid maintaining multiple records of the same person                        |
+| `* *`    | private tutor                                             | see which required contact information is missing                 | keep my records complete                                                     |
+| `* * *`  | private tutor                                             | delete a contact that was added by mistake                        | remove incorrect records from my contact list                                |
+| `* *`    | beginner private tutor                                    | receive feedback explaining why a command is invalid              | correct the command quickly                                                  |
+| `*`      | private tutor                                             | undo my most recent change                                        | recover from an accidental modification                                      |
+| `* * *`  | private tutor                                             | view all stored contacts                                          | review the people in my contact list                                         |
+| `* * *`  | private tutor                                             | identify whether a contact is a student or guardian               | understand the person's role                                                 |
+| `* *`    | private tutor                                             | search using part of a contact's name                             | find the person when I do not remember the full name                         |
+| `* *`    | private tutor                                             | mark a former student as active again                             | resume managing that contact if the student returns                          |
+| `* * *`  | private tutor                                             | retain my contact records after closing and reopening TutorRoster | avoid entering the information again                                         |
+| `* *`    | private tutor                                             | filter contacts by whether they are students or guardians         | focus on the relevant type of contact                                        |
+| `* *`    | beginner private tutor                                    | view the available commands and their usage                       | learn how to manage contacts                                                 |
 
 ### Use cases
 
