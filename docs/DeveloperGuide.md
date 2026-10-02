@@ -465,22 +465,52 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+**Environment and portability**
 
-*{More to be added}*
+1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
+2.  Should provide all features without an internet connection.
+3.  Should be distributable as a single JAR file of at most 100MB that runs without an installer.
+4.  Should not depend on a remote server or an external database management system.
+
+**Performance**
+
+The performance requirements below assume a computer with at least 4GB of RAM and a dual-core processor released within the last five years.
+
+5.  Should be able to store up to 500 contacts, with every student linked to a guardian.
+6.  Should display the result of any command within 1 second when storing 500 contacts.
+7.  Should display the contact list within 5 seconds of launching the JAR file when storing 500 contacts.
+
+**Usability**
+
+8.  Should allow every feature to be used with the keyboard alone, without a mouse.
+9.  A user who types at least 40 words per minute and is familiar with the commands should be able to add a contact with a name, phone number, and email address within 20 seconds.
+10. Should display all user interface elements without overlapping or being cut off on screen resolutions of 1920x1080 and higher at screen scales of 100% and 125%.
+11. Should keep every feature accessible on screen resolutions of 1280x720 and higher at a screen scale of 150%, although some panels may need scrolling.
+
+**Reliability and data**
+
+12. Should retain the changes made by a successful command after the application is terminated unexpectedly, such as when its process is killed or the computer loses power.
+13. Should store data locally in a plain-text JSON file that can be read and edited in a standard text editor.
+14. Should be able to load a data file copied from another computer, including one running a different _mainstream OS_.
+
+**Privacy and scope**
+
+15. Should not make any network connections while running.
+16. Should serve a single user on a single device, and is not required to support concurrent access by multiple users or synchronisation across devices.
 
 ### Glossary
 
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Contact**: A person record in TutorRoster that represents either a student or a guardian
+* **Role**: Whether a contact is a student or a guardian. This decides which rules apply to it
+* **Contact method**: Either a phone number or an email address. A guardian must have at least one
 * **Student**: A learner who receives or previously received tuition from the private tutor
 * **Guardian**: An adult responsible for a student and whom the private tutor may contact regarding the student
 * **Primary guardian**: The guardian designated as the private tutor's first point of contact for a student
 * **Active student**: A student who is currently receiving tuition from the private tutor
 * **Former student**: A student who is no longer receiving tuition but whose contact record is retained
 * **Tutoring context**: Concise information about a student, such as the student's education level or subject
+* **Normalised value**: A value after leading and trailing spaces are removed and repeated spaces inside a name are collapsed to one. This is the form used to store contacts and check for duplicates
 
 --------------------------------------------------------------------------------------------------------------------
 
