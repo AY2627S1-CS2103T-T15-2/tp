@@ -57,6 +57,7 @@ public class PersonTest {
         // same values -> returns true
         Person aliceCopy = new PersonBuilder(ALICE).build();
         assertTrue(ALICE.equals(aliceCopy));
+        assertEquals(ALICE.hashCode(), aliceCopy.hashCode());
 
         // same object -> returns true
         assertTrue(ALICE.equals(ALICE));
