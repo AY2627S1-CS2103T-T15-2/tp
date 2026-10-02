@@ -502,12 +502,15 @@ The performance requirements below assume a computer with at least 4GB of RAM an
 
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Contact**: A person record in TutorRoster that represents either a student or a guardian
+* **Role**: Whether a contact is a student or a guardian. This decides which rules apply to it
+* **Contact method**: Either a phone number or an email address. A guardian must have at least one
 * **Student**: A learner who receives or previously received tuition from the private tutor
 * **Guardian**: An adult responsible for a student and whom the private tutor may contact regarding the student
 * **Primary guardian**: The guardian designated as the private tutor's first point of contact for a student
 * **Active student**: A student who is currently receiving tuition from the private tutor
 * **Former student**: A student who is no longer receiving tuition but whose contact record is retained
 * **Tutoring context**: Concise information about a student, such as the student's education level or subject
+* **Normalised value**: A value after leading and trailing spaces are removed and repeated spaces inside a name are collapsed to one. This is the form used to store contacts and check for duplicates
 
 --------------------------------------------------------------------------------------------------------------------
 
