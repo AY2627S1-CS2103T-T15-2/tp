@@ -296,32 +296,151 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+For all use cases below, the **System** is `TutorRoster` and the **Actor** is the `Tutor`, unless specified otherwise
 
-**Use case: Delete a person**
+#### UC01: Link a student to a guardian
+
+**Preconditions:** The student and guardian contacts already exist.
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. Tutor requests to list all contacts.
+2. TutorRoster displays the contacts and their indexes.
+3. Tutor requests to link a student to a guardian using their displayed indexes.
+4. TutorRoster saves the relationship and displays the student's details together with the guardian's contact information.
 
-    Use case ends.
+   Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* **3a. An index is invalid or does not refer to a contact in the displayed list.**
+
+  3a1. TutorRoster displays an error and leaves existing relationships unchanged.
+
+  Use case resumes at step 3.
+
+* **3b. The selected student contact is not a student, or the selected guardian contact is not a guardian.**
+
+  3b1. TutorRoster displays an error and leaves existing relationships unchanged.
+
+  Use case resumes at step 3.
+
+* **3c. The student is already linked to the specified guardian.**
+
+  3c1. TutorRoster informs the tutor that the relationship already exists and makes no changes.
 
   Use case ends.
 
-* 3a. The given index is invalid.
+* **3d. The student is linked to a different guardian.**
 
-    * 3a1. AddressBook shows an error message.
+  3d1. TutorRoster replaces the existing relationship with the requested guardian, saves the change, and displays the updated guardian information.
 
-      Use case resumes at step 2.
+  Use case ends.
 
-*{More to be added}*
+* **4a. TutorRoster cannot save the relationship, including a replacement relationship in extension 3d.**
+
+  4a1. TutorRoster displays an error. Existing contacts, relationships, and saved data remain unchanged.
+
+  Use case ends.
+
+#### UC02: Update a contact's details
+
+**MSS**
+
+1. Tutor requests to find a contact by name.
+2. TutorRoster displays matching contacts and their indexes.
+3. Tutor requests to edit a contact using its displayed index and supplies the new name, phone number, or email address.
+4. TutorRoster saves the changes and displays the updated contact. Unspecified fields and existing student-guardian relationships remain unchanged.
+
+   Use case ends.
+
+**Extensions**
+
+* **1a. The search request contains no name or only whitespace.**
+
+  1a1. TutorRoster displays an error.
+
+  Use case resumes at step 1.
+
+* **2a. No contacts match the supplied name.**
+
+  2a1. TutorRoster informs the tutor that no matching contacts were found.
+
+  Use case ends.
+
+* **3a. The index is invalid or does not refer to a contact in the displayed list.**
+
+  3a1. TutorRoster displays an error and makes no changes.
+
+  Use case resumes at step 3.
+
+* **3b. No editable fields are supplied, or the supplied details are invalid.**
+
+  3b1. TutorRoster displays an error and leaves the contact unchanged.
+
+  Use case resumes at step 3.
+
+* **3c. The requested changes would remove a guardian's last contact method.**
+
+  3c1. TutorRoster explains that a guardian must have a phone number or email address and leaves the contact unchanged.
+
+  Use case resumes at step 3.
+
+* **3d. The updated contact would duplicate another existing contact.**
+
+  3d1. TutorRoster reports the duplicate and leaves the contact unchanged.
+
+  Use case resumes at step 3.
+
+* **4a. TutorRoster cannot save the changes.**
+
+  4a1. TutorRoster displays an error. Existing contact details, relationships, and saved data remain unchanged.
+
+  Use case ends.
+
+#### UC03: Delete a contact
+
+**MSS**
+
+1. Tutor requests to list all contacts.
+2. TutorRoster displays the contacts and their indexes.
+3. Tutor requests to delete a contact using its displayed index.
+4. TutorRoster deletes the contact and removes any student-guardian relationships involving it. Other contacts are retained.
+5. TutorRoster saves the changes, refreshes the contact list and its indexes, and reports the deletion and any relationships removed.
+
+   Use case ends.
+
+**Extensions**
+
+* **2a. The contact list is empty.**
+
+  2a1. TutorRoster informs the tutor that no contacts were found.
+
+  Use case ends.
+
+* **3a. The index is invalid or does not refer to a contact in the displayed list.**
+
+  3a1. TutorRoster displays an error. No contact or relationship is deleted.
+
+  Use case resumes at step 3.
+
+* **4a. The deleted contact is a student linked to a guardian.**
+
+  4a1. TutorRoster removes the student's relationship with the guardian. The guardian contact is retained.
+
+  Use case resumes at step 5.
+
+* **4b. The deleted contact is a guardian linked to one or more students.**
+
+  4b1. TutorRoster removes all relationships involving that guardian. The student contacts are retained and show that they have no linked guardian.
+
+  Use case resumes at step 5.
+
+* **5a. TutorRoster cannot save the deletion.**
+
+  5a1. TutorRoster reports that the deletion failed. The contact and its relationships are retained, and the displayed list and previously saved data remain unchanged.
+
+  Use case ends.
 
 ### Non-Functional Requirements
 
