@@ -156,8 +156,18 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseRole_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseRole(null));
+    }
+
+    @Test
     public void parseRole_validValueWithDifferentCase_returnsRole() throws Exception {
         assertEquals(Role.STUDENT, ParserUtil.parseRole(VALID_ROLE));
+    }
+
+    @Test
+    public void parseRole_validValueWithWhitespaceAndDifferentCase_returnsRole() throws Exception {
+        assertEquals(Role.GUARDIAN, ParserUtil.parseRole(WHITESPACE + "GuArDiAn" + WHITESPACE));
     }
 
     @Test

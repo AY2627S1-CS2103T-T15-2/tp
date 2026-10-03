@@ -9,7 +9,7 @@ public enum Role {
     STUDENT("Student"),
     GUARDIAN("Guardian");
 
-    public static final String MESSAGE_CONSTRAINTS = "Role should be either STUDENT or GUARDIAN.";
+    public static final String MESSAGE_CONSTRAINTS = "Role must be student or guardian.";
 
     private final String displayName;
 
@@ -36,7 +36,7 @@ public enum Role {
     /**
      * Returns the role represented by {@code value}, ignoring letter case and surrounding whitespace.
      *
-     * @throws IllegalArgumentException if {@code value} does not represent a supported role
+     * @throws IllegalArgumentException if {@code value} does not represent a supported role.
      */
     public static Role fromString(String value) {
         return valueOf(value.trim().toUpperCase(Locale.ROOT));
