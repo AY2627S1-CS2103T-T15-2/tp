@@ -32,6 +32,14 @@ public class Messages {
     }
 
     /**
+     * Returns {@code count} followed by "contact" if {@code count} is 1, or "contacts" otherwise.
+     * For example, 1 gives "1 contact" and 5 gives "5 contacts".
+     */
+    public static String formatContactCount(int count) {
+        return count + (count == 1 ? " contact" : " contacts");
+    }
+
+    /**
      * Formats the {@code person} for display to the user.
      */
     public static String format(Person person) {
