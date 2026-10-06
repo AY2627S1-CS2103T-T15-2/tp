@@ -67,6 +67,15 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
+<box type="info" seamless>
+
+**Contact order:**<br>
+
+* Contacts are always displayed in alphabetical order of name, ignoring capitalisation.
+* Contacts with the same name are displayed with guardians before students.
+* Index numbers used by commands such as `edit` and `delete` refer to this displayed order.
+</box>
+
 ### Viewing help: `help`
 
 Shows a message explaining how to access the help page.
