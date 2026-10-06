@@ -11,7 +11,7 @@ public class Name {
 
     public static final int MAX_LENGTH = 70;
     public static final String MESSAGE_CONSTRAINTS =
-            "Names must contain 1 to 70 characters and at least one letter or digit. "
+            "Names must contain 1 to 70 characters and cannot be blank. "
                     + "Names may contain letters, digits, spaces, apostrophes, hyphens, periods, and slashes.";
 
     public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N}\\p{Pd} './’]+";
@@ -37,10 +37,10 @@ public class Name {
 
         int characterCount = test.codePointCount(0, test.length());
         boolean hasValidLength = characterCount >= 1 && characterCount <= MAX_LENGTH;
-        boolean hasLetterOrDigit = test.codePoints().anyMatch(Character::isLetterOrDigit);
+        boolean isNotBlank = !test.isBlank();
         boolean containsOnlyAllowedCharacters = test.matches(VALIDATION_REGEX);
 
-        return hasValidLength && hasLetterOrDigit && containsOnlyAllowedCharacters;
+        return hasValidLength && isNotBlank && containsOnlyAllowedCharacters;
     }
 
 
