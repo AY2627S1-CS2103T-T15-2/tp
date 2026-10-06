@@ -7,6 +7,7 @@ import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalPersons.CARL;
 
 import java.util.List;
 
@@ -14,7 +15,9 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
 import seedu.address.testutil.AddressBookBuilder;
+import seedu.address.testutil.PersonBuilder;
 
 public class ModelManagerTest {
 
@@ -71,6 +74,32 @@ public class ModelManagerTest {
     @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> modelManager.getFilteredPersonList().remove(0));
+    }
+
+    @Test
+    public void getFilteredPersonList_personsAddedOutOfOrder_sortedByName() {
+        modelManager.addPerson(CARL);
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        assertEquals(List.of(ALICE, BENSON, CARL), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void getFilteredPersonList_filtered_remainsSorted() {
+        modelManager.addPerson(CARL);
+        modelManager.addPerson(BENSON);
+        modelManager.addPerson(ALICE);
+        modelManager.updateFilteredPersonList(person -> !person.equals(BENSON));
+        assertEquals(List.of(ALICE, CARL), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void getFilteredPersonList_personRenamed_resorted() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        Person renamedAlice = new PersonBuilder(ALICE).withName("Zoe Pauline").build();
+        modelManager.setPerson(ALICE, renamedAlice);
+        assertEquals(List.of(BENSON, renamedAlice), modelManager.getFilteredPersonList());
     }
 
     @Test
