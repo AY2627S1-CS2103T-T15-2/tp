@@ -184,6 +184,16 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
+    public void tokenizeWithQuotedValue_emptyNameAtEnd_returnsEmptyName() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithQuotedValue(
+                " n/", nSlash, nSlash, pSlash);
+
+        assertPreambleEmpty(argMultimap);
+        assertArgumentPresent(argMultimap, nSlash, "");
+        assertArgumentAbsent(argMultimap, pSlash);
+    }
+
+    @Test
     public void equalsMethod() {
         Prefix aaa = new Prefix("aaa");
 

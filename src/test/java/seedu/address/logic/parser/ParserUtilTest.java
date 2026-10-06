@@ -97,6 +97,8 @@ public class ParserUtilTest {
     @Test
     public void parseName_malformedQuotes_throwsParseException() {
         assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_NAME_QUOTES, ()
+                -> ParserUtil.parseName("\""));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_NAME_QUOTES, ()
                 -> ParserUtil.parseName("\"Randy"));
         assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_NAME_QUOTES, ()
                 -> ParserUtil.parseName("Randy\""));

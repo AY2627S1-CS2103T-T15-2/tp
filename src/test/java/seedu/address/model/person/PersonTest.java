@@ -38,6 +38,10 @@ public class PersonTest {
                 .withAddress(VALID_ADDRESS_BOB).withRole(VALID_ROLE_BOB).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(ALICE.isSamePerson(editedAlice));
 
+        // same name and phone, different email -> returns false
+        editedAlice = new PersonBuilder(ALICE).withEmail(VALID_EMAIL_BOB).build();
+        assertFalse(ALICE.isSamePerson(editedAlice));
+
         // same identity fields, data fields different -> returns true
         editedAlice = new PersonBuilder(ALICE).withAddress(VALID_ADDRESS_BOB).withRole(VALID_ROLE_BOB)
                 .withTags(VALID_TAG_HUSBAND).build();
