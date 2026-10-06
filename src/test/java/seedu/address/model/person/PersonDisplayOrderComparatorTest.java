@@ -42,4 +42,39 @@ public class PersonDisplayOrderComparatorTest {
         assertTrue(comparator.compare(alBob, alZed) < 0);
         assertEquals(0, comparator.compare(alZed, alZedSingleSpace));
     }
+
+    @Test
+    public void compare_sameNameDifferentRole_guardianBeforeStudent() {
+        Person guardian = new PersonBuilder().withName("Alex Tan").withRole("guardian").build();
+        Person student = new PersonBuilder().withName("Alex Tan").withRole("student").build();
+
+        assertTrue(comparator.compare(guardian, student) < 0);
+        assertTrue(comparator.compare(student, guardian) > 0);
+    }
+
+    @Test
+    public void compare_sameNameDifferentCaseAndRole_guardianBeforeStudent() {
+        Person guardian = new PersonBuilder().withName("ALEX TAN").withRole("guardian").build();
+        Person student = new PersonBuilder().withName("alex tan").withRole("student").build();
+
+        assertTrue(comparator.compare(guardian, student) < 0);
+    }
+
+    @Test
+    public void compare_differentNameAndRole_nameTakesPrecedence() {
+        Person studentAlex = new PersonBuilder().withName("Alex Tan").withRole("student").build();
+        Person guardianBernice = new PersonBuilder().withName("Bernice Yu").withRole("guardian").build();
+
+        assertTrue(comparator.compare(studentAlex, guardianBernice) < 0);
+    }
+
+    @Test
+    public void compare_sameNameAndRole_equal() {
+        Person firstGuardian = new PersonBuilder().withName("Alex Tan").withRole("guardian")
+                .withPhone("91234567").build();
+        Person secondGuardian = new PersonBuilder().withName("Alex Tan").withRole("guardian")
+                .withPhone("98765432").build();
+
+        assertEquals(0, comparator.compare(firstGuardian, secondGuardian));
+    }
 }
