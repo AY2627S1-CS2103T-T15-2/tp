@@ -5,24 +5,23 @@ import static java.util.Objects.requireNonNull;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.NameContainsSubstringPredicate;
 
 /**
- * Finds and lists all persons in the address book whose name contains any of the argument keywords.
- * Keyword matching is case insensitive.
+ * Finds and lists all contacts in the address book whose name contains the search term.
+ * Matching is case-insensitive.
  */
 public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all persons whose names contain any of "
-            + "the specified keywords (case-insensitive) and displays them as a list with index numbers.\n"
-            + "Parameters: KEYWORD [MORE_KEYWORDS]...\n"
-            + "Example: " + COMMAND_WORD + " alice bob charlie";
+    public static final String MESSAGE_INVALID_FORMAT = "Invalid find command. Use: " + COMMAND_WORD + " NAME";
+    public static final String MESSAGE_SUCCESS = "Found %1$s matching: %2$s.";
+    public static final String MESSAGE_NO_MATCHES = "No contacts found matching: %1$s";
 
-    private final NameContainsKeywordsPredicate predicate;
+    private final NameContainsSubstringPredicate predicate;
 
-    public FindCommand(NameContainsKeywordsPredicate predicate) {
+    public FindCommand(NameContainsSubstringPredicate predicate) {
         this.predicate = predicate;
     }
 
@@ -30,8 +29,14 @@ public class FindCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredPersonList(predicate);
+
+        int matchCount = model.getFilteredPersonList().size();
+        String searchTerm = predicate.getSearchTerm();
+        if (matchCount == 0) {
+            return new CommandResult(String.format(MESSAGE_NO_MATCHES, searchTerm));
+        }
         return new CommandResult(
-                String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));
+                String.format(MESSAGE_SUCCESS, Messages.formatContactCount(matchCount), searchTerm));
     }
 
     @Override
