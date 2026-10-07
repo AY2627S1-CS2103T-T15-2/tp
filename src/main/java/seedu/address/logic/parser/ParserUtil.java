@@ -22,6 +22,8 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String MESSAGE_INVALID_NAME_QUOTES =
+            "Invalid quoted name. Use n/NAME or n/\"NAME\", with quotation marks surrounding the entire name.";
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -38,17 +40,35 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String name} into a {@code Name}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces will be trimmed. A name may optionally be enclosed in quotation marks. The
+     * quotation marks are removed before the name is validated and stored.
      *
      * @throws ParseException if the given {@code name} is invalid.
      */
     public static Name parseName(String name) throws ParseException {
         requireNonNull(name);
         String trimmedName = name.trim();
-        if (!Name.isValidName(trimmedName)) {
+        boolean isQuoted = trimmedName.startsWith("\"");
+
+        if (isQuoted) {
+            if (trimmedName.length() < 2 || !trimmedName.endsWith("\"")) {
+                throw new ParseException(MESSAGE_INVALID_NAME_QUOTES);
+            }
+            trimmedName = trimmedName.substring(1, trimmedName.length() - 1).trim();
+            if (trimmedName.contains("\"")) {
+                throw new ParseException(MESSAGE_INVALID_NAME_QUOTES);
+            }
+        } else {
+            if (trimmedName.contains("\"")) {
+                throw new ParseException(MESSAGE_INVALID_NAME_QUOTES);
+            }
+        }
+
+        String normalizedName = trimmedName.replaceAll(" {2,}", " ");
+        if (!Name.isValidName(normalizedName)) {
             throw new ParseException(Name.MESSAGE_CONSTRAINTS);
         }
-        return new Name(trimmedName);
+        return new Name(normalizedName);
     }
 
     /**

@@ -57,6 +57,17 @@ public class UniquePersonListTest {
     }
 
     @Test
+    public void add_personWithSameNameAndDifferentIdentityFields_success() {
+        uniquePersonList.add(ALICE);
+        Person personWithSameName = new PersonBuilder(ALICE).withPhone("87654321")
+                .withEmail("another@example.com").build();
+
+        uniquePersonList.add(personWithSameName);
+
+        assertEquals(List.of(ALICE, personWithSameName), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
     public void setPerson_nullTargetPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniquePersonList.setPerson(null, ALICE));
     }

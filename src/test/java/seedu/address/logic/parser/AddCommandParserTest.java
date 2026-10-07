@@ -239,4 +239,49 @@ public class AddCommandParserTest {
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
     }
 
+    @Test
+    public void parse_validNameVariations_success() {
+        assertNameParsesSuccessfully("\"Randy p/e ratio\"", "Randy p/e ratio");
+        assertNameParsesSuccessfully("Ravi s/o Kumar", "Ravi s/o Kumar");
+        assertNameParsesSuccessfully("///", "///");
+        assertNameParsesSuccessfully("...", "...");
+        assertNameParsesSuccessfully("Mary-Anne O’Brien", "Mary-Anne O’Brien");
+        assertNameParsesSuccessfully("李小龍", "李小龍");
+        assertNameParsesSuccessfully("\"Alex    Tan\"", "Alex Tan");
+        assertNameParsesSuccessfully("a".repeat(Name.MAX_LENGTH), "a".repeat(Name.MAX_LENGTH));
+    }
+
+    @Test
+    public void parse_malformedQuotedName_failure() {
+        String otherFields = PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + ROLE_DESC_BOB;
+
+        assertParseFailure(parser, " " + PREFIX_NAME + "\"Randy p/e ratio" + otherFields,
+                ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
+        assertParseFailure(parser, " " + PREFIX_NAME + "Randy\"" + otherFields,
+                ParserUtil.MESSAGE_INVALID_NAME_QUOTES);
+        assertParseFailure(parser, " " + PREFIX_NAME + "\"Ran\"dy\"" + otherFields,
+                ParserUtil.MESSAGE_INVALID_NAME_QUOTES);
+        assertParseFailure(parser, " " + PREFIX_NAME + "\"\"Randy\"\"" + otherFields,
+                ParserUtil.MESSAGE_INVALID_NAME_QUOTES);
+    }
+
+    @Test
+    public void parse_emptyOrUnsupportedName_failure() {
+        String otherFields = PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + ROLE_DESC_BOB;
+
+        assertParseFailure(parser, " " + PREFIX_NAME + "\"\"" + otherFields, Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " " + PREFIX_NAME + "\"   \"" + otherFields, Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " " + PREFIX_NAME + "Alex@Tan" + otherFields, Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " " + PREFIX_NAME + "a".repeat(Name.MAX_LENGTH + 1) + otherFields,
+                Name.MESSAGE_CONSTRAINTS);
+    }
+
+    private void assertNameParsesSuccessfully(String nameArgument, String expectedName) {
+        Person expectedPerson = new PersonBuilder(BOB).withName(expectedName).withTags().build();
+        String input = " " + PREFIX_NAME + nameArgument + PHONE_DESC_BOB + EMAIL_DESC_BOB
+                + ADDRESS_DESC_BOB + ROLE_DESC_BOB;
+
+        assertParseSuccess(parser, input, new AddCommand(expectedPerson));
+    }
+
 }

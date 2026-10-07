@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import seedu.address.logic.parser.exceptions.ParseException;
+
 /**
  * Tokenizes arguments string of the form: {@code preamble <prefix>value <prefix>value ...}<br>
  *     e.g. {@code some preamble text t/ 11.00 t/12.00 k/ m/ July}  where prefixes are {@code t/ k/ m/}.<br>
@@ -14,6 +16,9 @@ import java.util.stream.Collectors;
  *    in the above example.<br>
  */
 public class ArgumentTokenizer {
+
+    public static final String MESSAGE_UNCLOSED_QUOTED_VALUE =
+            "Quoted value is missing a closing quotation mark.";
 
     /**
      * Tokenizes an arguments string and returns an {@code ArgumentMultimap} object that maps prefixes to their
@@ -29,6 +34,20 @@ public class ArgumentTokenizer {
     }
 
     /**
+     * Tokenizes {@code argsString}, ignoring prefixes that occur inside a quoted value belonging to
+     * {@code quotedValuePrefix}. The opening quotation mark must be the first non-whitespace character after the
+     * prefix. Quotation marks are retained in the extracted value for the field parser to validate and remove.
+     *
+     * @throws ParseException if the quoted value has no closing quotation mark
+     */
+    public static ArgumentMultimap tokenizeWithQuotedValue(String argsString, Prefix quotedValuePrefix,
+            Prefix... prefixes) throws ParseException {
+        List<PrefixPosition> positions = findAllPrefixPositionsOutsideQuotedValue(
+                argsString, quotedValuePrefix, prefixes);
+        return extractArguments(argsString, positions);
+    }
+
+    /**
      * Finds all zero-based prefix positions in the given arguments string.
      *
      * @param argsString Arguments string of the form: {@code preamble <prefix>value <prefix>value ...}
@@ -39,6 +58,53 @@ public class ArgumentTokenizer {
         return Arrays.stream(prefixes)
                 .flatMap(prefix -> findPrefixPositions(argsString, prefix).stream())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Finds prefix positions while treating a quoted value for {@code quotedValuePrefix} as literal text.
+     */
+    private static List<PrefixPosition> findAllPrefixPositionsOutsideQuotedValue(String argsString,
+            Prefix quotedValuePrefix, Prefix... prefixes) throws ParseException {
+        List<PrefixPosition> positions = new ArrayList<>();
+        boolean isInsideQuotedValue = false;
+
+        for (int i = 0; i < argsString.length(); i++) {
+            if (isInsideQuotedValue) {
+                if (argsString.charAt(i) == '"') {
+                    isInsideQuotedValue = false;
+                }
+                continue;
+            }
+
+            if (argsString.charAt(i) != ' ') {
+                continue;
+            }
+
+            for (Prefix prefix : prefixes) {
+                int prefixStart = i + 1;
+                if (!argsString.startsWith(prefix.getPrefix(), prefixStart)) {
+                    continue;
+                }
+
+                positions.add(new PrefixPosition(prefix, prefixStart));
+                if (prefix.equals(quotedValuePrefix)) {
+                    int valueStart = prefixStart + prefix.getPrefix().length();
+                    while (valueStart < argsString.length() && argsString.charAt(valueStart) == ' ') {
+                        valueStart++;
+                    }
+                    if (valueStart < argsString.length() && argsString.charAt(valueStart) == '"') {
+                        isInsideQuotedValue = true;
+                        i = valueStart;
+                    }
+                }
+                break;
+            }
+        }
+
+        if (isInsideQuotedValue) {
+            throw new ParseException(MESSAGE_UNCLOSED_QUOTED_VALUE);
+        }
+        return positions;
     }
 
     /**

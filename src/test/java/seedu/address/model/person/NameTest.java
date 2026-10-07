@@ -27,8 +27,15 @@ public class NameTest {
         // invalid name
         assertFalse(Name.isValidName("")); // empty string
         assertFalse(Name.isValidName(" ")); // spaces only
-        assertFalse(Name.isValidName("^")); // only non-alphanumeric characters
+        assertFalse(Name.isValidName("^")); // unsupported punctuation only
         assertFalse(Name.isValidName("peter*")); // contains non-alphanumeric characters
+        assertFalse(Name.isValidName("Alex@Tan")); // unsupported at sign
+        assertFalse(Name.isValidName("Alex!")); // unsupported exclamation mark
+        assertFalse(Name.isValidName("Alex~Tan")); // unsupported tilde
+        assertFalse(Name.isValidName("Alex_Tan")); // unsupported underscore
+        assertFalse(Name.isValidName("Alex, Tan")); // unsupported comma
+        assertFalse(Name.isValidName("\"Alex\"")); // quotation marks are syntax, not part of a name
+        assertFalse(Name.isValidName("a".repeat(Name.MAX_LENGTH + 1))); // exceeds maximum length
 
         // valid name
         assertTrue(Name.isValidName("peter jack")); // alphabets only
@@ -36,6 +43,16 @@ public class NameTest {
         assertTrue(Name.isValidName("peter the 2nd")); // alphanumeric characters
         assertTrue(Name.isValidName("Capital Tan")); // with capital letters
         assertTrue(Name.isValidName("David Roger Jackson Ray Jr 2nd")); // long names
+        assertTrue(Name.isValidName("Ravi s/o Kumar")); // slash
+        assertTrue(Name.isValidName("Mary-Anne O'Brien")); // hyphen and straight apostrophe
+        assertTrue(Name.isValidName("Mary-Anne O’Brien")); // typographic apostrophe
+        assertTrue(Name.isValidName("J. R. R. Tolkien")); // periods
+        assertTrue(Name.isValidName("李小龍")); // Unicode letters
+        assertTrue(Name.isValidName("Jose\u0301")); // combining mark
+        assertTrue(Name.isValidName("///")); // punctuation only
+        assertTrue(Name.isValidName("...")); // punctuation only
+        assertTrue(Name.isValidName("'-./’")); // supported punctuation only
+        assertTrue(Name.isValidName("a".repeat(Name.MAX_LENGTH))); // maximum length
     }
 
     @Test

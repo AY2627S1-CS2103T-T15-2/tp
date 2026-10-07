@@ -4,13 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
+
+import seedu.address.logic.parser.exceptions.ParseException;
 
 public class ArgumentTokenizerTest {
 
     private final Prefix unknownPrefix = new Prefix("--u");
+    private final Prefix nSlash = new Prefix("n/");
     private final Prefix pSlash = new Prefix("p/");
+    private final Prefix eSlash = new Prefix("e/");
     private final Prefix dashT = new Prefix("-t");
     private final Prefix hatQ = new Prefix("^Q");
 
@@ -134,6 +139,58 @@ public class ArgumentTokenizerTest {
         assertArgumentAbsent(argMultimap, pSlash);
         assertArgumentPresent(argMultimap, dashT, "not joined^Qjoined");
         assertArgumentAbsent(argMultimap, hatQ);
+    }
+
+    @Test
+    public void tokenizeWithQuotedValue_prefixesInsideQuotedName_treatedAsNameText() throws Exception {
+        String argsString = " n/\"Randy p/e ratio e/example\" p/123456 e/randy@example.com";
+
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithQuotedValue(
+                argsString, nSlash, nSlash, pSlash, eSlash);
+
+        assertPreambleEmpty(argMultimap);
+        assertArgumentPresent(argMultimap, nSlash, "\"Randy p/e ratio e/example\"");
+        assertArgumentPresent(argMultimap, pSlash, "123456");
+        assertArgumentPresent(argMultimap, eSlash, "randy@example.com");
+    }
+
+    @Test
+    public void tokenizeWithQuotedValue_unquotedNameWithSlash_tokenizesNormally() throws Exception {
+        String argsString = " n/Ravi s/o Kumar p/123456";
+
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithQuotedValue(
+                argsString, nSlash, nSlash, pSlash);
+
+        assertArgumentPresent(argMultimap, nSlash, "Ravi s/o Kumar");
+        assertArgumentPresent(argMultimap, pSlash, "123456");
+    }
+
+    @Test
+    public void tokenizeWithQuotedValue_spacesBeforeOpeningQuote_recognizesQuotedName() throws Exception {
+        String argsString = " n/   \"Randy p/e ratio\" p/123456";
+
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithQuotedValue(
+                argsString, nSlash, nSlash, pSlash);
+
+        assertArgumentPresent(argMultimap, nSlash, "\"Randy p/e ratio\"");
+        assertArgumentPresent(argMultimap, pSlash, "123456");
+    }
+
+    @Test
+    public void tokenizeWithQuotedValue_unclosedQuotedName_throwsParseException() {
+        assertThrows(ParseException.class, ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE, ()
+                -> ArgumentTokenizer.tokenizeWithQuotedValue(
+                    " n/\"Randy p/e ratio p/123456", nSlash, nSlash, pSlash));
+    }
+
+    @Test
+    public void tokenizeWithQuotedValue_emptyNameAtEnd_returnsEmptyName() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithQuotedValue(
+                " n/", nSlash, nSlash, pSlash);
+
+        assertPreambleEmpty(argMultimap);
+        assertArgumentPresent(argMultimap, nSlash, "");
+        assertArgumentAbsent(argMultimap, pSlash);
     }
 
     @Test

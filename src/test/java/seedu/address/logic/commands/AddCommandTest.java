@@ -53,6 +53,18 @@ public class AddCommandTest {
     }
 
     @Test
+    public void execute_personWithSameNameAndDifferentIdentityFields_addSuccessful() throws Exception {
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+        Person firstPerson = new PersonBuilder().build();
+        Person secondPerson = new PersonBuilder().withPhone("87654321").withEmail("another@example.com").build();
+
+        new AddCommand(firstPerson).execute(modelStub);
+        new AddCommand(secondPerson).execute(modelStub);
+
+        assertEquals(List.of(firstPerson, secondPerson), modelStub.personsAdded);
+    }
+
+    @Test
     public void equals() {
         Person alice = new PersonBuilder().withName("Alice").build();
         Person bob = new PersonBuilder().withName("Bob").build();

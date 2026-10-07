@@ -81,6 +81,40 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseName_validQuotedValue_returnsUnquotedName() throws Exception {
+        assertEquals(new Name("Randy p/e ratio"), ParserUtil.parseName("\"Randy p/e ratio\""));
+        assertEquals(new Name("Ravi s/o Kumar"), ParserUtil.parseName("  \"Ravi s/o Kumar\"  "));
+        assertEquals(new Name("///"), ParserUtil.parseName("\"///\""));
+        assertEquals(new Name("李小龍"), ParserUtil.parseName("\"李小龍\""));
+    }
+
+    @Test
+    public void parseName_repeatedSpaces_returnsNormalizedName() throws Exception {
+        assertEquals(new Name("Alex Tan"), ParserUtil.parseName("Alex    Tan"));
+        assertEquals(new Name("Randy p/e ratio"), ParserUtil.parseName("\"Randy   p/e    ratio\""));
+    }
+
+    @Test
+    public void parseName_malformedQuotes_throwsParseException() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_NAME_QUOTES, ()
+                -> ParserUtil.parseName("\""));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_NAME_QUOTES, ()
+                -> ParserUtil.parseName("\"Randy"));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_NAME_QUOTES, ()
+                -> ParserUtil.parseName("Randy\""));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_NAME_QUOTES, ()
+                -> ParserUtil.parseName("\"Ran\"dy\""));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_NAME_QUOTES, ()
+                -> ParserUtil.parseName("\"\"Randy\"\""));
+    }
+
+    @Test
+    public void parseName_emptyQuotedValue_throwsParseException() {
+        assertThrows(ParseException.class, Name.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseName("\"\""));
+        assertThrows(ParseException.class, Name.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseName("\"   \""));
+    }
+
+    @Test
     public void parsePhone_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> ParserUtil.parsePhone((String) null));
     }
