@@ -1,7 +1,9 @@
 package seedu.address.storage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -11,7 +13,9 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Role;
 
 /**
  * An Immutable AddressBook that is serializable to JSON format.
@@ -20,6 +24,8 @@ import seedu.address.model.person.Person;
 class JsonSerializableAddressBook {
 
     public static final String MESSAGE_DUPLICATE_PERSON = "Persons list contains duplicate person(s).";
+    public static final String MESSAGE_DUPLICATE_ID = "Contacts contain duplicate IDs.";
+    public static final String MESSAGE_INVALID_RELATIONSHIP = "A student link must refer to an existing guardian.";
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
 
@@ -47,12 +53,28 @@ class JsonSerializableAddressBook {
      */
     public AddressBook toModelType() throws IllegalValueException {
         AddressBook addressBook = new AddressBook();
+        Map<ContactId, Person> contacts = new HashMap<>();
         for (JsonAdaptedPerson jsonAdaptedPerson : persons) {
+            if (jsonAdaptedPerson == null) {
+                throw new IllegalValueException("Contacts must not contain null entries.");
+            }
             Person person = jsonAdaptedPerson.toModelType();
+            if (contacts.containsKey(person.getId())) {
+                throw new IllegalValueException(MESSAGE_DUPLICATE_ID);
+            }
             if (addressBook.hasPerson(person)) {
                 throw new IllegalValueException(MESSAGE_DUPLICATE_PERSON);
             }
             addressBook.addPerson(person);
+            contacts.put(person.getId(), person);
+        }
+        for (Person person : addressBook.getPersonList()) {
+            if (person.getGuardianId().isPresent()) {
+                Person guardian = contacts.get(person.getGuardianId().get());
+                if (guardian == null || guardian.getRole() != Role.GUARDIAN) {
+                    throw new IllegalValueException(MESSAGE_INVALID_RELATIONSHIP);
+                }
+            }
         }
         return addressBook;
     }

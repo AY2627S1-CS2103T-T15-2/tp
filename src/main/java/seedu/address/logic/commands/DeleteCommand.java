@@ -24,6 +24,8 @@ public class DeleteCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1";
 
     public static final String MESSAGE_DELETE_CONTACT_SUCCESS = "Deleted contact: %1$s [%2$s].";
+    public static final String MESSAGE_REMOVED_RELATIONSHIP = " Removed 1 student-guardian relationship.";
+    public static final String MESSAGE_REMOVED_RELATIONSHIPS = " Removed %d student-guardian relationships.";
 
     private final Index targetIndex;
 
@@ -41,9 +43,20 @@ public class DeleteCommand extends Command {
         }
 
         Person personToDelete = lastShownList.get(targetIndex.getZeroBased());
+        long removedRelationships = model.getAddressBook().getPersonList().stream()
+                .filter(person -> person.getGuardianId().filter(personToDelete.getId()::equals).isPresent()).count();
+        if (personToDelete.getGuardianId().isPresent()) {
+            removedRelationships++;
+        }
         model.deletePerson(personToDelete);
-        return new CommandResult(String.format(MESSAGE_DELETE_CONTACT_SUCCESS, personToDelete.getName(),
-                personToDelete.getRole()));
+        String feedback = String.format(MESSAGE_DELETE_CONTACT_SUCCESS, personToDelete.getName(),
+                personToDelete.getRole());
+        if (removedRelationships == 1) {
+            feedback += MESSAGE_REMOVED_RELATIONSHIP;
+        } else if (removedRelationships > 1) {
+            feedback += String.format(MESSAGE_REMOVED_RELATIONSHIPS, removedRelationships);
+        }
+        return new CommandResult(feedback);
     }
 
     @Override

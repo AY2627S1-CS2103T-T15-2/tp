@@ -4,9 +4,9 @@
   pageNav: 3
 ---
 
-# AB-3 User Guide
+# TutorRoster User Guide
 
-AddressBook Level 3 (AB3) is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, AB3 can help you manage contacts faster than traditional GUI applications.
+TutorRoster is a **desktop application for managing student and guardian contacts through typed commands**, with a graphical contact list and a panel for the selected contact's details.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -18,12 +18,12 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 1. Ensure that Java `25` or later is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
+1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-T15-2/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
+1. Copy the file to the folder you want to use as the _home folder_ for your TutorRoster.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
+   The application opens with your saved contacts, or sample contacts if there is no data file yet.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
@@ -31,7 +31,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+   * `add r/student n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a student named `John Doe`.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -89,7 +89,9 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
+Format: `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
+
+`ROLE` is `student` or `guardian`, ignoring letter case.
 
 <box type="tip" seamless>
 
@@ -97,8 +99,8 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
 </box>
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add r/student n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
+* `add r/guardian n/Betsy Crowe e/betsycrowe@example.com a/Newgate Prison p/1234567`
 
 ### Listing all contacts: `list`
 
@@ -145,6 +147,42 @@ Examples:
 * `find ale` returns `Alex Yeoh`
 * `find li` returns `Charlotte Oliveiro` and `David Li`
 
+### Linking a student to a guardian: `link`
+
+Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
+
+* Run `list` or `find NAME` first and use the indexes in the **currently displayed list**.
+* Both contacts must be visible. If a search hides either contact, run `list` before linking.
+* `s/` must identify a student and `g/` must identify a guardian.
+* Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
+* Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
+* Each student can have one guardian; a guardian can be linked to several students.
+* Linking to a different guardian replaces the previous relationship. Linking to the same guardian again is rejected.
+* A successful command selects the student and shows the guardian's current name, phone and email in the detail panel.
+* The relationship is saved automatically and survives edits, reordering and restarting the application.
+
+Examples, assuming Alex Tan is student `1`, Mei Tan is guardian `2`, and Sarah Lim is guardian `3`:
+
+* `link s/1 g/2` shows `Linked student Alex Tan to guardian Mei Tan.`
+* `link g/2 s/1` has the same effect, but is rejected if that relationship already exists: `Alex Tan is already linked to Mei Tan.`
+* `link s/1 g/3` replaces Mei Tan and shows `Changed Alex Tan’s guardian from Mei Tan to Sarah Lim.`
+
+Common errors:
+
+| Input problem | Result |
+|---|---|
+| Missing parameter or extra text | `Invalid link command. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX` |
+| Unknown parameter | `Unknown parameter. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX` |
+| Repeated parameter | `Each of s/ and g/ may appear only once.` |
+| Invalid student index | `Student index must be a positive integer shown in the list.` |
+| Invalid guardian index | `Guardian index must be a positive integer shown in the list.` |
+| Student index outside the displayed list | `No contact exists at student index INDEX.` |
+| Guardian index outside the displayed list | `No contact exists at guardian index INDEX.` |
+| Wrong student role | `Student index must refer to a student.` |
+| Wrong guardian role | `Guardian index must refer to a guardian.` |
+
+Invalid link commands leave the contacts, relationships, selected contact, detail panel and saved data unchanged.
+
 ### Deleting a person: `delete`
 
 Deletes the specified person from the address book.
@@ -154,6 +192,13 @@ Format: `delete INDEX`
 * Deletes the person at the specified `INDEX`.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
+
+Deleting a student removes that student's relationship. Deleting a guardian clears the links to that guardian and retains the student contacts.
+
+The success message reports any removed relationships, for example:
+`Deleted contact: Mei Tan [Guardian]. Removed 1 student-guardian relationship.`
+When several students were linked to the deleted guardian, the message uses the actual count and `relationships`.
+Students without a guardian show `Guardian: None` in the detail panel.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
@@ -173,17 +218,17 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+TutorRoster automatically saves data after every command. You do not need to save manually.
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+TutorRoster data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+Back up the data file before editing it. Invalid data prevents the contacts from loading.<br>
+Contacts have permanent `id` values, and a student's optional `guardianId` must refer to an existing guardian's `id`. Keep IDs unique and preserve them when editing contact details. Invalid IDs, repeated JSON fields, duplicate contacts and invalid guardian references make the file invalid. Older valid files without IDs are accepted; IDs are assigned on loading and included in the next successful save.
 </box>
 
 ### Archiving data files `[coming in v2.0]`
@@ -195,7 +240,7 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorRoster home folder.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -210,10 +255,11 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Add**    | `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
+**Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
 **List**   | `list`
 **Help**   | `help`

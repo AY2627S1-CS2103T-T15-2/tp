@@ -7,7 +7,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.person.ContactId;
+
 public class CommandResultTest {
+
+    @Test
+    public void selectedContactId_identifiesSelectionAndParticipatesInEquality() {
+        ContactId id = ContactId.generate();
+        CommandResult result = new CommandResult("linked", id);
+        assertEquals(id, result.getSelectedContactId().orElseThrow());
+        assertEquals(result, new CommandResult("linked", id));
+        assertEquals(result.hashCode(), new CommandResult("linked", id).hashCode());
+        assertNotEquals(result, new CommandResult("linked"));
+        assertNotEquals(result, new CommandResult("linked", ContactId.generate()));
+        assertTrue(new CommandResult("linked").getSelectedContactId().isEmpty());
+    }
+
     @Test
     public void equals() {
         CommandResult commandResult = new CommandResult("feedback");
@@ -57,7 +72,14 @@ public class CommandResultTest {
         CommandResult commandResult = new CommandResult("feedback");
         String expected = CommandResult.class.getCanonicalName() + "{feedbackToUser="
                 + commandResult.getFeedbackToUser() + ", showHelp=" + commandResult.isShowHelp()
-                + ", exit=" + commandResult.isExit() + "}";
+                + ", exit=" + commandResult.isExit()
+                + ", selectedContactId=" + commandResult.getSelectedContactId() + "}";
         assertEquals(expected, commandResult.toString());
+    }
+
+    @Test
+    public void toString_selectedContact_includesId() {
+        ContactId id = ContactId.generate();
+        assertTrue(new CommandResult("linked", id).toString().contains("selectedContactId=Optional[" + id + "]"));
     }
 }

@@ -3,6 +3,21 @@
     background-color: #383838; /* Used in the default.html file */
 }
 
+.person-details-scroll {
+    -fx-background-color: #383838;
+    -fx-background: #383838;
+}
+
+.person-details-content {
+    -fx-padding: 18;
+    -fx-background-color: #383838;
+}
+
+.person-details-name {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+}
+
 .label {
     -fx-font-size: 11pt;
     -fx-font-family: "Segoe UI Semibold";
