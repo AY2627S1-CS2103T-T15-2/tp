@@ -65,8 +65,8 @@ public class PersonDetailsPanel extends UiPart<Region> {
 
         name.setText(contact.getName().fullName);
         role.setText("Role: " + contact.getRole());
-        phone.setText("Phone: " + providedOrMissing(contact.getPhone().value));
-        email.setText("Email: " + providedOrMissing(contact.getEmail().value));
+        phone.setText("Phone: " + contact.getPhone().value);
+        email.setText("Email: " + contact.getEmail().value);
         boolean isStudent = contact.getRole() == Role.STUDENT;
         guardianDetails.setVisible(isStudent);
         guardianDetails.setManaged(isStudent);
@@ -74,12 +74,8 @@ public class PersonDetailsPanel extends UiPart<Region> {
                 .filter(person -> person.getId().equals(id)).findFirst()).orElse(null);
         guardianName.setText(guardian == null ? "Guardian: Not linked" : "Guardian: " + guardian.getName());
         guardianPhone.setText(guardian == null ? ""
-                : "Guardian phone: " + providedOrMissing(guardian.getPhone().value));
+                : "Guardian phone: " + guardian.getPhone().value);
         guardianEmail.setText(guardian == null ? ""
-                : "Guardian email: " + providedOrMissing(guardian.getEmail().value));
-    }
-
-    private String providedOrMissing(String value) {
-        return value.isBlank() ? "Not provided" : value;
+                : "Guardian email: " + guardian.getEmail().value);
     }
 }

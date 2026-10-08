@@ -1,7 +1,10 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Files;
@@ -34,6 +37,7 @@ import seedu.address.logic.LogicManager;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -113,7 +117,68 @@ public class LinkUiTest {
             root.applyCss();
             root.layout();
             saveSnapshot(root);
+
+            command.setText("edit 2 n/Sarah Tan p/91234567");
+            command.fireEvent(new ActionEvent());
+            assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+            assertEquals("Guardian: Sarah Tan", label(root, "guardianName").getText());
+            assertEquals("Guardian phone: 91234567", label(root, "guardianPhone").getText());
+
+            command.setText("delete 2");
+            command.fireEvent(new ActionEvent());
+            assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+            assertEquals("Guardian: Not linked", label(root, "guardianName").getText());
             stage.close();
+        });
+    }
+
+    @Test
+    public void selection_filteredOrDeletedContact_clearsSelectionAndDetails() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person student = new PersonBuilder().withName("Alex Tan").build();
+            Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+            ObservableList<Person> contacts = FXCollections.observableArrayList(student, guardian);
+            PersonListPanel listPanel = new PersonListPanel(contacts);
+            PersonDetailsPanel details = new PersonDetailsPanel(contacts, listPanel.selectedPersonProperty());
+            new Scene(details.getRoot());
+            details.getRoot().applyCss();
+
+            listPanel.selectPerson(guardian.getId());
+            assertEquals(guardian.getId(), listPanel.getSelectedPerson().getId());
+            assertEquals("Mei Tan", label(details.getRoot(), "name").getText());
+            assertFalse(details.getRoot().lookup("#guardianDetails").isVisible());
+
+            listPanel.selectPerson(ContactId.generate());
+            assertNull(listPanel.getSelectedPerson());
+            assertEquals("Select a contact to view details.", label(details.getRoot(), "name").getText());
+
+            listPanel.selectPerson(student.getId());
+            contacts.remove(student);
+            listPanel.selectPerson(student.getId());
+            assertNull(listPanel.getSelectedPerson());
+            assertEquals("Select a contact to view details.", label(details.getRoot(), "name").getText());
+
+            contacts.clear();
+            listPanel.selectPerson(guardian.getId());
+            assertNull(listPanel.getSelectedPerson());
+        });
+    }
+
+    @Test
+    public void details_selectedContactRemoved_clearsStaleDetails() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person student = new PersonBuilder().build();
+            ObservableList<Person> contacts = FXCollections.observableArrayList(student);
+            SimpleObjectProperty<Person> selection = new SimpleObjectProperty<>(student);
+            PersonDetailsPanel panel = new PersonDetailsPanel(contacts, selection);
+            new Scene(panel.getRoot());
+            panel.getRoot().applyCss();
+
+            assertTrue(panel.getRoot().lookup("#guardianDetails").isVisible());
+            contacts.remove(student);
+            assertEquals("Select a contact to view details.", label(panel.getRoot(), "name").getText());
+            assertEquals("", label(panel.getRoot(), "phone").getText());
+            assertFalse(panel.getRoot().lookup("#guardianDetails").isVisible());
         });
     }
 

@@ -101,11 +101,18 @@ public class JsonAddressBookStorage {
             Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } finally {
             try {
-                Files.deleteIfExists(temporary);
+                deleteTemporaryFile(temporary);
             } catch (IOException exception) {
                 logger.warning("Could not remove temporary save file: " + temporary);
             }
         }
+    }
+
+    /**
+     * Removes the temporary save file, if it still exists.
+     */
+    void deleteTemporaryFile(Path temporary) throws IOException {
+        Files.deleteIfExists(temporary);
     }
 
 }

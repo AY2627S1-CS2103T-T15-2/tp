@@ -72,7 +72,5 @@ public interface Model {
     /**
      * Returns the predicate currently used to filter contacts.
      */
-    default Predicate<Person> getPersonFilter() {
-        return PREDICATE_SHOW_ALL_PERSONS;
-    }
+    Predicate<Person> getPersonFilter();
 }
