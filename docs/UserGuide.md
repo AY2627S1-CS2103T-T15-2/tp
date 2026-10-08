@@ -23,7 +23,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
 1. Copy the file to the folder you want to use as the _home folder_ for your TutorRoster.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
-   The application opens with your saved contacts, or sample contacts if there is no data file yet.<br>
+   The application opens with your saved contacts, or an empty list if there is no data file yet.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
@@ -181,7 +181,7 @@ Common errors:
 | Wrong student role | `Student index must refer to a student.` |
 | Wrong guardian role | `Guardian index must refer to a guardian.` |
 
-Invalid link commands leave the contacts, relationships, selected contact, detail panel and saved data unchanged.
+Failed link commands leave the contacts, relationships, selected contact, detail panel and saved data unchanged.
 
 ### Deleting a person: `delete`
 
@@ -218,7 +218,9 @@ Format: `exit`
 
 ### Saving the data
 
-TutorRoster automatically saves data after every command. You do not need to save manually.
+TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear` and `link` commands. You do not need to save manually. Read-only commands do not write the data file.
+
+If saving fails, the command reports `Changes could not be saved. No changes were made.` Contacts, relationships and the previously saved data remain unchanged.
 
 ### Editing the data file
 
@@ -227,7 +229,7 @@ TutorRoster data is saved automatically as a JSON file `[JAR file location]/data
 <box type="warning" seamless>
 
 **Caution:**
-Back up the data file before editing it. Invalid data prevents the contacts from loading.<br>
+If the data file is invalid, TutorRoster starts with an empty list and disables data-changing commands for that session. It displays `Data changes are disabled because the data file could not be loaded. Fix the file and restart TutorRoster.` The invalid file is preserved. Back up the file before editing it, fix the error and restart the application.<br>
 Contacts have permanent `id` values, and a student's optional `guardianId` must refer to an existing guardian's `id`. Keep IDs unique and preserve them when editing contact details. Invalid IDs, repeated JSON fields, duplicate contacts and invalid guardian references make the file invalid. Older valid files without IDs are accepted; IDs are assigned on loading and included in the next successful save.
 </box>
 
