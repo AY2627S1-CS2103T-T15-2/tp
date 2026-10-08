@@ -108,8 +108,9 @@ public class LinkUiTest {
             command.fireEvent(new ActionEvent());
             assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
             assertEquals("Guardian: Mei Tan", label(root, "guardianName").getText());
-            assertEquals(Color.WHITE, label(root, "name").getTextFill());
-            assertEquals(20.0, label(root, "name").getFont().getSize(), 0.01);
+            Region personDetailsRoot = (Region) root.lookup("#personDetailsPanelPlaceholder");
+            assertEquals(Color.WHITE, label(personDetailsRoot, "name").getTextFill());
+            assertEquals(20.0, label(personDetailsRoot, "name").getFont().getSize(), 0.01);
             assertEquals("", command.getText());
             command.setText("link s/1 g/2");
             command.fireEvent(new ActionEvent());
