@@ -54,4 +54,9 @@ public interface Storage {
      */
     void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException;
 
+    /**
+     * Returns true if the data file failed to load in this session.
+     */
+    boolean isDataFileLoadFailed();
+
 }

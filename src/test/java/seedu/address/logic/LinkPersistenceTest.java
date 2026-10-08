@@ -1,8 +1,12 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.Assert.assertThrows;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -10,9 +14,12 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
@@ -64,6 +71,47 @@ public class LinkPersistenceTest {
     }
 
     @Test
+    public void execute_saveFailure_keepsContactsFilterAndSavedFileUnchanged() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        JsonAddressBookStorage workingStorage = new JsonAddressBookStorage(file);
+        Model model = createModel();
+        workingStorage.saveAddressBook(model.getAddressBook());
+        String originalFile = Files.readString(file);
+        model.updateFilteredPersonList(person -> person.getName().fullName.endsWith("Tan"));
+        List<Person> originalDisplay = List.copyOf(model.getFilteredPersonList());
+        JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(file) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook book) throws IOException {
+                throw new IOException("Simulated disk failure");
+            }
+        };
+        Logic logic = createLogic(model, failingStorage);
+        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () -> logic.execute("link s/1 g/2"));
+        assertTrue(findContact(model, student.getId()).getGuardianId().isEmpty());
+        assertEquals(originalDisplay, List.copyOf(model.getFilteredPersonList()));
+        assertEquals(originalFile, Files.readString(file));
+    }
+
+    @Test
+    public void execute_failedReplacement_preservesOldGuardian() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        Model model = createModel();
+        model.addPerson(new PersonBuilder().withName("Sarah Tan").withRole("guardian").build());
+        createLogic(model, storage).execute("link s/1 g/2");
+        String originalFile = Files.readString(file);
+        JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(file) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook book) throws IOException {
+                throw new IOException("Simulated disk failure");
+            }
+        };
+        assertThrows(CommandException.class, () -> createLogic(model, failingStorage).execute("link s/1 g/3"));
+        assertEquals(Optional.of(guardian.getId()), findContact(model, student.getId()).getGuardianId());
+        assertEquals(originalFile, Files.readString(file));
+    }
+
+    @Test
     public void execute_filteredLink_preservesFilterAfterSave() throws Exception {
         Model model = createModel();
         model.addPerson(new PersonBuilder().withName("Unrelated Contact").build());
@@ -88,4 +136,27 @@ public class LinkPersistenceTest {
         assertTrue(storage.readAddressBook().orElseThrow().getPersonList().getFirst().getGuardianId().isEmpty());
     }
 
+    @Test
+    public void execute_invalidDataFile_disablesChangesAndProtectsFile() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        Files.writeString(file, "{invalid json}");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        Logic logic = createLogic(new ModelManager(), storage);
+        assertEquals(Optional.of(LogicManager.MESSAGE_DATA_LOAD_FAILURE), logic.getStartupMessage());
+        assertThrows(CommandException.class,
+                LogicManager.MESSAGE_DATA_LOAD_FAILURE, () -> logic.execute("link s/1 g/2"));
+        assertThrows(CommandException.class, LogicManager.MESSAGE_DATA_LOAD_FAILURE, () -> logic.execute("clear"));
+        logic.execute("list");
+        assertEquals("{invalid json}", Files.readString(file));
+    }
+
+    @Test
+    public void execute_readOnlyCommands_doNotCreateDataFile() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        Logic logic = createLogic(new ModelManager(), new JsonAddressBookStorage(file));
+        logic.execute("list");
+        logic.execute("help");
+        assertFalse(Files.exists(file));
+    }
 }

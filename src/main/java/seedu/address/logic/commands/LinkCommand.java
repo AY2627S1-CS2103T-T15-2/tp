@@ -51,6 +51,11 @@ public class LinkCommand extends Command {
     }
 
     @Override
+    public boolean isDataChanging() {
+        return true;
+    }
+
+    @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         List<Person> displayedPersons = model.getFilteredPersonList();
