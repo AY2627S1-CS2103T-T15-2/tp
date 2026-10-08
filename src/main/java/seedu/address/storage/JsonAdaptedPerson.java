@@ -1,11 +1,6 @@
 package seedu.address.storage;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,11 +12,10 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
-import seedu.address.model.tag.Tag;
 
 /**
  * Jackson-friendly version of {@link Person}.
- * Legacy address properties are ignored by JsonUtil and omitted when saving.
+ * Legacy address and tags properties are ignored by JsonUtil and omitted when saving.
  */
 class JsonAdaptedPerson {
 
@@ -33,7 +27,6 @@ class JsonAdaptedPerson {
     private final String phone;
     private final String email;
     private final String role;
-    private final List<JsonAdaptedTag> tags = new ArrayList<>();
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -42,7 +35,7 @@ class JsonAdaptedPerson {
     public JsonAdaptedPerson(@JsonProperty("id") String id,
             @JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email,
-            @JsonProperty("role") String role, @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("role") String role,
             @JsonProperty("guardianId") String guardianId) {
         this.id = id;
         this.guardianId = guardianId;
@@ -50,9 +43,6 @@ class JsonAdaptedPerson {
         this.phone = phone;
         this.email = email;
         this.role = role;
-        if (tags != null) {
-            this.tags.addAll(tags);
-        }
     }
 
     /**
@@ -65,9 +55,6 @@ class JsonAdaptedPerson {
         phone = source.getPhone().value;
         email = source.getEmail().value;
         role = source.getRole().name();
-        tags.addAll(source.getTags().stream()
-                .map(JsonAdaptedTag::new)
-                .collect(Collectors.toList()));
     }
 
     /**
@@ -80,14 +67,6 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(ContactId.MESSAGE_CONSTRAINTS);
         }
         final ContactId modelId = id == null ? ContactId.generate() : new ContactId(id);
-        final List<Tag> personTags = new ArrayList<>();
-        for (JsonAdaptedTag tag : tags) {
-            if (tag == null) {
-                throw new IllegalValueException("Tags must not contain null entries.");
-            }
-            personTags.add(tag.toModelType());
-        }
-
         if (name == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName()));
         }
@@ -128,8 +107,7 @@ class JsonAdaptedPerson {
         }
         final Optional<ContactId> modelGuardianId = Optional.ofNullable(guardianId).map(ContactId::new);
 
-        final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelId, modelName, modelPhone, modelEmail, modelRole, modelTags,
+        return new Person(modelId, modelName, modelPhone, modelEmail, modelRole,
                 modelGuardianId);
     }
 

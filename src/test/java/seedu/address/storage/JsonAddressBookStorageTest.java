@@ -76,17 +76,20 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
-    public void readAndSaveAddressBook_legacyAddress_preservesContactsAndOmitsAddress() throws Exception {
+    public void readAndSaveAddressBook_legacyRemovedFields_preservesContactsAndOmitsRemovedFields() throws Exception {
         Path filePath = testFolder.resolve("legacyContacts.json");
         var guardian = new seedu.address.testutil.PersonBuilder().withName("Guardian")
-                .withRole("guardian").withTags("family").build();
+                .withRole("guardian").build();
         var student = new seedu.address.testutil.PersonBuilder(ALICE).withGuardianId(guardian.getId()).build();
         AddressBook original = new AddressBook();
         original.setPersons(java.util.List.of(guardian, student));
         String currentJson = JsonUtil.toJsonString(new JsonSerializableAddressBook(original));
 
-        for (String legacyValue : java.util.List.of("\"123 Main Street\"", "\" \"", "null")) {
-            String legacyJson = currentJson.replace("\"email\" :", "\"address\" : " + legacyValue + ", \"email\" :");
+        for (String legacyField : java.util.List.of(
+                "\"address\": \"123 Main Street\"", "\"address\": \" \"", "\"address\": null",
+                "\"tags\": [\"friends\", \"family\"]", "\"tags\": []", "\"tags\": null",
+                "\"address\": \"123 Main Street\", \"tags\": [\"friends\"]")) {
+            String legacyJson = currentJson.replace("\"email\" :", legacyField + ", \"email\" :");
             Files.writeString(filePath, legacyJson);
             JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
             ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
@@ -97,6 +100,7 @@ public class JsonAddressBookStorageTest {
 
             storage.saveAddressBook(loaded);
             assertFalse(Files.readString(filePath).contains("\"address\""));
+            assertFalse(Files.readString(filePath).contains("\"tags\""));
             assertEquals(original, new AddressBook(storage.readAddressBook().orElseThrow()));
         }
     }
@@ -124,7 +128,6 @@ public class JsonAddressBookStorageTest {
         jsonAddressBookStorage.saveAddressBook(original); // file path not specified
         readBack = jsonAddressBookStorage.readAddressBook().get(); // file path not specified
         assertEquals(original, new AddressBook(readBack));
-
     }
 
     @Test

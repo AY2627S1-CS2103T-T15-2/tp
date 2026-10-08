@@ -49,9 +49,7 @@ public class Messages {
                 .append("; Email: ")
                 .append(person.getEmail())
                 .append("; Role: ")
-                .append(person.getRole())
-                .append("; Tags: ");
-        person.getTags().forEach(builder::append);
+                .append(person.getRole());
         return builder.toString();
     }
 

@@ -7,7 +7,6 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ROLE_BOB;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
@@ -21,12 +20,6 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
-    public void asObservableList_modifyList_throwsUnsupportedOperationException() {
-        Person person = new PersonBuilder().build();
-        assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
-    }
-
-    @Test
     public void isSamePerson() {
         // same object -> returns true
         assertTrue(ALICE.isSamePerson(ALICE));
@@ -36,7 +29,7 @@ public class PersonTest {
 
         // same name, other identity fields different -> returns false
         Person editedAlice = new PersonBuilder(ALICE).withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_BOB)
-                .withRole(VALID_ROLE_BOB).withTags(VALID_TAG_HUSBAND).build();
+                .withRole(VALID_ROLE_BOB).build();
         assertFalse(ALICE.isSamePerson(editedAlice));
 
         // same name and phone, different email -> returns false
@@ -45,7 +38,7 @@ public class PersonTest {
 
         // same identity fields, data fields different -> returns true
         editedAlice = new PersonBuilder(ALICE).withRole(VALID_ROLE_BOB)
-                .withTags(VALID_TAG_HUSBAND).build();
+                .build();
         assertTrue(ALICE.isSamePerson(editedAlice));
 
         // different name, all other attributes same -> returns false
@@ -96,17 +89,13 @@ public class PersonTest {
         // different role -> returns false
         editedAlice = new PersonBuilder(ALICE).withRole(VALID_ROLE_BOB).build();
         assertFalse(ALICE.equals(editedAlice));
-
-        // different tags -> returns false
-        editedAlice = new PersonBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
-        assertFalse(ALICE.equals(editedAlice));
     }
 
     @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", email=" + ALICE.getEmail() + ", role=" + ALICE.getRole()
-                + ", tags=" + ALICE.getTags() + "}";
+                + "}";
         assertEquals(expected, ALICE.toString());
     }
 
