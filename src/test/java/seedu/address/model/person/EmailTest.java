@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -17,6 +18,12 @@ public class EmailTest {
     public void constructor_invalidEmail_throwsIllegalArgumentException() {
         String invalidEmail = "";
         assertThrows(IllegalArgumentException.class, () -> new Email(invalidEmail));
+    }
+
+    @Test
+    public void constructor_emailWithUppercaseLetters_preservesLetterCase() {
+        Email email = new Email("Valid.Email@Example.com");
+        assertEquals("Valid.Email@Example.com", email.value);
     }
 
     @Test
@@ -84,5 +91,26 @@ public class EmailTest {
 
         // different values -> returns false
         assertFalse(email.equals(new Email("other.valid@email")));
+    }
+
+    @Test
+    public void isSameEmail() {
+        Email email = new Email("Valid.Email@Example.com");
+
+        // same object -> returns true
+        assertTrue(email.isSameEmail(email));
+
+        // same value -> returns true
+        assertTrue(email.isSameEmail(new Email("Valid.Email@Example.com")));
+
+        // same value with different letter case -> returns true
+        assertTrue(email.isSameEmail(new Email("valid.email@example.com")));
+        assertTrue(email.isSameEmail(new Email("VALID.EMAIL@EXAMPLE.COM")));
+
+        // different value -> returns false
+        assertFalse(email.isSameEmail(new Email("other.email@example.com")));
+
+        // null -> returns false
+        assertFalse(email.isSameEmail(null));
     }
 }

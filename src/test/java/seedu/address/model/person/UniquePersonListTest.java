@@ -10,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +47,15 @@ public class UniquePersonListTest {
     }
 
     @Test
+    public void contains_personWithEmailDifferingOnlyInCase_returnsTrue() {
+        uniquePersonList.add(ALICE);
+        Person editedAlice = new PersonBuilder(ALICE)
+                .withEmail(ALICE.getEmail().value.toUpperCase(Locale.ROOT))
+                .build();
+        assertTrue(uniquePersonList.contains(editedAlice));
+    }
+
+    @Test
     public void add_nullPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniquePersonList.add(null));
     }
@@ -54,6 +64,15 @@ public class UniquePersonListTest {
     public void add_duplicatePerson_throwsDuplicatePersonException() {
         uniquePersonList.add(ALICE);
         assertThrows(DuplicatePersonException.class, () -> uniquePersonList.add(ALICE));
+    }
+
+    @Test
+    public void add_personWithEmailDifferingOnlyInCase_throwsDuplicatePersonException() {
+        uniquePersonList.add(ALICE);
+        Person editedAlice = new PersonBuilder(ALICE)
+                .withEmail(ALICE.getEmail().value.toUpperCase(Locale.ROOT))
+                .build();
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.add(editedAlice));
     }
 
     @Test
