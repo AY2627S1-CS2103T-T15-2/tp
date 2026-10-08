@@ -24,6 +24,11 @@ public interface Logic {
     ObservableList<Person> getFilteredPersonList();
 
     /**
+     * Returns all contacts, including those hidden by the current filter.
+     */
+    ObservableList<Person> getPersonList();
+
+    /**
      * Returns the user prefs' GUI settings.
      */
     GuiSettings getGuiSettings();
