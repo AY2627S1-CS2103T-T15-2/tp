@@ -48,8 +48,6 @@ public class Messages {
                 .append(person.getPhone())
                 .append("; Email: ")
                 .append(person.getEmail())
-                .append("; Address: ")
-                .append(person.getAddress())
                 .append("; Role: ")
                 .append(person.getRole())
                 .append("; Tags: ");

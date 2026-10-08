@@ -27,7 +27,6 @@ public class Person {
     private final Email email;
 
     // Data fields
-    private final Address address;
     private final Role role;
     private final Optional<ContactId> guardianId;
     private final Set<Tag> tags = new HashSet<>();
@@ -35,31 +34,30 @@ public class Person {
     /**
      * Creates a new person with a generated contact ID.
      */
-    public Person(Name name, Phone phone, Email email, Address address,
+    public Person(Name name, Phone phone, Email email,
             Role role, Set<Tag> tags) {
-        this(ContactId.generate(), name, phone, email, address, role, tags);
+        this(ContactId.generate(), name, phone, email, role, tags);
     }
 
     /**
      * Creates a person with the specified contact ID and details.
      */
     public Person(ContactId id, Name name, Phone phone, Email email,
-            Address address, Role role, Set<Tag> tags) {
-        this(id, name, phone, email, address, role, tags, Optional.empty());
+            Role role, Set<Tag> tags) {
+        this(id, name, phone, email, role, tags, Optional.empty());
     }
 
     /**
      * Creates a person with the specified ID, details and optional guardian relationship.
      */
-    public Person(ContactId id, Name name, Phone phone, Email email, Address address,
+    public Person(ContactId id, Name name, Phone phone, Email email,
             Role role, Set<Tag> tags, Optional<ContactId> guardianId) {
-        requireAllNonNull(id, name, phone, email, address, role, tags, guardianId);
+        requireAllNonNull(id, name, phone, email, role, tags, guardianId);
         checkArgument(guardianId.isEmpty() || role == Role.STUDENT, MESSAGE_INVALID_GUARDIAN_OWNER);
         this.id = id;
         this.name = name;
         this.phone = phone;
         this.email = email;
-        this.address = address;
         this.role = role;
         this.guardianId = guardianId;
         this.tags.addAll(tags);
@@ -77,7 +75,7 @@ public class Person {
      * Returns a copy of this contact with the specified guardian relationship.
      */
     public Person withGuardianId(Optional<ContactId> updatedGuardianId) {
-        return new Person(id, name, phone, email, address, role, tags, updatedGuardianId);
+        return new Person(id, name, phone, email, role, tags, updatedGuardianId);
     }
 
     public Name getName() {
@@ -90,10 +88,6 @@ public class Person {
 
     public Email getEmail() {
         return email;
-    }
-
-    public Address getAddress() {
-        return address;
     }
 
     public Role getRole() {
@@ -141,7 +135,6 @@ public class Person {
         return name.equals(otherPerson.name)
                 && phone.equals(otherPerson.phone)
                 && email.equals(otherPerson.email)
-                && address.equals(otherPerson.address)
                 && role.equals(otherPerson.role)
                 && guardianId.equals(otherPerson.guardianId)
                 && tags.equals(otherPerson.tags);
@@ -150,7 +143,7 @@ public class Person {
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, role, tags, guardianId);
+        return Objects.hash(name, phone, email, role, tags, guardianId);
     }
 
     @Override
@@ -159,7 +152,6 @@ public class Person {
                 .add("name", name)
                 .add("phone", phone)
                 .add("email", email)
-                .add("address", address)
                 .add("role", role)
                 .add("tags", tags)
                 .toString();

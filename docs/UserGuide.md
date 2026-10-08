@@ -31,7 +31,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
 
    * `list` : Lists all contacts.
 
-   * `add r/student n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a student named `John Doe`.
+   * `add r/student n/John Doe p/98765432 e/johnd@example.com` : Adds a student named `John Doe`.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -89,7 +89,7 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
+Format: `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL [t/TAG]... `
 
 `ROLE` is `student` or `guardian`, ignoring letter case.
 
@@ -99,8 +99,8 @@ Format: `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
 </box>
 
 Examples:
-* `add r/student n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add r/guardian n/Betsy Crowe e/betsycrowe@example.com a/Newgate Prison p/1234567`
+* `add r/student n/John Doe p/98765432 e/johnd@example.com`
+* `add r/guardian n/Betsy Crowe e/betsycrowe@example.com p/1234567`
 
 ### Listing all contacts: `list`
 
@@ -116,7 +116,7 @@ Format: `list`
 
 Edits an existing person in the address book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [t/TAG]... `
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -257,10 +257,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665`
+**Add**    | `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL [t/TAG]... ` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
 **List**   | `list`

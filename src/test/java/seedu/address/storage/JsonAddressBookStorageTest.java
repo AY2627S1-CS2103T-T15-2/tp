@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 
@@ -72,6 +73,32 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_invalidAndValidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidAndValidPersonAddressBook.json"));
+    }
+
+    @Test
+    public void readAndSaveAddressBook_legacyAddress_preservesContactsAndOmitsAddress() throws Exception {
+        Path filePath = testFolder.resolve("legacyContacts.json");
+        var guardian = new seedu.address.testutil.PersonBuilder().withName("Guardian")
+                .withRole("guardian").withTags("family").build();
+        var student = new seedu.address.testutil.PersonBuilder(ALICE).withGuardianId(guardian.getId()).build();
+        AddressBook original = new AddressBook();
+        original.setPersons(java.util.List.of(guardian, student));
+        String currentJson = JsonUtil.toJsonString(new JsonSerializableAddressBook(original));
+
+        for (String legacyValue : java.util.List.of("\"123 Main Street\"", "\" \"", "null")) {
+            String legacyJson = currentJson.replace("\"email\" :", "\"address\" : " + legacyValue + ", \"email\" :");
+            Files.writeString(filePath, legacyJson);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+            ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+            assertEquals(original, new AddressBook(loaded));
+            assertEquals(guardian.getId(), loaded.getPersonList().get(0).getId());
+            assertEquals(student.getId(), loaded.getPersonList().get(1).getId());
+            assertEquals(student.getGuardianId(), loaded.getPersonList().get(1).getGuardianId());
+
+            storage.saveAddressBook(loaded);
+            assertFalse(Files.readString(filePath).contains("\"address\""));
+            assertEquals(original, new AddressBook(storage.readAddressBook().orElseThrow()));
+        }
     }
 
     @Test

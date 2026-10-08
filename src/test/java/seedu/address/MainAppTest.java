@@ -45,7 +45,7 @@ public class MainAppTest {
         assertFalse(Files.exists(contactsFile));
         assertTrue(logic.getStartupMessage().isEmpty());
 
-        logic.execute("add n/Alex Tan p/91234567 e/alex@example.com a/Kent Ridge r/student");
+        logic.execute("add n/Alex Tan p/91234567 e/alex@example.com r/student");
         assertEquals(1, model.getAddressBook().getPersonList().size());
         assertTrue(Files.exists(contactsFile));
         Model reloaded = new MainApp().initModelManager(createStorage(contactsFile), new UserPrefs());

@@ -71,10 +71,10 @@ public class NameContainsSubstringPredicateTest {
         predicate = new NameContainsSubstringPredicate("Tan Alice");
         assertFalse(predicate.test(new PersonBuilder().withName("Alice Tan").build()));
 
-        // search term matches phone, email and address, but not name
+        // search term matches phone, but not name
         predicate = new NameContainsSubstringPredicate("12345");
         assertFalse(predicate.test(new PersonBuilder().withName("Alice").withPhone("12345")
-                .withEmail("alice@email.com").withAddress("Main Street").build()));
+                .withEmail("alice@email.com").build()));
     }
 
     @Test
