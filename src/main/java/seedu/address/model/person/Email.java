@@ -51,6 +51,13 @@ public class Email {
         return test.matches(VALIDATION_REGEX);
     }
 
+    /**
+     * Returns true if both email addresses are the same, ignoring letter case.
+     */
+    public boolean isSameEmail(Email otherEmail) {
+        return otherEmail != null && value.equalsIgnoreCase(otherEmail.value);
+    }
+
     @Override
     public String toString() {
         return value;
