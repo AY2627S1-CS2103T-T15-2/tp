@@ -1,0 +1,85 @@
+package seedu.address.ui;
+
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import seedu.address.model.person.Person;
+import seedu.address.model.person.Role;
+
+/**
+ * Displays the selected contact and its linked guardian's current contact details.
+ */
+public class PersonDetailsPanel extends UiPart<Region> {
+
+    private static final String FXML = "PersonDetailsPanel.fxml";
+
+    private final ObservableList<Person> persons;
+    private final ReadOnlyObjectProperty<Person> selection;
+
+    @FXML
+    private Label name;
+    @FXML
+    private Label role;
+    @FXML
+    private Label phone;
+    @FXML
+    private Label email;
+    @FXML
+    private VBox guardianDetails;
+    @FXML
+    private Label guardianName;
+    @FXML
+    private Label guardianPhone;
+    @FXML
+    private Label guardianEmail;
+
+    /**
+     * Creates a detail panel that follows the selected contact and changes to all saved contacts.
+     */
+    public PersonDetailsPanel(ObservableList<Person> persons, ReadOnlyObjectProperty<Person> selection) {
+        super(FXML);
+        this.persons = persons;
+        this.selection = selection;
+        selection.addListener((observable, previous, current) -> refreshDetails());
+        persons.addListener((ListChangeListener<Person>) change -> refreshDetails());
+        refreshDetails();
+    }
+
+    private void refreshDetails() {
+        Person selected = selection.get();
+        Person contact = selected == null ? null : persons.stream()
+                .filter(person -> person.getId().equals(selected.getId())).findFirst().orElse(null);
+        if (contact == null) {
+            name.setText("Select a contact to view details.");
+            role.setText("");
+            phone.setText("");
+            email.setText("");
+            guardianDetails.setVisible(false);
+            guardianDetails.setManaged(false);
+            return;
+        }
+
+        name.setText(contact.getName().fullName);
+        role.setText("Role: " + contact.getRole());
+        phone.setText("Phone: " + providedOrMissing(contact.getPhone().value));
+        email.setText("Email: " + providedOrMissing(contact.getEmail().value));
+        boolean isStudent = contact.getRole() == Role.STUDENT;
+        guardianDetails.setVisible(isStudent);
+        guardianDetails.setManaged(isStudent);
+        Person guardian = contact.getGuardianId().flatMap(id -> persons.stream()
+                .filter(person -> person.getId().equals(id)).findFirst()).orElse(null);
+        guardianName.setText(guardian == null ? "Guardian: Not linked" : "Guardian: " + guardian.getName());
+        guardianPhone.setText(guardian == null ? ""
+                : "Guardian phone: " + providedOrMissing(guardian.getPhone().value));
+        guardianEmail.setText(guardian == null ? ""
+                : "Guardian email: " + providedOrMissing(guardian.getEmail().value));
+    }
+
+    private String providedOrMissing(String value) {
+        return value.isBlank() ? "Not provided" : value;
+    }
+}

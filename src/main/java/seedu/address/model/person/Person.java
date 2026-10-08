@@ -1,10 +1,12 @@
 package seedu.address.model.person;
 
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -17,6 +19,7 @@ import seedu.address.model.tag.Tag;
 public class Person {
 
     // Identity fields
+    private final ContactId id;
     private final Name name;
     private final Phone phone;
     private final Email email;
@@ -24,19 +27,55 @@ public class Person {
     // Data fields
     private final Address address;
     private final Role role;
+    private final Optional<ContactId> guardianId;
     private final Set<Tag> tags = new HashSet<>();
 
     /**
-     * Creates a person whose fields are all present and not null.
+     * Creates a new person with a generated contact ID.
      */
-    public Person(Name name, Phone phone, Email email, Address address, Role role, Set<Tag> tags) {
-        requireAllNonNull(name, phone, email, address, role, tags);
+    public Person(Name name, Phone phone, Email email, Address address,
+            Role role, Set<Tag> tags) {
+        this(ContactId.generate(), name, phone, email, address, role, tags);
+    }
+
+    /**
+     * Creates a person with the specified contact ID and details.
+     */
+    public Person(ContactId id, Name name, Phone phone, Email email,
+            Address address, Role role, Set<Tag> tags) {
+        this(id, name, phone, email, address, role, tags, Optional.empty());
+    }
+
+    /**
+     * Creates a person with the specified ID, details and optional guardian relationship.
+     */
+    public Person(ContactId id, Name name, Phone phone, Email email, Address address,
+            Role role, Set<Tag> tags, Optional<ContactId> guardianId) {
+        requireAllNonNull(id, name, phone, email, address, role, tags, guardianId);
+        checkArgument(guardianId.isEmpty() || role == Role.STUDENT, "Only a student can have a linked guardian.");
+        this.id = id;
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.address = address;
         this.role = role;
+        this.guardianId = guardianId;
         this.tags.addAll(tags);
+    }
+
+    public ContactId getId() {
+        return id;
+    }
+
+    public Optional<ContactId> getGuardianId() {
+        return guardianId;
+    }
+
+    /**
+     * Returns a copy of this contact with the specified guardian relationship.
+     */
+    public Person withGuardianId(Optional<ContactId> updatedGuardianId) {
+        return new Person(id, name, phone, email, address, role, tags, updatedGuardianId);
     }
 
     public Name getName() {
@@ -102,13 +141,14 @@ public class Person {
                 && email.equals(otherPerson.email)
                 && address.equals(otherPerson.address)
                 && role.equals(otherPerson.role)
+                && guardianId.equals(otherPerson.guardianId)
                 && tags.equals(otherPerson.tags);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, role, tags);
+        return Objects.hash(name, phone, email, address, role, tags, guardianId);
     }
 
     @Override

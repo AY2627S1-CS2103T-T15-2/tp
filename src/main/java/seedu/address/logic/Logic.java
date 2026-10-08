@@ -1,5 +1,7 @@
 package seedu.address.logic;
 
+import java.util.Optional;
+
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.commands.CommandResult;
@@ -22,6 +24,16 @@ public interface Logic {
 
     /** Returns an unmodifiable view of the filtered list of persons */
     ObservableList<Person> getFilteredPersonList();
+
+    /**
+     * Returns all contacts, including those hidden by the current filter.
+     */
+    ObservableList<Person> getPersonList();
+
+    /**
+     * Returns a startup message when the data file could not be loaded.
+     */
+    Optional<String> getStartupMessage();
 
     /**
      * Returns the user prefs' GUI settings.

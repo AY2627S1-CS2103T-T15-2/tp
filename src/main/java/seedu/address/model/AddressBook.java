@@ -3,6 +3,7 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.Optional;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
@@ -81,6 +82,11 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void removePerson(Person key) {
         persons.remove(key);
+        for (Person person : List.copyOf(getPersonList())) {
+            if (person.getGuardianId().filter(key.getId()::equals).isPresent()) {
+                persons.setPerson(person, person.withGuardianId(Optional.empty()));
+            }
+        }
     }
 
     //// util methods

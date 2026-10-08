@@ -3,6 +3,7 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -25,6 +27,8 @@ class JsonAdaptedPerson {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Person's %s field is missing!";
 
+    private final String id;
+    private final String guardianId;
     private final String name;
     private final String phone;
     private final String email;
@@ -36,9 +40,13 @@ class JsonAdaptedPerson {
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
      */
     @JsonCreator
-    public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
+    public JsonAdaptedPerson(@JsonProperty("id") String id,
+            @JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
-            @JsonProperty("role") String role, @JsonProperty("tags") List<JsonAdaptedTag> tags) {
+            @JsonProperty("role") String role, @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("guardianId") String guardianId) {
+        this.id = id;
+        this.guardianId = guardianId;
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -50,9 +58,27 @@ class JsonAdaptedPerson {
     }
 
     /**
+     * Constructs a contact from the legacy data format without an ID.
+     */
+    public JsonAdaptedPerson(String name, String phone, String email, String address,
+            String role, List<JsonAdaptedTag> tags) {
+        this(null, name, phone, email, address, role, tags, null);
+    }
+
+    /**
+     * Constructs a contact with an ID and no guardian relationship.
+     */
+    public JsonAdaptedPerson(String id, String name, String phone, String email, String address,
+            String role, List<JsonAdaptedTag> tags) {
+        this(id, name, phone, email, address, role, tags, null);
+    }
+
+    /**
      * Converts a given {@code Person} into this class for Jackson use.
      */
     public JsonAdaptedPerson(Person source) {
+        id = source.getId().toString();
+        guardianId = source.getGuardianId().map(ContactId::toString).orElse(null);
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().value;
@@ -69,6 +95,10 @@ class JsonAdaptedPerson {
      * @throws IllegalValueException if there were any data constraints violated in the adapted person.
      */
     public Person toModelType() throws IllegalValueException {
+        if (id != null && !ContactId.isValidId(id)) {
+            throw new IllegalValueException(ContactId.MESSAGE_CONSTRAINTS);
+        }
+        final ContactId modelId = id == null ? ContactId.generate() : new ContactId(id);
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
             personTags.add(tag.toModelType());
@@ -114,8 +144,17 @@ class JsonAdaptedPerson {
         }
         final Role modelRole = Role.fromString(role);
 
+        if (guardianId != null && !ContactId.isValidId(guardianId)) {
+            throw new IllegalValueException(ContactId.MESSAGE_CONSTRAINTS);
+        }
+        if (guardianId != null && modelRole != Role.STUDENT) {
+            throw new IllegalValueException("Only a student can have a linked guardian.");
+        }
+        final Optional<ContactId> modelGuardianId = Optional.ofNullable(guardianId).map(ContactId::new);
+
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelRole, modelTags);
+        return new Person(modelId, modelName, modelPhone, modelEmail, modelAddress, modelRole, modelTags,
+                modelGuardianId);
     }
 
 }

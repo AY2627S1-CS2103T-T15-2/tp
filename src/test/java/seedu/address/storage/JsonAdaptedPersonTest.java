@@ -1,6 +1,7 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.storage.JsonAdaptedPerson.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
@@ -13,12 +14,14 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
 
 public class JsonAdaptedPersonTest {
+
     private static final String INVALID_NAME = "R@chel";
     private static final String INVALID_PHONE = "+651234";
     private static final String INVALID_ADDRESS = " ";
@@ -34,6 +37,40 @@ public class JsonAdaptedPersonTest {
     private static final List<JsonAdaptedTag> VALID_TAGS = BENSON.getTags().stream()
             .map(JsonAdaptedTag::new)
             .collect(Collectors.toList());
+
+    @Test
+    public void toModelType_invalidGuardianId_throwsIllegalValueException() {
+        JsonAdaptedPerson invalid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_ROLE, VALID_TAGS, "invalid-id");
+        assertThrows(IllegalValueException.class, ContactId.MESSAGE_CONSTRAINTS, invalid::toModelType);
+    }
+
+    @Test
+    public void toModelType_guardianWithGuardianId_rejectsInvalidRelationshipOwner() {
+        JsonAdaptedPerson invalid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, "GUARDIAN", VALID_TAGS, ContactId.generate().toString());
+        assertThrows(IllegalValueException.class, "Only a student can have a linked guardian.", invalid::toModelType);
+    }
+
+
+    @Test
+    public void toModelType_savedId_preservesId() throws Exception {
+        assertEquals(BENSON.getId(), new JsonAdaptedPerson(BENSON).toModelType().getId());
+    }
+
+    @Test
+    public void toModelType_legacyContact_generatesId() throws Exception {
+        JsonAdaptedPerson legacy = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_ROLE, VALID_TAGS);
+        assertTrue(ContactId.isValidId(legacy.toModelType().getId().toString()));
+    }
+
+    @Test
+    public void toModelType_invalidId_throwsIllegalValueException() {
+        JsonAdaptedPerson invalid = new JsonAdaptedPerson("1-1-1-1-1", VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_ROLE, VALID_TAGS);
+        assertThrows(IllegalValueException.class, ContactId.MESSAGE_CONSTRAINTS, invalid::toModelType);
+    }
 
     @Test
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
