@@ -70,6 +70,11 @@ public class EditCommand extends Command {
     }
 
     @Override
+    public boolean isDataChanging() {
+        return true;
+    }
+
+    @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         List<Person> lastShownList = model.getFilteredPersonList();
@@ -105,7 +110,8 @@ public class EditCommand extends Command {
         Role role = personToEdit.getRole();
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
 
-        return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, role, updatedTags);
+        return new Person(personToEdit.getId(), updatedName, updatedPhone,
+                updatedEmail, updatedAddress, role, updatedTags, personToEdit.getGuardianId());
     }
 
     @Override

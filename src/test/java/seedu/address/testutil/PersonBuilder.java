@@ -1,9 +1,11 @@
 package seedu.address.testutil;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.model.person.Address;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -23,6 +25,8 @@ public class PersonBuilder {
     public static final String DEFAULT_ADDRESS = "123, Jurong West Ave 6, #08-111";
     public static final Role DEFAULT_ROLE = Role.STUDENT;
 
+    private ContactId id;
+    private Optional<ContactId> guardianId = Optional.empty();
     private Name name;
     private Phone phone;
     private Email email;
@@ -34,6 +38,7 @@ public class PersonBuilder {
      * Creates a {@code PersonBuilder} with the default details.
      */
     public PersonBuilder() {
+        id = ContactId.generate();
         name = new Name(DEFAULT_NAME);
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
@@ -46,12 +51,30 @@ public class PersonBuilder {
      * Initializes the PersonBuilder with the data of {@code personToCopy}.
      */
     public PersonBuilder(Person personToCopy) {
+        id = personToCopy.getId();
+        guardianId = personToCopy.getGuardianId();
         name = personToCopy.getName();
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         address = personToCopy.getAddress();
         role = personToCopy.getRole();
         tags = new HashSet<>(personToCopy.getTags());
+    }
+
+    /**
+     * Sets the contact ID of the person being built.
+     */
+    public PersonBuilder withId(ContactId id) {
+        this.id = id;
+        return this;
+    }
+
+    /**
+     * Sets the guardian ID of the student being built.
+     */
+    public PersonBuilder withGuardianId(ContactId guardianId) {
+        this.guardianId = Optional.of(guardianId);
+        return this;
     }
 
     /**
@@ -103,7 +126,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, address, role, tags);
+        return new Person(id, name, phone, email, address, role, tags, guardianId);
     }
 
 }

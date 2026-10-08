@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.HOON;
@@ -9,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -48,6 +50,18 @@ public class JsonAddressBookStorageTest {
     @Test
     public void read_notJsonFormat_exceptionThrown() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("notJsonFormatAddressBook.json"));
+    }
+
+    @Test
+    public void read_nullRootOrPerson_rejectsInvalidData() throws Exception {
+        Path filePath = testFolder.resolve("contacts.json");
+        for (String invalidData : new String[]{"null", "{\"persons\":[null]}"}) {
+            Files.writeString(filePath, invalidData);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertTrue(storage.isDataFileLoadFailed());
+            assertEquals(invalidData, Files.readString(filePath));
+        }
     }
 
     @Test
@@ -106,5 +120,56 @@ public class JsonAddressBookStorageTest {
     @Test
     public void saveAddressBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> saveAddressBook(new AddressBook(), null));
+    }
+
+    @Test
+    public void saveAddressBook_afterLoadFailure_preservesInvalidFileUntilRestart() throws Exception {
+        Path filePath = testFolder.resolve("contacts.json");
+        String invalidData = "{invalid json}";
+        Files.writeString(filePath, invalidData);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertThrows(IOException.class, () -> storage.saveAddressBook(getTypicalAddressBook()));
+        assertEquals(invalidData, Files.readString(filePath));
+
+        Files.writeString(filePath, "{\"persons\":[]}");
+        storage.readAddressBook();
+        assertTrue(storage.isDataFileLoadFailed());
+        assertThrows(IOException.class, () -> storage.saveAddressBook(getTypicalAddressBook()));
+        assertEquals("{\"persons\":[]}", Files.readString(filePath));
+
+        JsonAddressBookStorage restartedStorage = new JsonAddressBookStorage(filePath);
+        restartedStorage.readAddressBook();
+        restartedStorage.saveAddressBook(getTypicalAddressBook());
+        assertEquals(getTypicalAddressBook(), new AddressBook(restartedStorage.readAddressBook().orElseThrow()));
+    }
+
+    @Test
+    public void saveAddressBook_cleanupFailure_doesNotReportSuccessfulSaveAsFailed() throws Exception {
+        Path filePath = testFolder.resolve("contacts.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath) {
+            @Override
+            void deleteTemporaryFile(Path temporaryFile) throws IOException {
+                throw new IOException("Simulated temporary file cleanup failure");
+            }
+        };
+
+        storage.saveAddressBook(getTypicalAddressBook());
+        assertEquals(getTypicalAddressBook(), new AddressBook(storage.readAddressBook().orElseThrow()));
+    }
+
+    @Test
+    public void saveAddressBook_failedReplacement_removesTemporaryFileAndPreservesDestination() throws Exception {
+        Path destination = testFolder.resolve("contacts.json");
+        Files.createDirectory(destination);
+        Path existingFile = destination.resolve("keep.txt");
+        Files.writeString(existingFile, "Existing data");
+
+        assertThrows(IOException.class, () -> new JsonAddressBookStorage(destination)
+                .saveAddressBook(getTypicalAddressBook()));
+        assertEquals("Existing data", Files.readString(existingFile));
+        try (var remainingFiles = Files.list(testFolder)) {
+            assertEquals(java.util.List.of(destination), remainingFiles.toList());
+        }
     }
 }

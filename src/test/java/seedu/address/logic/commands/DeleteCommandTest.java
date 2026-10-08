@@ -10,14 +10,18 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for
@@ -26,6 +30,53 @@ import seedu.address.model.person.Person;
 public class DeleteCommandTest {
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_linkedStudent_reportsRemovedLinkAndRetainsGuardian() throws Exception {
+        Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+        Person student = new PersonBuilder().withName("Alex Tan").withGuardianId(guardian.getId()).build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(student, guardian));
+        Model linkedModel = new ModelManager(addressBook, new UserPrefs());
+
+        CommandResult result = new DeleteCommand(INDEX_FIRST_PERSON).execute(linkedModel);
+        assertEquals("Deleted contact: Alex Tan [Student]. Removed 1 student-guardian relationship.",
+                result.getFeedbackToUser());
+        assertEquals(List.of(guardian), List.copyOf(linkedModel.getAddressBook().getPersonList()));
+    }
+
+    @Test
+    public void execute_linkedGuardian_reportsRemovedLinkToHiddenStudent() throws Exception {
+        Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+        Person student = new PersonBuilder().withName("Alex Tan").withGuardianId(guardian.getId()).build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(student, guardian));
+        Model linkedModel = new ModelManager(addressBook, new UserPrefs());
+        linkedModel.updateFilteredPersonList(person -> person.getId().equals(guardian.getId()));
+
+        CommandResult result = new DeleteCommand(INDEX_FIRST_PERSON).execute(linkedModel);
+        assertEquals("Deleted contact: Mei Tan [Guardian]. Removed 1 student-guardian relationship.",
+                result.getFeedbackToUser());
+        assertEquals(student.getId(), linkedModel.getAddressBook().getPersonList().getFirst().getId());
+        assertTrue(linkedModel.getAddressBook().getPersonList().getFirst().getGuardianId().isEmpty());
+    }
+
+    @Test
+    public void execute_guardianOfMultipleStudents_reportsCountAndClearsAllLinks() throws Exception {
+        Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+        Person student = new PersonBuilder().withName("Alex Tan").withGuardianId(guardian.getId()).build();
+        Person otherStudent = new PersonBuilder().withName("Bea Tan").withGuardianId(guardian.getId()).build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(student, otherStudent, guardian));
+        Model linkedModel = new ModelManager(addressBook, new UserPrefs());
+
+        CommandResult result = new DeleteCommand(Index.fromOneBased(3)).execute(linkedModel);
+        assertEquals("Deleted contact: Mei Tan [Guardian]. Removed 2 student-guardian relationships.",
+                result.getFeedbackToUser());
+        assertEquals(2, linkedModel.getAddressBook().getPersonList().size());
+        assertTrue(linkedModel.getAddressBook().getPersonList().stream()
+                .allMatch(person -> person.getGuardianId().isEmpty()));
+    }
 
     @Test
     public void execute_validIndexUnfilteredList_success() {

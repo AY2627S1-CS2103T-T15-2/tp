@@ -14,6 +14,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
 import java.util.Locale;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -125,5 +126,30 @@ public class PersonTest {
                 + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", role=" + ALICE.getRole()
                 + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
+    }
+
+    @Test
+    public void withGuardianId_guardianContact_rejectsRelationship() {
+        Person guardian = new PersonBuilder().withRole("guardian").build();
+        assertThrows(IllegalArgumentException.class,
+                "Only a student can have a linked guardian.", () -> guardian.withGuardianId(
+                        Optional.of(ContactId.generate())));
+        assertTrue(guardian.getGuardianId().isEmpty());
+    }
+
+    @Test
+    public void equals_differentGuardian_relationshipAffectsEquality() {
+        Person student = new PersonBuilder().build();
+        ContactId guardianId = ContactId.generate();
+        Person linkedStudent = student.withGuardianId(Optional.of(guardianId));
+        Person sameLink = student.withGuardianId(Optional.of(guardianId));
+        Person differentLink = student.withGuardianId(Optional.of(ContactId.generate()));
+
+        assertFalse(student.equals(linkedStudent));
+        assertFalse(linkedStudent.equals(differentLink));
+        assertEquals(linkedStudent, sameLink);
+        assertEquals(linkedStudent.hashCode(), sameLink.hashCode());
+        assertEquals(student.getId(), linkedStudent.getId());
+        assertTrue(student.getGuardianId().isEmpty());
     }
 }
