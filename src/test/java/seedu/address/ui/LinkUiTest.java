@@ -32,6 +32,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.AddressBook;
@@ -107,6 +108,8 @@ public class LinkUiTest {
             command.fireEvent(new ActionEvent());
             assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
             assertEquals("Guardian: Mei Tan", label(root, "guardianName").getText());
+            assertEquals(Color.WHITE, label(root, "name").getTextFill());
+            assertEquals(20.0, label(root, "name").getFont().getSize(), 0.01);
             assertEquals("", command.getText());
             command.setText("link s/1 g/2");
             command.fireEvent(new ActionEvent());
