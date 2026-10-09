@@ -183,26 +183,32 @@ Common errors:
 
 Failed link commands leave the contacts, relationships, selected contact, detail panel and saved data unchanged.
 
-### Deleting a person: `delete`
+### Deleting a contact: `delete`
 
-Deletes the specified person from the address book.
+Deletes the specified contact from TutorRoster.
 
 Format: `delete INDEX`
 
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
+* Deletes the contact at the specified `INDEX`.
+* The index refers to the index number shown in the displayed contact list.
 * The index **must be a positive integer** 1, 2, 3, ...
 
-Deleting a student removes that student's relationship. Deleting a guardian clears the links to that guardian and retains the student contacts.
+Deleting an unlinked contact does not remove any student-guardian relationships. Deleting a linked student removes
+that student's relationship while retaining the guardian. Deleting a guardian clears the relationships of all students
+linked to that guardian while retaining those student contacts.
 
-The success message reports any removed relationships, for example:
-`Deleted contact: Mei Tan [Guardian]. Removed 1 student-guardian relationship.`
-When several students were linked to the deleted guardian, the message uses the actual count and `relationships`.
+The success message reports how many relationships were removed, when applicable:
+
+* Deleting an unlinked contact: `Deleted contact: Alex Tan [Student].`
+* Deleting a linked student: `Deleted contact: Alex Tan [Student]. Removed 1 student-guardian relationship.`
+* Deleting a guardian linked to one student: `Deleted contact: Mei Tan [Guardian]. Removed 1 student-guardian relationship.`
+* Deleting a guardian linked to two students: `Deleted contact: Mei Tan [Guardian]. Removed 2 student-guardian relationships.`
+
 Students without a guardian show `Guardian: None` in the detail panel.
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+* `list` followed by `delete 2` deletes the 2nd contact in the displayed contact list.
+* `find Betsy` followed by `delete 1` deletes the 1st contact in the results of the `find` command.
 
 ### Clearing all entries: `clear`
 
