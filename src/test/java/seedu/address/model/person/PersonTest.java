@@ -38,12 +38,6 @@ public class PersonTest {
 
 
     @Test
-    public void asObservableList_modifyList_throwsUnsupportedOperationException() {
-        Person person = new PersonBuilder().build();
-        assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
-    }
-
-    @Test
     public void isSamePerson() {
         // same object -> returns true
         assertTrue(ALICE.isSamePerson(ALICE));
@@ -61,8 +55,7 @@ public class PersonTest {
         assertFalse(ALICE.isSamePerson(editedAlice));
 
         // same identity fields, data fields different -> returns true
-        editedAlice = new PersonBuilder(ALICE).withRole(VALID_ROLE_BOB)
-                .build();
+        editedAlice = new PersonBuilder(ALICE).withGuardianId(ContactId.generate()).build();
         assertTrue(ALICE.isSamePerson(editedAlice));
 
         // same identity fields with email differing only in letter case -> returns true

@@ -6,6 +6,8 @@ import static seedu.address.storage.JsonAdaptedPerson.MISSING_FIELD_MESSAGE_FORM
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
@@ -139,7 +141,7 @@ public class JsonAdaptedPersonTest {
     public void toModelType_emptyEmail_rejectsInvalidData() {
         for (String value : List.of("", " ", "alex@example", "alex@example..com")) {
             JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, value,
-                    VALID_ADDRESS, VALID_ROLE, VALID_TAGS, null);
+                    VALID_ROLE, null);
             assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, person::toModelType);
         }
     }

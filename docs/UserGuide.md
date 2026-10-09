@@ -85,7 +85,7 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL`
+Format: `add r/ROLE n/NAME p/PHONE_NUMBER [e/EMAIL]`
 
 `ROLE` is `student` or `guardian`, ignoring letter case.
 
@@ -117,17 +117,12 @@ Validation checks the address format; it does not verify that a mailbox exists.
 
 Contacts are duplicates when their role, name, phone and email all match. Name and email comparisons ignore
 capitalization. Two omitted emails match; an omitted email differs from a supplied email. Otherwise, identical
-contacts with different roles are allowed. Addresses and tags do not distinguish duplicate contacts.
-
-<box type="tip" seamless>
-
-**Tip:** A person can have any number of tags, including zero.
-</box>
+contacts with different roles are allowed.
 
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`
-* `add r/student n/Alex Tan p/91234567 a/123 Main Street` saves a contact without an email.
-* `add r/student n/Alex Tan p/91234567 e/alex+tuition@example.com a/123 Main Street` saves a contact with an email.
+* `add r/student n/Alex Tan p/91234567` saves a contact without an email.
+* `add r/student n/Alex Tan p/91234567 e/alex+tuition@example.com` saves a contact with an email.
 * `add r/guardian n/Betsy Crowe e/betsycrowe@example.com p/1234567`
 
 ### Listing all contacts: `list`
