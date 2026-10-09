@@ -21,8 +21,11 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
 
 public class JsonAddressBookStorageTest {
+
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
 
     @TempDir
@@ -200,6 +203,35 @@ public class JsonAddressBookStorageTest {
         assertEquals("Existing data", Files.readString(existingFile));
         try (var remainingFiles = Files.list(testFolder)) {
             assertEquals(java.util.List.of(destination), remainingFiles.toList());
+        }
+    }
+
+    @Test
+    public void readAndSaveAddressBook_optionalEmail_roundTrips() throws Exception {
+        Path path = testFolder.resolve("optional-email.json");
+        Person withoutEmail = new PersonBuilder().withoutEmail().build();
+        Person withEmail = new PersonBuilder().withName("Alex Tan").withEmail("Alex+Tuition@Example.COM").build();
+        AddressBook book = new AddressBook();
+        book.addPerson(withoutEmail);
+        book.addPerson(withEmail);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(path);
+        storage.saveAddressBook(book);
+        ReadOnlyAddressBook restored = storage.readAddressBook().orElseThrow();
+        assertEquals(book, new AddressBook(restored));
+        assertTrue(restored.getPersonList().get(0).getEmail().isEmpty());
+        assertEquals("Alex+Tuition@Example.COM", restored.getPersonList().get(1).getEmail().orElseThrow().value);
+        assertEquals(withoutEmail.getId(), restored.getPersonList().get(0).getId());
+    }
+
+    @Test
+    public void readAddressBook_missingOrNullEmail_acceptsAbsence() throws Exception {
+        Path path = testFolder.resolve("missing-email.json");
+        for (String emailField : new String[]{"", "\"email\":null,"}) {
+            Files.writeString(path, "{\"persons\":[{" + emailField
+                    + "\"name\":\"Alex Tan\",\"phone\":\"91234567\",\"address\":\"123 Main Street\","
+                    + "\"role\":\"STUDENT\"}]}");
+            ReadOnlyAddressBook restored = new JsonAddressBookStorage(path).readAddressBook().orElseThrow();
+            assertTrue(restored.getPersonList().get(0).getEmail().isEmpty());
         }
     }
 }

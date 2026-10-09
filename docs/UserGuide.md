@@ -89,8 +89,45 @@ Format: `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL`
 
 `ROLE` is `student` or `guardian`, ignoring letter case.
 
+Email is optional. Omit `e/` to save a contact without an email; the contact displays `Not provided`.
+Supplying `e/` with an empty or whitespace-only value is rejected with:
+`Empty email parameter: Email cannot be empty when e/ is specified.`
+
+An email must have exactly one `@`, a non-empty local part, and at least two non-empty domain labels
+separated by periods. The final domain label must contain at least two characters. Surrounding whitespace is
+trimmed; internal whitespace is rejected.
+The local part allows ASCII letters, digits, periods, underscores, percentage signs, plus signs and hyphens.
+Domain labels allow ASCII letters, digits and hyphens. Capitalization is preserved for display.
+Invalid values report:
+`Invalid email address: Email must contain one @ symbol, a non-empty local part, and at least two non-empty domain labels separated by periods, without spaces.`
+
+| Accepted email | Rejected email |
+| --- | --- |
+| `alex.tan@example.com` | `alex@example` |
+| `alex+tuition@example.com` | `alex @example.com` |
+| `Alex_Tan%25@Example.COM` | `@example.com` |
+| `alex%school@example.com` | `alex@.com` |
+| `alex+tuition@example.com` | `.alex@example.com` |
+| `alex+tuition@example.com` | `alex@example..com` |
+
+The local part accepts `%` in addition to the original `+`, `_`, `.`, and `-` characters, while special
+characters cannot start or end the local part or appear consecutively. Domain labels retain the original
+alphanumeric and hyphen placement restrictions, and the final label must contain at least two characters.
+Validation checks the address format; it does not verify that a mailbox exists.
+
+Contacts are duplicates when their role, name, phone and email all match. Name and email comparisons ignore
+capitalization. Two omitted emails match; an omitted email differs from a supplied email. Otherwise, identical
+contacts with different roles are allowed. Addresses and tags do not distinguish duplicate contacts.
+
+<box type="tip" seamless>
+
+**Tip:** A person can have any number of tags, including zero.
+</box>
+
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`
+* `add r/student n/Alex Tan p/91234567 a/123 Main Street` saves a contact without an email.
+* `add r/student n/Alex Tan p/91234567 e/alex+tuition@example.com a/123 Main Street` saves a contact with an email.
 * `add r/guardian n/Betsy Crowe e/betsycrowe@example.com p/1234567`
 
 ### Listing all contacts: `list`
@@ -112,6 +149,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
+  as `add`. An empty `e/` is rejected and cannot be used to remove an existing email.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
@@ -172,26 +211,32 @@ Common errors:
 
 Failed link commands leave the contacts, relationships, selected contact, detail panel and saved data unchanged.
 
-### Deleting a person: `delete`
+### Deleting a contact: `delete`
 
-Deletes the specified person from the address book.
+Deletes the specified contact from TutorRoster.
 
 Format: `delete INDEX`
 
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
+* Deletes the contact at the specified `INDEX`.
+* The index refers to the index number shown in the displayed contact list.
 * The index **must be a positive integer** 1, 2, 3, ...
 
-Deleting a student removes that student's relationship. Deleting a guardian clears the links to that guardian and retains the student contacts.
+Deleting an unlinked contact does not remove any student-guardian relationships. Deleting a linked student removes
+that student's relationship while retaining the guardian. Deleting a guardian clears the relationships of all students
+linked to that guardian while retaining those student contacts.
 
-The success message reports any removed relationships, for example:
-`Deleted contact: Mei Tan [Guardian]. Removed 1 student-guardian relationship.`
-When several students were linked to the deleted guardian, the message uses the actual count and `relationships`.
+The success message reports how many relationships were removed, when applicable:
+
+* Deleting an unlinked contact: `Deleted contact: Alex Tan [Student].`
+* Deleting a linked student: `Deleted contact: Alex Tan [Student]. Removed 1 student-guardian relationship.`
+* Deleting a guardian linked to one student: `Deleted contact: Mei Tan [Guardian]. Removed 1 student-guardian relationship.`
+* Deleting a guardian linked to two students: `Deleted contact: Mei Tan [Guardian]. Removed 2 student-guardian relationships.`
+
 Students without a guardian show `Guardian: None` in the detail panel.
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+* `list` followed by `delete 2` deletes the 2nd contact in the displayed contact list.
+* `find Betsy` followed by `delete 1` deletes the 1st contact in the results of the `find` command.
 
 ### Clearing all entries: `clear`
 

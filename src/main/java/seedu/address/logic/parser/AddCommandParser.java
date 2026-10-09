@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import seedu.address.logic.commands.AddCommand;
@@ -31,7 +32,7 @@ public class AddCommandParser implements Parser<AddCommand> {
                 ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
                         PREFIX_ROLE);
 
-        if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ROLE)
+        if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_PHONE, PREFIX_ROLE)
                 || !argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
         }
@@ -39,12 +40,17 @@ public class AddCommandParser implements Parser<AddCommand> {
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ROLE);
         Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
         Phone phone = ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get());
-        Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
+        Optional<Email> email = parseOptionalEmail(argMultimap);
         Role role = ParserUtil.parseRole(argMultimap.getValue(PREFIX_ROLE).get());
 
         Person person = new Person(name, phone, email, role);
 
         return new AddCommand(person);
+    }
+
+    private static Optional<Email> parseOptionalEmail(ArgumentMultimap argumentMultimap) throws ParseException {
+        Optional<String> email = argumentMultimap.getValue(PREFIX_EMAIL);
+        return email.isPresent() ? Optional.of(ParserUtil.parseEmail(email.get())) : Optional.empty();
     }
 
     /**

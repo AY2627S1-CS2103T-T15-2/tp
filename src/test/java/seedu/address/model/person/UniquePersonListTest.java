@@ -8,6 +8,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -44,6 +45,15 @@ public class UniquePersonListTest {
     }
 
     @Test
+    public void contains_personWithEmailDifferingOnlyInCase_returnsTrue() {
+        uniquePersonList.add(ALICE);
+        Person editedAlice = new PersonBuilder(ALICE)
+                .withEmail(ALICE.getEmail().orElseThrow().value.toUpperCase(Locale.ROOT))
+                .build();
+        assertTrue(uniquePersonList.contains(editedAlice));
+    }
+
+    @Test
     public void add_nullPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniquePersonList.add(null));
     }
@@ -52,6 +62,15 @@ public class UniquePersonListTest {
     public void add_duplicatePerson_throwsDuplicatePersonException() {
         uniquePersonList.add(ALICE);
         assertThrows(DuplicatePersonException.class, () -> uniquePersonList.add(ALICE));
+    }
+
+    @Test
+    public void add_personWithEmailDifferingOnlyInCase_throwsDuplicatePersonException() {
+        uniquePersonList.add(ALICE);
+        Person editedAlice = new PersonBuilder(ALICE)
+                .withEmail(ALICE.getEmail().orElseThrow().value.toUpperCase(Locale.ROOT))
+                .build();
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.add(editedAlice));
     }
 
     @Test
@@ -178,5 +197,17 @@ public class UniquePersonListTest {
     @Test
     public void toStringMethod() {
         assertEquals(uniquePersonList.asUnmodifiableObservableList().toString(), uniquePersonList.toString());
+    }
+
+    @Test
+    public void setPersons_withoutEmail_rejectDuplicates() {
+        Person alice = new PersonBuilder(ALICE).withoutEmail().build();
+        Person bob = new PersonBuilder(alice).withName("Other Student").build();
+        Person duplicate = new PersonBuilder(alice).withName("ALICE PAULINE").build();
+        uniquePersonList.add(alice);
+        uniquePersonList.add(bob);
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPerson(bob, duplicate));
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPersons(List.of(alice, duplicate)));
+        assertEquals(List.of(alice, bob), uniquePersonList.asUnmodifiableObservableList());
     }
 }

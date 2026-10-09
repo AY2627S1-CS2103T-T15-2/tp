@@ -23,7 +23,7 @@ public class PersonBuilder {
     private Optional<ContactId> guardianId = Optional.empty();
     private Name name;
     private Phone phone;
-    private Email email;
+    private Optional<Email> email;
     private Role role;
 
     /**
@@ -33,7 +33,7 @@ public class PersonBuilder {
         id = ContactId.generate();
         name = new Name(DEFAULT_NAME);
         phone = new Phone(DEFAULT_PHONE);
-        email = new Email(DEFAULT_EMAIL);
+        email = Optional.of(new Email(DEFAULT_EMAIL));
         role = DEFAULT_ROLE;
     }
 
@@ -85,7 +85,15 @@ public class PersonBuilder {
      * Sets the {@code Email} of the {@code Person} that we are building.
      */
     public PersonBuilder withEmail(String email) {
-        this.email = new Email(email);
+        this.email = Optional.of(new Email(email));
+        return this;
+    }
+
+    /**
+     * Removes the email from the person being built.
+     */
+    public PersonBuilder withoutEmail() {
+        email = Optional.empty();
         return this;
     }
 

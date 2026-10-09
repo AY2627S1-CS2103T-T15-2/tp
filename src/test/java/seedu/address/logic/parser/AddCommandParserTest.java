@@ -40,6 +40,7 @@ import seedu.address.model.person.Role;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandParserTest {
+
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
@@ -149,6 +150,13 @@ public class AddCommandParserTest {
 
         // missing email prefix
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_EMAIL_BOB + ROLE_DESC_BOB,
+
+        // an email without its prefix becomes part of the phone value
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_EMAIL_BOB + ADDRESS_DESC_BOB + ROLE_DESC_BOB,
+                Phone.MESSAGE_CONSTRAINTS);
+
+        // missing address prefix
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + VALID_ADDRESS_BOB + ROLE_DESC_BOB,
                 expectedMessage);
 
         // missing role prefix
@@ -238,4 +246,22 @@ public class AddCommandParserTest {
         assertParseSuccess(parser, input, new AddCommand(expectedPerson));
     }
 
+
+    @Test
+    public void parse_emailOmitted_success() {
+        Person expected = new PersonBuilder(AMY).withoutEmail().withTags().build();
+        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + ADDRESS_DESC_AMY + ROLE_DESC_AMY,
+                new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_emailEmpty_failure() {
+        String fields = NAME_DESC_AMY + PHONE_DESC_AMY + ADDRESS_DESC_AMY + ROLE_DESC_AMY;
+        assertParseFailure(parser, fields + " e/", Email.MESSAGE_EMPTY);
+        assertParseFailure(parser, fields + " e/   ", Email.MESSAGE_EMPTY);
+        assertParseFailure(parser, NAME_DESC_AMY + " e/   " + PHONE_DESC_AMY + ADDRESS_DESC_AMY + ROLE_DESC_AMY,
+                Email.MESSAGE_EMPTY);
+        assertParseFailure(parser, fields + " e/ e/alex@example.com",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_EMAIL));
+    }
 }

@@ -236,4 +236,28 @@ public class LinkUiTest {
             throw new AssertionError("Could not save UI preview", exception);
         }
     }
+
+    @Test
+    public void details_optionalEmail_displaysAbsenceAndRefreshesCapitalization() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").withoutEmail().build();
+            Person student = new PersonBuilder().withName("Alex Tan").withoutEmail()
+                    .withGuardianId(guardian.getId()).build();
+            ObservableList<Person> contacts = FXCollections.observableArrayList(student, guardian);
+            PersonDetailsPanel panel = new PersonDetailsPanel(contacts, new SimpleObjectProperty<>(student));
+            new Scene(panel.getRoot());
+            panel.getRoot().applyCss();
+            assertEquals("Email: Not provided", label(panel.getRoot(), "email").getText());
+            assertEquals("Guardian email: Not provided", label(panel.getRoot(), "guardianEmail").getText());
+            PersonCard card = new PersonCard(student, 1);
+            new Scene(card.getRoot());
+            card.getRoot().applyCss();
+            assertEquals("Not provided", label(card.getRoot(), "email").getText());
+
+            contacts.set(1, new PersonBuilder(guardian).withEmail("Mei+Tuition@Example.COM").build());
+            assertEquals("Guardian email: Mei+Tuition@Example.COM", label(panel.getRoot(), "guardianEmail").getText());
+            contacts.set(0, new PersonBuilder(student).withEmail("Alex@Example.COM").build());
+            assertEquals("Email: Alex@Example.COM", label(panel.getRoot(), "email").getText());
+        });
+    }
 }

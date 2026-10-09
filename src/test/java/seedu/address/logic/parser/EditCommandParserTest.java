@@ -163,4 +163,11 @@ public class EditCommandParserTest {
         assertParseFailure(parser, userInput,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL));
     }
+
+    @Test
+    public void parse_emptyEmail_failure() {
+        assertParseFailure(parser, "1 e/", Email.MESSAGE_EMPTY);
+        assertParseFailure(parser, "1 e/   ", Email.MESSAGE_EMPTY);
+        assertParseFailure(parser, "1 e/alex@example", Email.MESSAGE_CONSTRAINTS);
+    }
 }

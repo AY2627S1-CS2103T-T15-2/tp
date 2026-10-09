@@ -68,7 +68,7 @@ public class PersonDetailsPanel extends UiPart<Region> {
         name.setText(contact.getName().fullName);
         role.setText("Role: " + contact.getRole());
         phone.setText("Phone: " + formatContactMethod(contact.getPhone().value));
-        email.setText("Email: " + formatContactMethod(contact.getEmail().value));
+        email.setText("Email: " + contact.getEmail().map(Object::toString).orElse("Not provided"));
         boolean isStudent = contact.getRole() == Role.STUDENT;
         guardianDetails.setVisible(isStudent);
         guardianDetails.setManaged(isStudent);
@@ -77,7 +77,7 @@ public class PersonDetailsPanel extends UiPart<Region> {
         guardianPhone.setText(guardian == null ? ""
                 : "Guardian phone: " + formatContactMethod(guardian.getPhone().value));
         guardianEmail.setText(guardian == null ? ""
-                : "Guardian email: " + formatContactMethod(guardian.getEmail().value));
+                : "Guardian email: " + guardian.getEmail().map(Object::toString).orElse("Not provided"));
     }
 
     /** Formats the missing-contact-method text required by the MVP. */

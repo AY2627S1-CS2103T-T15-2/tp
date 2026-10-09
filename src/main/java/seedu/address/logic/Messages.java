@@ -47,7 +47,7 @@ public class Messages {
                 .append("; Phone: ")
                 .append(person.getPhone())
                 .append("; Email: ")
-                .append(person.getEmail())
+                .append(person.getEmail().map(Object::toString).orElse("Not provided"))
                 .append("; Role: ")
                 .append(person.getRole());
         return builder.toString();

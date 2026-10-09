@@ -105,4 +105,33 @@ public class JsonSerializableAddressBookTest {
                 dataFromFile::toModelType);
     }
 
+
+    @Test
+    public void toModelType_optionalEmail_preservesRolesAndRelationships() throws Exception {
+        Person guardian = new PersonBuilder().withoutEmail().withRole("guardian").build();
+        Person student = new PersonBuilder().withoutEmail().withGuardianId(guardian.getId()).build();
+        JsonSerializableAddressBook data = new JsonSerializableAddressBook(
+                List.of(new JsonAdaptedPerson(student), new JsonAdaptedPerson(guardian)));
+        AddressBook loaded = JsonUtil.fromJsonString(JsonUtil.toJsonString(data),
+                JsonSerializableAddressBook.class).toModelType();
+        assertEquals(List.of(student, guardian), loaded.getPersonList());
+        assertEquals(guardian.getId(), loaded.getPersonList().get(1).getId());
+    }
+
+    @Test
+    public void toModelType_caseVariantOrAbsentEmailDuplicates_rejectsDuplicates() {
+        Person first = new PersonBuilder().withEmail("Alex@Example.COM").build();
+        Person second = new PersonBuilder(first).withName("AMY BEE").withEmail("alex@example.com")
+                .withId(ContactId.generate()).build();
+        assertDuplicateContactsRejected(first, second);
+        assertDuplicateContactsRejected(new PersonBuilder(first).withoutEmail().build(),
+                new PersonBuilder(second).withoutEmail().build());
+    }
+
+    private void assertDuplicateContactsRejected(Person first, Person second) {
+        JsonSerializableAddressBook data = new JsonSerializableAddressBook(
+                List.of(new JsonAdaptedPerson(first), new JsonAdaptedPerson(second)));
+        assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_DUPLICATE_PERSON,
+                data::toModelType);
+    }
 }
