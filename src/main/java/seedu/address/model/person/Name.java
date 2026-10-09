@@ -43,6 +43,12 @@ public class Name {
         return hasValidLength && isNotBlank && containsOnlyAllowedCharacters;
     }
 
+    /**
+     * Returns true if both names are the same, ignoring letter case.
+     */
+    public boolean isSameName(Name otherName) {
+        return otherName != null && fullName.equalsIgnoreCase(otherName.fullName);
+    }
 
     @Override
     public String toString() {

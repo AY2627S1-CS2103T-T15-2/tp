@@ -24,7 +24,7 @@ public class Person {
     private final ContactId id;
     private final Name name;
     private final Phone phone;
-    private final Email email;
+    private final Optional<Email> email;
 
     // Data fields
     private final Address address;
@@ -35,7 +35,7 @@ public class Person {
     /**
      * Creates a new person with a generated contact ID.
      */
-    public Person(Name name, Phone phone, Email email, Address address,
+    public Person(Name name, Phone phone, Optional<Email> email, Address address,
             Role role, Set<Tag> tags) {
         this(ContactId.generate(), name, phone, email, address, role, tags);
     }
@@ -43,7 +43,7 @@ public class Person {
     /**
      * Creates a person with the specified contact ID and details.
      */
-    public Person(ContactId id, Name name, Phone phone, Email email,
+    public Person(ContactId id, Name name, Phone phone, Optional<Email> email,
             Address address, Role role, Set<Tag> tags) {
         this(id, name, phone, email, address, role, tags, Optional.empty());
     }
@@ -51,7 +51,7 @@ public class Person {
     /**
      * Creates a person with the specified ID, details and optional guardian relationship.
      */
-    public Person(ContactId id, Name name, Phone phone, Email email, Address address,
+    public Person(ContactId id, Name name, Phone phone, Optional<Email> email, Address address,
             Role role, Set<Tag> tags, Optional<ContactId> guardianId) {
         requireAllNonNull(id, name, phone, email, address, role, tags, guardianId);
         checkArgument(guardianId.isEmpty() || role == Role.STUDENT, MESSAGE_INVALID_GUARDIAN_OWNER);
@@ -88,7 +88,7 @@ public class Person {
         return phone;
     }
 
-    public Email getEmail() {
+    public Optional<Email> getEmail() {
         return email;
     }
 
@@ -110,7 +110,7 @@ public class Person {
 
     /**
      * Returns true if both persons have the same identity fields.
-     * People may share a name as long as their phone number or email address differs.
+     * Identity consists of role, name, phone and optional email, ignoring name and email case.
      */
     public boolean isSamePerson(Person otherPerson) {
         if (otherPerson == this) {
@@ -118,9 +118,17 @@ public class Person {
         }
 
         return otherPerson != null
-                && otherPerson.getName().equals(getName())
+                && role == otherPerson.role
+                && otherPerson.getName().isSameName(getName())
                 && otherPerson.getPhone().equals(getPhone())
-                && otherPerson.getEmail().equals(getEmail());
+                && hasSameEmail(otherPerson);
+    }
+
+    private boolean hasSameEmail(Person otherPerson) {
+        if (email.isEmpty() || otherPerson.email.isEmpty()) {
+            return email.isEmpty() && otherPerson.email.isEmpty();
+        }
+        return email.get().isSameEmail(otherPerson.email.get());
     }
 
     /**

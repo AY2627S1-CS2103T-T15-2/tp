@@ -205,4 +205,11 @@ public class EditCommandParserTest {
 
         assertParseSuccess(parser, userInput, expectedCommand);
     }
+
+    @Test
+    public void parse_emptyEmail_failure() {
+        assertParseFailure(parser, "1 e/", Email.MESSAGE_EMPTY);
+        assertParseFailure(parser, "1 e/   ", Email.MESSAGE_EMPTY);
+        assertParseFailure(parser, "1 e/alex@example", Email.MESSAGE_CONSTRAINTS);
+    }
 }

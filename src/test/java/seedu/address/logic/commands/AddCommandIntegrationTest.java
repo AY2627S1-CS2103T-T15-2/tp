@@ -11,6 +11,7 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
@@ -45,4 +46,21 @@ public class AddCommandIntegrationTest {
                 AddCommand.MESSAGE_DUPLICATE_PERSON);
     }
 
+
+    @Test
+    public void execute_optionalEmailAndRole_enforcesDuplicateIdentity() throws Exception {
+        Person student = new PersonBuilder().withoutEmail().build();
+        new AddCommand(student).execute(model);
+        Person duplicate = new PersonBuilder(student).withName("AMY BEE").build();
+        assertCommandFailure(new AddCommand(duplicate), model, AddCommand.MESSAGE_DUPLICATE_PERSON);
+
+        Person guardian = new PersonBuilder(student).withRole("guardian")
+                .withId(ContactId.generate()).build();
+        new AddCommand(guardian).execute(model);
+        Person withEmail = new PersonBuilder(student).withEmail("Alex+Tuition@Example.COM")
+                .withId(ContactId.generate()).build();
+        new AddCommand(withEmail).execute(model);
+        assertCommandFailure(new AddCommand(new PersonBuilder(withEmail)
+                .withEmail("alex+tuition@example.com").build()), model, AddCommand.MESSAGE_DUPLICATE_PERSON);
+    }
 }
