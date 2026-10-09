@@ -65,7 +65,7 @@ class JsonAdaptedPerson {
         guardianId = source.getGuardianId().map(ContactId::toString).orElse(null);
         name = source.getName().fullName;
         phone = source.getPhone().value;
-        email = source.getEmail().value;
+        email = source.getEmail().map(Email::toString).orElse(null);
         address = source.getAddress().value;
         role = source.getRole().name();
         tags.addAll(source.getTags().stream()
@@ -107,13 +107,10 @@ class JsonAdaptedPerson {
         }
         final Phone modelPhone = new Phone(phone);
 
-        if (email == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName()));
-        }
-        if (!Email.isValidEmail(email)) {
+        if (email != null && !Email.isValidEmail(email)) {
             throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
         }
-        final Email modelEmail = new Email(email);
+        final Optional<Email> modelEmail = Optional.ofNullable(email).map(Email::new);
 
         if (address == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Address.class.getSimpleName()));

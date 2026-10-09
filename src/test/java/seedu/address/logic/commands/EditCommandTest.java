@@ -195,4 +195,26 @@ public class EditCommandTest {
         assertEquals(expected, editCommand.toString());
     }
 
+
+    @Test
+    public void execute_contactWithoutEmail_preservesAbsenceThenAddsEmail() throws Exception {
+        Person student = new PersonBuilder().withoutEmail().build();
+        Model localModel = new ModelManager();
+        localModel.addPerson(student);
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withName("Alex Tan").build())
+                .execute(localModel);
+        Person renamed = localModel.getFilteredPersonList().get(0);
+        assertTrue(renamed.getEmail().isEmpty());
+        assertEquals(student.getId(), renamed.getId());
+
+        new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withEmail("Alex+Tuition@Example.COM").build()).execute(localModel);
+        Person updated = localModel.getFilteredPersonList().get(0);
+        assertEquals("Alex+Tuition@Example.COM", updated.getEmail().orElseThrow().value);
+        new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withEmail("alex+tuition@example.com").build()).execute(localModel);
+        assertEquals("alex+tuition@example.com",
+                localModel.getFilteredPersonList().get(0).getEmail().orElseThrow().value);
+        assertEquals(student.getId(), updated.getId());
+    }
 }

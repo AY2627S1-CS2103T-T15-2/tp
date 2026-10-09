@@ -20,6 +20,7 @@ import seedu.address.model.person.Role;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
+
     private static final String INVALID_NAME = "R@chel";
     private static final String INVALID_PHONE = "+651234";
     private static final String INVALID_ADDRESS = " ";
@@ -248,5 +249,36 @@ public class ParserUtilTest {
         Set<Tag> expectedTagSet = Set.of(new Tag(VALID_TAG_1), new Tag(VALID_TAG_2));
 
         assertEquals(expectedTagSet, actualTagSet);
+    }
+
+    @Test
+    public void parseEmail_emptyOrWhitespace_reportsExactMessage() {
+        String expectedMessage = "Empty email parameter: Email cannot be empty when e/ is specified.";
+        for (String value : List.of("", " ", "\t\r\n")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseEmail(value));
+        }
+    }
+
+    @Test
+    public void parseEmail_invalidExamples_reportsExactMessage() {
+        String expectedMessage = "Invalid email address: Email must contain one @ symbol, a non-empty local part, "
+                + "and at least two non-empty domain labels separated by periods, without spaces.";
+        for (String value : List.of("alex@example", "alex @example.com", "@example.com",
+                "alex@.com", "alex@example..com", "alex@@example.com", "alex@exam_ple.com",
+                "alex!@example.com", "alex\t@example.com", "alex@example.com.")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseEmail(value));
+        }
+    }
+
+    @Test
+    public void parseEmail_validExamples_preservesTrimmedValue() throws Exception {
+        for (String value : List.of("alex.tan@example.com", "alex+tuition@example.com",
+                "Alex_Tan%25@Example.COM", "alex%school@example.com")) {
+            assertEquals(value, ParserUtil.parseEmail(" \t" + value + " \r\n").value);
+        }
+        for (String value : List.of(".alex@example.com", "alex..tan@example.com", "alex-@example.com",
+                "alex@-example.com", "alex@example-.com", "a@b.c")) {
+            assertThrows(ParseException.class, () -> ParserUtil.parseEmail(value));
+        }
     }
 }

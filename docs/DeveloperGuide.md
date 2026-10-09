@@ -260,6 +260,16 @@ Every `Person` has an immutable `ContactId`, represented by a UUID. A student ha
 
 Contact JSON records contain an `id` UUID string and an optional `guardianId` UUID string, alongside the existing fields. `JsonAdaptedPerson` restores saved IDs; legacy records without IDs receive new IDs that are persisted on the next successful save. `JsonSerializableAddressBook` first loads all contacts, rejecting duplicate IDs and duplicate contact details, then validates that every guardian reference points to an existing contact with the guardian role. A guardian cannot carry a guardian reference. Repeated JSON object fields are rejected during parsing.
 
+`Person` stores email as a non-null `Optional<Email>`. `Email` always represents a valid, present address.
+The JSON adapter keeps email as a nullable string: missing or null means absent, while empty and invalid strings
+are rejected. Existing valid strings retain their capitalization. Single-label domains and domains whose final
+label has fewer than two characters are invalid; incompatible files fail loading without being rewritten automatically.
+
+Duplicate identity is Role + Name + Phone + Email. `Name.isSameName` and `Email.isSameEmail` ignore capitalization;
+two absent emails match, and an absent email never matches a present one. Full object equality remains case-sensitive
+so capitalization-only edits remain observable. Existing same-role records differing only in capitalization may
+therefore fail duplicate validation on loading. IDs and guardian links remain independent of duplicate identity.
+
 Each command declares whether it changes data through `Command.isDataChanging()`. `LogicManager` executes data-changing commands on a candidate model carrying the original filter. It saves that candidate before replacing the live model. An unsuccessful command or save therefore cannot change the live contacts, relationships or displayed list. `JsonAddressBookStorage` writes a temporary file in the destination directory and atomically replaces the data file; it fails safely if atomic replacement is unavailable. Read-only commands do not save data.
 
 If loading fails, storage records that failure for the session. The UI displays the startup error, and all data-changing commands are disabled until the user fixes the file and restarts the application. The invalid file is never overwritten during that session. A missing data file starts with an empty list and is created by the first successful data-changing command.

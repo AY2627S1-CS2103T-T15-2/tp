@@ -33,7 +33,7 @@ public class JsonAdaptedPersonTest {
 
     private static final String VALID_NAME = BENSON.getName().toString();
     private static final String VALID_PHONE = BENSON.getPhone().toString();
-    private static final String VALID_EMAIL = BENSON.getEmail().toString();
+    private static final String VALID_EMAIL = BENSON.getEmail().orElseThrow().toString();
     private static final String VALID_ADDRESS = BENSON.getAddress().toString();
     private static final String VALID_ROLE = BENSON.getRole().name();
     private static final List<JsonAdaptedTag> VALID_TAGS = BENSON.getTags().stream()
@@ -131,11 +131,10 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_nullEmail_throwsIllegalValueException() {
+    public void toModelType_nullEmail_returnsPersonWithoutEmail() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, null, VALID_ADDRESS,
                 VALID_ROLE, VALID_TAGS, null);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName());
-        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+        assertTrue(person.toModelType().getEmail().isEmpty());
     }
 
     @Test
@@ -182,4 +181,13 @@ public class JsonAdaptedPersonTest {
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
 
+
+    @Test
+    public void toModelType_emptyEmail_rejectsInvalidData() {
+        for (String value : List.of("", " ", "alex@example", "alex@example..com")) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, value,
+                    VALID_ADDRESS, VALID_ROLE, VALID_TAGS, null);
+            assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+    }
 }

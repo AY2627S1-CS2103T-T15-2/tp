@@ -57,7 +57,7 @@ public class AddCommandTest {
     public void execute_personWithEmailDifferingOnlyInCase_throwsCommandException() {
         Person existingPerson = new PersonBuilder().build();
         Person duplicatePerson = new PersonBuilder(existingPerson)
-                .withEmail(existingPerson.getEmail().value.toUpperCase(Locale.ROOT))
+                .withEmail(existingPerson.getEmail().orElseThrow().value.toUpperCase(Locale.ROOT))
                 .build();
         AddCommand addCommand = new AddCommand(duplicatePerson);
         ModelStub modelStub = new ModelStubWithPerson(existingPerson);
