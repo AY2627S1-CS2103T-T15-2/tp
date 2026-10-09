@@ -76,7 +76,7 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
-    public void readAndSaveAddressBook_legacyRemovedFields_preservesContactsAndOmitsRemovedFields() throws Exception {
+    public void readAndSaveAddressBook_legacyFields_preserved() throws Exception {
         Path filePath = testFolder.resolve("legacyContacts.json");
         var guardian = new seedu.address.testutil.PersonBuilder().withName("Guardian")
                 .withRole("guardian").build();
