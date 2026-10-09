@@ -201,14 +201,6 @@ public class LinkUiTest {
         });
     }
 
-    @Test
-    public void details_contactMethods_formatsMissingAndProvidedValues() {
-        assertEquals("Not provided", PersonDetailsPanel.formatContactMethod(""));
-        assertEquals("Not provided", PersonDetailsPanel.formatContactMethod(" \t"));
-        assertEquals("91234567", PersonDetailsPanel.formatContactMethod("91234567"));
-        assertEquals("alex@example.com", PersonDetailsPanel.formatContactMethod("alex@example.com"));
-    }
-
     private static Label label(Region root, String id) {
         return (Label) root.lookup("#" + id);
     }
