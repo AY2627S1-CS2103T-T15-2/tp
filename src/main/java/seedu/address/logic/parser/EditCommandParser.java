@@ -45,7 +45,12 @@ public class EditCommandParser implements Parser<EditCommand> {
             editPersonDescriptor.setPhone(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get()));
         }
         if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
-            editPersonDescriptor.setEmail(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get()));
+            String email = argMultimap.getValue(PREFIX_EMAIL).get();
+            if (email.trim().equals(EditCommand.REMOVE_FIELD_VALUE)) {
+                editPersonDescriptor.removeEmail();
+            } else {
+                editPersonDescriptor.setEmail(ParserUtil.parseEmail(email));
+            }
         }
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {

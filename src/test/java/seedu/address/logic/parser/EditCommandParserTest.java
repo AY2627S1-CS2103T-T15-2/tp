@@ -172,6 +172,23 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_emailNone_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutEmail().build();
+        assertParseSuccess(parser, "1 e/NONE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseSuccess(parser, "1 e/ NONE ", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+
+        descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_AMY).withoutEmail().build();
+        assertParseSuccess(parser, "1" + NAME_DESC_AMY + " e/NONE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_emailNoneWrongCase_failure() {
+        // only the exact value NONE removes the email
+        assertParseFailure(parser, "1 e/none", Email.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 e/None", Email.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
     public void parse_quotedName_success() {
         Index targetIndex = INDEX_FIRST_PERSON;
 
@@ -179,6 +196,11 @@ public class EditCommandParserTest {
         String userInput = targetIndex.getOneBased() + " n/\"Randy p/e ratio\"" + PHONE_DESC_AMY;
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Randy p/e ratio")
                 .withPhone(VALID_PHONE_AMY).build();
+        assertParseSuccess(parser, userInput, new EditCommand(targetIndex, descriptor));
+
+        // quoted name containing the email prefix is kept whole
+        userInput = targetIndex.getOneBased() + " n/\"Tan e/x Lim\"" + EMAIL_DESC_AMY;
+        descriptor = new EditPersonDescriptorBuilder().withName("Tan e/x Lim").withEmail(VALID_EMAIL_AMY).build();
         assertParseSuccess(parser, userInput, new EditCommand(targetIndex, descriptor));
 
         // quoted and unquoted names with s/o give the same result

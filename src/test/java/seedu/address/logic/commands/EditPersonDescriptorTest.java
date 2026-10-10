@@ -45,6 +45,23 @@ public class EditPersonDescriptorTest {
         // different email -> returns false
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withEmail(VALID_EMAIL_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
+
+        // email removed -> returns false
+        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withoutEmail().build();
+        assertFalse(DESC_AMY.equals(editedAmy));
+
+        // email removed in both -> returns true
+        assertTrue(editedAmy.equals(new EditPersonDescriptor(editedAmy)));
+    }
+
+    @Test
+    public void removeEmail_thenSetEmail_emailNotRemoved() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutEmail().build();
+        assertTrue(descriptor.isEmailRemoved());
+        assertTrue(descriptor.isAnyFieldEdited());
+
+        descriptor.setEmail(DESC_BOB.getEmail().get());
+        assertFalse(descriptor.isEmailRemoved());
     }
 
     @Test
@@ -53,7 +70,8 @@ public class EditPersonDescriptorTest {
         String expected = EditPersonDescriptor.class.getCanonicalName() + "{name="
                 + editPersonDescriptor.getName().orElse(null) + ", phone="
                 + editPersonDescriptor.getPhone().orElse(null) + ", email="
-                + editPersonDescriptor.getEmail().orElse(null) + "}";
+                + editPersonDescriptor.getEmail().orElse(null) + ", isEmailRemoved="
+                + editPersonDescriptor.isEmailRemoved() + "}";
         assertEquals(expected, editPersonDescriptor.toString());
     }
 }
