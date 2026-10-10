@@ -1,5 +1,7 @@
 package seedu.address.ui;
 
+import static seedu.address.ui.ContactDisplayFormatter.formatContactMethod;
+
 import java.util.Optional;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -68,7 +70,7 @@ public class PersonDetailsPanel extends UiPart<Region> {
         name.setText(contact.getName().fullName);
         role.setText("Role: " + contact.getRole());
         phone.setText("Phone: " + formatContactMethod(contact.getPhone().value));
-        email.setText("Email: " + contact.getEmail().map(Object::toString).orElse("Not provided"));
+        email.setText("Email: " + formatContactMethod(contact.getEmail()));
         boolean isStudent = contact.getRole() == Role.STUDENT;
         guardianDetails.setVisible(isStudent);
         guardianDetails.setManaged(isStudent);
@@ -77,11 +79,6 @@ public class PersonDetailsPanel extends UiPart<Region> {
         guardianPhone.setText(guardian == null ? ""
                 : "Guardian phone: " + formatContactMethod(guardian.getPhone().value));
         guardianEmail.setText(guardian == null ? ""
-                : "Guardian email: " + guardian.getEmail().map(Object::toString).orElse("Not provided"));
-    }
-
-    /** Formats the missing-contact-method text required by the MVP. */
-    static String formatContactMethod(String value) {
-        return value.isBlank() ? "Not provided" : value;
+                : "Guardian email: " + formatContactMethod(guardian.getEmail()));
     }
 }
