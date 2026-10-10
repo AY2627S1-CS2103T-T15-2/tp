@@ -63,6 +63,7 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("PeterJack_1190@example.com")); // underscore in local part
         assertTrue(Email.isValidEmail("PeterJack.1190@example.com")); // period in local part
         assertTrue(Email.isValidEmail("PeterJack+1190@example.com")); // '+' symbol in local part
+        assertTrue(Email.isValidEmail("PeterJack%1190@example.com")); // percentage sign in local part
         assertTrue(Email.isValidEmail("PeterJack-1190@example.com")); // hyphen in local part
         assertFalse(Email.isValidEmail("a@bc")); // domain needs at least two labels
         assertFalse(Email.isValidEmail("test@localhost")); // domain needs at least two labels

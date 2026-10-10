@@ -31,7 +31,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
 
    * `list` : Lists all contacts.
 
-   * `add r/student n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a student named `John Doe`.
+   * `add r/student n/John Doe p/98765432 e/johnd@example.com` : Adds a student named `John Doe`.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -53,10 +53,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
 * Items in square brackets are optional.<br>
-  For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
-
-* Items followed by `...` can appear zero or more times.<br>
-  For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
+  For example, `edit INDEX [n/NAME] [p/PHONE]` can be used as `edit 1 n/John Doe` or as `edit 1 p/91234567`.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
@@ -84,12 +81,11 @@ Shows a message explaining how to access the help page.
 
 Format: `help`
 
-
 ### Adding a person: `add`
 
 Adds a person to the address book.
 
-Format: `add r/ROLE n/NAME p/PHONE_NUMBER [e/EMAIL] a/ADDRESS [t/TAG]... `
+Format: `add r/ROLE n/NAME p/PHONE_NUMBER [e/EMAIL]`
 
 `ROLE` is `student` or `guardian`, ignoring letter case.
 
@@ -120,19 +116,14 @@ alphanumeric and hyphen placement restrictions, and the final label must contain
 Validation checks the address format; it does not verify that a mailbox exists.
 
 Contacts are duplicates when their role, name, phone and email all match. Name and email comparisons ignore
-capitalization. Two omitted emails match; an omitted email differs from a supplied email. Otherwise identical
-contacts with different roles are allowed. Addresses and tags do not distinguish duplicate contacts.
-
-<box type="tip" seamless>
-
-**Tip:** A person can have any number of tags, including zero.
-</box>
+capitalization. Two omitted emails match; an omitted email differs from a supplied email. Otherwise, identical
+contacts with different roles are allowed.
 
 Examples:
-* `add r/student n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add r/student n/Alex Tan p/91234567 a/123 Main Street` saves a contact without an email.
-* `add r/student n/Alex Tan p/91234567 e/alex+tuition@example.com a/123 Main Street` saves a contact with an email.
-* `add r/guardian n/Betsy Crowe e/betsycrowe@example.com a/Newgate Prison p/1234567`
+* `add r/student n/John Doe p/98765432 e/johnd@example.com`
+* `add r/student n/Alex Tan p/91234567` saves a contact without an email.
+* `add r/student n/Alex Tan p/91234567 e/alex+tuition@example.com` saves a contact with an email.
+* `add r/guardian n/Betsy Crowe e/betsycrowe@example.com p/1234567`
 
 ### Listing all contacts: `list`
 
@@ -148,19 +139,17 @@ Format: `list`
 
 Edits an existing person in the address book.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
   as `add`. An empty `e/` is rejected and cannot be used to remove an existing email.
-* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
-* To remove all of a person's tags, enter `t/` without a tag after it.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
+*  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
 
 ### Locating contacts by name: `find`
 
@@ -297,10 +286,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665`
+**Add**    | `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
 **List**   | `list`

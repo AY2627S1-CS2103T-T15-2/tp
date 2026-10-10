@@ -3,13 +3,10 @@ package seedu.address.model.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
-import seedu.address.model.tag.Tag;
 
 public class SampleDataUtilTest {
 
@@ -32,12 +29,4 @@ public class SampleDataUtilTest {
         assertEquals("Alex Yeoh", addressBook.getPersonList().get(0).getName().fullName);
     }
 
-    @Test
-    public void getTagSet_returnsTagsForAllValues() {
-        Set<Tag> tags = SampleDataUtil.getTagSet("friends", "colleagues");
-
-        assertEquals(2, tags.size());
-        assertTrue(tags.stream().anyMatch(tag -> tag.tagName.equals("friends")));
-        assertTrue(tags.stream().anyMatch(tag -> tag.tagName.equals("colleagues")));
-    }
 }

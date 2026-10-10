@@ -84,6 +84,21 @@ public class LinkUiTest {
     }
 
     @Test
+    public void personCard_displaysContactDetailsWithoutAddressOrTags() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person person = new PersonBuilder().withoutEmail().build();
+            PersonCard card = new PersonCard(person, 1);
+            new Scene(card.getRoot());
+            assertNull(card.getRoot().lookup("#address"));
+            assertEquals(person.getName().toString(), label(card.getRoot(), "name").getText());
+            assertEquals(person.getPhone().toString(), label(card.getRoot(), "phone").getText());
+            assertEquals("Not provided", label(card.getRoot(), "email").getText());
+            assertEquals(person.getRole().toString(), label(card.getRoot(), "role").getText());
+            assertNull(card.getRoot().lookup("#tags"));
+        });
+    }
+
+    @Test
     public void command_link_selectsStudentAndDuplicateKeepsDetails() throws Exception {
         runOnJavaFxThread(() -> {
             Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();

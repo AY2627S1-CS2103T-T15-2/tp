@@ -3,14 +3,10 @@ package seedu.address.model.person;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.model.tag.Tag;
 
 /**
  * Represents a Person in the address book.
@@ -27,42 +23,38 @@ public class Person {
     private final Optional<Email> email;
 
     // Data fields
-    private final Address address;
     private final Role role;
     private final Optional<ContactId> guardianId;
-    private final Set<Tag> tags = new HashSet<>();
 
     /**
      * Creates a new person with a generated contact ID.
      */
-    public Person(Name name, Phone phone, Optional<Email> email, Address address,
-            Role role, Set<Tag> tags) {
-        this(ContactId.generate(), name, phone, email, address, role, tags);
+    public Person(Name name, Phone phone, Optional<Email> email,
+            Role role) {
+        this(ContactId.generate(), name, phone, email, role);
     }
 
     /**
      * Creates a person with the specified contact ID and details.
      */
     public Person(ContactId id, Name name, Phone phone, Optional<Email> email,
-            Address address, Role role, Set<Tag> tags) {
-        this(id, name, phone, email, address, role, tags, Optional.empty());
+            Role role) {
+        this(id, name, phone, email, role, Optional.empty());
     }
 
     /**
      * Creates a person with the specified ID, details and optional guardian relationship.
      */
-    public Person(ContactId id, Name name, Phone phone, Optional<Email> email, Address address,
-            Role role, Set<Tag> tags, Optional<ContactId> guardianId) {
-        requireAllNonNull(id, name, phone, email, address, role, tags, guardianId);
+    public Person(ContactId id, Name name, Phone phone, Optional<Email> email,
+            Role role, Optional<ContactId> guardianId) {
+        requireAllNonNull(id, name, phone, email, role, guardianId);
         checkArgument(guardianId.isEmpty() || role == Role.STUDENT, MESSAGE_INVALID_GUARDIAN_OWNER);
         this.id = id;
         this.name = name;
         this.phone = phone;
         this.email = email;
-        this.address = address;
         this.role = role;
         this.guardianId = guardianId;
-        this.tags.addAll(tags);
     }
 
     public ContactId getId() {
@@ -77,7 +69,7 @@ public class Person {
      * Returns a copy of this contact with the specified guardian relationship.
      */
     public Person withGuardianId(Optional<ContactId> updatedGuardianId) {
-        return new Person(id, name, phone, email, address, role, tags, updatedGuardianId);
+        return new Person(id, name, phone, email, role, updatedGuardianId);
     }
 
     public Name getName() {
@@ -92,20 +84,8 @@ public class Person {
         return email;
     }
 
-    public Address getAddress() {
-        return address;
-    }
-
     public Role getRole() {
         return role;
-    }
-
-    /**
-     * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
-     * if modification is attempted.
-     */
-    public Set<Tag> getTags() {
-        return Collections.unmodifiableSet(tags);
     }
 
     /**
@@ -149,16 +129,14 @@ public class Person {
         return name.equals(otherPerson.name)
                 && phone.equals(otherPerson.phone)
                 && email.equals(otherPerson.email)
-                && address.equals(otherPerson.address)
                 && role.equals(otherPerson.role)
-                && guardianId.equals(otherPerson.guardianId)
-                && tags.equals(otherPerson.tags);
+                && guardianId.equals(otherPerson.guardianId);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, role, tags, guardianId);
+        return Objects.hash(name, phone, email, role, guardianId);
     }
 
     @Override
@@ -167,9 +145,7 @@ public class Person {
                 .add("name", name)
                 .add("phone", phone)
                 .add("email", email)
-                .add("address", address)
                 .add("role", role)
-                .add("tags", tags)
                 .toString();
     }
 
