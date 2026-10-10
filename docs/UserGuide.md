@@ -146,10 +146,13 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * Existing values will be updated to the input values.
 * Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
   as `add`. An empty `e/` is rejected and cannot be used to remove an existing email.
+* A name containing a `/` can be wrapped in double quotes, as in `add`. Anything inside the quotes is treated as
+  part of the name, so `edit 1 n/"Randy p/e ratio"` sets the name to `Randy p/e ratio` without reading `p/` as a phone.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
+*  `edit 3 n/"Ravi s/o Kumar"` Edits the name of the 3rd person to be `Ravi s/o Kumar`.
 
 ### Locating contacts by name: `find`
 
