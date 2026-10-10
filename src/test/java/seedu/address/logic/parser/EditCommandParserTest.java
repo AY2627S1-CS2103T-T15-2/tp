@@ -170,4 +170,29 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 e/   ", Email.MESSAGE_EMPTY);
         assertParseFailure(parser, "1 e/alex@example", Email.MESSAGE_CONSTRAINTS);
     }
+
+    @Test
+    public void parse_quotedName_success() {
+        Index targetIndex = INDEX_FIRST_PERSON;
+
+        // quoted name containing a prefix is kept whole
+        String userInput = targetIndex.getOneBased() + " n/\"Randy p/e ratio\"" + PHONE_DESC_AMY;
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Randy p/e ratio")
+                .withPhone(VALID_PHONE_AMY).build();
+        assertParseSuccess(parser, userInput, new EditCommand(targetIndex, descriptor));
+
+        // quoted and unquoted names with s/o give the same result
+        descriptor = new EditPersonDescriptorBuilder().withName("Ravi s/o Kumar").build();
+        assertParseSuccess(parser, targetIndex.getOneBased() + " n/\"Ravi s/o Kumar\"",
+                new EditCommand(targetIndex, descriptor));
+        assertParseSuccess(parser, targetIndex.getOneBased() + " n/Ravi s/o Kumar",
+                new EditCommand(targetIndex, descriptor));
+    }
+
+    @Test
+    public void parse_malformedQuotedName_failure() {
+        assertParseFailure(parser, "1 n/\"Randy p/e ratio", ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
+        assertParseFailure(parser, "1 n/Randy\"", ParserUtil.MESSAGE_INVALID_NAME_QUOTES);
+        assertParseFailure(parser, "1 n/\"Ran\"dy\"", ParserUtil.MESSAGE_INVALID_NAME_QUOTES);
+    }
 }
