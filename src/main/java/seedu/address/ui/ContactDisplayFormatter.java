@@ -11,6 +11,10 @@ public class ContactDisplayFormatter {
 
     public static final String MISSING_CONTACT_METHOD = "Not provided";
 
+    private ContactDisplayFormatter() {
+        // Prevents instantiation, as this class only has static methods.
+    }
+
     /**
      * Returns {@code contactMethod}, or "Not provided" if {@code contactMethod} is blank.
      */
