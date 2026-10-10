@@ -145,11 +145,14 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
-  as `add`. An empty `e/` is rejected and cannot be used to remove an existing email.
+  as `add`. An empty `e/` is rejected.
+* `e/NONE` removes the existing email. Only the exact value `NONE` in capital letters does this; `e/none` is
+  treated as an invalid email.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
+*  `edit 2 e/NONE` Removes the email of the 2nd person.
 
 ### Locating contacts by name: `find`
 

@@ -170,4 +170,21 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 e/   ", Email.MESSAGE_EMPTY);
         assertParseFailure(parser, "1 e/alex@example", Email.MESSAGE_CONSTRAINTS);
     }
+
+    @Test
+    public void parse_emailNone_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutEmail().build();
+        assertParseSuccess(parser, "1 e/NONE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseSuccess(parser, "1 e/ NONE ", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+
+        descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_AMY).withoutEmail().build();
+        assertParseSuccess(parser, "1" + NAME_DESC_AMY + " e/NONE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_emailNoneWrongCase_failure() {
+        // only the exact value NONE removes the email
+        assertParseFailure(parser, "1 e/none", Email.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 e/None", Email.MESSAGE_CONSTRAINTS);
+    }
 }

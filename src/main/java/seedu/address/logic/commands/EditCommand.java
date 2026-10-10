@@ -29,6 +29,9 @@ public class EditCommand extends Command {
 
     public static final String COMMAND_WORD = "edit";
 
+    /** Value that removes an optional field when given in place of the field's value. */
+    public static final String REMOVE_FIELD_VALUE = "NONE";
+
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the person identified "
             + "by the index number used in the displayed person list. "
             + "Existing values will be overwritten by the input values.\n"
@@ -36,6 +39,7 @@ public class EditCommand extends Command {
             + "[" + PREFIX_NAME + "NAME] "
             + "[" + PREFIX_PHONE + "PHONE] "
             + "[" + PREFIX_EMAIL + "EMAIL]\n"
+            + "Use " + PREFIX_EMAIL + REMOVE_FIELD_VALUE + " to remove the email.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";
@@ -96,7 +100,9 @@ public class EditCommand extends Command {
 
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
         Phone updatedPhone = editPersonDescriptor.getPhone().orElse(personToEdit.getPhone());
-        Optional<Email> updatedEmail = editPersonDescriptor.getEmail().or(personToEdit::getEmail);
+        Optional<Email> updatedEmail = editPersonDescriptor.isEmailRemoved()
+                ? Optional.empty()
+                : editPersonDescriptor.getEmail().or(personToEdit::getEmail);
         Role role = personToEdit.getRole();
 
         return new Person(personToEdit.getId(), updatedName, updatedPhone,
@@ -134,6 +140,7 @@ public class EditCommand extends Command {
         private Name name;
         private Phone phone;
         private Email email;
+        private boolean isEmailRemoved;
 
         public EditPersonDescriptor() {}
 
@@ -144,13 +151,14 @@ public class EditCommand extends Command {
             setName(toCopy.name);
             setPhone(toCopy.phone);
             setEmail(toCopy.email);
+            isEmailRemoved = toCopy.isEmailRemoved;
         }
 
         /**
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email);
+            return CollectionUtil.isAnyNonNull(name, phone, email) || isEmailRemoved;
         }
 
         public void setName(Name name) {
@@ -171,6 +179,19 @@ public class EditCommand extends Command {
 
         public void setEmail(Email email) {
             this.email = email;
+            isEmailRemoved = false;
+        }
+
+        /**
+         * Marks the email to be removed from the edited person.
+         */
+        public void removeEmail() {
+            email = null;
+            isEmailRemoved = true;
+        }
+
+        public boolean isEmailRemoved() {
+            return isEmailRemoved;
         }
 
         public Optional<Email> getEmail() {
@@ -190,7 +211,8 @@ public class EditCommand extends Command {
 
             return Objects.equals(name, otherEditPersonDescriptor.name)
                     && Objects.equals(phone, otherEditPersonDescriptor.phone)
-                    && Objects.equals(email, otherEditPersonDescriptor.email);
+                    && Objects.equals(email, otherEditPersonDescriptor.email)
+                    && isEmailRemoved == otherEditPersonDescriptor.isEmailRemoved;
         }
 
         @Override
@@ -199,6 +221,7 @@ public class EditCommand extends Command {
                     .add("name", name)
                     .add("phone", phone)
                     .add("email", email)
+                    .add("isEmailRemoved", isEmailRemoved)
                     .toString();
         }
     }
