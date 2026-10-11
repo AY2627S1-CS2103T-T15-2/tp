@@ -268,4 +268,18 @@ public class AddCommandParserTest {
         assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY
                 + " e/alex%school@example.com" + ROLE_DESC_AMY, new AddCommand(expected));
     }
+
+    @Test
+    public void parse_phoneWithLabelsAndMultipleNumbers_success() {
+        String phoneDetails = "(HP) +65 1234 5678 1111-3333 (Office)";
+        Person expected = new PersonBuilder(AMY).withoutEmail().withPhone(phoneDetails).build();
+        assertParseSuccess(parser, NAME_DESC_AMY + " p/" + phoneDetails + ROLE_DESC_AMY,
+                new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_phoneWithSlash_failure() {
+        assertParseFailure(parser, NAME_DESC_AMY + " p/911/2222" + ROLE_DESC_AMY,
+                Phone.MESSAGE_CONSTRAINTS);
+    }
 }

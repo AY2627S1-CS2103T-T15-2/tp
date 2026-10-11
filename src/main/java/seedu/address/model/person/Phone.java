@@ -11,8 +11,8 @@ public class Phone {
 
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Phone numbers should only contain digits, and should be at least 3 digits long";
-    public static final String VALIDATION_REGEX = "\\d{3,}";
+            "Phone details must contain at least 3 digits and cannot contain control characters, '@' or '/'.";
+    public static final int MINIMUM_DIGIT_COUNT = 3;
     public final String value;
 
     /**
@@ -30,7 +30,18 @@ public class Phone {
      * Returns true if a given string is a valid phone number.
      */
     public static boolean isValidPhone(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        int digitCount = 0;
+        for (int i = 0; i < test.length(); i++) {
+            char character = test.charAt(i);
+            if (Character.isISOControl(character) || character == '@' || character == '/') {
+                return false;
+            }
+            if (Character.isDigit(character)) {
+                digitCount++;
+            }
+        }
+        return digitCount >= MINIMUM_DIGIT_COUNT;
     }
 
     @Override

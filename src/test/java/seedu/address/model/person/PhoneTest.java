@@ -28,14 +28,37 @@ public class PhoneTest {
         assertFalse(Phone.isValidPhone("")); // empty string
         assertFalse(Phone.isValidPhone(" ")); // spaces only
         assertFalse(Phone.isValidPhone("91")); // less than 3 numbers
-        assertFalse(Phone.isValidPhone("phone")); // non-numeric
-        assertFalse(Phone.isValidPhone("9011p041")); // alphabets within digits
-        assertFalse(Phone.isValidPhone("9312 1534")); // spaces within digits
+        assertFalse(Phone.isValidPhone("phone")); // no digits
+        assertFalse(Phone.isValidPhone("HP 12 (Office)")); // fewer than 3 digits
+        assertFalse(Phone.isValidPhone("91\n1234")); // control characters
+        assertFalse(Phone.isValidPhone("amy123@example.com")); // @ is reserved for email values
+        assertFalse(Phone.isValidPhone("911/2222")); // slash is reserved for command prefixes
 
         // valid phone numbers
         assertTrue(Phone.isValidPhone("911")); // exactly 3 numbers
         assertTrue(Phone.isValidPhone("93121534"));
         assertTrue(Phone.isValidPhone("124293842033123")); // long phone numbers
+        assertTrue(Phone.isValidPhone("+65-9123-4567"));
+        assertTrue(Phone.isValidPhone("(HP) +65 1234 5678"));
+        assertTrue(Phone.isValidPhone("HP+651234567 Office: 1111-3333"));
+    }
+
+    @Test
+    public void isValidPhone_withThreeDigitsAndOtherText_isValid() {
+        assertTrue(Phone.isValidPhone("联系人 HP 电话: +65 123"));
+        assertTrue(Phone.isValidPhone("(HP) +65-123"));
+    }
+
+    @Test
+    public void isValidPhone_withFewerThanThreeDigits_isInvalid() {
+        assertFalse(Phone.isValidPhone("(HP) +65"));
+        assertFalse(Phone.isValidPhone("办公室 12"));
+    }
+
+    @Test
+    public void isValidPhone_withTabOrCarriageReturn_isInvalid() {
+        assertFalse(Phone.isValidPhone("911\t2222"));
+        assertFalse(Phone.isValidPhone("911\r2222"));
     }
 
     @Test
