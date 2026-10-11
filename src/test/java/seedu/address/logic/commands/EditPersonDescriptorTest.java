@@ -50,6 +50,11 @@ public class EditPersonDescriptorTest {
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withoutEmail().build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
+        // phone removed -> returns false
+        EditPersonDescriptor phoneRemovedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withoutPhone().build();
+        assertFalse(DESC_AMY.equals(phoneRemovedAmy));
+        assertTrue(phoneRemovedAmy.equals(new EditPersonDescriptor(phoneRemovedAmy)));
+
         // email removed in both -> returns true
         assertTrue(editedAmy.equals(new EditPersonDescriptor(editedAmy)));
     }
@@ -65,12 +70,23 @@ public class EditPersonDescriptorTest {
     }
 
     @Test
+    public void removePhone_thenSetPhone_phoneNotRemoved() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutPhone().build();
+        assertTrue(descriptor.isPhoneRemoved());
+        assertTrue(descriptor.isAnyFieldEdited());
+
+        descriptor.setPhone(DESC_BOB.getPhone().get());
+        assertFalse(descriptor.isPhoneRemoved());
+    }
+
+    @Test
     public void toStringMethod() {
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
         String expected = EditPersonDescriptor.class.getCanonicalName() + "{name="
                 + editPersonDescriptor.getName().orElse(null) + ", phone="
                 + editPersonDescriptor.getPhone().orElse(null) + ", email="
-                + editPersonDescriptor.getEmail().orElse(null) + ", isEmailRemoved="
+                + editPersonDescriptor.getEmail().orElse(null) + ", isPhoneRemoved="
+                + editPersonDescriptor.isPhoneRemoved() + ", isEmailRemoved="
                 + editPersonDescriptor.isEmailRemoved() + "}";
         assertEquals(expected, editPersonDescriptor.toString());
     }

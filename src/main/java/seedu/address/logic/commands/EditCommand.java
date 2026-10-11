@@ -39,7 +39,8 @@ public class EditCommand extends Command {
             + "[" + PREFIX_NAME + "NAME] "
             + "[" + PREFIX_PHONE + "PHONE] "
             + "[" + PREFIX_EMAIL + "EMAIL]\n"
-            + "Use " + PREFIX_EMAIL + REMOVE_FIELD_VALUE + " to remove the email.\n"
+            + "Use " + PREFIX_PHONE + REMOVE_FIELD_VALUE + " or " + PREFIX_EMAIL + REMOVE_FIELD_VALUE
+            + " to remove the phone or email.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";
@@ -81,6 +82,10 @@ public class EditCommand extends Command {
         Person personToEdit = lastShownList.get(index.getZeroBased());
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
+        if (editedPerson.isGuardianWithoutContactMethod()) {
+            throw new CommandException(Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
+        }
+
         if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
@@ -99,7 +104,9 @@ public class EditCommand extends Command {
         assert personToEdit != null;
 
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
-        Optional<Phone> updatedPhone = editPersonDescriptor.getPhone().or(personToEdit::getPhone);
+        Optional<Phone> updatedPhone = editPersonDescriptor.isPhoneRemoved()
+                ? Optional.empty()
+                : editPersonDescriptor.getPhone().or(personToEdit::getPhone);
         Optional<Email> updatedEmail = editPersonDescriptor.isEmailRemoved()
                 ? Optional.empty()
                 : editPersonDescriptor.getEmail().or(personToEdit::getEmail);
@@ -140,6 +147,7 @@ public class EditCommand extends Command {
         private Name name;
         private Phone phone;
         private Email email;
+        private boolean isPhoneRemoved;
         private boolean isEmailRemoved;
 
         public EditPersonDescriptor() {}
@@ -151,6 +159,7 @@ public class EditCommand extends Command {
             setName(toCopy.name);
             setPhone(toCopy.phone);
             setEmail(toCopy.email);
+            isPhoneRemoved = toCopy.isPhoneRemoved;
             isEmailRemoved = toCopy.isEmailRemoved;
         }
 
@@ -158,7 +167,7 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email) || isEmailRemoved;
+            return CollectionUtil.isAnyNonNull(name, phone, email) || isPhoneRemoved || isEmailRemoved;
         }
 
         public void setName(Name name) {
@@ -171,6 +180,19 @@ public class EditCommand extends Command {
 
         public void setPhone(Phone phone) {
             this.phone = phone;
+            isPhoneRemoved = false;
+        }
+
+        /**
+         * Marks the phone to be removed from the edited person.
+         */
+        public void removePhone() {
+            phone = null;
+            isPhoneRemoved = true;
+        }
+
+        public boolean isPhoneRemoved() {
+            return isPhoneRemoved;
         }
 
         public Optional<Phone> getPhone() {
@@ -212,6 +234,7 @@ public class EditCommand extends Command {
             return Objects.equals(name, otherEditPersonDescriptor.name)
                     && Objects.equals(phone, otherEditPersonDescriptor.phone)
                     && Objects.equals(email, otherEditPersonDescriptor.email)
+                    && isPhoneRemoved == otherEditPersonDescriptor.isPhoneRemoved
                     && isEmailRemoved == otherEditPersonDescriptor.isEmailRemoved;
         }
 
@@ -221,6 +244,7 @@ public class EditCommand extends Command {
                     .add("name", name)
                     .add("phone", phone)
                     .add("email", email)
+                    .add("isPhoneRemoved", isPhoneRemoved)
                     .add("isEmailRemoved", isEmailRemoved)
                     .toString();
         }

@@ -164,6 +164,12 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
   as `add`. An empty `e/` is rejected.
 * `e/NONE` removes the existing email. Only the exact value `NONE` in capital letters does this; `e/none` is
   treated as an invalid email.
+* Omitting `p/` preserves the existing phone number, including its absence. Supplying a phone number uses the same
+  validation as `add`. An empty `p/` is rejected.
+* `p/NONE` removes the existing phone number. As with `e/NONE`, only the exact value `NONE` does this.
+* A guardian must keep at least one contact method. An edit that would leave a guardian with neither a phone number
+  nor an email is rejected with `A guardian must have at least one contact method: phone or email.`
+  A student can have both removed.
 * A name containing a `/` can be wrapped in double quotes, as in `add`. Anything inside the quotes is treated as
   part of the name, so `edit 1 n/"Randy p/e ratio"` sets the name to `Randy p/e ratio` without reading `p/` as a phone.
 
@@ -171,6 +177,7 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
 *  `edit 2 e/NONE` Removes the email of the 2nd person.
+*  `edit 2 p/NONE` Removes the phone number of the 2nd person.
 *  `edit 3 n/"Ravi s/o Kumar"` Edits the name of the 3rd person to be `Ravi s/o Kumar`.
 
 ### Locating contacts by name: `find`

@@ -56,6 +56,14 @@ public class EditPersonDescriptorBuilder {
     }
 
     /**
+     * Marks the {@code Phone} of the {@code EditPersonDescriptor} that we are building to be removed.
+     */
+    public EditPersonDescriptorBuilder withoutPhone() {
+        descriptor.removePhone();
+        return this;
+    }
+
+    /**
      * Marks the {@code Email} of the {@code EditPersonDescriptor} that we are building to be removed.
      */
     public EditPersonDescriptorBuilder withoutEmail() {
