@@ -14,6 +14,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -34,6 +36,13 @@ public class EditCommandTest {
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
+    /**
+     * Returns the expected result of a successful edit of the person at {@code index}, which selects that person.
+     */
+    private CommandResult createExpectedResult(String message, Index index) {
+        return new CommandResult(message, model.getFilteredPersonList().get(index.getZeroBased()).getId());
+    }
+
     @Test
     public void execute_editPhone_preservesContactId() throws Exception {
         Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
@@ -42,6 +51,14 @@ public class EditCommandTest {
         Person edited = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         assertEquals(original.getId(), edited.getId());
         assertEquals(VALID_PHONE_BOB, edited.getPhone().value);
+    }
+
+    @Test
+    public void execute_validEdit_selectsEditedContact() throws Exception {
+        Person original = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build();
+        CommandResult result = new EditCommand(INDEX_SECOND_PERSON, descriptor).execute(model);
+        assertEquals(Optional.of(original.getId()), result.getSelectedContactId());
     }
 
     @Test
@@ -57,7 +74,8 @@ public class EditCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(personToEdit, editedPerson);
 
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, createExpectedResult(expectedMessage, INDEX_FIRST_PERSON),
+                expectedModel);
     }
 
     @Test
@@ -72,7 +90,8 @@ public class EditCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
 
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, createExpectedResult(expectedMessage, INDEX_FIRST_PERSON),
+                expectedModel);
     }
 
     @Test
@@ -94,7 +113,7 @@ public class EditCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(lastPerson, editedPerson);
 
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, createExpectedResult(expectedMessage, indexLastPerson), expectedModel);
     }
 
     @Test
@@ -107,7 +126,8 @@ public class EditCommandTest {
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
 
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, createExpectedResult(expectedMessage, INDEX_FIRST_PERSON),
+                expectedModel);
     }
 
     @Test
@@ -125,7 +145,8 @@ public class EditCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
 
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, createExpectedResult(expectedMessage, INDEX_FIRST_PERSON),
+                expectedModel);
     }
 
     @Test

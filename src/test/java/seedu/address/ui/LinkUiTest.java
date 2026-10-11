@@ -139,7 +139,10 @@ public class LinkUiTest {
 
             command.setText("edit 2 n/Sarah Tan p/91234567");
             command.fireEvent(new ActionEvent());
-            assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+            assertEquals(guardian.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+            assertEquals("Sarah Tan", label(personDetailsRoot, "name").getText());
+
+            window.getPersonListPanel().selectPerson(student.getId());
             assertEquals("Guardian: Sarah Tan", label(root, "guardianName").getText());
             assertEquals("Guardian phone: 91234567", label(root, "guardianPhone").getText());
 

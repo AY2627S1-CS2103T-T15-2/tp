@@ -144,6 +144,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* After a successful edit, the edited contact is selected and its details are shown in the details panel.
 * Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
   as `add`. An empty `e/` is rejected.
 * `e/NONE` removes the existing email. Only the exact value `NONE` in capital letters does this; `e/none` is
