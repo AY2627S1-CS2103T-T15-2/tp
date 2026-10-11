@@ -8,6 +8,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
 
 public class ContactDisplayFormatterTest {
 
@@ -44,5 +46,22 @@ public class ContactDisplayFormatterTest {
     public void formatContactMethod_presentOptional_returnsValueWithCapitalisationPreserved() {
         Optional<Email> email = Optional.of(new Email("Alex@Example.COM"));
         assertEquals("Alex@Example.COM", ContactDisplayFormatter.formatContactMethod(email));
+    }
+
+    @Test
+    public void formatNameWithRole_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ContactDisplayFormatter.formatNameWithRole(null));
+    }
+
+    @Test
+    public void formatNameWithRole_student_returnsNameWithStudentRole() {
+        Person student = new PersonBuilder().withName("Alex Tan").withRole("student").build();
+        assertEquals("Alex Tan [Student]", ContactDisplayFormatter.formatNameWithRole(student));
+    }
+
+    @Test
+    public void formatNameWithRole_guardian_returnsNameWithGuardianRole() {
+        Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+        assertEquals("Mei Tan [Guardian]", ContactDisplayFormatter.formatNameWithRole(guardian));
     }
 }

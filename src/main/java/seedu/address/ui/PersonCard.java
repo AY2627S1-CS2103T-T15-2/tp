@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import static seedu.address.ui.ContactDisplayFormatter.formatContactMethod;
+import static seedu.address.ui.ContactDisplayFormatter.formatNameWithRole;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -35,8 +36,6 @@ public class PersonCard extends UiPart<Region> {
     private Label phone;
     @FXML
     private Label email;
-    @FXML
-    private Label role;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -45,9 +44,8 @@ public class PersonCard extends UiPart<Region> {
         super(FXML);
         this.person = person;
         id.setText(displayedIndex + ". ");
-        name.setText(person.getName().fullName);
+        name.setText(formatNameWithRole(person));
         phone.setText(formatContactMethod(person.getPhone()));
         email.setText(formatContactMethod(person.getEmail()));
-        role.setText(person.getRole().toString());
     }
 }
