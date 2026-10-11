@@ -89,6 +89,11 @@ Format: `add r/ROLE n/NAME p/PHONE_NUMBER [e/EMAIL]`
 
 `ROLE` is `student` or `guardian`, ignoring letter case.
 
+The phone field accepts contact details with at least 3 digits and no maximum length. You can include multiple
+numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
+has no position restriction. The `@` character is reserved for email addresses, and `/` is reserved for command
+prefixes. Control characters such as tabs and line breaks are not accepted; surrounding whitespace is trimmed.
+
 Email is optional. Omit `e/` to save a contact without an email; the contact displays `Not provided`.
 Supplying `e/` with an empty or whitespace-only value is rejected with:
 `Empty email parameter: Email cannot be empty when e/ is specified.`

@@ -6,7 +6,7 @@
     "role": "STUDENT"
   }, {
     "name": "Person With Invalid Phone Field",
-    "phone": "948asdf2424",
+    "phone": "94asdf",
     "email": "hans@example.com",
     "role": "GUARDIAN"
   } ]
