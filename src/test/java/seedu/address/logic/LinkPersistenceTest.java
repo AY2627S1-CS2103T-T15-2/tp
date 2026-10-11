@@ -65,7 +65,7 @@ public class LinkPersistenceTest {
         assertEquals(Optional.of(guardian.getId()), findContact(reloaded, student.getId()).getGuardianId());
         assertEquals("Zoe Tan", findContact(reloaded, student.getId()).getName().fullName);
         assertEquals("Bea Tan", findContact(reloaded, guardian.getId()).getName().fullName);
-        assertEquals("91234567", findContact(reloaded, guardian.getId()).getPhone().value);
+        assertEquals("91234567", findContact(reloaded, guardian.getId()).getPhone().get().value);
         assertEquals(List.of(guardian.getId(), student.getId()), reloaded.getFilteredPersonList().stream()
                 .map(Person::getId).toList());
     }

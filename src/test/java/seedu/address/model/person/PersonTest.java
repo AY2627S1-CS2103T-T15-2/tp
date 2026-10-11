@@ -36,6 +36,29 @@ public class PersonTest {
         assertEquals(student, new PersonBuilder(student).build());
     }
 
+    @Test
+    public void isSamePerson_optionalPhone_comparesMissingPhoneAsEmptyValue() {
+        Person withoutPhone = new PersonBuilder(ALICE).withoutPhone().build();
+        assertTrue(withoutPhone.isSamePerson(new PersonBuilder(withoutPhone).build()));
+        assertFalse(withoutPhone.isSamePerson(ALICE));
+        assertFalse(ALICE.isSamePerson(withoutPhone));
+    }
+
+    @Test
+    public void isGuardianWithoutContactMethod() {
+        Person guardian = new PersonBuilder().withRole("guardian").build();
+        assertFalse(guardian.isGuardianWithoutContactMethod());
+        assertFalse(new PersonBuilder(guardian).withoutPhone().build().isGuardianWithoutContactMethod());
+        assertFalse(new PersonBuilder(guardian).withoutEmail().build().isGuardianWithoutContactMethod());
+        assertTrue(new PersonBuilder(guardian).withoutPhone().withoutEmail().build()
+                .isGuardianWithoutContactMethod());
+
+        Person studentWithoutContactMethod = new PersonBuilder().withRole("student").withoutPhone().withoutEmail()
+                .build();
+        assertFalse(studentWithoutContactMethod.hasContactMethod());
+        assertFalse(studentWithoutContactMethod.isGuardianWithoutContactMethod());
+    }
+
 
     @Test
     public void isSamePerson() {

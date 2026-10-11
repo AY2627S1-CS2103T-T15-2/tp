@@ -45,6 +45,27 @@ public class AddCommandTest {
     }
 
     @Test
+    public void execute_studentWithoutContactMethod_addSuccessful() throws Exception {
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+        Person student = new PersonBuilder().withRole("student").withoutPhone().withoutEmail().build();
+
+        new AddCommand(student).execute(modelStub);
+
+        assertEquals(List.of(student), modelStub.personsAdded);
+    }
+
+    @Test
+    public void execute_guardianWithoutContactMethod_throwsCommandException() {
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+        Person guardian = new PersonBuilder().withRole("guardian").withoutPhone().withoutEmail().build();
+        AddCommand addCommand = new AddCommand(guardian);
+
+        assertThrows(CommandException.class, Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD, () ->
+                addCommand.execute(modelStub));
+        assertTrue(modelStub.personsAdded.isEmpty());
+    }
+
+    @Test
     public void execute_duplicatePerson_throwsCommandException() {
         Person validPerson = new PersonBuilder().build();
         AddCommand addCommand = new AddCommand(validPerson);

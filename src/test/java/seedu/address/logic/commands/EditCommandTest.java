@@ -50,7 +50,7 @@ public class EditCommandTest {
         new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
         Person edited = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         assertEquals(original.getId(), edited.getId());
-        assertEquals(VALID_PHONE_BOB, edited.getPhone().value);
+        assertEquals(VALID_PHONE_BOB, edited.getPhone().get().value);
     }
 
     @Test

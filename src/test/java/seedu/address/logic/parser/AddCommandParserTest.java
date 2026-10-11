@@ -148,10 +148,6 @@ public class AddCommandParserTest {
         assertParseFailure(parser, VALID_NAME_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB,
                 expectedMessage);
 
-        // missing phone prefix
-        assertParseFailure(parser, NAME_DESC_BOB + VALID_PHONE_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB,
-                expectedMessage);
-
         // an email without its prefix becomes part of the phone value
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_EMAIL_BOB + ROLE_DESC_BOB,
                 Phone.MESSAGE_CONSTRAINTS);
@@ -249,6 +245,28 @@ public class AddCommandParserTest {
         Person expected = new PersonBuilder(AMY).withoutEmail().build();
         assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + ROLE_DESC_AMY,
                 new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_phoneOmitted_success() {
+        Person expected = new PersonBuilder(AMY).withoutPhone().build();
+        assertParseSuccess(parser, NAME_DESC_AMY + EMAIL_DESC_AMY + ROLE_DESC_AMY,
+                new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_phoneAndEmailOmitted_success() {
+        Person expected = new PersonBuilder(AMY).withoutPhone().withoutEmail().build();
+        assertParseSuccess(parser, NAME_DESC_AMY + ROLE_DESC_AMY, new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_phoneEmpty_failure() {
+        String fields = NAME_DESC_AMY + EMAIL_DESC_AMY + ROLE_DESC_AMY;
+        assertParseFailure(parser, fields + " p/", Phone.MESSAGE_EMPTY);
+        assertParseFailure(parser, fields + " p/   ", Phone.MESSAGE_EMPTY);
+        assertParseFailure(parser, NAME_DESC_AMY + " p/   " + EMAIL_DESC_AMY + ROLE_DESC_AMY,
+                Phone.MESSAGE_EMPTY);
     }
 
     @Test

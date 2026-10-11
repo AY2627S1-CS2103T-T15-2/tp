@@ -85,9 +85,17 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add r/ROLE n/NAME p/PHONE_NUMBER [e/EMAIL]`
+Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]`
 
 `ROLE` is `student` or `guardian`, ignoring letter case.
+
+Phone is optional. Omit `p/` to save a contact without a phone number; the contact displays `Not provided`.
+Supplying `p/` with an empty or whitespace-only value is rejected with:
+`Empty phone parameter: Phone cannot be empty when p/ is specified.`
+
+A guardian must have at least one contact method. Adding a guardian with neither `p/` nor `e/` is rejected with:
+`A guardian must have at least one contact method: phone or email.`
+A student can be saved without a phone number or email.
 
 The phone field accepts contact details with at least 3 digits and no maximum length. You can include multiple
 numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
@@ -121,13 +129,15 @@ alphanumeric and hyphen placement restrictions, and the final label must contain
 Validation checks the address format; it does not verify that a mailbox exists.
 
 Contacts are duplicates when their role, name, phone and email all match. Name and email comparisons ignore
-capitalization. Two omitted emails match; an omitted email differs from a supplied email. Otherwise, identical
+capitalization. Two omitted phone numbers or emails match; an omitted value differs from a supplied one. Otherwise, identical
 contacts with different roles are allowed.
 
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`
 * `add r/student n/Alex Tan p/91234567` saves a contact without an email.
 * `add r/student n/Alex Tan p/91234567 e/alex+tuition@example.com` saves a contact with an email.
+* `add r/guardian n/Mei Tan e/mei@example.com` saves a guardian without a phone number.
+* `add r/student n/Ben Lim` saves a student without a phone number or email.
 * `add r/guardian n/Betsy Crowe e/betsycrowe@example.com p/1234567`
 
 ### Listing all contacts: `list`
@@ -298,7 +308,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add r/ROLE n/NAME p/PHONE_NUMBER e/EMAIL` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com`
+**Add**    | `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
