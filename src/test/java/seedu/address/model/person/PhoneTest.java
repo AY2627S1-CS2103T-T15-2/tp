@@ -44,6 +44,24 @@ public class PhoneTest {
     }
 
     @Test
+    public void isValidPhone_withThreeDigitsAndOtherText_isValid() {
+        assertTrue(Phone.isValidPhone("联系人 HP 电话: +65 123"));
+        assertTrue(Phone.isValidPhone("(HP) +65-123"));
+    }
+
+    @Test
+    public void isValidPhone_withFewerThanThreeDigits_isInvalid() {
+        assertFalse(Phone.isValidPhone("(HP) +65"));
+        assertFalse(Phone.isValidPhone("办公室 12"));
+    }
+
+    @Test
+    public void isValidPhone_withTabOrCarriageReturn_isInvalid() {
+        assertFalse(Phone.isValidPhone("911\t2222"));
+        assertFalse(Phone.isValidPhone("911\r2222"));
+    }
+
+    @Test
     public void equals() {
         Phone phone = new Phone("999");
 
