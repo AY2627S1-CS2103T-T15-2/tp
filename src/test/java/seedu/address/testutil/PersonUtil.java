@@ -27,7 +27,7 @@ public class PersonUtil {
     public static String getPersonDetails(Person person) {
         StringBuilder sb = new StringBuilder();
         sb.append(PREFIX_NAME + person.getName().fullName + " ");
-        sb.append(PREFIX_PHONE + person.getPhone().value + " ");
+        person.getPhone().ifPresent(phone -> sb.append(PREFIX_PHONE + phone.value + " "));
         person.getEmail().ifPresent(email -> sb.append(PREFIX_EMAIL).append(email.value).append(" "));
         sb.append(PREFIX_ROLE + person.getRole().name() + " ");
         return sb.toString();

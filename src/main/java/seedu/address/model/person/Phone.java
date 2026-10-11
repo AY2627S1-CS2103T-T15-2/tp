@@ -12,6 +12,7 @@ public class Phone {
 
     public static final String MESSAGE_CONSTRAINTS =
             "Phone details must contain at least 3 digits and cannot contain control characters, '@' or '/'.";
+    public static final String MESSAGE_EMPTY = "Empty phone parameter: Phone cannot be empty when p/ is specified.";
     public static final int MINIMUM_DIGIT_COUNT = 3;
     public final String value;
 

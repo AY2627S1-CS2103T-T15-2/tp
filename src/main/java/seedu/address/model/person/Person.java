@@ -15,11 +15,13 @@ import seedu.address.commons.util.ToStringBuilder;
 public class Person {
 
     public static final String MESSAGE_INVALID_GUARDIAN_OWNER = "Only a student can have a linked guardian.";
+    public static final String MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD =
+            "A guardian must have at least one contact method: phone or email.";
 
     // Identity fields
     private final ContactId id;
     private final Name name;
-    private final Phone phone;
+    private final Optional<Phone> phone;
     private final Optional<Email> email;
 
     // Data fields
@@ -29,7 +31,7 @@ public class Person {
     /**
      * Creates a new person with a generated contact ID.
      */
-    public Person(Name name, Phone phone, Optional<Email> email,
+    public Person(Name name, Optional<Phone> phone, Optional<Email> email,
             Role role) {
         this(ContactId.generate(), name, phone, email, role);
     }
@@ -37,7 +39,7 @@ public class Person {
     /**
      * Creates a person with the specified contact ID and details.
      */
-    public Person(ContactId id, Name name, Phone phone, Optional<Email> email,
+    public Person(ContactId id, Name name, Optional<Phone> phone, Optional<Email> email,
             Role role) {
         this(id, name, phone, email, role, Optional.empty());
     }
@@ -45,7 +47,7 @@ public class Person {
     /**
      * Creates a person with the specified ID, details and optional guardian relationship.
      */
-    public Person(ContactId id, Name name, Phone phone, Optional<Email> email,
+    public Person(ContactId id, Name name, Optional<Phone> phone, Optional<Email> email,
             Role role, Optional<ContactId> guardianId) {
         requireAllNonNull(id, name, phone, email, role, guardianId);
         checkArgument(guardianId.isEmpty() || role == Role.STUDENT, MESSAGE_INVALID_GUARDIAN_OWNER);
@@ -76,7 +78,7 @@ public class Person {
         return name;
     }
 
-    public Phone getPhone() {
+    public Optional<Phone> getPhone() {
         return phone;
     }
 
@@ -89,8 +91,22 @@ public class Person {
     }
 
     /**
+     * Returns true if this contact has a phone number or an email address.
+     */
+    public boolean hasContactMethod() {
+        return phone.isPresent() || email.isPresent();
+    }
+
+    /**
+     * Returns true if this contact is a guardian with neither a phone number nor an email address.
+     */
+    public boolean isGuardianWithoutContactMethod() {
+        return role == Role.GUARDIAN && !hasContactMethod();
+    }
+
+    /**
      * Returns true if both persons have the same identity fields.
-     * Identity consists of role, name, phone and optional email, ignoring name and email case.
+     * Identity consists of role, name, optional phone and optional email, ignoring name and email case.
      */
     public boolean isSamePerson(Person otherPerson) {
         if (otherPerson == this) {

@@ -69,7 +69,7 @@ public class PersonDetailsPanel extends UiPart<Region> {
 
         name.setText(contact.getName().fullName);
         role.setText("Role: " + contact.getRole());
-        phone.setText("Phone: " + formatContactMethod(contact.getPhone().value));
+        phone.setText("Phone: " + formatContactMethod(contact.getPhone()));
         email.setText("Email: " + formatContactMethod(contact.getEmail()));
         boolean isStudent = contact.getRole() == Role.STUDENT;
         guardianDetails.setVisible(isStudent);
@@ -77,7 +77,7 @@ public class PersonDetailsPanel extends UiPart<Region> {
         Person guardian = contact.getGuardianId().flatMap(id -> PersonLookup.findById(persons, id)).orElse(null);
         guardianName.setText(guardian == null ? "Guardian: None" : "Guardian: " + guardian.getName());
         guardianPhone.setText(guardian == null ? ""
-                : "Guardian phone: " + formatContactMethod(guardian.getPhone().value));
+                : "Guardian phone: " + formatContactMethod(guardian.getPhone()));
         guardianEmail.setText(guardian == null ? ""
                 : "Guardian email: " + formatContactMethod(guardian.getEmail()));
     }

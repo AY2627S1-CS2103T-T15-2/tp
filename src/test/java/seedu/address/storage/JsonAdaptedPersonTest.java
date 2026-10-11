@@ -26,7 +26,7 @@ public class JsonAdaptedPersonTest {
     private static final String INVALID_ROLE = "teacher";
 
     private static final String VALID_NAME = BENSON.getName().toString();
-    private static final String VALID_PHONE = BENSON.getPhone().toString();
+    private static final String VALID_PHONE = BENSON.getPhone().get().toString();
     private static final String VALID_EMAIL = BENSON.getEmail().orElseThrow().toString();
     private static final String VALID_ROLE = BENSON.getRole().name();
 
@@ -96,11 +96,10 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_nullPhone_throwsIllegalValueException() {
+    public void toModelType_nullPhone_returnsPersonWithoutPhone() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, null, VALID_EMAIL,
                 VALID_ROLE, null);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName());
-        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+        assertTrue(person.toModelType().getPhone().isEmpty());
     }
 
     @Test
