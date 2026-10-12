@@ -255,7 +255,7 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_phoneAndEmailOmitted_success() {
+    public void parse_studentPhoneAndEmailOmitted_success() {
         Person expected = new PersonBuilder(AMY).withoutPhone().withoutEmail().build();
         assertParseSuccess(parser, NAME_DESC_AMY + ROLE_DESC_AMY, new AddCommand(expected));
     }

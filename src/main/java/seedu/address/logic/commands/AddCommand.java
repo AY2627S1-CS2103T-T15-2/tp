@@ -21,20 +21,25 @@ public class AddCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a person to the address book. "
             + "Parameters: "
+            + PREFIX_ROLE + "ROLE "
             + PREFIX_NAME + "NAME "
             + "[" + PREFIX_PHONE + "PHONE] "
             + "[" + PREFIX_EMAIL + "EMAIL] "
-            + PREFIX_ROLE + "ROLE\n"
+            + "\n"
+            + "For students, " + PREFIX_PHONE + "PHONE and " + PREFIX_EMAIL + "EMAIL are optional. "
+            + "Guardians need at least one contact method.\n"
             + "Example: " + COMMAND_WORD + " "
+            + PREFIX_ROLE + "student "
             + PREFIX_NAME + "John Doe "
             + PREFIX_PHONE + "98765432 "
-            + PREFIX_EMAIL + "johnd@example.com "
-            + PREFIX_ROLE + "student";
+            + PREFIX_EMAIL + "johnd@example.com";
 
     public static final String MESSAGE_SUCCESS = "New person added: %1$s";
     public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in the address book.";
     public static final String MESSAGE_POSSIBLE_DUPLICATE = "Warning: A contact with the same role and name exists. "
             + "This contact may be a duplicate, but it was added.";
+    public static final String MESSAGE_CONTACT_METHOD_REQUIRED =
+            "A guardian must have at least one contact method: phone or email.";
 
     private final Person toAdd;
 
@@ -56,7 +61,7 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (toAdd.isGuardianWithoutContactMethod()) {
-            throw new CommandException(Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
+            throw new CommandException(MESSAGE_CONTACT_METHOD_REQUIRED);
         }
 
         if (model.hasPerson(toAdd)) {
