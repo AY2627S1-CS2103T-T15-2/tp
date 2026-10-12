@@ -40,6 +40,56 @@ public class Email {
     }
 
     /**
+     * Returns a specific validation error for {@code test}, or {@code null} if it is valid.
+     */
+    public static String getValidationErrorMessage(String test) {
+        requireNonNull(test);
+        if (test.chars().filter(character -> character == '@').count() != 1) {
+            return "Email address must contain exactly one @ symbol.";
+        }
+
+        String[] addressParts = test.split("@", -1);
+        String localPart = addressParts[0];
+        String domain = addressParts[1];
+        if (localPart.isEmpty()) {
+            return "Email local part cannot be empty.";
+        }
+        if (domain.isEmpty()) {
+            return "Email domain cannot be empty.";
+        }
+        if (test.chars().anyMatch(Character::isWhitespace)) {
+            return "Email address cannot contain whitespace.";
+        }
+        if (!localPart.matches(LOCAL_PART)) {
+            return "Email local part contains unsupported characters or invalid punctuation placement.";
+        }
+
+        String[] domainLabels = domain.split("\\.", -1);
+        if (domainLabels.length < 2) {
+            return "Email domain must contain at least two labels separated by a period.";
+        }
+        for (int i = 0; i < domainLabels.length - 1; i++) {
+            if (domainLabels[i].isEmpty()) {
+                return "Email domain labels cannot be empty.";
+            }
+            if (!domainLabels[i].matches(DOMAIN_LABEL)) {
+                return "Email domain labels may contain letters, digits, and internal hyphens only.";
+            }
+        }
+        String finalLabel = domainLabels[domainLabels.length - 1];
+        if (finalLabel.isEmpty()) {
+            return "Email domain labels cannot be empty.";
+        }
+        if (finalLabel.length() < 2) {
+            return "Email's final domain label must contain at least two characters.";
+        }
+        if (!finalLabel.matches(DOMAIN_LABEL)) {
+            return "Email's final domain label may contain letters, digits, and internal hyphens only.";
+        }
+        return null;
+    }
+
+    /**
      * Returns true if both email addresses are the same, ignoring letter case.
      */
     public boolean isSameEmail(Email otherEmail) {

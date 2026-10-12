@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_EMAIL_DESC;
@@ -47,11 +46,11 @@ public class AddCommandParserTest {
     public void parse_removedContactFieldPrefixes_failure() {
         String fields = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB;
         assertParseFailure(parser, " t/friends" + fields,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                AddCommandParser.MESSAGE_UNEXPECTED_TEXT);
         assertParseFailure(parser, fields + " t/friends", Role.MESSAGE_CONSTRAINTS);
 
         assertParseFailure(parser, " a/123 Main Street" + fields,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                AddCommandParser.MESSAGE_UNEXPECTED_TEXT);
         assertParseFailure(parser, fields + " a/123 Main Street", Role.MESSAGE_CONSTRAINTS);
     }
 
@@ -142,38 +141,37 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_compulsoryFieldMissing_failure() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
-
         // missing name prefix
         assertParseFailure(parser, VALID_NAME_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB,
-                expectedMessage);
+                AddCommandParser.MESSAGE_MISSING_NAME);
 
         // an email without its prefix becomes part of the phone value
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_EMAIL_BOB + ROLE_DESC_BOB,
-                Phone.MESSAGE_CONSTRAINTS);
+                Phone.MESSAGE_INVALID_CHARACTERS);
 
         // missing role prefix
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + " " + VALID_ROLE_BOB, expectedMessage);
+                + " " + VALID_ROLE_BOB, AddCommandParser.MESSAGE_MISSING_ROLE);
 
         // all prefixes missing
         assertParseFailure(parser, VALID_NAME_BOB + VALID_PHONE_BOB + VALID_EMAIL_BOB,
-                expectedMessage);
+                AddCommandParser.MESSAGE_MISSING_NAME);
     }
 
     @Test
     public void parse_invalidValue_failure() {
         // invalid name
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + ROLE_DESC_BOB, Name.MESSAGE_CONSTRAINTS);
+                + ROLE_DESC_BOB, "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
+                        + "hyphens, periods, and slashes.");
 
         // invalid phone
         assertParseFailure(parser, NAME_DESC_BOB + INVALID_PHONE_DESC + EMAIL_DESC_BOB
-                + ROLE_DESC_BOB, Phone.MESSAGE_CONSTRAINTS);
+                + ROLE_DESC_BOB, Phone.MESSAGE_TOO_FEW_DIGITS);
 
         // invalid email
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + INVALID_EMAIL_DESC
-                + ROLE_DESC_BOB, Email.MESSAGE_CONSTRAINTS);
+                + ROLE_DESC_BOB, "Email address must contain exactly one @ symbol.");
 
         // invalid role
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
@@ -186,12 +184,13 @@ public class AddCommandParserTest {
         // two invalid values, only first invalid value reported
         assertParseFailure(parser, INVALID_NAME_DESC + INVALID_PHONE_DESC + EMAIL_DESC_BOB
                 + ROLE_DESC_BOB,
-                Name.MESSAGE_CONSTRAINTS);
+                "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
+                        + "hyphens, periods, and slashes.");
 
         // non-empty preamble
         assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ROLE_DESC_BOB,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                AddCommandParser.MESSAGE_UNEXPECTED_TEXT);
     }
 
     @Test
@@ -224,11 +223,13 @@ public class AddCommandParserTest {
     public void parse_emptyOrUnsupportedName_failure() {
         String otherFields = PHONE_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB;
 
-        assertParseFailure(parser, " " + PREFIX_NAME + "\"\"" + otherFields, Name.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " " + PREFIX_NAME + "\"   \"" + otherFields, Name.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " " + PREFIX_NAME + "Alex@Tan" + otherFields, Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " " + PREFIX_NAME + "\"\"" + otherFields, "Name cannot be blank.");
+        assertParseFailure(parser, " " + PREFIX_NAME + "\"   \"" + otherFields, "Name cannot be blank.");
+        assertParseFailure(parser, " " + PREFIX_NAME + "Alex@Tan" + otherFields,
+                "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
+                        + "hyphens, periods, and slashes.");
         assertParseFailure(parser, " " + PREFIX_NAME + "a".repeat(Name.MAX_LENGTH + 1) + otherFields,
-                Name.MESSAGE_CONSTRAINTS);
+                "Name cannot exceed " + Name.MAX_LENGTH + " characters.");
     }
 
     private void assertNameParsesSuccessfully(String nameArgument, String expectedName) {
@@ -255,9 +256,9 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_phoneAndEmailOmitted_success() {
-        Person expected = new PersonBuilder(AMY).withoutPhone().withoutEmail().build();
-        assertParseSuccess(parser, NAME_DESC_AMY + ROLE_DESC_AMY, new AddCommand(expected));
+    public void parse_phoneAndEmailOmitted_failure() {
+        assertParseFailure(parser, NAME_DESC_AMY + ROLE_DESC_AMY,
+                AddCommandParser.MESSAGE_MISSING_CONTACT_METHOD);
     }
 
     @Test
@@ -298,6 +299,6 @@ public class AddCommandParserTest {
     @Test
     public void parse_phoneWithSlash_failure() {
         assertParseFailure(parser, NAME_DESC_AMY + " p/911/2222" + ROLE_DESC_AMY,
-                Phone.MESSAGE_CONSTRAINTS);
+                Phone.MESSAGE_INVALID_CHARACTERS);
     }
 }

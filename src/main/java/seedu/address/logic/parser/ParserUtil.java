@@ -59,8 +59,9 @@ public class ParserUtil {
         }
 
         String normalizedName = trimmedName.replaceAll(" {2,}", " ");
-        if (!Name.isValidName(normalizedName)) {
-            throw new ParseException(Name.MESSAGE_CONSTRAINTS);
+        String nameValidationError = Name.getValidationErrorMessage(normalizedName);
+        if (nameValidationError != null) {
+            throw new ParseException(nameValidationError);
         }
         return new Name(normalizedName);
     }
@@ -77,8 +78,11 @@ public class ParserUtil {
         if (trimmedPhone.isEmpty()) {
             throw new ParseException(Phone.MESSAGE_EMPTY);
         }
-        if (!Phone.isValidPhone(trimmedPhone)) {
-            throw new ParseException(Phone.MESSAGE_CONSTRAINTS);
+        if (Phone.hasInvalidCharacters(trimmedPhone)) {
+            throw new ParseException(Phone.MESSAGE_INVALID_CHARACTERS);
+        }
+        if (Phone.getDigitCount(trimmedPhone) < Phone.MINIMUM_DIGIT_COUNT) {
+            throw new ParseException(Phone.MESSAGE_TOO_FEW_DIGITS);
         }
         return new Phone(trimmedPhone);
     }
@@ -95,8 +99,9 @@ public class ParserUtil {
         if (trimmedEmail.isEmpty()) {
             throw new ParseException(Email.MESSAGE_EMPTY);
         }
-        if (!Email.isValidEmail(trimmedEmail)) {
-            throw new ParseException(Email.MESSAGE_CONSTRAINTS);
+        String emailValidationError = Email.getValidationErrorMessage(trimmedEmail);
+        if (emailValidationError != null) {
+            throw new ParseException(emailValidationError);
         }
         return new Email(trimmedEmail);
     }
