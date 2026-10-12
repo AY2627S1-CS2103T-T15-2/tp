@@ -43,7 +43,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
             String phone = argMultimap.getValue(PREFIX_PHONE).get();
-            if (phone.trim().equals(EditCommand.REMOVE_FIELD_VALUE)) {
+            if (phone.trim().equalsIgnoreCase(EditCommand.REMOVE_FIELD_VALUE)) {
                 editPersonDescriptor.removePhone();
             } else {
                 editPersonDescriptor.setPhone(ParserUtil.parsePhone(phone));
@@ -51,7 +51,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
             String email = argMultimap.getValue(PREFIX_EMAIL).get();
-            if (email.trim().equals(EditCommand.REMOVE_FIELD_VALUE)) {
+            if (email.trim().equalsIgnoreCase(EditCommand.REMOVE_FIELD_VALUE)) {
                 editPersonDescriptor.removeEmail();
             } else {
                 editPersonDescriptor.setEmail(ParserUtil.parseEmail(email));

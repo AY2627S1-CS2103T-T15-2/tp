@@ -162,11 +162,10 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * After a successful edit, the edited contact is selected and its details are shown in the details panel.
 * Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
   as `add`. An empty `e/` is rejected.
-* `e/NONE` removes the existing email. Only the exact value `NONE` in capital letters does this; `e/none` is
-  treated as an invalid email.
+* `e/NONE` removes the existing email. `NONE` ignores letter case, so `e/none` also works.
 * Omitting `p/` preserves the existing phone number, including its absence. Supplying a phone number uses the same
   validation as `add`. An empty `p/` is rejected.
-* `p/NONE` removes the existing phone number. As with `e/NONE`, only the exact value `NONE` does this.
+* `p/NONE` removes the existing phone number. As with `e/NONE`, letter case is ignored.
 * A guardian must keep at least one contact method. An edit that would leave a guardian with neither a phone number
   nor an email is rejected with `A guardian must have at least one contact method: phone or email.`
   A student can have both removed.

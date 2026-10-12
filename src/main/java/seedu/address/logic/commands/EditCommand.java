@@ -29,7 +29,7 @@ public class EditCommand extends Command {
 
     public static final String COMMAND_WORD = "edit";
 
-    /** Value that removes an optional field when given in place of the field's value. */
+    /** Value, ignoring case, that removes an optional field when given in place of the field's value. */
     public static final String REMOVE_FIELD_VALUE = "NONE";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the person identified "

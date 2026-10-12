@@ -192,10 +192,10 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_phoneNoneWrongCase_failure() {
-        // only the exact value NONE removes the phone
-        assertParseFailure(parser, "1 p/none", Phone.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1 p/None", Phone.MESSAGE_CONSTRAINTS);
+    public void parse_phoneNoneAnyCase_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutPhone().build();
+        assertParseSuccess(parser, "1 p/none", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseSuccess(parser, "1 p/nOnE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test
@@ -205,10 +205,10 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_emailNoneWrongCase_failure() {
-        // only the exact value NONE removes the email
-        assertParseFailure(parser, "1 e/none", Email.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1 e/None", Email.MESSAGE_CONSTRAINTS);
+    public void parse_emailNoneAnyCase_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutEmail().build();
+        assertParseSuccess(parser, "1 e/none", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseSuccess(parser, "1 e/None", new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test
