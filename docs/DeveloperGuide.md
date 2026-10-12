@@ -240,6 +240,50 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 _{more aspects and alternatives to be added}_
 
+### Editing contacts
+
+`edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]` changes the name, phone number or email address of a displayed contact.
+The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
+first displayed contact `p`.
+
+<puml src="diagrams/EditSequenceDiagram.puml" alt="Interactions inside the Logic component for the `edit 1 p/NONE` command" />
+
+**Parsing.** `EditCommandParser` tokenizes the arguments with `ArgumentTokenizer#tokenizeWithQuotedValue`, so a
+quoted name such as `n/"Randy p/e ratio"` keeps any prefix-like text inside the quotes. It then checks, in order:
+
+1. No unknown parameter. Any word ending in `/` outside a quoted name, other than `n/`, `p/` or `e/`, is rejected
+   with `Unknown parameter`. This is why an unquoted name such as `Ravi s/o Kumar` must be quoted.
+2. No repeated parameter. Each of `n/`, `p/` and `e/` may appear once.
+3. A valid index. A missing index, or extra text before the first parameter, gives `Invalid edit command`. A value
+   that is not a positive integer gives `The contact index must be a positive integer shown in the list.`
+
+Each supplied value is stored in an `EditPersonDescriptor`. `NONE` in any letter case is stored as a removal
+(`removePhone()` or `removeEmail()`) rather than a value. Setting a value after a removal clears the removal flag.
+An empty descriptor is rejected with `At least one of n/, p/, or e/ must be provided.`
+
+**Execution.** `EditCommand#execute` resolves the index against the filtered, sorted display list, so the index the
+user sees is the one edited. An index beyond the list gives `No contact exists at index INDEX.` The edited contact is
+built by `createEditedPerson`: each field takes the descriptor's value, is emptied if marked for removal, or keeps the
+current value otherwise. The contact's ID, role and guardian link are always copied, so relationships survive an
+edit.
+
+The edit is then rejected if it would leave a guardian with no phone number and no email, or if the edited contact
+would duplicate another contact. The duplicate check is skipped when the edited contact still matches its original
+duplicate identity, so changing only the capitalization of a name is allowed.
+
+On success, `Model#setPerson` replaces the contact and the full list is shown again. The `CommandResult` carries the
+edited contact's ID, and `MainWindow` selects that contact so the detail panel shows the update. Like other
+data-changing commands, `LogicManager` runs the edit on a candidate model and saves it before replacing the live
+model, so a failed save leaves the contact unchanged.
+
+**Design considerations.**
+
+* **Removing a field:** `p/NONE` and `e/NONE` were chosen over an empty `p/` or `e/`, which is rejected as a likely
+  typo. `NONE` cannot be a valid phone number or email, so it never clashes with real data. Letter case is ignored as
+  a deliberate choice for ease of typing.
+* **Rejecting unknown parameters:** silently keeping `a/15` as part of a name would save data the user did not intend.
+  The cost is that names containing a word ending in `/` must be quoted.
+
 ### Student-guardian linking
 
 `LinkCommandParser` accepts `link s/STUDENT_INDEX g/GUARDIAN_INDEX` in either parameter order. It rejects missing, repeated and unknown prefixes, extra text and invalid integer indexes. `LinkCommand` resolves both indexes against the filtered, sorted display list, validates their roles, rejects duplicate links and replaces an existing guardian when requested.
@@ -578,6 +622,38 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### Editing a person
+
+1. Prerequisites: start from the sample data and run `list`. Note which contacts are students and which are
+   guardians.
+
+1. Test case: `edit 1 n/Alex Yeoh p/91234567`<br>
+   Expected: The first contact's name and phone are updated. The status message shows
+   `Updated contact: Alex Yeoh [ROLE].` The edited contact is selected and the detail panel shows the new details.
+
+1. Test case: `edit 1 p/NONE` on a student<br>
+   Expected: The phone number is removed and shows `Not provided`.
+
+1. Test case: on a guardian with a phone number and no email, `edit INDEX p/NONE`<br>
+   Expected: No change. The status message shows
+   `A guardian must have at least one contact method: phone or email.`
+
+1. Test case: `find` a name, then `edit 1 n/New Name`<br>
+   Expected: The first search result is edited, and the full contact list is shown again.
+
+1. Test case: `edit 1 n/"Ravi s/o Kumar"`<br>
+   Expected: The name becomes `Ravi s/o Kumar`. Without the quotes, the command is rejected with `Unknown parameter`.
+
+1. Incorrect commands to try, each leaving the contacts unchanged:
+   * `edit 1` gives `At least one of n/, p/, or e/ must be provided.`
+   * `edit n/Alex` gives `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
+   * `edit 0 n/Alex` gives `The contact index must be a positive integer shown in the list.`
+   * `edit 999 n/Alex` gives `No contact exists at index 999.`
+   * `edit 1 r/guardian` gives `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
+   * `edit 1 n/A n/B` gives `Each of n/, p/, and e/ may appear only once.`
+   * Editing a contact so that it matches another contact's role, name, phone and email gives
+     `This edit would create a duplicate contact.`
 
 ### Saving data
 
