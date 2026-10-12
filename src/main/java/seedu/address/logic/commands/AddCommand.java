@@ -38,6 +38,11 @@ public class AddCommand extends Command {
     public static final String MESSAGE_DUPLICATE_PERSON = "This contact already exists.";
     public static final String MESSAGE_POSSIBLE_DUPLICATE = "Warning: A contact with the same role and name exists. "
             + "This contact may be a duplicate, but it was added.";
+    public static final String MESSAGE_POSSIBLE_DUPLICATE_PHONE = "Warning: A contact with the same role and name, "
+            + "and a phone number matching after ignoring spaces and hyphens exists. "
+            + "This contact may be a duplicate, but it was added.";
+    public static final String MESSAGE_POSSIBLE_DUPLICATE_EMAIL = "Warning: A contact with the same role and name, "
+            + "and the same email address exists. This contact may be a duplicate, but it was added.";
     public static final String MESSAGE_CONTACT_METHOD_REQUIRED =
             "A guardian must have at least one contact method: phone or email.";
 
@@ -68,15 +73,28 @@ public class AddCommand extends Command {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
 
-        boolean hasPossibleDuplicate = model.getAddressBook().getPersonList().stream()
-                .anyMatch(toAdd::hasSameNameAndRole);
+        boolean hasSimilarPhone = model.getAddressBook().getPersonList().stream()
+                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSamePhoneIgnoringFormatting(person));
+        boolean hasSameEmail = model.getAddressBook().getPersonList().stream()
+                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSameEmailAddress(person));
+        boolean hasSharedEmptyContactField = model.getAddressBook().getPersonList().stream()
+                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && hasSharedEmptyContactField(person));
 
         model.addPerson(toAdd);
         String feedback = String.format(MESSAGE_SUCCESS, Messages.format(toAdd));
-        if (hasPossibleDuplicate) {
+        if (hasSimilarPhone) {
+            feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_PHONE;
+        } else if (hasSameEmail) {
+            feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_EMAIL;
+        } else if (hasSharedEmptyContactField) {
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE;
         }
         return new CommandResult(feedback);
+    }
+
+    private boolean hasSharedEmptyContactField(Person otherPerson) {
+        return toAdd.getPhone().isEmpty() && otherPerson.getPhone().isEmpty()
+                || toAdd.getEmail().isEmpty() && otherPerson.getEmail().isEmpty();
     }
 
     @Override

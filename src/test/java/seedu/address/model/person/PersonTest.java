@@ -45,13 +45,23 @@ public class PersonTest {
     }
 
     @Test
-    public void isSamePerson_phoneFormattingDifferences_ignoresSpacesAndHyphens() {
+    public void isSamePerson_phoneFormattingDifferences_areNotExactDuplicates() {
         Person spacedPhone = new PersonBuilder(ALICE).withPhone("+65 9123 4567").build();
         Person hyphenatedPhone = new PersonBuilder(ALICE).withPhone("+65-9123-4567").build();
         Person differentPhone = new PersonBuilder(ALICE).withPhone("+65-9123-4568").build();
 
-        assertTrue(spacedPhone.isSamePerson(hyphenatedPhone));
+        assertFalse(spacedPhone.isSamePerson(hyphenatedPhone));
+        assertTrue(spacedPhone.hasSamePhoneIgnoringFormatting(hyphenatedPhone));
         assertFalse(spacedPhone.isSamePerson(differentPhone));
+    }
+
+    @Test
+    public void isSamePerson_studentWithoutContactMethods_nameAndRoleAloneAreNotDuplicate() {
+        Person studentWithoutContact = new PersonBuilder().withRole("student").withoutPhone().withoutEmail().build();
+        Person anotherStudentWithoutContact = new PersonBuilder(studentWithoutContact)
+                .withId(ContactId.generate()).build();
+
+        assertFalse(studentWithoutContact.isSamePerson(anotherStudentWithoutContact));
     }
 
     @Test
