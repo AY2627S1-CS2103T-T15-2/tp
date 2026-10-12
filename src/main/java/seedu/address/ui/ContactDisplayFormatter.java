@@ -18,14 +18,6 @@ public class ContactDisplayFormatter {
     }
 
     /**
-     * Returns {@code contactMethod}, or "Not provided" if {@code contactMethod} is blank.
-     */
-    public static String formatContactMethod(String contactMethod) {
-        requireNonNull(contactMethod);
-        return contactMethod.isBlank() ? MISSING_CONTACT_METHOD : contactMethod;
-    }
-
-    /**
      * Returns the text of {@code contactMethod}, or "Not provided" if {@code contactMethod} is empty.
      */
     public static String formatContactMethod(Optional<?> contactMethod) {

@@ -9,32 +9,14 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.testutil.PersonBuilder;
 
 public class ContactDisplayFormatterTest {
 
     @Test
-    public void formatContactMethod_nullString_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> ContactDisplayFormatter.formatContactMethod(
-                (String) null));
-    }
-
-    @Test
-    public void formatContactMethod_blankString_returnsNotProvided() {
-        assertEquals("Not provided", ContactDisplayFormatter.formatContactMethod(""));
-        assertEquals("Not provided", ContactDisplayFormatter.formatContactMethod(" \t"));
-    }
-
-    @Test
-    public void formatContactMethod_nonBlankString_returnsValue() {
-        assertEquals("91234567", ContactDisplayFormatter.formatContactMethod("91234567"));
-        assertEquals("alex@example.com", ContactDisplayFormatter.formatContactMethod("alex@example.com"));
-    }
-
-    @Test
-    public void formatContactMethod_nullOptional_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> ContactDisplayFormatter.formatContactMethod(
-                (Optional<Email>) null));
+    public void formatContactMethod_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ContactDisplayFormatter.formatContactMethod(null));
     }
 
     @Test
@@ -43,7 +25,13 @@ public class ContactDisplayFormatterTest {
     }
 
     @Test
-    public void formatContactMethod_presentOptional_returnsValueWithCapitalisationPreserved() {
+    public void formatContactMethod_presentPhone_returnsPhone() {
+        Optional<Phone> phone = Optional.of(new Phone("91234567"));
+        assertEquals("91234567", ContactDisplayFormatter.formatContactMethod(phone));
+    }
+
+    @Test
+    public void formatContactMethod_presentEmail_returnsEmailWithCapitalisationPreserved() {
         Optional<Email> email = Optional.of(new Email("Alex@Example.COM"));
         assertEquals("Alex@Example.COM", ContactDisplayFormatter.formatContactMethod(email));
     }
