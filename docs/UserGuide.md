@@ -95,7 +95,7 @@ Supplying `p/` with an empty or whitespace-only value is rejected with:
 
 A guardian must have at least one contact method. Adding a guardian with neither `p/` nor `e/` is rejected with:
 `A guardian must have at least one contact method: phone or email.`
-For students, phone and email are independently optional. A student can have both, either one, or neither.
+A student can be saved without a phone number or email.
 
 The phone field accepts contact details with at least 3 digits and no maximum length. You can include multiple
 numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
