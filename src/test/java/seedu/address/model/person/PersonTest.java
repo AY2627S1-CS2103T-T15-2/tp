@@ -45,6 +45,16 @@ public class PersonTest {
     }
 
     @Test
+    public void isSamePerson_phoneFormattingDifferences_ignoresSpacesAndHyphens() {
+        Person spacedPhone = new PersonBuilder(ALICE).withPhone("+65 9123 4567").build();
+        Person hyphenatedPhone = new PersonBuilder(ALICE).withPhone("+65-9123-4567").build();
+        Person differentPhone = new PersonBuilder(ALICE).withPhone("+65-9123-4568").build();
+
+        assertTrue(spacedPhone.isSamePerson(hyphenatedPhone));
+        assertFalse(spacedPhone.isSamePerson(differentPhone));
+    }
+
+    @Test
     public void isGuardianWithoutContactMethod() {
         Person guardian = new PersonBuilder().withRole("guardian").build();
         assertFalse(guardian.isGuardianWithoutContactMethod());

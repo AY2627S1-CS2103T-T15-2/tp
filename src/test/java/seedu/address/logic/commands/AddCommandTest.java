@@ -87,6 +87,16 @@ public class AddCommandTest {
     }
 
     @Test
+    public void execute_personWithEquivalentPhoneFormatting_throwsCommandException() {
+        Person existingPerson = new PersonBuilder().withPhone("+65 9123 4567").build();
+        Person duplicatePerson = new PersonBuilder(existingPerson).withPhone("+65-9123-4567").build();
+        AddCommand addCommand = new AddCommand(duplicatePerson);
+        ModelStub modelStub = new ModelStubWithPerson(existingPerson);
+
+        assertThrows(CommandException.class, AddCommand.MESSAGE_DUPLICATE_PERSON, () -> addCommand.execute(modelStub));
+    }
+
+    @Test
     public void execute_personWithNameDifferingOnlyInCase_throwsCommandException() {
         Person existingPerson = new PersonBuilder().build();
         Person duplicatePerson = new PersonBuilder(existingPerson)
@@ -99,14 +109,41 @@ public class AddCommandTest {
     }
 
     @Test
-    public void execute_personWithSameNameAndDifferentIdentityFields_addSuccessful() throws Exception {
+    public void execute_personWithSameNameAndDifferentIdentityFields_warnsAndAdds() throws Exception {
         ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
         Person firstPerson = new PersonBuilder().build();
         Person secondPerson = new PersonBuilder().withPhone("87654321").withEmail("another@example.com").build();
 
         new AddCommand(firstPerson).execute(modelStub);
-        new AddCommand(secondPerson).execute(modelStub);
+        CommandResult result = new AddCommand(secondPerson).execute(modelStub);
 
+        assertTrue(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE));
+        assertEquals(List.of(firstPerson, secondPerson), modelStub.personsAdded);
+    }
+
+    @Test
+    public void execute_personWithSameNameAndRoleButMissingContactDetails_warnsAndAdds() throws Exception {
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+        Person firstPerson = new PersonBuilder().withoutEmail().build();
+        Person secondPerson = new PersonBuilder(firstPerson).withoutPhone().withEmail("new@example.com").build();
+
+        new AddCommand(firstPerson).execute(modelStub);
+        CommandResult result = new AddCommand(secondPerson).execute(modelStub);
+
+        assertTrue(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE));
+        assertEquals(List.of(firstPerson, secondPerson), modelStub.personsAdded);
+    }
+
+    @Test
+    public void execute_personWithSameNameAndDifferentRole_addsWithoutWarning() throws Exception {
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+        Person firstPerson = new PersonBuilder().build();
+        Person secondPerson = new PersonBuilder(firstPerson).withRole("guardian").build();
+
+        new AddCommand(firstPerson).execute(modelStub);
+        CommandResult result = new AddCommand(secondPerson).execute(modelStub);
+
+        assertFalse(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE));
         assertEquals(List.of(firstPerson, secondPerson), modelStub.personsAdded);
     }
 
@@ -222,6 +259,13 @@ public class AddCommandTest {
             requireNonNull(person);
             return this.person.isSamePerson(person);
         }
+
+        @Override
+        public ReadOnlyAddressBook getAddressBook() {
+            AddressBook addressBook = new AddressBook();
+            addressBook.addPerson(person);
+            return addressBook;
+        }
     }
 
     /**
@@ -244,7 +288,9 @@ public class AddCommandTest {
 
         @Override
         public ReadOnlyAddressBook getAddressBook() {
-            return new AddressBook();
+            AddressBook addressBook = new AddressBook();
+            addressBook.setPersons(personsAdded);
+            return addressBook;
         }
     }
 

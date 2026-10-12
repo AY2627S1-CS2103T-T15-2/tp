@@ -33,6 +33,8 @@ public class AddCommand extends Command {
 
     public static final String MESSAGE_SUCCESS = "New person added: %1$s";
     public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in the address book.";
+    public static final String MESSAGE_POSSIBLE_DUPLICATE = "Warning: A contact with the same role and name exists. "
+            + "This contact may be a duplicate, but it was added.";
 
     private final Person toAdd;
 
@@ -61,8 +63,15 @@ public class AddCommand extends Command {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
 
+        boolean hasPossibleDuplicate = model.getAddressBook().getPersonList().stream()
+                .anyMatch(toAdd::hasSameNameAndRole);
+
         model.addPerson(toAdd);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(toAdd)));
+        String feedback = String.format(MESSAGE_SUCCESS, Messages.format(toAdd));
+        if (hasPossibleDuplicate) {
+            feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE;
+        }
+        return new CommandResult(feedback);
     }
 
     @Override

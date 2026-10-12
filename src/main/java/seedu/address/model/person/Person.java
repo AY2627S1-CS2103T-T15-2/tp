@@ -116,8 +116,28 @@ public class Person {
         return otherPerson != null
                 && role == otherPerson.role
                 && otherPerson.getName().isSameName(getName())
-                && otherPerson.getPhone().equals(getPhone())
+                && hasSamePhone(otherPerson)
                 && hasSameEmail(otherPerson);
+    }
+
+    /**
+     * Returns true if both persons have the same role and name, ignoring name case.
+     */
+    public boolean hasSameNameAndRole(Person otherPerson) {
+        return otherPerson != null
+                && role == otherPerson.role
+                && name.isSameName(otherPerson.name);
+    }
+
+    private boolean hasSamePhone(Person otherPerson) {
+        if (phone.isEmpty() || otherPerson.phone.isEmpty()) {
+            return phone.isEmpty() && otherPerson.phone.isEmpty();
+        }
+        return normalizePhone(phone.get()).equals(normalizePhone(otherPerson.phone.get()));
+    }
+
+    private String normalizePhone(Phone phoneNumber) {
+        return phoneNumber.value.replace(" ", "").replace("-", "");
     }
 
     private boolean hasSameEmail(Person otherPerson) {
