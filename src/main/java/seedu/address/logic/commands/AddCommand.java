@@ -35,7 +35,7 @@ public class AddCommand extends Command {
             + PREFIX_EMAIL + "johnd@example.com";
 
     public static final String MESSAGE_SUCCESS = "New person added: %1$s";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in the address book.";
+    public static final String MESSAGE_DUPLICATE_PERSON = "This contact already exists.";
     public static final String MESSAGE_POSSIBLE_DUPLICATE = "Warning: A contact with the same role and name exists. "
             + "This contact may be a duplicate, but it was added.";
     public static final String MESSAGE_CONTACT_METHOD_REQUIRED =
