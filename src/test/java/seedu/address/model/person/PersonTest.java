@@ -56,6 +56,22 @@ public class PersonTest {
     }
 
     @Test
+    public void contactComparisonHelpers_handleNullAndMissingContactMethods() {
+        Person contact = new PersonBuilder().withRole("student").build();
+        Person withoutPhone = new PersonBuilder(contact).withoutPhone().build();
+        Person withoutEmail = new PersonBuilder(contact).withoutEmail().build();
+
+        assertFalse(contact.hasSameNameAndRole(null));
+        assertFalse(contact.hasSamePhoneIgnoringFormatting(null));
+        assertFalse(withoutPhone.hasSamePhoneIgnoringFormatting(contact));
+        assertFalse(contact.hasSamePhoneIgnoringFormatting(withoutPhone));
+        assertFalse(contact.hasSameEmailAddress(null));
+        assertFalse(withoutEmail.hasSameEmailAddress(contact));
+        assertFalse(contact.hasSameEmailAddress(withoutEmail));
+        assertFalse(contact.hasSameNameAndRole(new PersonBuilder(contact).withRole("guardian").build()));
+    }
+
+    @Test
     public void isSamePerson_studentWithoutContactMethods_nameAndRoleAloneAreNotDuplicate() {
         Person studentWithoutContact = new PersonBuilder().withRole("student").withoutPhone().withoutEmail().build();
         Person anotherStudentWithoutContact = new PersonBuilder(studentWithoutContact)

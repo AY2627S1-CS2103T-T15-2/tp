@@ -200,6 +200,52 @@ public class AddCommandTest {
     }
 
     @Test
+    public void execute_sameMissingPhoneAndDifferentEmails_warnsGenerallyAndAdds() throws Exception {
+        Person firstStudent = new PersonBuilder().withRole("student").withoutPhone()
+                .withEmail("first@example.com").build();
+        Person secondStudent = new PersonBuilder(firstStudent).withEmail("second@example.com").build();
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+
+        new AddCommand(firstStudent).execute(modelStub);
+        CommandResult result = new AddCommand(secondStudent).execute(modelStub);
+
+        assertTrue(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE));
+        assertFalse(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE_PHONE));
+        assertFalse(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE_EMAIL));
+        assertEquals(List.of(firstStudent, secondStudent), modelStub.personsAdded);
+    }
+
+    @Test
+    public void execute_onlyOneContactMissing_doesNotWarnAboutSharedEmptyField() throws Exception {
+        Person firstStudent = new PersonBuilder().withRole("student").withEmail("first@example.com").build();
+        Person secondStudent = new PersonBuilder(firstStudent).withoutPhone().withEmail("second@example.com").build();
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+
+        new AddCommand(firstStudent).execute(modelStub);
+        CommandResult result = new AddCommand(secondStudent).execute(modelStub);
+
+        assertFalse(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE));
+        assertFalse(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE_PHONE));
+        assertFalse(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE_EMAIL));
+        assertEquals(List.of(firstStudent, secondStudent), modelStub.personsAdded);
+    }
+
+    @Test
+    public void execute_emailMissingFromOnlyOneContact_doesNotWarnAboutSharedEmptyField() throws Exception {
+        Person firstStudent = new PersonBuilder().withRole("student").withEmail("first@example.com").build();
+        Person secondStudent = new PersonBuilder(firstStudent).withPhone("87654321").withoutEmail().build();
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+
+        new AddCommand(firstStudent).execute(modelStub);
+        CommandResult result = new AddCommand(secondStudent).execute(modelStub);
+
+        assertFalse(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE));
+        assertFalse(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE_PHONE));
+        assertFalse(result.getFeedbackToUser().contains(AddCommand.MESSAGE_POSSIBLE_DUPLICATE_EMAIL));
+        assertEquals(List.of(firstStudent, secondStudent), modelStub.personsAdded);
+    }
+
+    @Test
     public void execute_personWithSameNameAndDifferentRole_addsWithoutWarning() throws Exception {
         ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
         Person firstPerson = new PersonBuilder().build();
