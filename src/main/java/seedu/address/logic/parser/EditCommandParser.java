@@ -83,8 +83,9 @@ public class EditCommandParser implements Parser<EditCommand> {
         if (!prefix.equals(PREFIX_NAME) || !trimmedValue.startsWith("\"")) {
             return value;
         }
+        // The tokenizer has already rejected a quoted name without a closing quotation mark.
         int closingQuote = trimmedValue.indexOf('"', 1);
-        return closingQuote == -1 ? "" : " " + trimmedValue.substring(closingQuote + 1);
+        return " " + trimmedValue.substring(closingQuote + 1);
     }
 
     private static void throwIfUnknownPrefix(String text) throws ParseException {
