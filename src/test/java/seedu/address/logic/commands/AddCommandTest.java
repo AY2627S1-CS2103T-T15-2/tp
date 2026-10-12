@@ -45,14 +45,16 @@ public class AddCommandTest {
     }
 
     @Test
-    public void execute_studentWithoutContactMethod_throwsCommandException() {
+    public void execute_studentWithoutContactMethod_addSuccessful() throws Exception {
         ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
         Person student = new PersonBuilder().withRole("student").withoutPhone().withoutEmail().build();
         AddCommand addCommand = new AddCommand(student);
 
-        assertThrows(CommandException.class, AddCommand.MESSAGE_CONTACT_METHOD_REQUIRED, () ->
-                addCommand.execute(modelStub));
-        assertTrue(modelStub.personsAdded.isEmpty());
+        CommandResult result = addCommand.execute(modelStub);
+
+        assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(student)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(student), modelStub.personsAdded);
     }
 
     @Test

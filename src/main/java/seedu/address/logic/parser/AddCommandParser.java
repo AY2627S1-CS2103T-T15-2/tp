@@ -43,10 +43,6 @@ public class AddCommandParser implements Parser<AddCommand> {
         Optional<Email> email = parseOptionalEmail(argMultimap);
         Role role = ParserUtil.parseRole(argMultimap.getValue(PREFIX_ROLE).get());
 
-        if (phone.isEmpty() && email.isEmpty()) {
-            throw new ParseException(AddCommand.MESSAGE_CONTACT_METHOD_REQUIRED);
-        }
-
         Person person = new Person(name, phone, email, role);
 
         return new AddCommand(person);
