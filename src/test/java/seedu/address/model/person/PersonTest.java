@@ -60,13 +60,17 @@ public class PersonTest {
         assertFalse(guardian.isGuardianWithoutContactMethod());
         assertFalse(new PersonBuilder(guardian).withoutPhone().build().isGuardianWithoutContactMethod());
         assertFalse(new PersonBuilder(guardian).withoutEmail().build().isGuardianWithoutContactMethod());
-        assertTrue(new PersonBuilder(guardian).withoutPhone().withoutEmail().build()
-                .isGuardianWithoutContactMethod());
 
         Person studentWithoutContactMethod = new PersonBuilder().withRole("student").withoutPhone().withoutEmail()
                 .build();
         assertFalse(studentWithoutContactMethod.hasContactMethod());
         assertFalse(studentWithoutContactMethod.isGuardianWithoutContactMethod());
+    }
+
+    @Test
+    public void constructor_guardianWithoutContactMethod_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD, () ->
+                new PersonBuilder().withRole("guardian").withoutPhone().withoutEmail().build());
     }
 
 

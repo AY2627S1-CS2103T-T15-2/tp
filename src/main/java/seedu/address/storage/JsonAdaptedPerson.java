@@ -101,6 +101,10 @@ class JsonAdaptedPerson {
         }
         final Optional<ContactId> modelGuardianId = Optional.ofNullable(guardianId).map(ContactId::new);
 
+        if (modelRole == Role.GUARDIAN && modelPhone.isEmpty() && modelEmail.isEmpty()) {
+            throw new IllegalValueException(Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
+        }
+
         return new Person(modelId, modelName, modelPhone, modelEmail, modelRole,
                 modelGuardianId);
     }

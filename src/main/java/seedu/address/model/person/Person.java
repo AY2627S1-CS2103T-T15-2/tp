@@ -51,6 +51,8 @@ public class Person {
             Role role, Optional<ContactId> guardianId) {
         requireAllNonNull(id, name, phone, email, role, guardianId);
         checkArgument(guardianId.isEmpty() || role == Role.STUDENT, MESSAGE_INVALID_GUARDIAN_OWNER);
+        checkArgument(role != Role.GUARDIAN || phone.isPresent() || email.isPresent(),
+                MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
         this.id = id;
         this.name = name;
         this.phone = phone;
