@@ -93,6 +93,22 @@ public class DeleteCommandTest {
     }
 
     @Test
+    public void execute_middleContact_remainingIndexesAreConsecutive() throws Exception {
+        Person first = new PersonBuilder().withName("Alex Tan").build();
+        Person middle = new PersonBuilder().withName("Bea Tan").build();
+        Person last = new PersonBuilder().withName("Cara Tan").build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(first, middle, last));
+        Model indexedModel = new ModelManager(addressBook, new UserPrefs());
+
+        new DeleteCommand(INDEX_SECOND_PERSON).execute(indexedModel);
+
+        assertEquals(List.of(first, last), List.copyOf(indexedModel.getFilteredPersonList()));
+        new DeleteCommand(INDEX_SECOND_PERSON).execute(indexedModel);
+        assertEquals(List.of(first), List.copyOf(indexedModel.getFilteredPersonList()));
+    }
+
+    @Test
     public void execute_invalidIndexUnfilteredList_throwsCommandException() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         DeleteCommand deleteCommand = new DeleteCommand(outOfBoundIndex);

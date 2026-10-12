@@ -137,6 +137,45 @@ public class LinkPersistenceTest {
     }
 
     @Test
+    public void execute_deleteLinkedStudent_persistsDeletionAndRetainsGuardian() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json"));
+        Model model = createModel();
+        Logic logic = createLogic(model, storage);
+        logic.execute("link s/1 g/2");
+
+        logic.execute("delete 1");
+
+        Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertTrue(PersonLookup.findById(reloaded.getAddressBook().getPersonList(), student.getId()).isEmpty());
+        assertEquals(guardian.getId(), reloaded.getAddressBook().getPersonList().getFirst().getId());
+        assertEquals(1, reloaded.getAddressBook().getPersonList().size());
+    }
+
+    @Test
+    public void execute_deleteSaveFailure_keepsContactsRelationshipsAndSavedFileUnchanged() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        JsonAddressBookStorage workingStorage = new JsonAddressBookStorage(file);
+        Model model = createModel();
+        createLogic(model, workingStorage).execute("link s/1 g/2");
+        String originalFile = Files.readString(file);
+        JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(file) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook book) throws IOException {
+                throw new IOException("Simulated disk failure");
+            }
+        };
+
+        Logic failingLogic = createLogic(model, failingStorage);
+        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE,
+                () -> failingLogic.execute("delete 1"));
+
+        assertEquals(2, model.getAddressBook().getPersonList().size());
+        assertEquals(Optional.of(guardian.getId()), findContact(model, student.getId()).getGuardianId());
+        assertEquals(guardian.getId(), findContact(model, guardian.getId()).getId());
+        assertEquals(originalFile, Files.readString(file));
+    }
+
+    @Test
     public void execute_invalidDataFile_disablesChangesAndProtectsFile() throws Exception {
         Path file = temporaryFolder.resolve("contacts.json");
         Files.writeString(file, "{invalid json}");
