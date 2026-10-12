@@ -21,18 +21,22 @@ public class AddCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a person to the address book. "
             + "Parameters: "
+            + PREFIX_ROLE + "ROLE "
             + PREFIX_NAME + "NAME "
             + "[" + PREFIX_PHONE + "PHONE] "
             + "[" + PREFIX_EMAIL + "EMAIL] "
-            + PREFIX_ROLE + "ROLE\n"
+            + "\n"
+            + "At least one of " + PREFIX_PHONE + "PHONE or " + PREFIX_EMAIL + "EMAIL must be provided.\n"
             + "Example: " + COMMAND_WORD + " "
+            + PREFIX_ROLE + "student "
             + PREFIX_NAME + "John Doe "
             + PREFIX_PHONE + "98765432 "
-            + PREFIX_EMAIL + "johnd@example.com "
-            + PREFIX_ROLE + "student";
+            + PREFIX_EMAIL + "johnd@example.com";
 
     public static final String MESSAGE_SUCCESS = "New person added: %1$s";
     public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in the address book.";
+    public static final String MESSAGE_CONTACT_METHOD_REQUIRED =
+            "A contact must have at least one contact method: phone or email.";
 
     private final Person toAdd;
 
@@ -53,8 +57,8 @@ public class AddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        if (toAdd.isGuardianWithoutContactMethod()) {
-            throw new CommandException(Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
+        if (!toAdd.hasContactMethod()) {
+            throw new CommandException(MESSAGE_CONTACT_METHOD_REQUIRED);
         }
 
         if (model.hasPerson(toAdd)) {
