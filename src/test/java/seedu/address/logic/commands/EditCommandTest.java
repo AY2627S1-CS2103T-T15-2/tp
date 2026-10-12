@@ -79,6 +79,67 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_removePhone_success() {
+        Person personToEdit = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person editedPerson = new PersonBuilder(personToEdit).withoutPhone().build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutPhone().build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, editedPerson.getName(),
+                editedPerson.getRole());
+
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(personToEdit, editedPerson);
+
+        assertCommandSuccess(editCommand, model, createExpectedResult(expectedMessage, INDEX_FIRST_PERSON),
+                expectedModel);
+    }
+
+    @Test
+    public void execute_removeGuardianLastContactMethod_failure() {
+        Person guardian = new PersonBuilder().withRole("guardian").withoutEmail().build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(guardian);
+        Model guardianModel = new ModelManager(addressBook, new UserPrefs());
+
+        EditCommand removePhone = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withoutPhone().build());
+        assertCommandFailure(removePhone, guardianModel, Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
+
+        EditCommand removeBoth = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withoutPhone().withoutEmail().build());
+        assertCommandFailure(removeBoth, guardianModel, Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
+    }
+
+    @Test
+    public void execute_removeGuardianPhoneKeepingEmail_success() throws Exception {
+        Person guardian = new PersonBuilder().withRole("guardian").build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(guardian);
+        Model guardianModel = new ModelManager(addressBook, new UserPrefs());
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withoutPhone().build())
+                .execute(guardianModel);
+
+        Person edited = guardianModel.getFilteredPersonList().get(0);
+        assertTrue(edited.getPhone().isEmpty());
+        assertEquals(guardian.getEmail(), edited.getEmail());
+    }
+
+    @Test
+    public void execute_removeStudentPhoneAndEmail_success() throws Exception {
+        Person student = new PersonBuilder().withRole("student").build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(student);
+        Model studentModel = new ModelManager(addressBook, new UserPrefs());
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withoutPhone().withoutEmail().build())
+                .execute(studentModel);
+
+        assertFalse(studentModel.getFilteredPersonList().get(0).hasContactMethod());
+    }
+
+    @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
         Person editedPerson = new PersonBuilder().build();
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(editedPerson).build();
