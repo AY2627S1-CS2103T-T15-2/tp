@@ -340,6 +340,71 @@ exact duplicates, displayed indexes, role validation, first links, replacements,
 relationship persistence, deletion cleanup, invalid references, failed saves and UI selection/details. JavaFX UI tests
 run on Windows desktop environments; the remaining tests run on all supported platforms.
 
+### Listing and finding contacts
+
+`list` and `find` change which contacts the list panel shows by updating the predicate of the model's filtered list.
+Neither command changes any contact data.
+
+**Listing.** `AddressBookParser` passes any text after `list` to `ListCommandParser`, which rejects non-blank text
+with `Invalid list command. Use: list`. `ListCommand` resets the filter to `PREDICATE_SHOW_ALL_PERSONS` and reports
+the number of contacts, for example `Listed 6 contacts`. `Messages#formatContactCount` uses the singular `contact`
+when there is exactly one contact. If there are no contacts, `ListCommand` reports `No contacts found.` instead.
+
+**Finding.** `FindCommandParser` treats all the text after `find` as a single search term. It removes leading and
+trailing whitespace, reduces each run of internal whitespace to one space, and rejects a term that is then empty with
+`Invalid find command. Use: find NAME`. The term is wrapped in a `NameContainsSubstringPredicate`, which matches a
+contact whose name contains the term, ignoring letter case. Consecutive spaces in the name are also treated as one
+space. `FindCommand` applies the predicate with `Model#updateFilteredPersonList` and reports either
+`Found X contacts matching: NAME.` or `No contacts found matching: NAME`.
+
+The term is matched as a whole, so word order matters: `find tan alex` does not match `Alex Tan`. Matching only the
+name keeps results predictable for the tutor, who searches for a person rather than for a phone number or email.
+
+The sequence diagram below shows how `find ale` is executed.
+
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Interactions for the `find ale` command" />
+
+### Ordering and displaying contacts
+
+**Ordering.** `ModelManager` wraps its `FilteredList` in a `SortedList` that uses `PersonDisplayOrderComparator`, and
+`Model#getFilteredPersonList` returns this sorted view. The comparator orders contacts by name, ignoring letter case
+and treating consecutive spaces as one space. Contacts with the same name are ordered by role, with guardians before
+students. The specification does not order contacts with the same name and role, so the comparator treats them as
+equal.
+
+Commands that take an index, such as `edit`, `delete` and `link`, look it up in `Model#getFilteredPersonList`, so
+the index always refers to the order shown on screen. The order is kept after `list`, `find`, `add` and
+`edit`, and when the application starts, without any command having to sort the list itself.
+
+**List cards.** `PersonCard` shows each contact as `NAME [ROLE]` followed by `Phone:` and `Email:` lines.
+`ContactDisplayFormatter` formats these values, showing `Not provided` for a missing phone number or email address.
+A student's card also shows `Guardian: NAME`, or `Guardian: None` if the student has no linked guardian.
+
+`PersonListPanel` receives both the displayed list and the complete contact list. It looks up a student's guardian in
+the complete list, so the guardian is still named when `find` hides the guardian from the displayed list. The panel
+redraws its cards whenever any contact changes, so renaming a guardian also updates the cards of the guardian's
+students.
+
+#### Design considerations:
+
+**Aspect: Where contacts are sorted**
+
+* **Alternative 1 (current choice):** Sort in `ModelManager`, as a sorted view of the filtered list.
+  * Pros: Every command and the UI see the same order, so displayed indexes always match the indexes commands use.
+  * Cons: The order is fixed for all views of the list.
+* **Alternative 2:** Sort in each command or in the UI.
+  * Pros: Different views could use different orders.
+  * Cons: Each command must remember to sort, and the UI order could differ from the indexes commands use.
+
+**Aspect: How `find` matches names**
+
+* **Alternative 1 (current choice):** Match the whole search term as part of the name, ignoring case.
+  * Pros: Tutors can find a contact from part of a name, as required by the MVP specification.
+  * Cons: Word order matters, so `find tan alex` does not match `Alex Tan`.
+* **Alternative 2:** Match any of several whole-word keywords, as in AB3.
+  * Pros: Word order does not matter.
+  * Cons: Partial names such as `ale` do not match, and searching for several words returns many unrelated contacts.
+
 ### \[Proposed\] Data archiving
 
 _{Explain here how the data archiving feature will be implemented}_
@@ -703,6 +768,28 @@ testers are expected to do more *exploratory* testing.
    * `edit 1 n/A n/B` gives `Each of n/, p/, and e/ may appear only once.`
    * Editing a contact so that it matches another contact's role, name, phone and email gives
      `This edit would create a duplicate contact.`
+
+### Finding contacts
+
+1. Prerequisites: start with an empty address book, for example by running `clear`. Then add three contacts:
+   `add r/student n/Alex Yeoh`, `add r/student n/Charlotte Oliveiro` and `add r/guardian n/David Li p/91031282`.
+
+1. Test case: `find ale`<br>
+   Expected: Only Alex Yeoh is shown. The status message shows `Found 1 contact matching: ale.`
+
+1. Test case: `find LI`<br>
+   Expected: Charlotte Oliveiro and David Li are shown, as the search ignores case and matches part of a name.
+   The status message shows `Found 2 contacts matching: LI.`
+
+1. Test case: `find yeoh alex`<br>
+   Expected: No contacts are shown, as the words must appear in the same order as in the name. The status message
+   shows `No contacts found matching: yeoh alex`
+
+1. Test case: `list` after any of the `find` commands above<br>
+   Expected: All three contacts are shown again. The status message shows `Listed 3 contacts`.
+
+1. Test case: `find`<br>
+   Expected: The shown contacts are unchanged. The status message shows `Invalid find command. Use: find NAME`
 
 ### Saving data
 
