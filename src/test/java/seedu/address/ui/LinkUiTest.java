@@ -101,6 +101,17 @@ public class LinkUiTest {
     }
 
     @Test
+    public void personCard_contactDetailLabels_wrapText() throws Exception {
+        runOnJavaFxThread(() -> {
+            PersonCard card = new PersonCard(new PersonBuilder().build(), 1, Optional.empty());
+            new Scene(card.getRoot());
+            for (String id : List.of("name", "phone", "email", "guardian")) {
+                assertTrue(label(card.getRoot(), id).isWrapText());
+            }
+        });
+    }
+
+    @Test
     public void command_link_selectsStudentAndDuplicateKeepsDetails() throws Exception {
         runOnJavaFxThread(() -> {
             Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
