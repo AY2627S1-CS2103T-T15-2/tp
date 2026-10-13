@@ -769,6 +769,28 @@ testers are expected to do more *exploratory* testing.
    * Editing a contact so that it matches another contact's role, name, phone and email gives
      `This edit would create a duplicate contact.`
 
+### Finding contacts
+
+1. Prerequisites: start with an empty address book, for example by running `clear`. Then add three contacts:
+   `add r/student n/Alex Yeoh`, `add r/student n/Charlotte Oliveiro` and `add r/guardian n/David Li p/91031282`.
+
+1. Test case: `find ale`<br>
+   Expected: Only Alex Yeoh is shown. The status message shows `Found 1 contact matching: ale.`
+
+1. Test case: `find LI`<br>
+   Expected: Charlotte Oliveiro and David Li are shown, as the search ignores case and matches part of a name.
+   The status message shows `Found 2 contacts matching: LI.`
+
+1. Test case: `find yeoh alex`<br>
+   Expected: No contacts are shown, as the words must appear in the same order as in the name. The status message
+   shows `No contacts found matching: yeoh alex`
+
+1. Test case: `list` after any of the `find` commands above<br>
+   Expected: All three contacts are shown again. The status message shows `Listed 3 contacts`.
+
+1. Test case: `find`<br>
+   Expected: The shown contacts are unchanged. The status message shows `Invalid find command. Use: find NAME`
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
