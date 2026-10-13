@@ -71,7 +71,9 @@
         "adding-a-person": "Adding a person",
         "deleting-a-person": "Deleting a person",
         "editing-a-person": "Editing a person",
+        "listing-contacts": "Listing contacts",
         "finding-contacts": "Finding contacts",
+        "ordering-and-displaying-contacts-2": "Ordering and displaying contacts",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
