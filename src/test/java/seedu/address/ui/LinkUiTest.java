@@ -206,6 +206,30 @@ public class LinkUiTest {
         });
     }
 
+    @Test
+    public void personList_guardianRenamed_refreshesStudentCard() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+            Person student = new PersonBuilder().withName("Alex Tan")
+                    .withGuardianId(guardian.getId()).build();
+            ObservableList<Person> contacts = FXCollections.observableArrayList(student, guardian);
+            PersonListPanel listPanel = new PersonListPanel(contacts, contacts);
+            new Scene(listPanel.getRoot(), 400, 600);
+            listPanel.getRoot().applyCss();
+            listPanel.getRoot().layout();
+            assertTrue(hasLabelWithText(listPanel.getRoot(), "Guardian: Mei Tan"));
+
+            contacts.set(1, new PersonBuilder(guardian).withName("Mei Lim").build());
+            listPanel.getRoot().layout();
+            assertTrue(hasLabelWithText(listPanel.getRoot(), "Guardian: Mei Lim"));
+        });
+    }
+
+    private static boolean hasLabelWithText(Region root, String text) {
+        return root.lookupAll(".label").stream()
+                .anyMatch(node -> node instanceof Label textLabel && text.equals(textLabel.getText()));
+    }
+
     private static Label label(Region root, String id) {
         return (Label) root.lookup("#" + id);
     }

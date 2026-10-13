@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
@@ -29,13 +30,15 @@ public class PersonListPanel extends UiPart<Region> {
     /**
      * Creates a {@code PersonListPanel} that displays {@code displayedPersons}.
      * Linked guardians are looked up in {@code allPersons}, so that a student's guardian is shown
-     * even when the guardian is not in the displayed list.
+     * even when the guardian is not in the displayed list. The cards are redrawn whenever any contact
+     * changes, so that a student's card shows the current name of its guardian.
      */
     public PersonListPanel(ObservableList<Person> displayedPersons, ObservableList<Person> allPersons) {
         super(FXML);
         this.allPersons = allPersons;
         personListView.setItems(displayedPersons);
         personListView.setCellFactory(listView -> new PersonListViewCell());
+        allPersons.addListener((ListChangeListener<Person>) change -> personListView.refresh());
     }
 
     /**
