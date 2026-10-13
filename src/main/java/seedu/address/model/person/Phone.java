@@ -11,12 +11,15 @@ public class Phone {
 
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Phone details must contain at least 3 digits and cannot contain control characters, '@' or '/'.";
+            "Phone details must contain at least 3 digits, cannot exceed 100 characters, and cannot contain control "
+                    + "characters, '@' or '/'.";
     public static final String MESSAGE_TOO_FEW_DIGITS = "Phone number must contain at least 3 digits.";
+    public static final String MESSAGE_TOO_LONG = "Phone details cannot exceed 100 characters.";
     public static final String MESSAGE_INVALID_CHARACTERS =
             "Phone number cannot contain control characters, '@', or '/'.";
     public static final String MESSAGE_EMPTY = "Empty phone parameter: Phone cannot be empty when p/ is specified.";
     public static final int MINIMUM_DIGIT_COUNT = 3;
+    public static final int MAX_LENGTH = 100;
     public final String value;
 
     /**
@@ -35,7 +38,9 @@ public class Phone {
      */
     public static boolean isValidPhone(String test) {
         requireNonNull(test);
-        return !hasInvalidCharacters(test) && getDigitCount(test) >= MINIMUM_DIGIT_COUNT;
+        int characterCount = test.codePointCount(0, test.length());
+        return characterCount <= MAX_LENGTH && !hasInvalidCharacters(test)
+                && getDigitCount(test) >= MINIMUM_DIGIT_COUNT;
     }
 
     /**

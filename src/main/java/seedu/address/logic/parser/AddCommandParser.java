@@ -5,6 +5,8 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import seedu.address.logic.commands.AddCommand;
@@ -22,8 +24,8 @@ public class AddCommandParser implements Parser<AddCommand> {
 
     public static final String MESSAGE_MISSING_NAME = "Missing required field: n/NAME.";
     public static final String MESSAGE_MISSING_ROLE = "Missing required field: r/ROLE.";
-    public static final String MESSAGE_MISSING_CONTACT_METHOD =
-            "Missing contact method. Specify p/PHONE, e/EMAIL, or both.";
+    public static final String MESSAGE_EMPTY_ROLE =
+            "Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.";
     public static final String MESSAGE_UNEXPECTED_TEXT = "Unexpected text outside a field. "
             + "Use n/NAME, r/ROLE, p/PHONE, or e/EMAIL.";
 
@@ -52,14 +54,22 @@ public class AddCommandParser implements Parser<AddCommand> {
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(MESSAGE_UNEXPECTED_TEXT);
         }
-        String nameValue = argMultimap.getValue(PREFIX_NAME).get();
-        if (!nameValue.startsWith("\"") && nameValue.contains("/")) {
-            throw new ParseException(AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
+        Name name = null;
+        Role role = null;
+        Optional<Phone> phone = Optional.empty();
+        Optional<Email> email = Optional.empty();
+        for (Prefix prefix : getRecognizedPrefixesInOrder(args)) {
+            String value = argMultimap.getValue(prefix).orElseThrow();
+            if (prefix.equals(PREFIX_NAME)) {
+                name = parseName(value);
+            } else if (prefix.equals(PREFIX_ROLE)) {
+                role = parseRole(value);
+            } else if (prefix.equals(PREFIX_PHONE)) {
+                phone = Optional.of(ParserUtil.parsePhone(value));
+            } else if (prefix.equals(PREFIX_EMAIL)) {
+                email = Optional.of(ParserUtil.parseEmail(value));
+            }
         }
-        Name name = ParserUtil.parseName(nameValue);
-        Optional<Phone> phone = parseOptionalPhone(argMultimap);
-        Optional<Email> email = parseOptionalEmail(argMultimap);
-        Role role = ParserUtil.parseRole(argMultimap.getValue(PREFIX_ROLE).get());
 
         if (role == Role.GUARDIAN && phone.isEmpty() && email.isEmpty()) {
             throw new ParseException(AddCommand.MESSAGE_CONTACT_METHOD_REQUIRED);
@@ -70,14 +80,68 @@ public class AddCommandParser implements Parser<AddCommand> {
         return new AddCommand(person);
     }
 
-    private static Optional<Phone> parseOptionalPhone(ArgumentMultimap argumentMultimap) throws ParseException {
-        Optional<String> phone = argumentMultimap.getValue(PREFIX_PHONE);
-        return phone.isPresent() ? Optional.of(ParserUtil.parsePhone(phone.get())) : Optional.empty();
+    private static Name parseName(String value) throws ParseException {
+        if (!value.startsWith("\"") && value.contains("/")) {
+            throw new ParseException(AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
+        }
+        return ParserUtil.parseName(value);
     }
 
-    private static Optional<Email> parseOptionalEmail(ArgumentMultimap argumentMultimap) throws ParseException {
-        Optional<String> email = argumentMultimap.getValue(PREFIX_EMAIL);
-        return email.isPresent() ? Optional.of(ParserUtil.parseEmail(email.get())) : Optional.empty();
+    private static Role parseRole(String value) throws ParseException {
+        if (value.isBlank()) {
+            throw new ParseException(MESSAGE_EMPTY_ROLE);
+        }
+        return ParserUtil.parseRole(value);
+    }
+
+    /**
+     * Returns the recognized parameter prefixes in the order they appear outside a quoted name.
+     */
+    private static List<Prefix> getRecognizedPrefixesInOrder(String args) {
+        List<Prefix> prefixes = new ArrayList<>();
+        boolean isInsideQuotedName = false;
+        for (int i = 0; i < args.length(); i++) {
+            if (isInsideQuotedName) {
+                if (args.charAt(i) == '"') {
+                    isInsideQuotedName = false;
+                }
+                continue;
+            }
+            if (args.charAt(i) != ' ') {
+                continue;
+            }
+
+            int prefixStart = i + 1;
+            Prefix prefix = getRecognizedPrefixAt(args, prefixStart);
+            if (prefix == null) {
+                continue;
+            }
+            prefixes.add(prefix);
+            if (prefix.equals(PREFIX_NAME)) {
+                int valueStart = prefixStart + PREFIX_NAME.getPrefix().length();
+                while (valueStart < args.length() && args.charAt(valueStart) == ' ') {
+                    valueStart++;
+                }
+                if (valueStart < args.length() && args.charAt(valueStart) == '"') {
+                    isInsideQuotedName = true;
+                    i = valueStart;
+                }
+            }
+        }
+        return prefixes;
+    }
+
+    private static Prefix getRecognizedPrefixAt(String args, int prefixStart) {
+        if (args.startsWith(PREFIX_ROLE.getPrefix(), prefixStart)) {
+            return PREFIX_ROLE;
+        } else if (args.startsWith(PREFIX_NAME.getPrefix(), prefixStart)) {
+            return PREFIX_NAME;
+        } else if (args.startsWith(PREFIX_PHONE.getPrefix(), prefixStart)) {
+            return PREFIX_PHONE;
+        } else if (args.startsWith(PREFIX_EMAIL.getPrefix(), prefixStart)) {
+            return PREFIX_EMAIL;
+        }
+        return null;
     }
 
     /**

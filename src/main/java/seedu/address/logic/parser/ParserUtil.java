@@ -84,6 +84,9 @@ public class ParserUtil {
         if (Phone.getDigitCount(trimmedPhone) < Phone.MINIMUM_DIGIT_COUNT) {
             throw new ParseException(Phone.MESSAGE_TOO_FEW_DIGITS);
         }
+        if (trimmedPhone.codePointCount(0, trimmedPhone.length()) > Phone.MAX_LENGTH) {
+            throw new ParseException(Phone.MESSAGE_TOO_LONG);
+        }
         return new Phone(trimmedPhone);
     }
 

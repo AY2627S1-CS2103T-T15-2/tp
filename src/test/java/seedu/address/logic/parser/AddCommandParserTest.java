@@ -193,7 +193,9 @@ public class AddCommandParserTest {
 
         // empty role
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + " " + PREFIX_ROLE, Role.MESSAGE_CONSTRAINTS);
+                + " " + PREFIX_ROLE, AddCommandParser.MESSAGE_EMPTY_ROLE);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
+                + " " + PREFIX_ROLE + "   ", AddCommandParser.MESSAGE_EMPTY_ROLE);
 
         // two invalid values, only first invalid value reported
         assertParseFailure(parser, INVALID_NAME_DESC + INVALID_PHONE_DESC + EMAIL_DESC_BOB
@@ -208,6 +210,26 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_emailInvalidValues_reportsSpecificErrors() {
+        String[][] invalidEmailCases = {
+            {"@example.com", "Email local part cannot be empty."},
+            {"alex@", "Email domain cannot be empty."},
+            {"alex @example.com", "Email address cannot contain whitespace."},
+            {"alex-@example.com", "Email local part contains unsupported characters or invalid punctuation placement."},
+            {"alex@example", "Email domain must contain at least two labels separated by a period."},
+            {"alex@.com", "Email domain labels cannot be empty."},
+            {"alex@example..com", "Email domain labels cannot be empty."},
+            {"alex@exam_ple.com", "Email domain labels may contain letters, digits, and internal hyphens only."},
+            {"alex@example.c", "Email's final domain label must contain at least two characters."}
+        };
+
+        for (String[] testCase : invalidEmailCases) {
+            String arguments = NAME_DESC_AMY + PHONE_DESC_AMY + " e/" + testCase[0] + ROLE_DESC_AMY;
+            assertParseFailure(parser, arguments, testCase[1]);
+        }
+    }
+
+    @Test
     public void parse_validNameVariations_success() {
         assertNameParsesSuccessfully("\"Randy p/e ratio\"", "Randy p/e ratio");
         assertNameParsesSuccessfully("\"ravi s/o\"", "ravi s/o");
@@ -219,6 +241,14 @@ public class AddCommandParserTest {
         assertNameParsesSuccessfully("李小龍", "李小龍");
         assertNameParsesSuccessfully("\"Alex    Tan\"", "Alex Tan");
         assertNameParsesSuccessfully("a".repeat(Name.MAX_LENGTH), "a".repeat(Name.MAX_LENGTH));
+    }
+
+    @Test
+    public void parse_multipleInvalidFields_reportsFirstFieldInCommandOrder() {
+        assertParseFailure(parser, NAME_DESC_AMY + " " + PREFIX_ROLE + "teacher p/12",
+                Role.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, NAME_DESC_AMY + " p/12 " + PREFIX_ROLE + "teacher",
+                Phone.MESSAGE_TOO_FEW_DIGITS);
     }
 
     @Test
@@ -284,6 +314,17 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_guardianWithOneContactMethod_success() {
+        Person phoneOnlyGuardian = new PersonBuilder(BOB).withoutEmail().build();
+        assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ROLE_DESC_BOB,
+                new AddCommand(phoneOnlyGuardian));
+
+        Person emailOnlyGuardian = new PersonBuilder(BOB).withoutPhone().build();
+        assertParseSuccess(parser, NAME_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB,
+                new AddCommand(emailOnlyGuardian));
+    }
+
+    @Test
     public void parse_phoneEmpty_failure() {
         String fields = NAME_DESC_AMY + EMAIL_DESC_AMY + ROLE_DESC_AMY;
         assertParseFailure(parser, fields + " p/", Phone.MESSAGE_EMPTY);
@@ -319,8 +360,31 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_phoneAtMaximumLength_success() {
+        String phoneDetails = "1".repeat(Phone.MAX_LENGTH);
+        Person expected = new PersonBuilder(AMY).withPhone(phoneDetails).withoutEmail().build();
+        assertParseSuccess(parser, NAME_DESC_AMY + " p/" + phoneDetails + ROLE_DESC_AMY,
+                new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_phoneExceedingMaximumLength_failure() {
+        String phoneDetails = "1".repeat(Phone.MAX_LENGTH + 1);
+        assertParseFailure(parser, NAME_DESC_AMY + " p/" + phoneDetails + ROLE_DESC_AMY,
+                Phone.MESSAGE_TOO_LONG);
+    }
+
+    @Test
     public void parse_phoneWithSlash_failure() {
         assertParseFailure(parser, NAME_DESC_AMY + " p/911/2222" + ROLE_DESC_AMY,
+                Phone.MESSAGE_INVALID_CHARACTERS);
+    }
+
+    @Test
+    public void parse_phoneWithForbiddenCharacters_failure() {
+        assertParseFailure(parser, NAME_DESC_AMY + " p/912@456" + ROLE_DESC_AMY,
+                Phone.MESSAGE_INVALID_CHARACTERS);
+        assertParseFailure(parser, NAME_DESC_AMY + " p/912\t456" + ROLE_DESC_AMY,
                 Phone.MESSAGE_INVALID_CHARACTERS);
     }
 }
