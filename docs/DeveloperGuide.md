@@ -294,6 +294,26 @@ exact duplicates, displayed indexes, role validation, first links, replacements,
 relationship persistence, deletion cleanup, invalid references, failed saves and UI selection/details. JavaFX UI tests
 run on Windows desktop environments; the remaining tests run on all supported platforms.
 
+### Listing and finding contacts
+
+`list` and `find` change which contacts the list panel shows by updating the predicate of the model's filtered list.
+Neither command changes any contact data.
+
+**Listing.** `AddressBookParser` passes any text after `list` to `ListCommandParser`, which rejects non-blank text
+with `Invalid list command. Use: list`. `ListCommand` resets the filter to `PREDICATE_SHOW_ALL_PERSONS` and reports
+the number of contacts, for example `Listed 6 contacts`. `Messages#formatContactCount` uses the singular `contact`
+when there is exactly one contact. If there are no contacts, `ListCommand` reports `No contacts found.` instead.
+
+**Finding.** `FindCommandParser` treats all the text after `find` as a single search term. It removes leading and
+trailing whitespace, reduces each run of internal whitespace to one space, and rejects a term that is then empty with
+`Invalid find command. Use: find NAME`. The term is wrapped in a `NameContainsSubstringPredicate`, which matches a
+contact whose name contains the term, ignoring letter case. Consecutive spaces in the name are also treated as one
+space. `FindCommand` applies the predicate with `Model#updateFilteredPersonList` and reports either
+`Found X contacts matching: NAME.` or `No contacts found matching: NAME`.
+
+The term is matched as a whole, so word order matters: `find tan alex` does not match `Alex Tan`. Matching only the
+name keeps results predictable for the tutor, who searches for a person rather than for a phone number or email.
+
 ### \[Proposed\] Data archiving
 
 _{Explain here how the data archiving feature will be implemented}_
