@@ -248,25 +248,51 @@ Every `Person` has an immutable `ContactId`, represented by a UUID. A student ha
 
 `EditCommand` preserves both IDs when constructing the edited person. `AddressBook.removePerson` clears references to a removed guardian. The detail panel resolves the guardian against the complete contact list, including contacts outside the current search results, and refreshes when either contact changes. The command result carries the student's ID so the UI can select that contact after a successful save.
 
+### Contact details and Add validation
+
+`AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE` and `e/EMAIL` as optional fields. A student
+may omit both contact methods. The parser rejects a guardian if both are absent to provide a user-facing command
+error, and `EditCommand` applies the same rule to the resulting contact before updating the model. `Person` stores
+phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
+method. This model invariant applies regardless of which code path creates a `Person`.
+
+`AddCommand` rejects an exact duplicate using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Duplicate
+identity consists of role, name, phone and email. Name and email comparisons ignore capitalization; phone numbers are
+compared after trimming leading and trailing whitespace, while internal spaces and hyphens remain significant. Two
+absent values for an optional field match, provided both contacts have at least one contact method. This gives
+students with neither a phone number nor an email address a specific exception: matching role and name alone does not
+make them exact duplicates. They may both be added, with a general possible-duplicate warning. For other contacts,
+matching role and name with different details is allowed, and Add may display a possible-duplicate warning when a
+phone number matches after spaces and hyphens are ignored, when the email addresses match, or when both contacts are
+missing the same contact method.
+
 ### Saving contacts and relationships
 
 Contact JSON records contain an `id` UUID string and an optional `guardianId` UUID string, alongside the existing fields. `JsonAdaptedPerson` restores saved IDs; legacy records without IDs receive new IDs that are persisted on the next successful save. `JsonSerializableAddressBook` first loads all contacts, rejecting duplicate IDs and duplicate contact details, then validates that every guardian reference points to an existing contact with the guardian role. A guardian cannot carry a guardian reference. Repeated JSON object fields are rejected during parsing.
 
-`Person` stores email as a non-null `Optional<Email>`. `Email` always represents a valid, present address.
-The JSON adapter keeps email as a nullable string: missing or null means absent, while empty and invalid strings
-are rejected. Existing valid strings retain their capitalization. Single-label domains and domains whose final
-label has fewer than two characters are invalid; incompatible files fail loading without being rewritten automatically.
+`Person` stores phone and email as non-null `Optional` values. `Phone` and `Email` always represent valid, present
+values. The JSON adapter keeps both fields as nullable strings: missing or null means absent, while empty and invalid
+strings are rejected. Existing valid strings retain their capitalization. Single-label email domains and domains
+whose final label has fewer than two characters are invalid; incompatible files fail loading without being rewritten
+automatically. `JsonAdaptedPerson` rejects a guardian record that has neither a phone number nor an email address
+while converting it to a model object. The `Person` constructor enforces the same invariant, so saved data cannot
+bypass the guardian contact-method requirement.
 
 Duplicate identity is Role + Name + Phone + Email. `Name.isSameName` and `Email.isSameEmail` ignore capitalization;
-two absent emails match, and an absent email never matches a present one. Full object equality remains case-sensitive
-so capitalization-only edits remain observable. Existing same-role records differing only in capitalization may
-therefore fail duplicate validation on loading. IDs and guardian links remain independent of duplicate identity.
+two absent values for optional fields match when each contact has at least one contact method. A contactless student
+is not considered an exact duplicate of another student based on role and name alone. Full object equality remains
+case-sensitive so capitalization-only edits remain observable. Existing same-role records differing only in
+capitalization may therefore fail duplicate validation on loading. IDs and guardian links remain independent of
+duplicate identity.
 
 Each command declares whether it changes data through `Command.isDataChanging()`. `LogicManager` executes data-changing commands on a candidate model carrying the original filter. It saves that candidate before replacing the live model. An unsuccessful command or save therefore cannot change the live contacts, relationships or displayed list. `JsonAddressBookStorage` writes a temporary file in the destination directory and atomically replaces the data file; it fails safely if atomic replacement is unavailable. Read-only commands do not save data.
 
 If loading fails, storage records that failure for the session. The UI displays the startup error, and all data-changing commands are disabled until the user fixes the file and restarts the application. The invalid file is never overwritten during that session. A missing data file starts with an empty list and is created by the first successful data-changing command.
 
-Relevant tests cover parsing, displayed indexes, role validation, first links, replacements, duplicates, shared guardians, ID preservation, relationship persistence, deletion cleanup, invalid references, failed saves and UI selection/details. JavaFX UI tests run on Windows desktop environments; the remaining tests run on all supported platforms.
+Relevant tests cover Add parsing and validation, optional student contact methods, guardian contact-method requirements,
+exact duplicates, displayed indexes, role validation, first links, replacements, shared guardians, ID preservation,
+relationship persistence, deletion cleanup, invalid references, failed saves and UI selection/details. JavaFX UI tests
+run on Windows desktop environments; the remaining tests run on all supported platforms.
 
 ### \[Proposed\] Data archiving
 
@@ -496,7 +522,7 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 
 The performance requirements below assume a computer with at least 4GB of RAM and a dual-core processor released within the last five years.
 
-5.  Should be able to store up to 500 contacts, with every student linked to a guardian.
+5.  Should be able to store up to 500 contacts.
 6.  Should display the result of any command within 1 second when storing 500 contacts.
 7.  Should display the contact list within 5 seconds of launching the JAR file when storing 500 contacts.
 
@@ -523,8 +549,10 @@ The performance requirements below assume a computer with at least 4GB of RAM an
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Contact**: A person record in TutorRoster that represents either a student or a guardian
 * **Role**: Whether a contact is a student or a guardian. This decides which rules apply to it
-* **Contact method**: Either a phone number or an email address. A guardian must have at least one
-* **Student**: A learner who receives or previously received tuition from the private tutor
+* **Contact method**: Either a phone number or an email address. Students may omit both; a guardian must have at least
+  one
+* **Student**: A learner who receives or previously received tuition from the private tutor. A student may have no
+  linked guardian
 * **Guardian**: An adult responsible for a student and whom the private tutor may contact regarding the student
 * **Primary guardian**: The guardian designated as the private tutor's first point of contact for a student
 * **Active student**: A student who is currently receiving tuition from the private tutor
@@ -561,6 +589,25 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Adding a person
+
+1. Start with an empty address book or use names and details not already in the address book.
+
+1. Test case: `add r/student n/Ben Lim`<br>
+   Expected: The student is added with no phone number or email address.
+
+1. Test case: `add r/guardian n/Mei Tan p/91234567`<br>
+   Expected: The guardian is added with a phone number and no email address.
+
+1. Test case: `add r/guardian n/Betsy Crowe e/betsycrowe@example.com`<br>
+   Expected: The guardian is added with an email address and no phone number.
+
+1. Test case: `add r/guardian n/No Contact`<br>
+   Expected: No contact is added. The result says `A guardian must have at least one contact method: phone or email.`
+
+1. Repeat the first command.<br>
+   Expected: No duplicate is added. The result says `This person already exists in the address book.`
 
 ### Deleting a person
 

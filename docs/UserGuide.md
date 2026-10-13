@@ -87,7 +87,8 @@ Adds a person to the address book.
 
 Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]`
 
-`ROLE` is `student` or `guardian`, ignoring letter case.
+`r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case.
+Phone and email are optional fields, subject to the guardian requirement below.
 
 Phone is optional. Omit `p/` to save a contact without a phone number; the contact displays `Not provided`.
 Supplying `p/` with an empty or whitespace-only value is rejected with:
@@ -101,6 +102,8 @@ The phone field accepts contact details with at least 3 digits and no maximum le
 numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
 has no position restriction. The `@` character is reserved for email addresses, and `/` is reserved for command
 prefixes. Control characters such as tabs and line breaks are not accepted; surrounding whitespace is trimmed.
+Invalid phone values report:
+`Phone details must contain at least 3 digits and cannot contain control characters, '@' or '/'.`
 
 Email is optional. Omit `e/` to save a contact without an email; the contact displays `Not provided`.
 Supplying `e/` with an empty or whitespace-only value is rejected with:
@@ -114,14 +117,14 @@ Domain labels allow ASCII letters, digits and hyphens. Capitalization is preserv
 Invalid values report:
 `Invalid email address: Email must contain one @ symbol, a non-empty local part, and at least two non-empty domain labels separated by periods, without spaces.`
 
-| Accepted email | Rejected email |
-| --- | --- |
-| `alex.tan@example.com` | `alex@example` |
-| `alex+tuition@example.com` | `alex @example.com` |
-| `Alex_Tan%25@Example.COM` | `@example.com` |
-| `alex%school@example.com` | `alex@.com` |
-| `alex+tuition@example.com` | `.alex@example.com` |
-| `alex+tuition@example.com` | `alex@example..com` |
+| Accepted email | Rejected email | Reason for rejection |
+| --- | --- | --- |
+| `alex.tan@example.com` | `alex@example` | Fewer than two domain labels |
+| `alex+tuition@example.com` | `alex@example.c` | Final domain label has fewer than two characters |
+| `Alex_Tan%25@Example.COM` | `.alex@example.com` | Local part starts with a special character |
+| `alex%school@example.com` | `alex..tan@example.com` | Consecutive special characters in the local part |
+| `alex-tan@example.com` | `alex-@example.com` | Local part ends with a special character |
+| `alex@example.com` | `alex@-example.com` | Domain label starts with a hyphen |
 
 The local part accepts `%` in addition to the original `+`, `_`, `.`, and `-` characters, while special
 characters cannot start or end the local part or appear consecutively. Domain labels retain the original
@@ -129,8 +132,10 @@ alphanumeric and hyphen placement restrictions, and the final label must contain
 Validation checks the address format; it does not verify that a mailbox exists.
 
 Contacts are duplicates when their role, name, phone and email all match. Name and email comparisons ignore
-capitalization. Two omitted phone numbers or emails match; an omitted value differs from a supplied one. Otherwise, identical
-contacts with different roles are allowed.
+capitalization; phone details are compared as entered, including spaces and punctuation. Two omitted phone numbers
+or emails match, while an omitted value differs from a supplied one. Identical details with different roles are
+allowed. An exact duplicate is rejected with `This person already exists in the address book.` Contacts with the
+same role and name but different details are added as separate contacts.
 
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`
