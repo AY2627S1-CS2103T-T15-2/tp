@@ -166,8 +166,8 @@ public class LinkPersistenceTest {
         };
 
         Logic failingLogic = createLogic(model, failingStorage);
-        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE,
-                () -> failingLogic.execute("delete 1"));
+        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () ->
+                failingLogic.execute("delete 1"));
 
         assertEquals(2, model.getAddressBook().getPersonList().size());
         assertEquals(Optional.of(guardian.getId()), findContact(model, student.getId()).getGuardianId());
