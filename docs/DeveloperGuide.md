@@ -769,6 +769,22 @@ testers are expected to do more *exploratory* testing.
    * Editing a contact so that it matches another contact's role, name, phone and email gives
      `This edit would create a duplicate contact.`
 
+### Listing contacts
+
+1. Prerequisites: start with an empty address book, for example by running `clear`.
+
+1. Test case: `list`<br>
+   Expected: No contacts are shown. The status message shows `No contacts found.`
+
+1. Test case: `add r/student n/Alex Yeoh`, then `list`<br>
+   Expected: Alex Yeoh is shown. The status message shows `Listed 1 contact`.
+
+1. Test case: `add r/guardian n/Mei Tan p/98765432`, then `list`<br>
+   Expected: Both contacts are shown. The status message shows `Listed 2 contacts`.
+
+1. Test case: `list 3`<br>
+   Expected: The shown contacts are unchanged. The status message shows `Invalid list command. Use: list`
+
 ### Finding contacts
 
 1. Prerequisites: start with an empty address book, for example by running `clear`. Then add three contacts:
