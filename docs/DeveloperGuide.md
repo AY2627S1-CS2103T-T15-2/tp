@@ -807,6 +807,35 @@ testers are expected to do more *exploratory* testing.
 1. Test case: `find`<br>
    Expected: The shown contacts are unchanged. The status message shows `Invalid find command. Use: find NAME`
 
+### Ordering and displaying contacts
+
+1. Prerequisites: start with an empty address book, for example by running `clear`. Then add four contacts in this
+   order: `add r/guardian n/David Li p/91031282`, `add r/student n/Charlotte Oliveiro`, `add r/student n/Alex Yeoh`
+   and `add r/guardian n/Bernice Yu p/99272758`.
+
+1. Test case: `list`<br>
+   Expected: The contacts are shown in alphabetical order: Alex Yeoh, Bernice Yu, Charlotte Oliveiro, then David Li.
+   Each card shows the name followed by the role, for example `Alex Yeoh [Student]`, and shows `Not provided` for a
+   missing phone or email. Student cards also show `Guardian: None`, and guardian cards have no guardian line.
+
+1. Test case: `link s/1 g/2`<br>
+   Expected: The status message shows `Linked student Alex Yeoh to guardian Bernice Yu.` Alex Yeoh's card shows
+   `Guardian: Bernice Yu`.
+
+1. Test case: `edit 2 n/Bernice Tan`<br>
+   Expected: Alex Yeoh's card shows `Guardian: Bernice Tan` straight away, without running another command.
+
+1. Test case: `add r/student n/David Li`<br>
+   Expected: The new student is shown directly after the guardian David Li, as guardians come before students with
+   the same name.
+
+1. Test case: `add r/guardian n/aaron lim p/81234567`<br>
+   Expected: The new guardian `aaron lim` is shown first, as the order ignores capitalisation.
+
+1. Test case: `add r/student n/Maximilian Alexander Christopher Bartholomew Montgomery Fitzgerald`<br>
+   Expected: The whole name is visible. If it does not fit on one line, it wraps onto the next line instead of being
+   cut off.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
