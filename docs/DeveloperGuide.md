@@ -251,14 +251,20 @@ Every `Person` has an immutable `ContactId`, represented by a UUID. A student ha
 ### Contact details and Add validation
 
 `AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE` and `e/EMAIL` as optional fields. A student
-may omit both contact methods. `AddCommand` rejects a guardian if both are absent, and `EditCommand` applies the same
-rule to the resulting contact before updating the model. `Person` stores phone and email as optional values; the
-guardian-specific requirement is enforced by these command paths rather than by the `Person` constructor.
+may omit both contact methods. The parser rejects a guardian if both are absent to provide a user-facing command
+error, and `EditCommand` applies the same rule to the resulting contact before updating the model. `Person` stores
+phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
+method. This model invariant applies regardless of which code path creates a `Person`.
 
 `AddCommand` rejects an exact duplicate using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Duplicate
-identity consists of role, name, phone and email. Name and email comparisons ignore capitalization, phone details
-are compared as entered, and two absent values for an optional field match. Contacts with the same role and name but
-different details are allowed as separate contacts.
+identity consists of role, name, phone and email. Name and email comparisons ignore capitalization; phone numbers are
+compared after trimming leading and trailing whitespace, while internal spaces and hyphens remain significant. Two
+absent values for an optional field match, provided both contacts have at least one contact method. This gives
+students with neither a phone number nor an email address a specific exception: matching role and name alone does not
+make them exact duplicates. They may both be added, with a general possible-duplicate warning. For other contacts,
+matching role and name with different details is allowed, and Add may display a possible-duplicate warning when a
+phone number matches after spaces and hyphens are ignored, when the email addresses match, or when both contacts are
+missing the same contact method.
 
 ### Saving contacts and relationships
 
@@ -268,12 +274,16 @@ Contact JSON records contain an `id` UUID string and an optional `guardianId` UU
 values. The JSON adapter keeps both fields as nullable strings: missing or null means absent, while empty and invalid
 strings are rejected. Existing valid strings retain their capitalization. Single-label email domains and domains
 whose final label has fewer than two characters are invalid; incompatible files fail loading without being rewritten
-automatically. The JSON adapter validates field formats but does not enforce the guardian contact-method rule.
+automatically. `JsonAdaptedPerson` rejects a guardian record that has neither a phone number nor an email address
+while converting it to a model object. The `Person` constructor enforces the same invariant, so saved data cannot
+bypass the guardian contact-method requirement.
 
 Duplicate identity is Role + Name + Phone + Email. `Name.isSameName` and `Email.isSameEmail` ignore capitalization;
-two absent emails match, and an absent email never matches a present one. Full object equality remains case-sensitive
-so capitalization-only edits remain observable. Existing same-role records differing only in capitalization may
-therefore fail duplicate validation on loading. IDs and guardian links remain independent of duplicate identity.
+two absent values for optional fields match when each contact has at least one contact method. A contactless student
+is not considered an exact duplicate of another student based on role and name alone. Full object equality remains
+case-sensitive so capitalization-only edits remain observable. Existing same-role records differing only in
+capitalization may therefore fail duplicate validation on loading. IDs and guardian links remain independent of
+duplicate identity.
 
 Each command declares whether it changes data through `Command.isDataChanging()`. `LogicManager` executes data-changing commands on a candidate model carrying the original filter. It saves that candidate before replacing the live model. An unsuccessful command or save therefore cannot change the live contacts, relationships or displayed list. `JsonAddressBookStorage` writes a temporary file in the destination directory and atomically replaces the data file; it fails safely if atomic replacement is unavailable. Read-only commands do not save data.
 
