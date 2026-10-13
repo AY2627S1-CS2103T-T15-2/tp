@@ -70,6 +70,7 @@ public class EditCommandParserTest {
     public void parse_extraPreamble_failure() {
         assertParseFailure(parser, "1 some random string", EditCommand.MESSAGE_INVALID_COMMAND);
         assertParseFailure(parser, "1 2" + NAME_DESC_AMY, EditCommand.MESSAGE_INVALID_COMMAND);
+        assertParseFailure(parser, "1\t2" + NAME_DESC_AMY, EditCommand.MESSAGE_INVALID_COMMAND);
     }
 
     @Test

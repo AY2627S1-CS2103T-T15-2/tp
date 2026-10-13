@@ -73,12 +73,12 @@ public class EditCommandParser implements Parser<EditCommand> {
         throwIfUnknownPrefix(argMultimap.getPreamble());
         for (Prefix prefix : EDIT_PREFIXES) {
             for (String value : argMultimap.getAllValues(prefix)) {
-                throwIfUnknownPrefix(prefix.getPrefix() + textOutsideQuotes(prefix, value));
+                throwIfUnknownPrefix(prefix.getPrefix() + extractTextOutsideQuotes(prefix, value));
             }
         }
     }
 
-    private static String textOutsideQuotes(Prefix prefix, String value) {
+    private static String extractTextOutsideQuotes(Prefix prefix, String value) {
         String trimmedValue = value.trim();
         if (!prefix.equals(PREFIX_NAME) || !trimmedValue.startsWith("\"")) {
             return value;
@@ -107,7 +107,7 @@ public class EditCommandParser implements Parser<EditCommand> {
     }
 
     private static Index parseIndex(String preamble) throws ParseException {
-        if (preamble.isEmpty() || preamble.contains(" ")) {
+        if (preamble.isEmpty() || preamble.matches(".*\\s.*")) {
             throw new ParseException(EditCommand.MESSAGE_INVALID_COMMAND);
         }
         try {

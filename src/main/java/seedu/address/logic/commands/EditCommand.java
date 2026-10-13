@@ -44,10 +44,10 @@ public class EditCommand extends Command {
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";
 
-    public static final String MESSAGE_FORMAT = COMMAND_WORD + " INDEX [" + PREFIX_NAME + "NAME] ["
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX [" + PREFIX_NAME + "NAME] ["
             + PREFIX_PHONE + "PHONE] [" + PREFIX_EMAIL + "EMAIL]";
-    public static final String MESSAGE_INVALID_COMMAND = "Invalid edit command. Use: " + MESSAGE_FORMAT;
-    public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter. Use: " + MESSAGE_FORMAT;
+    public static final String MESSAGE_INVALID_COMMAND = "Invalid edit command. Use: " + COMMAND_FORMAT;
+    public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter. Use: " + COMMAND_FORMAT;
     public static final String MESSAGE_REPEATED_PARAMETER = "Each of " + PREFIX_NAME + ", " + PREFIX_PHONE
             + ", and " + PREFIX_EMAIL + " may appear only once.";
     public static final String MESSAGE_INVALID_INDEX =
