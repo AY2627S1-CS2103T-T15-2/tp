@@ -46,13 +46,27 @@ public class AddCommandParserTest {
     @Test
     public void parse_removedContactFieldPrefixes_failure() {
         String fields = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB;
-        assertParseFailure(parser, " t/friends" + fields,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
-        assertParseFailure(parser, fields + " t/friends", Role.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " t/friends" + fields, AddCommand.MESSAGE_INVALID_PARAMETER);
+        assertParseFailure(parser, fields + " t/friends", AddCommand.MESSAGE_INVALID_PARAMETER);
 
-        assertParseFailure(parser, " a/123 Main Street" + fields,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
-        assertParseFailure(parser, fields + " a/123 Main Street", Role.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " a/123 Main Street" + fields, AddCommand.MESSAGE_INVALID_PARAMETER);
+        assertParseFailure(parser, fields + " a/123 Main Street", AddCommand.MESSAGE_INVALID_PARAMETER);
+    }
+
+    @Test
+    public void parse_unknownParameter_failure() {
+        String fields = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB;
+        assertParseFailure(parser, fields + " x/value", AddCommand.MESSAGE_INVALID_PARAMETER);
+        assertParseFailure(parser, NAME_DESC_BOB + " a/15" + PHONE_DESC_BOB + ROLE_DESC_BOB,
+                AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
+        assertParseFailure(parser, NAME_DESC_BOB + " s/o Kumar" + PHONE_DESC_BOB + ROLE_DESC_BOB,
+                AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
+        assertParseFailure(parser, " " + PREFIX_NAME + "Ravi s/o Kumar" + PHONE_DESC_BOB + ROLE_DESC_BOB,
+                AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
+        assertParseFailure(parser, " " + PREFIX_NAME + "ravi/so" + PHONE_DESC_BOB + ROLE_DESC_BOB,
+                AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
+        assertParseFailure(parser, " " + PREFIX_NAME + "Alex / Tan" + PHONE_DESC_BOB + ROLE_DESC_BOB,
+                AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
     }
 
     @Test
@@ -197,8 +211,10 @@ public class AddCommandParserTest {
     @Test
     public void parse_validNameVariations_success() {
         assertNameParsesSuccessfully("\"Randy p/e ratio\"", "Randy p/e ratio");
-        assertNameParsesSuccessfully("Ravi s/o Kumar", "Ravi s/o Kumar");
-        assertNameParsesSuccessfully("///", "///");
+        assertNameParsesSuccessfully("\"ravi s/o\"", "ravi s/o");
+        assertNameParsesSuccessfully("\"Ravi s/o Kumar\"", "Ravi s/o Kumar");
+        assertNameParsesSuccessfully("\"Alex / Tan\"", "Alex / Tan");
+        assertNameParsesSuccessfully("\"///\"", "///");
         assertNameParsesSuccessfully("...", "...");
         assertNameParsesSuccessfully("Mary-Anne O’Brien", "Mary-Anne O’Brien");
         assertNameParsesSuccessfully("李小龍", "李小龍");

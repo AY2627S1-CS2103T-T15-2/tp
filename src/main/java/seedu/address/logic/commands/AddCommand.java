@@ -45,6 +45,10 @@ public class AddCommand extends Command {
             + "and the same email address exists. This contact may be a duplicate, but it was added.";
     public static final String MESSAGE_CONTACT_METHOD_REQUIRED =
             "A guardian must have at least one contact method: phone or email.";
+    public static final String MESSAGE_INVALID_PARAMETER =
+            "Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE, and e/EMAIL.";
+    public static final String MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH = MESSAGE_INVALID_PARAMETER
+            + " If '/' is part of the name, enclose the entire name in double quotes.";
 
     private final Person toAdd;
 
