@@ -184,8 +184,16 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * A guardian must keep at least one contact method. An edit that would leave a guardian with neither a phone number
   nor an email is rejected with `A guardian must have at least one contact method: phone or email.`
   A student can have both removed.
-* A name containing a `/` can be wrapped in double quotes, as in `add`. Anything inside the quotes is treated as
-  part of the name, so `edit 1 n/"Randy p/e ratio"` sets the name to `Randy p/e ratio` without reading `p/` as a phone.
+* A name containing a word that ends in `/`, such as `s/o`, must be wrapped in double quotes. Anything inside the
+  quotes is treated as part of the name, so `edit 1 n/"Randy p/e ratio"` sets the name to `Randy p/e ratio` without
+  reading `p/` as a phone. Unquoted, `edit 1 n/Ravi s/o Kumar` is rejected because `s/` is read as a parameter.
+* Each of `n/`, `p/` and `e/` may appear only once. Any other parameter, such as `r/` or `a/`, is rejected with
+  `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`. The role of a contact cannot be edited.
+* A missing index, or extra text before the first parameter, is rejected with
+  `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`.
+* An index that is not a positive whole number is rejected with
+  `The contact index must be a positive integer shown in the list.` Leading zeroes are accepted, so `02` means 2.
+  An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
