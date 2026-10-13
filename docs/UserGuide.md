@@ -149,12 +149,15 @@ Format: `list`
 * Any text after `list` is rejected; for example, `list 3` shows `Invalid list command. Use: list`.
 * The result shows the number of contacts listed; for example, `Listed 6 contacts`.
 * If there are no saved contacts, `No contacts found.` is shown.
-* Each contact is shown with its index, name and role, phone number, and email address. For example:
+* Each contact is shown with its index, name and role, phone number, and email address. Students also show
+  their linked guardian. For example:
   ```
   1. Alex Tan [Student]
   Phone: 91234567
   Email: alex@example.com
+  Guardian: Mei Tan
   ```
+* If a student has no linked guardian, `Guardian: None` is shown.
 * If a contact has no phone number or email address, `Not provided` is shown instead; for example, `Phone: Not provided`.
 
 ### Editing a person: `edit`
