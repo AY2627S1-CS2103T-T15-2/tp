@@ -51,6 +51,8 @@ public class Person {
             Role role, Optional<ContactId> guardianId) {
         requireAllNonNull(id, name, phone, email, role, guardianId);
         checkArgument(guardianId.isEmpty() || role == Role.STUDENT, MESSAGE_INVALID_GUARDIAN_OWNER);
+        checkArgument(role != Role.GUARDIAN || phone.isPresent() || email.isPresent(),
+                MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
         this.id = id;
         this.name = name;
         this.phone = phone;
@@ -106,7 +108,8 @@ public class Person {
 
     /**
      * Returns true if both persons have the same identity fields.
-     * Identity consists of role, name, optional phone and optional email, ignoring name and email case.
+     * Identity consists of role, name, phone and email, ignoring name and email case. At least one contact method
+     * must be present; role and name alone are insufficient to identify a duplicate.
      */
     public boolean isSamePerson(Person otherPerson) {
         if (otherPerson == this) {
@@ -114,17 +117,59 @@ public class Person {
         }
 
         return otherPerson != null
+                && hasContactMethod()
+                && otherPerson.hasContactMethod()
                 && role == otherPerson.role
                 && otherPerson.getName().isSameName(getName())
-                && otherPerson.getPhone().equals(getPhone())
+                && hasSamePhone(otherPerson)
                 && hasSameEmail(otherPerson);
+    }
+
+    /**
+     * Returns true if both persons have the same role and name, ignoring name case.
+     */
+    public boolean hasSameNameAndRole(Person otherPerson) {
+        return otherPerson != null
+                && role == otherPerson.role
+                && name.isSameName(otherPerson.name);
+    }
+
+    /**
+     * Returns true if both persons have phone numbers that match after removing spaces and hyphens.
+     */
+    public boolean hasSamePhoneIgnoringFormatting(Person otherPerson) {
+        return otherPerson != null
+                && phone.isPresent()
+                && otherPerson.phone.isPresent()
+                && normalizePhone(phone.get()).equals(normalizePhone(otherPerson.phone.get()));
+    }
+
+    /**
+     * Returns true if both persons have the same email address, ignoring letter case.
+     */
+    public boolean hasSameEmailAddress(Person otherPerson) {
+        return otherPerson != null
+                && email.isPresent()
+                && otherPerson.email.isPresent()
+                && email.get().isSameEmail(otherPerson.email.get());
+    }
+
+    private boolean hasSamePhone(Person otherPerson) {
+        if (phone.isEmpty() || otherPerson.phone.isEmpty()) {
+            return phone.isEmpty() && otherPerson.phone.isEmpty();
+        }
+        return phone.get().value.trim().equals(otherPerson.phone.get().value.trim());
+    }
+
+    private String normalizePhone(Phone phoneNumber) {
+        return phoneNumber.value.trim().replace(" ", "").replace("-", "");
     }
 
     private boolean hasSameEmail(Person otherPerson) {
         if (email.isEmpty() || otherPerson.email.isEmpty()) {
             return email.isEmpty() && otherPerson.email.isEmpty();
         }
-        return email.get().isSameEmail(otherPerson.email.get());
+        return hasSameEmailAddress(otherPerson);
     }
 
     /**

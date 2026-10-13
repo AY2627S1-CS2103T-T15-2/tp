@@ -119,6 +119,14 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_guardianWithoutContactMethod_rejectsInvalidData() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, null, null,
+                "GUARDIAN", null);
+        assertThrows(IllegalValueException.class, Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD,
+                person::toModelType);
+    }
+
+    @Test
     public void toModelType_invalidRole_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL, INVALID_ROLE,

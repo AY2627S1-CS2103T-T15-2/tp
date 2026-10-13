@@ -45,18 +45,58 @@ public class PersonTest {
     }
 
     @Test
+    public void isSamePerson_phoneFormattingDifferences_areNotExactDuplicates() {
+        Person spacedPhone = new PersonBuilder(ALICE).withPhone("+65 9123 4567").build();
+        Person hyphenatedPhone = new PersonBuilder(ALICE).withPhone("+65-9123-4567").build();
+        Person differentPhone = new PersonBuilder(ALICE).withPhone("+65-9123-4568").build();
+
+        assertFalse(spacedPhone.isSamePerson(hyphenatedPhone));
+        assertTrue(spacedPhone.hasSamePhoneIgnoringFormatting(hyphenatedPhone));
+        assertFalse(spacedPhone.isSamePerson(differentPhone));
+    }
+
+    @Test
+    public void contactComparisonHelpers_handleNullAndMissingContactMethods() {
+        Person contact = new PersonBuilder().withRole("student").build();
+        Person withoutPhone = new PersonBuilder(contact).withoutPhone().build();
+        Person withoutEmail = new PersonBuilder(contact).withoutEmail().build();
+
+        assertFalse(contact.hasSameNameAndRole(null));
+        assertFalse(contact.hasSamePhoneIgnoringFormatting(null));
+        assertFalse(withoutPhone.hasSamePhoneIgnoringFormatting(contact));
+        assertFalse(contact.hasSamePhoneIgnoringFormatting(withoutPhone));
+        assertFalse(contact.hasSameEmailAddress(null));
+        assertFalse(withoutEmail.hasSameEmailAddress(contact));
+        assertFalse(contact.hasSameEmailAddress(withoutEmail));
+        assertFalse(contact.hasSameNameAndRole(new PersonBuilder(contact).withRole("guardian").build()));
+    }
+
+    @Test
+    public void isSamePerson_studentWithoutContactMethods_nameAndRoleAloneAreNotDuplicate() {
+        Person studentWithoutContact = new PersonBuilder().withRole("student").withoutPhone().withoutEmail().build();
+        Person anotherStudentWithoutContact = new PersonBuilder(studentWithoutContact)
+                .withId(ContactId.generate()).build();
+
+        assertFalse(studentWithoutContact.isSamePerson(anotherStudentWithoutContact));
+    }
+
+    @Test
     public void isGuardianWithoutContactMethod() {
         Person guardian = new PersonBuilder().withRole("guardian").build();
         assertFalse(guardian.isGuardianWithoutContactMethod());
         assertFalse(new PersonBuilder(guardian).withoutPhone().build().isGuardianWithoutContactMethod());
         assertFalse(new PersonBuilder(guardian).withoutEmail().build().isGuardianWithoutContactMethod());
-        assertTrue(new PersonBuilder(guardian).withoutPhone().withoutEmail().build()
-                .isGuardianWithoutContactMethod());
 
         Person studentWithoutContactMethod = new PersonBuilder().withRole("student").withoutPhone().withoutEmail()
                 .build();
         assertFalse(studentWithoutContactMethod.hasContactMethod());
         assertFalse(studentWithoutContactMethod.isGuardianWithoutContactMethod());
+    }
+
+    @Test
+    public void constructor_guardianWithoutContactMethod_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD, () ->
+                new PersonBuilder().withRole("guardian").withoutPhone().withoutEmail().build());
     }
 
 
