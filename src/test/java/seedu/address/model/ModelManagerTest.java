@@ -103,6 +103,17 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void getFilteredPersonList_sameNameDifferentRole_guardianBeforeStudent() {
+        Person student = new PersonBuilder().withName("Alex Tan").withRole("student")
+                .withPhone("91234567").build();
+        Person guardian = new PersonBuilder().withName("Alex Tan").withRole("guardian")
+                .withPhone("98765432").build();
+        modelManager.addPerson(student);
+        modelManager.addPerson(guardian);
+        assertEquals(List.of(guardian, student), modelManager.getFilteredPersonList());
+    }
+
+    @Test
     public void equals() {
         AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
         AddressBook differentAddressBook = new AddressBook();
