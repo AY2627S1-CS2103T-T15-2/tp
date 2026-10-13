@@ -40,6 +40,41 @@ public class AddCommandIntegrationTest {
     }
 
     @Test
+    public void execute_studentWithoutContactMethods_success() {
+        Person student = new PersonBuilder().withRole("student").withoutPhone().withoutEmail().build();
+
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.addPerson(student);
+
+        assertCommandSuccess(new AddCommand(student), model,
+                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(student)), expectedModel);
+    }
+
+    @Test
+    public void execute_guardianWithPhoneOnly_success() {
+        Person guardian = new PersonBuilder().withName("Phone Only Guardian").withRole("guardian")
+                .withoutEmail().build();
+
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.addPerson(guardian);
+
+        assertCommandSuccess(new AddCommand(guardian), model,
+                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(guardian)), expectedModel);
+    }
+
+    @Test
+    public void execute_guardianWithEmailOnly_success() {
+        Person guardian = new PersonBuilder().withName("Email Only Guardian").withRole("guardian")
+                .withoutPhone().withEmail("guardian@example.com").build();
+
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.addPerson(guardian);
+
+        assertCommandSuccess(new AddCommand(guardian), model,
+                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(guardian)), expectedModel);
+    }
+
+    @Test
     public void execute_duplicatePerson_throwsCommandException() {
         Person personInList = model.getAddressBook().getPersonList().get(0);
         assertCommandFailure(new AddCommand(personInList), model,

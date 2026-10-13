@@ -87,7 +87,8 @@ Adds a person to the address book.
 
 Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]`
 
-`ROLE` is `student` or `guardian`, ignoring letter case.
+`r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case.
+Phone and email are optional fields, subject to the guardian requirement below.
 
 Phone is optional. Omit `p/` to save a contact without a phone number; the contact displays `Not provided`.
 Supplying `p/` with an empty or whitespace-only value is rejected with:
@@ -95,12 +96,14 @@ Supplying `p/` with an empty or whitespace-only value is rejected with:
 
 A guardian must have at least one contact method. Adding a guardian with neither `p/` nor `e/` is rejected with:
 `A guardian must have at least one contact method: phone or email.`
-A student can be saved without a phone number or email.
+For students, phone and email are independently optional. A student can have both, either one, or neither.
 
 The phone field accepts contact details with at least 3 digits and no maximum length. You can include multiple
 numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
 has no position restriction. The `@` character is reserved for email addresses, and `/` is reserved for command
 prefixes. Control characters such as tabs and line breaks are not accepted; surrounding whitespace is trimmed.
+Invalid phone values report:
+`Phone details must contain at least 3 digits and cannot contain control characters, '@' or '/'.`
 
 Email is optional. Omit `e/` to save a contact without an email; the contact displays `Not provided`.
 Supplying `e/` with an empty or whitespace-only value is rejected with:
@@ -114,14 +117,14 @@ Domain labels allow ASCII letters, digits and hyphens. Capitalization is preserv
 Invalid values report:
 `Invalid email address: Email must contain one @ symbol, a non-empty local part, and at least two non-empty domain labels separated by periods, without spaces.`
 
-| Accepted email | Rejected email |
-| --- | --- |
-| `alex.tan@example.com` | `alex@example` |
-| `alex+tuition@example.com` | `alex @example.com` |
-| `Alex_Tan%25@Example.COM` | `@example.com` |
-| `alex%school@example.com` | `alex@.com` |
-| `alex+tuition@example.com` | `.alex@example.com` |
-| `alex+tuition@example.com` | `alex@example..com` |
+| Accepted email | Rejected email | Reason for rejection |
+| --- | --- | --- |
+| `alex.tan@example.com` | `alex@example` | Fewer than two domain labels |
+| `alex+tuition@example.com` | `alex@example.c` | Final domain label has fewer than two characters |
+| `Alex_Tan%25@Example.COM` | `.alex@example.com` | Local part starts with a special character |
+| `alex%school@example.com` | `alex..tan@example.com` | Consecutive special characters in the local part |
+| `alex-tan@example.com` | `alex-@example.com` | Local part ends with a special character |
+| `alex@example.com` | `alex@-example.com` | Domain label starts with a hyphen |
 
 The local part accepts `%` in addition to the original `+`, `_`, `.`, and `-` characters, while special
 characters cannot start or end the local part or appear consecutively. Domain labels retain the original
@@ -129,8 +132,10 @@ alphanumeric and hyphen placement restrictions, and the final label must contain
 Validation checks the address format; it does not verify that a mailbox exists.
 
 Contacts are duplicates when their role, name, phone and email all match. Name and email comparisons ignore
-capitalization. Two omitted phone numbers or emails match; an omitted value differs from a supplied one. Otherwise, identical
-contacts with different roles are allowed.
+capitalization; phone details are compared as entered, including spaces and punctuation. Two omitted phone numbers
+or emails match, while an omitted value differs from a supplied one. Identical details with different roles are
+allowed. An exact duplicate is rejected with `This person already exists in the address book.` Contacts with the
+same role and name but different details are added as separate contacts.
 
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`
@@ -149,6 +154,16 @@ Format: `list`
 * Any text after `list` is rejected; for example, `list 3` shows `Invalid list command. Use: list`.
 * The result shows the number of contacts listed; for example, `Listed 6 contacts`.
 * If there are no saved contacts, `No contacts found.` is shown.
+* Each contact is shown with its index, name and role, phone number, and email address. Students also show
+  their linked guardian. For example:
+  ```
+  1. Alex Tan [Student]
+  Phone: 91234567
+  Email: alex@example.com
+  Guardian: Mei Tan
+  ```
+* If a student has no linked guardian, `Guardian: None` is shown.
+* If a contact has no phone number or email address, `Not provided` is shown instead; for example, `Phone: Not provided`.
 
 ### Editing a person: `edit`
 
@@ -162,8 +177,13 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * After a successful edit, the edited contact is selected and its details are shown in the details panel.
 * Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
   as `add`. An empty `e/` is rejected.
-* `e/NONE` removes the existing email. Only the exact value `NONE` in capital letters does this; `e/none` is
-  treated as an invalid email.
+* `e/NONE` removes the existing email. `NONE` ignores letter case, so `e/none` also works.
+* Omitting `p/` preserves the existing phone number, including its absence. Supplying a phone number uses the same
+  validation as `add`. An empty `p/` is rejected.
+* `p/NONE` removes the existing phone number. As with `e/NONE`, letter case is ignored.
+* A guardian must keep at least one contact method. An edit that would leave a guardian with neither a phone number
+  nor an email is rejected with `A guardian must have at least one contact method: phone or email.`
+  A student can have both removed.
 * A name containing a `/` can be wrapped in double quotes, as in `add`. Anything inside the quotes is treated as
   part of the name, so `edit 1 n/"Randy p/e ratio"` sets the name to `Randy p/e ratio` without reading `p/` as a phone.
 
@@ -171,6 +191,7 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
 *  `edit 2 e/NONE` Removes the email of the 2nd person.
+*  `edit 2 p/NONE` Removes the phone number of the 2nd person.
 *  `edit 3 n/"Ravi s/o Kumar"` Edits the name of the 3rd person to be `Ravi s/o Kumar`.
 
 ### Locating contacts by name: `find`
@@ -187,6 +208,7 @@ Format: `find NAME`
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.
 * The result shows the number of matches; for example, `Found 2 contacts matching: li.`
 * If no contact matches, `No contacts found matching: NAME` is shown.
+* Matching contacts are shown in the same format as `list`.
 
 Examples:
 * `find ale` returns `Alex Yeoh`

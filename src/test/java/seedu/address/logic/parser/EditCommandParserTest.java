@@ -186,10 +186,33 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_emailNoneWrongCase_failure() {
-        // only the exact value NONE removes the email
-        assertParseFailure(parser, "1 e/none", "Email address must contain exactly one @ symbol.");
-        assertParseFailure(parser, "1 e/None", "Email address must contain exactly one @ symbol.");
+    public void parse_phoneNone_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutPhone().build();
+        assertParseSuccess(parser, "1 p/NONE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseSuccess(parser, "1 p/ NONE ", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+
+        descriptor = new EditPersonDescriptorBuilder().withoutPhone().withoutEmail().build();
+        assertParseSuccess(parser, "1 p/NONE e/NONE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_phoneNoneAnyCase_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutPhone().build();
+        assertParseSuccess(parser, "1 p/none", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseSuccess(parser, "1 p/nOnE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_emptyPhone_failure() {
+        assertParseFailure(parser, "1 p/", Phone.MESSAGE_EMPTY);
+        assertParseFailure(parser, "1 p/   ", Phone.MESSAGE_EMPTY);
+    }
+
+    @Test
+    public void parse_emailNoneAnyCase_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutEmail().build();
+        assertParseSuccess(parser, "1 e/none", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseSuccess(parser, "1 e/None", new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test
