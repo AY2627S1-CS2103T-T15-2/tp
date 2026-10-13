@@ -244,7 +244,9 @@ _{more aspects and alternatives to be added}_
 
 `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]` changes the name, phone number or email address of a displayed contact.
 The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
-first displayed contact `p`.
+first displayed contact `p`. Because edit changes data, `LogicManager` runs it on a candidate copy `c` of the live
+model `m`, saves `c` through `Storage`, and only then copies `c`'s data into `m`. If the save fails, `m` is never
+touched.
 
 <puml src="diagrams/EditSequenceDiagram.puml" alt="Interactions inside the Logic component for the `edit 1 p/NONE` command" />
 
