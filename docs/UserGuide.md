@@ -194,6 +194,13 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * An index that is not a positive whole number is rejected with
   `The contact index must be a positive integer shown in the list.` Leading zeroes are accepted, so `02` means 2.
   An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
+* An edit that would make the contact identical to another contact is rejected with
+  `This edit would create a duplicate contact.`
+* If the edited contact has the same role and name as another contact, and the two also share a phone number,
+  an email address, or a missing phone number or email, the edit still goes ahead but a warning is shown below the
+  success message, as with `add`. For example, renaming a student to the name of another student with the same phone
+  number but a different email shows `Warning: Another contact with the same role and name, and a phone number
+  matching after ignoring spaces and hyphens exists. This contact may be a duplicate, but it was updated.`
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.

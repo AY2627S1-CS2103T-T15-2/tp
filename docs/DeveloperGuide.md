@@ -273,6 +273,12 @@ The edit is then rejected if it would leave a guardian with no phone number and 
 would duplicate another contact. The duplicate check is skipped when the edited contact still matches its original
 duplicate identity, so changing only the capitalization of a name is allowed.
 
+If the edit is allowed, `getPossibleDuplicateWarning` compares the edited contact with every other contact, excluding
+itself by ID, using the same rules as `add`. A contact with the same role and name that also has a matching phone
+number (ignoring spaces and hyphens), the same email address, or a shared missing phone number or email produces a
+warning, which is appended to the success message. The edit is still applied, because different people may share a
+name.
+
 On success, `Model#setPerson` replaces the contact and the full list is shown again. The `CommandResult` carries the
 edited contact's ID, and `MainWindow` selects that contact so the detail panel shows the update. Like other
 data-changing commands, `LogicManager` runs the edit on a candidate model and saves it before replacing the live
@@ -283,6 +289,8 @@ model, so a failed save leaves the contact unchanged.
 * **Removing a field:** `p/NONE` and `e/NONE` were chosen over an empty `p/` or `e/`, which is rejected as a likely
   typo. `NONE` cannot be a valid phone number or email, so it never clashes with real data. Letter case is ignored as
   a deliberate choice for ease of typing.
+* **Possible duplicates:** a warning was chosen over rejecting the edit, matching `add`, so that two people with
+  the same name can both be recorded. Rejecting would force the tutor to change one name just to save the record.
 * **Rejecting unknown parameters:** silently keeping `a/15` as part of a name would save data the user did not intend.
   The cost is that names containing a word ending in `/` must be quoted.
 
@@ -739,8 +747,9 @@ testers are expected to do more *exploratory* testing.
 
 ### Editing a person
 
-1. Prerequisites: start from the sample data and run `list`. Note which contacts are students and which are
-   guardians.
+1. Prerequisites: start with an empty address book, for example by running `clear`. Then add three contacts:
+   `add r/student n/Bernice Yu p/99272758`, `add r/guardian n/David Li p/91031282` and
+   `add r/student n/Irfan Ibrahim e/irfan@example.com`.
 
 1. Test case: `edit 1 n/Alex Yeoh p/91234567`<br>
    Expected: The first contact's name and phone are updated. The status message shows
@@ -758,6 +767,11 @@ testers are expected to do more *exploratory* testing.
 
 1. Test case: `edit 1 n/"Ravi s/o Kumar"`<br>
    Expected: The name becomes `Ravi s/o Kumar`. Without the quotes, the command is rejected with `Unknown parameter`.
+
+1. Test case: `add r/student n/Roy Balakrishnan p/92624417 e/irfan@example.com`, then `edit INDEX n/Irfan Ibrahim`
+   using Roy's index.<br>
+   Expected: The name is updated. Below the success message, a warning says another contact with the same role and
+   name, and the same email address exists, and that the contact may be a duplicate but was updated.
 
 1. Incorrect commands to try, each leaving the contacts unchanged:
    * `edit 1` gives `At least one of n/, p/, or e/ must be provided.`
