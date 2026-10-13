@@ -80,11 +80,12 @@ public class EditCommand extends Command {
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
-        Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
-
-        if (editedPerson.isGuardianWithoutContactMethod()) {
+        if (personToEdit.getRole() == Role.GUARDIAN
+                && getUpdatedPhone(personToEdit, editPersonDescriptor).isEmpty()
+                && getUpdatedEmail(personToEdit, editPersonDescriptor).isEmpty()) {
             throw new CommandException(Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
         }
+        Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
         if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
@@ -104,16 +105,24 @@ public class EditCommand extends Command {
         assert personToEdit != null;
 
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
-        Optional<Phone> updatedPhone = editPersonDescriptor.isPhoneRemoved()
-                ? Optional.empty()
-                : editPersonDescriptor.getPhone().or(personToEdit::getPhone);
-        Optional<Email> updatedEmail = editPersonDescriptor.isEmailRemoved()
-                ? Optional.empty()
-                : editPersonDescriptor.getEmail().or(personToEdit::getEmail);
+        Optional<Phone> updatedPhone = getUpdatedPhone(personToEdit, editPersonDescriptor);
+        Optional<Email> updatedEmail = getUpdatedEmail(personToEdit, editPersonDescriptor);
         Role role = personToEdit.getRole();
 
         return new Person(personToEdit.getId(), updatedName, updatedPhone,
                 updatedEmail, role, personToEdit.getGuardianId());
+    }
+
+    private static Optional<Phone> getUpdatedPhone(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {
+        return editPersonDescriptor.isPhoneRemoved()
+                ? Optional.empty()
+                : editPersonDescriptor.getPhone().or(personToEdit::getPhone);
+    }
+
+    private static Optional<Email> getUpdatedEmail(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {
+        return editPersonDescriptor.isEmailRemoved()
+                ? Optional.empty()
+                : editPersonDescriptor.getEmail().or(personToEdit::getEmail);
     }
 
     @Override

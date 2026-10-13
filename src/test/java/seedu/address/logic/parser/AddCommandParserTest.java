@@ -261,6 +261,12 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_guardianPhoneAndEmailOmitted_failure() {
+        assertParseFailure(parser, NAME_DESC_AMY + ROLE_DESC_BOB,
+                AddCommand.MESSAGE_CONTACT_METHOD_REQUIRED);
+    }
+
+    @Test
     public void parse_phoneEmpty_failure() {
         String fields = NAME_DESC_AMY + EMAIL_DESC_AMY + ROLE_DESC_AMY;
         assertParseFailure(parser, fields + " p/", Phone.MESSAGE_EMPTY);
