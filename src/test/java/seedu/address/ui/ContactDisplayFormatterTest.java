@@ -52,4 +52,20 @@ public class ContactDisplayFormatterTest {
         Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
         assertEquals("Mei Tan [Guardian]", ContactDisplayFormatter.formatNameWithRole(guardian));
     }
+
+    @Test
+    public void formatGuardianName_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ContactDisplayFormatter.formatGuardianName(null));
+    }
+
+    @Test
+    public void formatGuardianName_noGuardian_returnsNone() {
+        assertEquals("None", ContactDisplayFormatter.formatGuardianName(Optional.empty()));
+    }
+
+    @Test
+    public void formatGuardianName_linkedGuardian_returnsGuardianName() {
+        Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+        assertEquals("Mei Tan", ContactDisplayFormatter.formatGuardianName(Optional.of(guardian)));
+    }
 }

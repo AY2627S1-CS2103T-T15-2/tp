@@ -12,6 +12,7 @@ import seedu.address.model.person.Person;
 public class ContactDisplayFormatter {
 
     public static final String MISSING_CONTACT_METHOD = "Not provided";
+    public static final String MISSING_GUARDIAN = "None";
 
     private ContactDisplayFormatter() {
         // Prevents instantiation, as this class only has static methods.
@@ -32,5 +33,13 @@ public class ContactDisplayFormatter {
     public static String formatNameWithRole(Person person) {
         requireNonNull(person);
         return person.getName().fullName + " [" + person.getRole() + "]";
+    }
+
+    /**
+     * Returns the name of {@code guardian}, or "None" if {@code guardian} is empty.
+     */
+    public static String formatGuardianName(Optional<Person> guardian) {
+        requireNonNull(guardian);
+        return guardian.map(person -> person.getName().fullName).orElse(MISSING_GUARDIAN);
     }
 }

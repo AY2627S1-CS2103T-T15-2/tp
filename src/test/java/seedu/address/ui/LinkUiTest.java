@@ -87,7 +87,7 @@ public class LinkUiTest {
     public void personCard_displaysContactDetailsWithoutAddressOrTags() throws Exception {
         runOnJavaFxThread(() -> {
             Person person = new PersonBuilder().withoutEmail().build();
-            PersonCard card = new PersonCard(person, 1);
+            PersonCard card = new PersonCard(person, 1, Optional.empty());
             new Scene(card.getRoot());
             assertNull(card.getRoot().lookup("#address"));
             assertEquals(person.getName() + " [" + person.getRole() + "]",
@@ -95,6 +95,7 @@ public class LinkUiTest {
             assertEquals("Phone: " + person.getPhone().get(), label(card.getRoot(), "phone").getText());
             assertEquals("Email: Not provided", label(card.getRoot(), "email").getText());
             assertNull(card.getRoot().lookup("#role"));
+            assertEquals("Guardian: None", label(card.getRoot(), "guardian").getText());
             assertNull(card.getRoot().lookup("#tags"));
         });
     }
@@ -161,7 +162,7 @@ public class LinkUiTest {
             Person student = new PersonBuilder().withName("Alex Tan").build();
             Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
             ObservableList<Person> contacts = FXCollections.observableArrayList(student, guardian);
-            PersonListPanel listPanel = new PersonListPanel(contacts);
+            PersonListPanel listPanel = new PersonListPanel(contacts, contacts);
             PersonDetailsPanel details = new PersonDetailsPanel(contacts, listPanel.selectedPersonProperty());
             new Scene(details.getRoot());
             details.getRoot().applyCss();
@@ -245,10 +246,14 @@ public class LinkUiTest {
             panel.getRoot().applyCss();
             assertEquals("Email: Not provided", label(panel.getRoot(), "email").getText());
             assertEquals("Guardian email: Not provided", label(panel.getRoot(), "guardianEmail").getText());
-            PersonCard card = new PersonCard(student, 1);
+            PersonCard card = new PersonCard(student, 1, Optional.of(guardian));
             new Scene(card.getRoot());
             card.getRoot().applyCss();
             assertEquals("Email: Not provided", label(card.getRoot(), "email").getText());
+            assertEquals("Guardian: Mei Tan", label(card.getRoot(), "guardian").getText());
+            PersonCard guardianCard = new PersonCard(guardian, 2, Optional.empty());
+            new Scene(guardianCard.getRoot());
+            assertFalse(guardianCard.getRoot().lookup("#guardian").isVisible());
 
             contacts.set(1, new PersonBuilder(guardian).withEmail("Mei+Tuition@Example.COM").build());
             assertEquals("Guardian email: Mei+Tuition@Example.COM", label(panel.getRoot(), "guardianEmail").getText());
