@@ -169,7 +169,10 @@ public class AddCommandParserTest {
 
         // all prefixes missing
         assertParseFailure(parser, VALID_NAME_BOB + VALID_PHONE_BOB + VALID_EMAIL_BOB,
-                AddCommandParser.MESSAGE_MISSING_NAME);
+                AddCommandParser.MESSAGE_MISSING_ROLE);
+
+        // empty command: role is the first required parameter in the documented format
+        assertParseFailure(parser, "", AddCommandParser.MESSAGE_MISSING_ROLE);
     }
 
     @Test
@@ -191,6 +194,9 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + INVALID_ROLE_DESC, Role.MESSAGE_CONSTRAINTS);
 
+        // an invalid role is reported before a missing name
+        assertParseFailure(parser, INVALID_ROLE_DESC, Role.MESSAGE_CONSTRAINTS);
+
         // empty role
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + " " + PREFIX_ROLE, AddCommandParser.MESSAGE_EMPTY_ROLE);
@@ -202,6 +208,15 @@ public class AddCommandParserTest {
                 + ROLE_DESC_BOB,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
                         + "hyphens, periods, and slashes.");
+
+        // invalid fields are checked in documented parameter order, regardless of input order
+        assertParseFailure(parser, INVALID_EMAIL_DESC + INVALID_PHONE_DESC + INVALID_NAME_DESC + INVALID_ROLE_DESC,
+                Role.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, INVALID_EMAIL_DESC + INVALID_PHONE_DESC + INVALID_NAME_DESC + ROLE_DESC_BOB,
+                "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
+                        + "hyphens, periods, and slashes.");
+        assertParseFailure(parser, INVALID_EMAIL_DESC + INVALID_PHONE_DESC + NAME_DESC_BOB + ROLE_DESC_BOB,
+                Phone.MESSAGE_TOO_FEW_DIGITS);
 
         // non-empty preamble
         assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
@@ -244,11 +259,11 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_multipleInvalidFields_reportsFirstFieldInCommandOrder() {
+    public void parse_multipleInvalidFields_reportsFirstFieldInParameterOrder() {
         assertParseFailure(parser, NAME_DESC_AMY + " " + PREFIX_ROLE + "teacher p/12",
                 Role.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, NAME_DESC_AMY + " p/12 " + PREFIX_ROLE + "teacher",
-                Phone.MESSAGE_TOO_FEW_DIGITS);
+                Role.MESSAGE_CONSTRAINTS);
     }
 
     @Test
