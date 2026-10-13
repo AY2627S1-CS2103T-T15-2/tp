@@ -314,6 +314,10 @@ space. `FindCommand` applies the predicate with `Model#updateFilteredPersonList`
 The term is matched as a whole, so word order matters: `find tan alex` does not match `Alex Tan`. Matching only the
 name keeps results predictable for the tutor, who searches for a person rather than for a phone number or email.
 
+The sequence diagram below shows how `find ale` is executed.
+
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Interactions for the `find ale` command" />
+
 ### \[Proposed\] Data archiving
 
 _{Explain here how the data archiving feature will be implemented}_
