@@ -53,6 +53,7 @@
         "implementation": "Implementation",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "student-guardian-linking": "Student-guardian linking",
+        "contact-details-and-add-validation": "Contact details and Add validation",
         "saving-contacts-and-relationships": "Saving contacts and relationships",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -64,6 +65,7 @@
         "glossary": "Glossary",
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
+        "adding-a-person": "Adding a person",
         "deleting-a-person": "Deleting a person",
         "saving-data": "Saving data"
       },
