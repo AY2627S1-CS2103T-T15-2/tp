@@ -24,6 +24,8 @@ public class AddCommandParser implements Parser<AddCommand> {
             + AddCommand.MESSAGE_USAGE;
     public static final String MESSAGE_MISSING_ROLE = "Missing required field: r/ROLE.\n\n"
             + AddCommand.MESSAGE_USAGE;
+    public static final String MESSAGE_DUPLICATE_PREFIXES =
+            "Each of r/, n/, p/, and e/ may appear only once.";
     public static final String MESSAGE_EMPTY_ROLE =
             "Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.";
     public static final String MESSAGE_UNEXPECTED_TEXT = "Unexpected text outside a field. "
@@ -44,7 +46,7 @@ public class AddCommandParser implements Parser<AddCommand> {
                 ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
                         PREFIX_ROLE);
 
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ROLE);
+        verifyNoDuplicatePrefixes(argMultimap);
         if (!argMultimap.getValue(PREFIX_ROLE).isPresent()) {
             throw new ParseException(MESSAGE_MISSING_ROLE);
         }
@@ -72,6 +74,15 @@ public class AddCommandParser implements Parser<AddCommand> {
         Person person = new Person(name, phone, email, role);
 
         return new AddCommand(person);
+    }
+
+    private static void verifyNoDuplicatePrefixes(ArgumentMultimap argMultimap) throws ParseException {
+        if (argMultimap.getAllValues(PREFIX_ROLE).size() > 1
+                || argMultimap.getAllValues(PREFIX_NAME).size() > 1
+                || argMultimap.getAllValues(PREFIX_PHONE).size() > 1
+                || argMultimap.getAllValues(PREFIX_EMAIL).size() > 1) {
+            throw new ParseException(MESSAGE_DUPLICATE_PREFIXES);
+        }
     }
 
     private static Name parseName(String value) throws ParseException {

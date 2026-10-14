@@ -88,12 +88,19 @@ Adds a person to the address book.
 Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]`
 
 `r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case. The parameters may
-appear in any order, but each may appear only once. Values are checked in the order their parameters appear, so the
-first invalid field is reported first.
+appear in any order, but each may appear only once. If multiple supplied values are invalid, errors are checked in the
+fixed parameter order `r/ROLE`, `n/NAME`, `p/PHONE`, then `e/EMAIL`, regardless of the order entered.
 An empty `r/` is rejected with `Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.`
-An unsupported role is rejected with `Role must be student or guardian.`
-If `r/` is omitted, the error is `Missing required field: r/ROLE.` If `n/` is omitted, the error is
-`Missing required field: n/NAME.` Repeating a parameter is rejected with an error that identifies the repeated field.
+An unsupported role is rejected with `Invalid role. Role must be student or guardian.`
+If `r/` is omitted, the error starts with `Missing required field: r/ROLE.` If `n/` is omitted, it starts with
+`Missing required field: n/NAME.` In either case, that line is followed by the same usage text:
+
+    add: Adds a person to the address book.
+    Parameters: r/ROLE n/NAME [p/PHONE] [e/EMAIL]
+    Students may omit phone and email; guardians must provide at least one.
+    Example: add r/student n/John Doe p/98765432 e/johnd@example.com
+
+Repeating any parameter is rejected with `Each of r/, n/, p/, and e/ may appear only once.`
 Phone and email are optional fields, subject to the guardian requirement below.
 
 Phone is optional. Omit `p/` to save a contact without a phone number; the contact displays `Not provided`.
@@ -112,7 +119,7 @@ phone values report the relevant reason: `Phone number must contain at least 3 d
 `Phone details cannot exceed 100 characters.`, or
 `Phone number cannot contain control characters, '@', or '/'.`
 
-For example, `add r/teacher n/Alex Tan p/12` reports the invalid role first because `r/` appears before `p/`.
+For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first even though `p/` appears first in the command.
 
 Email is optional. Omit `e/` to save a contact without an email; the contact displays `Not provided`.
 Supplying `e/` with an empty or whitespace-only value is rejected with:
@@ -164,10 +171,11 @@ Examples:
 * Two contacts with the same role and name and the same email but different phone values receive the email warning.
 * Two students with the same role and name and no phone or email receive a general warning; both are added.
 
-An invalid parameter such as `a/15` is rejected with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
-and e/EMAIL.` If a slash is part of a name, enclose the entire name in double quotes, for example
-`add r/student n/"Ravi s/o Kumar"`. A missing role or name reports which required field is missing. Repeating a
-parameter is rejected and identifies the repeated field.
+An unknown parameter such as `a/15` is rejected with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
+and e/EMAIL.` If an unquoted slash occurs in the name, the message also says to enclose the entire name in double
+quotes. For example, use `add r/student n/"AC/DC"` or `add r/student n/"Ravi s/o Kumar"`. For Add, every slash in a
+name must be quoted, including an embedded slash such as the one in `AC/DC`. Edit has its own parsing behavior and
+continues to accept unquoted embedded slashes.
 
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`

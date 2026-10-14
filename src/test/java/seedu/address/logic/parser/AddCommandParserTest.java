@@ -18,9 +18,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ROLE_BOB;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -29,7 +27,6 @@ import static seedu.address.testutil.TypicalPersons.BOB;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
@@ -95,62 +92,61 @@ public class AddCommandParserTest {
 
         // multiple names
         assertParseFailure(parser, NAME_DESC_AMY + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // multiple phones
         assertParseFailure(parser, PHONE_DESC_AMY + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // multiple emails
         assertParseFailure(parser, EMAIL_DESC_AMY + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_EMAIL));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // multiple roles
         assertParseFailure(parser, ROLE_DESC_AMY + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_ROLE));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // multiple fields repeated
         assertParseFailure(parser,
                 validExpectedPersonString + PHONE_DESC_AMY + EMAIL_DESC_AMY + NAME_DESC_AMY
                         + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME, PREFIX_EMAIL, PREFIX_PHONE,
-                        PREFIX_ROLE));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // invalid value followed by valid value
 
         // invalid name
         assertParseFailure(parser, INVALID_NAME_DESC + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // invalid email
         assertParseFailure(parser, INVALID_EMAIL_DESC + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_EMAIL));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // invalid phone
         assertParseFailure(parser, INVALID_PHONE_DESC + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // invalid role
         assertParseFailure(parser, INVALID_ROLE_DESC + validExpectedPersonString,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_ROLE));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // valid value followed by invalid value
 
         // invalid name
         assertParseFailure(parser, validExpectedPersonString + INVALID_NAME_DESC,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // invalid email
         assertParseFailure(parser, validExpectedPersonString + INVALID_EMAIL_DESC,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_EMAIL));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // invalid phone
         assertParseFailure(parser, validExpectedPersonString + INVALID_PHONE_DESC,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
 
         // invalid role
         assertParseFailure(parser, validExpectedPersonString + INVALID_ROLE_DESC,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_ROLE));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
     }
 
     @Test
@@ -356,7 +352,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_DESC_AMY + " e/   " + PHONE_DESC_AMY + ROLE_DESC_AMY,
                 Email.MESSAGE_EMPTY);
         assertParseFailure(parser, fields + " e/ e/alex@example.com",
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_EMAIL));
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
     }
 
     @Test
