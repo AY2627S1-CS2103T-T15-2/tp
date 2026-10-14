@@ -120,6 +120,22 @@ public class UniquePersonListTest {
     }
 
     @Test
+    public void setPerson_equalContactlessStudents_updatesTargetById() {
+        Person first = new PersonBuilder().withoutPhone().withoutEmail().build();
+        Person second = new PersonBuilder().withoutPhone().withoutEmail().build();
+        Person linkedSecond = new PersonBuilder(second).withGuardianId(ContactId.generate()).build();
+        uniquePersonList.setPersons(List.of(first, second));
+
+        uniquePersonList.setPerson(second, linkedSecond);
+
+        assertEquals(first.getId(), uniquePersonList.asUnmodifiableObservableList().get(0).getId());
+        assertTrue(uniquePersonList.asUnmodifiableObservableList().get(0).getGuardianId().isEmpty());
+        assertEquals(second.getId(), uniquePersonList.asUnmodifiableObservableList().get(1).getId());
+        assertEquals(linkedSecond.getGuardianId(),
+                uniquePersonList.asUnmodifiableObservableList().get(1).getGuardianId());
+    }
+
+    @Test
     public void setPerson_editedPersonHasDifferentIdentity_success() {
         uniquePersonList.add(ALICE);
         uniquePersonList.setPerson(ALICE, BOB);
@@ -151,6 +167,31 @@ public class UniquePersonListTest {
         uniquePersonList.remove(ALICE);
         UniquePersonList expectedUniquePersonList = new UniquePersonList();
         assertEquals(expectedUniquePersonList, uniquePersonList);
+    }
+
+    @Test
+    public void remove_equalContactlessStudents_removesTargetById() {
+        Person first = new PersonBuilder().withoutPhone().withoutEmail().build();
+        Person second = new PersonBuilder().withoutPhone().withoutEmail().build();
+        uniquePersonList.setPersons(List.of(first, second));
+
+        uniquePersonList.remove(second);
+
+        assertEquals(1, uniquePersonList.asUnmodifiableObservableList().size());
+        assertEquals(first.getId(), uniquePersonList.asUnmodifiableObservableList().getFirst().getId());
+    }
+
+    @Test
+    public void setPerson_equalDetailsWithUnknownId_throwsPersonNotFoundException() {
+        Person equalContact = new PersonBuilder().build();
+        uniquePersonList.add(new PersonBuilder().build());
+        assertThrows(PersonNotFoundException.class, () -> uniquePersonList.setPerson(equalContact, equalContact));
+    }
+
+    @Test
+    public void remove_equalDetailsWithUnknownId_throwsPersonNotFoundException() {
+        uniquePersonList.add(new PersonBuilder().build());
+        assertThrows(PersonNotFoundException.class, () -> uniquePersonList.remove(new PersonBuilder().build()));
     }
 
     @Test

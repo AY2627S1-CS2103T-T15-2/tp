@@ -272,8 +272,11 @@ Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
 * Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
 * Each student can have one guardian; a guardian can be linked to several students.
+* Students with the same name remain separate contacts, even if both have no phone or email.
+  Use the intended student's displayed index; linking one does not change the other student's guardian.
 * Linking to a different guardian replaces the previous relationship. Linking to the same guardian again is rejected.
 * A successful command selects the student and shows the guardian's current name, phone and email in the detail panel.
+  The command box stays focused so you can immediately enter the next command.
 * The relationship is saved automatically and survives edits, reordering and restarting the application.
 
 Examples, assuming Alex Tan is student `1`, Mei Tan is guardian `2`, and Sarah Lim is guardian `3`:
@@ -297,6 +300,8 @@ Common errors:
 | Wrong guardian role | `Guardian index must refer to a guardian.` |
 
 Failed link commands leave the contacts, relationships, selected contact, detail panel and saved data unchanged.
+
+![A linked student selected with the guardian's contact details displayed](images/StudentGuardianLink.png)
 
 ### Deleting a contact: `delete`
 
