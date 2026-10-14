@@ -296,28 +296,42 @@ Every `Person` has an immutable `ContactId`, represented by a UUID. A student ha
 
 ### Contact details and Add validation
 
-`AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE` and `e/EMAIL` as optional fields. A student
-may omit both contact methods. The parser rejects a guardian if both are absent to provide a user-facing command
-error, and `EditCommand` applies the same rule to the resulting contact before updating the model. `Person` stores
+`AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE` and `e/EMAIL` as optional fields. It validates
+supplied values in the fixed order role, name, phone, then email, regardless of the order in which parameters appear.
+Missing required fields and invalid roles are also reported in that order. A student may omit both contact methods. The
+parser rejects a guardian if both are absent to provide a user-facing command error, and `EditCommand` applies the same
+rule to the resulting contact before updating the model. `Person` stores
 phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
 method. This model invariant applies regardless of which code path creates a `Person`.
+
+The Add parser rejects unknown parameters with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE, and
+e/EMAIL.` If the unknown parameter occurs while parsing a name, the message also instructs the user to quote the full
+name. For Add, every name containing `/` must be enclosed in double quotes, including an embedded slash such as
+`AC/DC`. Edit retains its separate behavior, which accepts unquoted embedded slashes. Missing `r/ROLE` or `n/NAME`
+errors identify the missing field and append the add command usage. Repeated parameters return
+`Each of r/, n/, p/, and e/ may appear only once.` Empty roles receive a separate error from unsupported roles; an
+unsupported role reports `Invalid role. Role must be student or guardian.` When multiple supplied values are invalid,
+the parser reports the first error in the fixed order role, name, phone, then email.
 
 `AddCommand` rejects an exact duplicate using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Duplicate
 identity consists of role, name, phone and email. Name and email comparisons ignore capitalization; phone numbers are
 compared after trimming leading and trailing whitespace, while internal spaces and hyphens remain significant. Two
-absent values for an optional field match, provided both contacts have at least one contact method. This gives
-students with neither a phone number nor an email address a specific exception: matching role and name alone does not
-make them exact duplicates. They may both be added, with a general possible-duplicate warning. For other contacts,
-matching role and name with different details is allowed, and Add may display a possible-duplicate warning when a
-phone number matches after spaces and hyphens are ignored, when the email addresses match, or when both contacts are
-missing the same contact method.
+absent values for an optional field match, provided both contacts have at least one contact method. Exact duplicates
+are rejected with `This contact already exists.` This gives students with neither a phone number nor an email address
+a specific exception: matching role and name alone does not make them exact duplicates. They may both be added, with a
+general possible-duplicate warning. For other contacts, matching role and name with different details is allowed. Add
+checks possible duplicates in this order: a phone number that matches after spaces and hyphens are ignored; an email
+address that matches case-insensitively; then a contact method that is absent from both contacts. It displays only the
+first matching warning, appends it after the normal success message, and still adds the contact. Contacts with
+different roles or names do not receive these warnings.
 
 ### Saving contacts and relationships
 
 Contact JSON records contain an `id` UUID string and an optional `guardianId` UUID string, alongside the existing fields. `JsonAdaptedPerson` restores saved IDs; legacy records without IDs receive new IDs that are persisted on the next successful save. `JsonSerializableAddressBook` first loads all contacts, rejecting duplicate IDs and duplicate contact details, then validates that every guardian reference points to an existing contact with the guardian role. A guardian cannot carry a guardian reference. Repeated JSON object fields are rejected during parsing.
 
 `Person` stores phone and email as non-null `Optional` values. `Phone` and `Email` always represent valid, present
-values. The JSON adapter keeps both fields as nullable strings: missing or null means absent, while empty and invalid
+values. Phone details contain at least 3 digits and no more than 100 characters. The JSON adapter keeps both fields as
+nullable strings: missing or null means absent, while empty and invalid
 strings are rejected. Existing valid strings retain their capitalization. Single-label email domains and domains
 whose final label has fewer than two characters are invalid; incompatible files fail loading without being rewritten
 automatically. `JsonAdaptedPerson` rejects a guardian record that has neither a phone number nor an email address
@@ -335,8 +349,9 @@ Each command declares whether it changes data through `Command.isDataChanging()`
 
 If loading fails, storage records that failure for the session. The UI displays the startup error, and all data-changing commands are disabled until the user fixes the file and restarts the application. The invalid file is never overwritten during that session. A missing data file starts with an empty list and is created by the first successful data-changing command.
 
-Relevant tests cover Add parsing and validation, optional student contact methods, guardian contact-method requirements,
-exact duplicates, displayed indexes, role validation, first links, replacements, shared guardians, ID preservation,
+Relevant tests cover Add parsing and validation, repeated parameters, fixed validation-error ordering, quoted names
+containing slashes, the phone length limit, optional student contact methods, guardians with either one contact method, guardian contact-method
+requirements, exact duplicates and possible-duplicate warning priority, displayed indexes, role validation, first links, replacements, shared guardians, ID preservation,
 relationship persistence, deletion cleanup, invalid references, failed saves and UI selection/details. JavaFX UI tests
 run on Windows desktop environments; the remaining tests run on all supported platforms.
 
@@ -718,7 +733,29 @@ testers are expected to do more *exploratory* testing.
    Expected: No contact is added. The result says `A guardian must have at least one contact method: phone or email.`
 
 1. Repeat the first command.<br>
-   Expected: No duplicate is added. The result says `This person already exists in the address book.`
+   Expected: A second contact is added with the same role and name. The success message is followed by the general
+   possible-duplicate warning because both contacts have no phone number or email address.
+
+1. Test case: `add r/student n/Alex Tan p/91234567 e/alex@example.com`, then repeat the command with the same values.<br>
+   Expected: The second command is rejected with `This contact already exists.`
+
+1. Test case: `add r/student n/Casey Lee p/9123 4567`, then `add r/student n/Casey Lee p/91234567`.<br>
+   Expected: The second contact is added with the phone-related possible-duplicate warning.
+
+1. Test case: `add r/student n/Jamie Ng p/12345678 e/jamie@example.com`, then `add r/student n/Jamie Ng p/87654321 e/JAMIE@example.com`.<br>
+   Expected: The second contact is added with the email-related possible-duplicate warning.
+
+1. Test case: `add r/student n/Alex Tan p/12`.<br>
+   Expected: The phone error says it must contain at least 3 digits.
+
+1. Test case: `add r/student n/Alex Tan p/`.<br>
+   Expected: The result says `Empty phone parameter: Phone cannot be empty when p/ is specified.`
+
+1. Test case: `add r/student n/Alex Tan p/<101-character value>`.<br>
+   Expected: The result says `Phone details cannot exceed 100 characters.`
+
+1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
+   Expected: Both report the role error first, following the fixed parameter order regardless of command order.
 
 ### Deleting a person
 

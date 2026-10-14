@@ -1,13 +1,11 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -21,6 +19,17 @@ import seedu.address.model.person.Role;
  * Parses input arguments and creates a new AddCommand object
  */
 public class AddCommandParser implements Parser<AddCommand> {
+
+    public static final String MESSAGE_MISSING_NAME = "Missing required field: n/NAME.\n\n"
+            + AddCommand.MESSAGE_USAGE;
+    public static final String MESSAGE_MISSING_ROLE = "Missing required field: r/ROLE.\n\n"
+            + AddCommand.MESSAGE_USAGE;
+    public static final String MESSAGE_DUPLICATE_PREFIXES =
+            "Each of r/, n/, p/, and e/ may appear only once.";
+    public static final String MESSAGE_EMPTY_ROLE =
+            "Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.";
+    public static final String MESSAGE_UNEXPECTED_TEXT = "Unexpected text outside a field. "
+            + "Use n/NAME, r/ROLE, p/PHONE, or e/EMAIL.";
 
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
@@ -37,20 +46,26 @@ public class AddCommandParser implements Parser<AddCommand> {
                 ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
                         PREFIX_ROLE);
 
-        if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ROLE)
-                || !argMultimap.getPreamble().isEmpty()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+        verifyNoDuplicatePrefixes(argMultimap);
+        if (!argMultimap.getValue(PREFIX_ROLE).isPresent()) {
+            throw new ParseException(MESSAGE_MISSING_ROLE);
         }
-
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ROLE);
-        String nameValue = argMultimap.getValue(PREFIX_NAME).get();
-        if (!nameValue.startsWith("\"") && nameValue.contains("/")) {
-            throw new ParseException(AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
+        Role role = parseRole(argMultimap.getValue(PREFIX_ROLE).orElseThrow());
+        if (!argMultimap.getValue(PREFIX_NAME).isPresent()) {
+            throw new ParseException(MESSAGE_MISSING_NAME);
         }
-        Name name = ParserUtil.parseName(nameValue);
-        Optional<Phone> phone = parseOptionalPhone(argMultimap);
-        Optional<Email> email = parseOptionalEmail(argMultimap);
-        Role role = ParserUtil.parseRole(argMultimap.getValue(PREFIX_ROLE).get());
+        if (!argMultimap.getPreamble().isEmpty()) {
+            throw new ParseException(MESSAGE_UNEXPECTED_TEXT);
+        }
+        Name name = parseName(argMultimap.getValue(PREFIX_NAME).orElseThrow());
+        Optional<Phone> phone = Optional.empty();
+        if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
+            phone = Optional.of(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).orElseThrow()));
+        }
+        Optional<Email> email = Optional.empty();
+        if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
+            email = Optional.of(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).orElseThrow()));
+        }
 
         if (role == Role.GUARDIAN && phone.isEmpty() && email.isEmpty()) {
             throw new ParseException(AddCommand.MESSAGE_CONTACT_METHOD_REQUIRED);
@@ -61,14 +76,27 @@ public class AddCommandParser implements Parser<AddCommand> {
         return new AddCommand(person);
     }
 
-    private static Optional<Phone> parseOptionalPhone(ArgumentMultimap argumentMultimap) throws ParseException {
-        Optional<String> phone = argumentMultimap.getValue(PREFIX_PHONE);
-        return phone.isPresent() ? Optional.of(ParserUtil.parsePhone(phone.get())) : Optional.empty();
+    private static void verifyNoDuplicatePrefixes(ArgumentMultimap argMultimap) throws ParseException {
+        if (argMultimap.getAllValues(PREFIX_ROLE).size() > 1
+                || argMultimap.getAllValues(PREFIX_NAME).size() > 1
+                || argMultimap.getAllValues(PREFIX_PHONE).size() > 1
+                || argMultimap.getAllValues(PREFIX_EMAIL).size() > 1) {
+            throw new ParseException(MESSAGE_DUPLICATE_PREFIXES);
+        }
     }
 
-    private static Optional<Email> parseOptionalEmail(ArgumentMultimap argumentMultimap) throws ParseException {
-        Optional<String> email = argumentMultimap.getValue(PREFIX_EMAIL);
-        return email.isPresent() ? Optional.of(ParserUtil.parseEmail(email.get())) : Optional.empty();
+    private static Name parseName(String value) throws ParseException {
+        if (!value.startsWith("\"") && value.contains("/")) {
+            throw new ParseException(AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
+        }
+        return ParserUtil.parseName(value);
+    }
+
+    private static Role parseRole(String value) throws ParseException {
+        if (value.isBlank()) {
+            throw new ParseException(MESSAGE_EMPTY_ROLE);
+        }
+        return ParserUtil.parseRole(value);
     }
 
     /**
@@ -114,14 +142,6 @@ public class AddCommandParser implements Parser<AddCommand> {
             return PREFIX_ROLE;
         }
         return null;
-    }
-
-    /**
-     * Returns true if none of the prefixes contains empty {@code Optional} values in the given
-     * {@code ArgumentMultimap}.
-     */
-    private static boolean arePrefixesPresent(ArgumentMultimap argumentMultimap, Prefix... prefixes) {
-        return Stream.of(prefixes).allMatch(prefix -> argumentMultimap.getValue(prefix).isPresent());
     }
 
 }

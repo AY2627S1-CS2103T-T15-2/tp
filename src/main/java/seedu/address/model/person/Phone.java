@@ -11,9 +11,15 @@ public class Phone {
 
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Phone details must contain at least 3 digits and cannot contain control characters, '@' or '/'.";
+            "Phone details must contain at least 3 digits, cannot exceed 100 characters, and cannot contain control "
+                    + "characters, '@' or '/'.";
+    public static final String MESSAGE_TOO_FEW_DIGITS = "Phone number must contain at least 3 digits.";
+    public static final String MESSAGE_TOO_LONG = "Phone details cannot exceed 100 characters.";
+    public static final String MESSAGE_INVALID_CHARACTERS =
+            "Phone number cannot contain control characters, '@', or '/'.";
     public static final String MESSAGE_EMPTY = "Empty phone parameter: Phone cannot be empty when p/ is specified.";
     public static final int MINIMUM_DIGIT_COUNT = 3;
+    public static final int MAX_LENGTH = 100;
     public final String value;
 
     /**
@@ -32,17 +38,37 @@ public class Phone {
      */
     public static boolean isValidPhone(String test) {
         requireNonNull(test);
-        int digitCount = 0;
+        int characterCount = test.codePointCount(0, test.length());
+        return characterCount <= MAX_LENGTH && !hasInvalidCharacters(test)
+                && getDigitCount(test) >= MINIMUM_DIGIT_COUNT;
+    }
+
+    /**
+     * Returns true if the phone details contain a prohibited character.
+     */
+    public static boolean hasInvalidCharacters(String test) {
+        requireNonNull(test);
         for (int i = 0; i < test.length(); i++) {
             char character = test.charAt(i);
             if (Character.isISOControl(character) || character == '@' || character == '/') {
-                return false;
+                return true;
             }
-            if (Character.isDigit(character)) {
+        }
+        return false;
+    }
+
+    /**
+     * Returns the number of digits in the phone details.
+     */
+    public static int getDigitCount(String test) {
+        requireNonNull(test);
+        int digitCount = 0;
+        for (int i = 0; i < test.length(); i++) {
+            if (Character.isDigit(test.charAt(i))) {
                 digitCount++;
             }
         }
-        return digitCount >= MINIMUM_DIGIT_COUNT;
+        return digitCount;
     }
 
     @Override

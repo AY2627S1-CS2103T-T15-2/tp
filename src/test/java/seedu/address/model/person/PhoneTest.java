@@ -33,6 +33,7 @@ public class PhoneTest {
         assertFalse(Phone.isValidPhone("91\n1234")); // control characters
         assertFalse(Phone.isValidPhone("amy123@example.com")); // @ is reserved for email values
         assertFalse(Phone.isValidPhone("911/2222")); // slash is reserved for command prefixes
+        assertFalse(Phone.isValidPhone("1".repeat(Phone.MAX_LENGTH + 1))); // exceeds maximum length
 
         // valid phone numbers
         assertTrue(Phone.isValidPhone("911")); // exactly 3 numbers
@@ -41,6 +42,7 @@ public class PhoneTest {
         assertTrue(Phone.isValidPhone("+65-9123-4567"));
         assertTrue(Phone.isValidPhone("(HP) +65 1234 5678"));
         assertTrue(Phone.isValidPhone("HP+651234567 Office: 1111-3333"));
+        assertTrue(Phone.isValidPhone("1".repeat(Phone.MAX_LENGTH))); // exactly maximum length
     }
 
     @Test

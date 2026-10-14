@@ -35,12 +35,26 @@ public class Name {
     public static boolean isValidName(String test) {
         requireNonNull(test);
 
-        int characterCount = test.codePointCount(0, test.length());
-        boolean hasValidLength = characterCount >= 1 && characterCount <= MAX_LENGTH;
-        boolean isNotBlank = !test.isBlank();
-        boolean containsOnlyAllowedCharacters = test.matches(VALIDATION_REGEX);
+        return getValidationErrorMessage(test) == null;
+    }
 
-        return hasValidLength && isNotBlank && containsOnlyAllowedCharacters;
+    /**
+     * Returns a specific validation error for {@code test}, or {@code null} if it is valid.
+     */
+    public static String getValidationErrorMessage(String test) {
+        requireNonNull(test);
+        if (test.isBlank()) {
+            return "Name cannot be blank.";
+        }
+        int characterCount = test.codePointCount(0, test.length());
+        if (characterCount > MAX_LENGTH) {
+            return "Name cannot exceed " + MAX_LENGTH + " characters.";
+        }
+        if (!test.matches(VALIDATION_REGEX)) {
+            return "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
+                    + "hyphens, periods, and slashes.";
+        }
+        return null;
     }
 
     /**

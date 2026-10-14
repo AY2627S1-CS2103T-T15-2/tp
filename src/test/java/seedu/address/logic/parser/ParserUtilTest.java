@@ -102,8 +102,8 @@ public class ParserUtilTest {
 
     @Test
     public void parseName_emptyQuotedValue_throwsParseException() {
-        assertThrows(ParseException.class, Name.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseName("\"\""));
-        assertThrows(ParseException.class, Name.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseName("\"   \""));
+        assertThrows(ParseException.class, "Name cannot be blank.", () -> ParserUtil.parseName("\"\""));
+        assertThrows(ParseException.class, "Name cannot be blank.", () -> ParserUtil.parseName("\"   \""));
     }
 
     @Test
@@ -183,13 +183,40 @@ public class ParserUtilTest {
 
     @Test
     public void parseEmail_invalidExamples_reportsExactMessage() {
-        String expectedMessage = "Invalid email address: Email must contain one @ symbol, a non-empty local part, "
-                + "and at least two non-empty domain labels separated by periods, without spaces.";
-        for (String value : List.of("alex@example", "alex @example.com", "@example.com",
-                "alex@.com", "alex@example..com", "alex@@example.com", "alex@exam_ple.com",
-                "alex!@example.com", "alex\t@example.com", "alex@example.com.")) {
-            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseEmail(value));
-        }
+        assertThrows(ParseException.class, "Email domain must contain at least two labels separated by a period.", ()
+                -> ParserUtil.parseEmail("alex@example"));
+        assertThrows(ParseException.class, "Email address cannot contain whitespace.", ()
+                -> ParserUtil.parseEmail("alex @example.com"));
+        assertThrows(ParseException.class, "Email local part cannot be empty.", ()
+                -> ParserUtil.parseEmail("@example.com"));
+        assertThrows(ParseException.class, "Email domain labels cannot be empty.", ()
+                -> ParserUtil.parseEmail("alex@.com"));
+        assertThrows(ParseException.class, "Email domain labels cannot be empty.", ()
+                -> ParserUtil.parseEmail("alex@example..com"));
+        assertThrows(ParseException.class, "Email address must contain exactly one @ symbol.", ()
+                -> ParserUtil.parseEmail("alex@@example.com"));
+        assertThrows(ParseException.class,
+                "Email domain labels may contain letters, digits, and internal hyphens only.", ()
+                -> ParserUtil.parseEmail("alex@exam_ple.com"));
+        assertThrows(ParseException.class,
+                "Email local part contains unsupported characters or invalid punctuation placement.", ()
+                -> ParserUtil.parseEmail("alex!@example.com"));
+        assertThrows(ParseException.class, "Email address cannot contain whitespace.", ()
+                -> ParserUtil.parseEmail("alex\t@example.com"));
+        assertThrows(ParseException.class, "Email domain labels cannot be empty.", ()
+                -> ParserUtil.parseEmail("alex@example.com."));
+        assertThrows(ParseException.class, "Email's final domain label must contain at least two characters.", ()
+                -> ParserUtil.parseEmail("a@b.c"));
+    }
+
+    @Test
+    public void parsePhone_invalidExamples_reportsSpecificMessage() {
+        assertThrows(ParseException.class, Phone.MESSAGE_TOO_FEW_DIGITS, () -> ParserUtil.parsePhone("office"));
+        assertThrows(ParseException.class, Phone.MESSAGE_TOO_FEW_DIGITS, () -> ParserUtil.parsePhone("12"));
+        assertThrows(ParseException.class, Phone.MESSAGE_INVALID_CHARACTERS, ()
+                -> ParserUtil.parsePhone("911/2222"));
+        assertThrows(ParseException.class, Phone.MESSAGE_INVALID_CHARACTERS, ()
+                -> ParserUtil.parsePhone("911\t2222"));
     }
 
     @Test
