@@ -201,6 +201,36 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_editPhoneToMatchSameNameContact_warnsAboutPhone() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withPhone("91234567")
+                .withEmail("alex@example.com").build();
+        Person other = new PersonBuilder().withName("Alex Tan").withPhone("87654321")
+                .withEmail("other@example.com").build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+        Index otherIndex = Index.fromZeroBased(warningModel.getFilteredPersonList().indexOf(other));
+
+        CommandResult result = new EditCommand(otherIndex,
+                new EditPersonDescriptorBuilder().withPhone("9123-4567").build()).execute(warningModel);
+
+        assertTrue(result.getFeedbackToUser().endsWith("\n" + EditCommand.MESSAGE_POSSIBLE_DUPLICATE_PHONE));
+    }
+
+    @Test
+    public void execute_editEmailToMatchSameNameContact_warnsAboutEmail() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withPhone("91234567")
+                .withEmail("alex@example.com").build();
+        Person other = new PersonBuilder().withName("Alex Tan").withPhone("87654321")
+                .withEmail("other@example.com").build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+        Index otherIndex = Index.fromZeroBased(warningModel.getFilteredPersonList().indexOf(other));
+
+        CommandResult result = new EditCommand(otherIndex,
+                new EditPersonDescriptorBuilder().withEmail("ALEX@example.com").build()).execute(warningModel);
+
+        assertTrue(result.getFeedbackToUser().endsWith("\n" + EditCommand.MESSAGE_POSSIBLE_DUPLICATE_EMAIL));
+    }
+
+    @Test
     public void execute_renameContactlessStudentToNameOfStudentWithContactDetails_noWarning() throws Exception {
         Person existing = new PersonBuilder().withName("Alex Tan").withPhone("91234567")
                 .withEmail("alex@example.com").build();
