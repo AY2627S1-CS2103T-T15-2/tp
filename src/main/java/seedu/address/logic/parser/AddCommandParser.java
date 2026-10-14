@@ -108,6 +108,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         boolean isInsideQuotedValue = false;
         boolean tokenHasSlash = false;
         Prefix currentField = null;
+        int currentFieldValueStart = 0;
         for (int i = 0; i < args.length(); i++) {
             char current = args.charAt(i);
             if (current == '"') {
@@ -120,12 +121,15 @@ public class AddCommandParser implements Parser<AddCommand> {
                 String prefix = args.substring(tokenStart, i + 1);
                 Prefix recognizedPrefix = getRecognizedPrefix(prefix);
                 if (recognizedPrefix == null) {
-                    String errorMessage = currentField == PREFIX_NAME
+                    boolean nameValueIsQuoted = currentField == PREFIX_NAME
+                            && args.substring(currentFieldValueStart, tokenStart).stripLeading().startsWith("\"");
+                    String errorMessage = currentField == PREFIX_NAME && !nameValueIsQuoted
                             ? AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH
                             : AddCommand.MESSAGE_INVALID_PARAMETER;
                     return Optional.of(errorMessage);
                 }
                 currentField = recognizedPrefix;
+                currentFieldValueStart = i + 1;
             }
         }
         return Optional.empty();
