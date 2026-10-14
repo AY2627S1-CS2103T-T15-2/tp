@@ -1,0 +1,126 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":EditCommandParser" as EditCommandParser LOGIC_COLOR
+participant "d:EditPersonDescriptor" as Descriptor LOGIC_COLOR
+participant "e:EditCommand" as EditCommand LOGIC_COLOR
+participant "r:CommandResult" as CommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "c:ModelManager" as Model MODEL_COLOR
+participant "m:Model" as LiveModel MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+[-> LogicManager : execute("edit 1 p/NONE")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("edit 1 p/NONE")
+activate AddressBookParser
+
+create EditCommandParser
+AddressBookParser -> EditCommandParser
+activate EditCommandParser
+
+EditCommandParser --> AddressBookParser
+deactivate EditCommandParser
+
+AddressBookParser -> EditCommandParser : parse("1 p/NONE")
+activate EditCommandParser
+
+create Descriptor
+EditCommandParser -> Descriptor
+activate Descriptor
+
+Descriptor --> EditCommandParser
+deactivate Descriptor
+
+EditCommandParser -> Descriptor : removePhone()
+activate Descriptor
+
+Descriptor --> EditCommandParser
+deactivate Descriptor
+
+create EditCommand
+EditCommandParser -> EditCommand : EditCommand(1, d)
+activate EditCommand
+
+EditCommand --> EditCommandParser
+deactivate EditCommand
+
+EditCommandParser --> AddressBookParser : e
+deactivate EditCommandParser
+'Hidden arrow to position the destroy marker below the end of the activation bar.
+EditCommandParser -[hidden]-> AddressBookParser
+destroy EditCommandParser
+
+AddressBookParser --> LogicManager : e
+deactivate AddressBookParser
+
+create Model
+LogicManager -> Model : ModelManager(m's data)
+activate Model
+
+Model --> LogicManager
+deactivate Model
+
+LogicManager -> EditCommand : execute(c)
+activate EditCommand
+
+EditCommand -> Model : getFilteredPersonList()
+activate Model
+
+Model --> EditCommand : list
+deactivate Model
+
+EditCommand -> EditCommand : createEditedPerson(p, d)
+activate EditCommand
+
+EditCommand --> EditCommand : edited
+deactivate EditCommand
+
+EditCommand -> Model : setPerson(p, edited)
+activate Model
+
+Model --> EditCommand
+deactivate Model
+
+EditCommand -> Model : updateFilteredPersonList(all)
+activate Model
+
+Model --> EditCommand
+deactivate Model
+
+create CommandResult
+EditCommand -> CommandResult : CommandResult(message, edited id)
+activate CommandResult
+
+CommandResult --> EditCommand
+deactivate CommandResult
+
+EditCommand --> LogicManager : r
+deactivate EditCommand
+
+LogicManager -> Storage : saveAddressBook(c's data)
+activate Storage
+
+Storage --> LogicManager
+deactivate Storage
+
+LogicManager -> LiveModel : setAddressBook(c's data)
+activate LiveModel
+
+LiveModel --> LogicManager
+deactivate LiveModel
+
+[<--LogicManager : r
+deactivate LogicManager
+@enduml

@@ -240,6 +240,52 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 _{more aspects and alternatives to be added}_
 
+### Editing contacts
+
+`edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]` changes the name, phone number or email address of a displayed contact.
+The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
+first displayed contact `p`. Because edit changes data, `LogicManager` runs it on a candidate copy `c` of the live
+model `m`, saves `c` through `Storage`, and only then copies `c`'s data into `m`. If the save fails, `m` is never
+touched.
+
+<puml src="diagrams/EditSequenceDiagram.puml" alt="Interactions inside the Logic component for the `edit 1 p/NONE` command" />
+
+**Parsing.** `EditCommandParser` tokenizes the arguments with `ArgumentTokenizer#tokenizeWithQuotedValue`, so a
+quoted name such as `n/"Randy p/e ratio"` keeps any prefix-like text inside the quotes. It then checks, in order:
+
+1. No unknown parameter. Any word ending in `/` outside a quoted name, other than `n/`, `p/` or `e/`, is rejected
+   with `Unknown parameter`. This is why an unquoted name such as `Ravi s/o Kumar` must be quoted.
+2. No repeated parameter. Each of `n/`, `p/` and `e/` may appear once.
+3. A valid index. A missing index, or extra text before the first parameter, gives `Invalid edit command`. A value
+   that is not a positive integer gives `The contact index must be a positive integer shown in the list.`
+
+Each supplied value is stored in an `EditPersonDescriptor`. `NONE` in any letter case is stored as a removal
+(`removePhone()` or `removeEmail()`) rather than a value. Setting a value after a removal clears the removal flag.
+An empty descriptor is rejected with `At least one of n/, p/, or e/ must be provided.`
+
+**Execution.** `EditCommand#execute` resolves the index against the filtered, sorted display list, so the index the
+user sees is the one edited. An index beyond the list gives `No contact exists at index INDEX.` The edited contact is
+built by `createEditedPerson`: each field takes the descriptor's value, is emptied if marked for removal, or keeps the
+current value otherwise. The contact's ID, role and guardian link are always copied, so relationships survive an
+edit.
+
+The edit is then rejected if it would leave a guardian with no phone number and no email, or if the edited contact
+would duplicate another contact. The duplicate check is skipped when the edited contact still matches its original
+duplicate identity, so changing only the capitalization of a name is allowed.
+
+On success, `Model#setPerson` replaces the contact and the full list is shown again. The `CommandResult` carries the
+edited contact's ID, and `MainWindow` selects that contact so the detail panel shows the update. Like other
+data-changing commands, `LogicManager` runs the edit on a candidate model and saves it before replacing the live
+model, so a failed save leaves the contact unchanged.
+
+**Design considerations.**
+
+* **Removing a field:** `p/NONE` and `e/NONE` were chosen over an empty `p/` or `e/`, which is rejected as a likely
+  typo. `NONE` cannot be a valid phone number or email, so it never clashes with real data. Letter case is ignored as
+  a deliberate choice for ease of typing.
+* **Rejecting unknown parameters:** silently keeping `a/15` as part of a name would save data the user did not intend.
+  The cost is that names containing a word ending in `/` must be quoted.
+
 ### Student-guardian linking
 
 `LinkCommandParser` accepts `link s/STUDENT_INDEX g/GUARDIAN_INDEX` in either parameter order. It rejects missing, repeated and unknown prefixes, extra text and invalid integer indexes. `LinkCommand` resolves both indexes against the filtered, sorted display list, validates their roles, rejects duplicate links and replaces an existing guardian when requested.
@@ -303,6 +349,71 @@ length limit, optional student contact methods, guardians with either one contac
 requirements, exact duplicates and possible-duplicate warning priority, displayed indexes, role validation, first links, replacements, shared guardians, ID preservation,
 relationship persistence, deletion cleanup, invalid references, failed saves and UI selection/details. JavaFX UI tests
 run on Windows desktop environments; the remaining tests run on all supported platforms.
+
+### Listing and finding contacts
+
+`list` and `find` change which contacts the list panel shows by updating the predicate of the model's filtered list.
+Neither command changes any contact data.
+
+**Listing.** `AddressBookParser` passes any text after `list` to `ListCommandParser`, which rejects non-blank text
+with `Invalid list command. Use: list`. `ListCommand` resets the filter to `PREDICATE_SHOW_ALL_PERSONS` and reports
+the number of contacts, for example `Listed 6 contacts`. `Messages#formatContactCount` uses the singular `contact`
+when there is exactly one contact. If there are no contacts, `ListCommand` reports `No contacts found.` instead.
+
+**Finding.** `FindCommandParser` treats all the text after `find` as a single search term. It removes leading and
+trailing whitespace, reduces each run of internal whitespace to one space, and rejects a term that is then empty with
+`Invalid find command. Use: find NAME`. The term is wrapped in a `NameContainsSubstringPredicate`, which matches a
+contact whose name contains the term, ignoring letter case. Consecutive spaces in the name are also treated as one
+space. `FindCommand` applies the predicate with `Model#updateFilteredPersonList` and reports either
+`Found X contacts matching: NAME.` or `No contacts found matching: NAME`.
+
+The term is matched as a whole, so word order matters: `find tan alex` does not match `Alex Tan`. Matching only the
+name keeps results predictable for the tutor, who searches for a person rather than for a phone number or email.
+
+The sequence diagram below shows how `find ale` is executed.
+
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Interactions for the `find ale` command" />
+
+### Ordering and displaying contacts
+
+**Ordering.** `ModelManager` wraps its `FilteredList` in a `SortedList` that uses `PersonDisplayOrderComparator`, and
+`Model#getFilteredPersonList` returns this sorted view. The comparator orders contacts by name, ignoring letter case
+and treating consecutive spaces as one space. Contacts with the same name are ordered by role, with guardians before
+students. The specification does not order contacts with the same name and role, so the comparator treats them as
+equal.
+
+Commands that take an index, such as `edit`, `delete` and `link`, look it up in `Model#getFilteredPersonList`, so
+the index always refers to the order shown on screen. The order is kept after `list`, `find`, `add` and
+`edit`, and when the application starts, without any command having to sort the list itself.
+
+**List cards.** `PersonCard` shows each contact as `NAME [ROLE]` followed by `Phone:` and `Email:` lines.
+`ContactDisplayFormatter` formats these values, showing `Not provided` for a missing phone number or email address.
+A student's card also shows `Guardian: NAME`, or `Guardian: None` if the student has no linked guardian.
+
+`PersonListPanel` receives both the displayed list and the complete contact list. It looks up a student's guardian in
+the complete list, so the guardian is still named when `find` hides the guardian from the displayed list. The panel
+redraws its cards whenever any contact changes, so renaming a guardian also updates the cards of the guardian's
+students.
+
+#### Design considerations:
+
+**Aspect: Where contacts are sorted**
+
+* **Alternative 1 (current choice):** Sort in `ModelManager`, as a sorted view of the filtered list.
+  * Pros: Every command and the UI see the same order, so displayed indexes always match the indexes commands use.
+  * Cons: The order is fixed for all views of the list.
+* **Alternative 2:** Sort in each command or in the UI.
+  * Pros: Different views could use different orders.
+  * Cons: Each command must remember to sort, and the UI order could differ from the indexes commands use.
+
+**Aspect: How `find` matches names**
+
+* **Alternative 1 (current choice):** Match the whole search term as part of the name, ignoring case.
+  * Pros: Tutors can find a contact from part of a name, as required by the MVP specification.
+  * Cons: Word order matters, so `find tan alex` does not match `Alex Tan`.
+* **Alternative 2:** Match any of several whole-word keywords, as in AB3.
+  * Pros: Word order does not matter.
+  * Cons: Partial names such as `ale` do not match, and searching for several words returns many unrelated contacts.
 
 ### \[Proposed\] Data archiving
 
@@ -657,6 +768,105 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### Editing a person
+
+1. Prerequisites: start from the sample data and run `list`. Note which contacts are students and which are
+   guardians.
+
+1. Test case: `edit 1 n/Alex Yeoh p/91234567`<br>
+   Expected: The first contact's name and phone are updated. The status message shows
+   `Updated contact: Alex Yeoh [ROLE].` The edited contact is selected and the detail panel shows the new details.
+
+1. Test case: `edit 1 p/NONE` on a student<br>
+   Expected: The phone number is removed and shows `Not provided`.
+
+1. Test case: on a guardian with a phone number and no email, `edit INDEX p/NONE`<br>
+   Expected: No change. The status message shows
+   `A guardian must have at least one contact method: phone or email.`
+
+1. Test case: `find` a name, then `edit 1 n/New Name`<br>
+   Expected: The first search result is edited, and the full contact list is shown again.
+
+1. Test case: `edit 1 n/"Ravi s/o Kumar"`<br>
+   Expected: The name becomes `Ravi s/o Kumar`. Without the quotes, the command is rejected with `Unknown parameter`.
+
+1. Incorrect commands to try, each leaving the contacts unchanged:
+   * `edit 1` gives `At least one of n/, p/, or e/ must be provided.`
+   * `edit n/Alex` gives `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
+   * `edit 0 n/Alex` gives `The contact index must be a positive integer shown in the list.`
+   * `edit 999 n/Alex` gives `No contact exists at index 999.`
+   * `edit 1 r/guardian` gives `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
+   * `edit 1 n/A n/B` gives `Each of n/, p/, and e/ may appear only once.`
+   * Editing a contact so that it matches another contact's role, name, phone and email gives
+     `This edit would create a duplicate contact.`
+
+### Listing contacts
+
+1. Prerequisites: start with an empty address book, for example by running `clear`.
+
+1. Test case: `list`<br>
+   Expected: No contacts are shown. The status message shows `No contacts found.`
+
+1. Test case: `add r/student n/Alex Yeoh`, then `list`<br>
+   Expected: Alex Yeoh is shown. The status message shows `Listed 1 contact`.
+
+1. Test case: `add r/guardian n/Mei Tan p/98765432`, then `list`<br>
+   Expected: Both contacts are shown. The status message shows `Listed 2 contacts`.
+
+1. Test case: `list 3`<br>
+   Expected: The shown contacts are unchanged. The status message shows `Invalid list command. Use: list`
+
+### Finding contacts
+
+1. Prerequisites: start with an empty address book, for example by running `clear`. Then add three contacts:
+   `add r/student n/Alex Yeoh`, `add r/student n/Charlotte Oliveiro` and `add r/guardian n/David Li p/91031282`.
+
+1. Test case: `find ale`<br>
+   Expected: Only Alex Yeoh is shown. The status message shows `Found 1 contact matching: ale.`
+
+1. Test case: `find LI`<br>
+   Expected: Charlotte Oliveiro and David Li are shown, as the search ignores case and matches part of a name.
+   The status message shows `Found 2 contacts matching: LI.`
+
+1. Test case: `find yeoh alex`<br>
+   Expected: No contacts are shown, as the words must appear in the same order as in the name. The status message
+   shows `No contacts found matching: yeoh alex`
+
+1. Test case: `list` after any of the `find` commands above<br>
+   Expected: All three contacts are shown again. The status message shows `Listed 3 contacts`.
+
+1. Test case: `find`<br>
+   Expected: The shown contacts are unchanged. The status message shows `Invalid find command. Use: find NAME`
+
+### Ordering and displaying contacts
+
+1. Prerequisites: start with an empty address book, for example by running `clear`. Then add four contacts in this
+   order: `add r/guardian n/David Li p/91031282`, `add r/student n/Charlotte Oliveiro`, `add r/student n/Alex Yeoh`
+   and `add r/guardian n/Bernice Yu p/99272758`.
+
+1. Test case: `list`<br>
+   Expected: The contacts are shown in alphabetical order: Alex Yeoh, Bernice Yu, Charlotte Oliveiro, then David Li.
+   Each card shows the name followed by the role, for example `Alex Yeoh [Student]`, and shows `Not provided` for a
+   missing phone or email. Student cards also show `Guardian: None`, and guardian cards have no guardian line.
+
+1. Test case: `link s/1 g/2`<br>
+   Expected: The status message shows `Linked student Alex Yeoh to guardian Bernice Yu.` Alex Yeoh's card shows
+   `Guardian: Bernice Yu`.
+
+1. Test case: `edit 2 n/Bernice Tan`<br>
+   Expected: Alex Yeoh's card shows `Guardian: Bernice Tan` straight away, without running another command.
+
+1. Test case: `add r/student n/David Li`<br>
+   Expected: The new student is shown directly after the guardian David Li, as guardians come before students with
+   the same name.
+
+1. Test case: `add r/guardian n/aaron lim p/81234567`<br>
+   Expected: The new guardian `aaron lim` is shown first, as the order ignores capitalisation.
+
+1. Test case: `add r/student n/Maximilian Alexander Christopher Bartholomew Montgomery Fitzgerald`<br>
+   Expected: The whole name is visible. If it does not fit on one line, it wraps onto the next line instead of being
+   cut off.
 
 ### Saving data
 
