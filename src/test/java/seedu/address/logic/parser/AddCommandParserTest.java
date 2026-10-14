@@ -57,6 +57,10 @@ public class AddCommandParserTest {
                 AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
         assertParseFailure(parser, NAME_DESC_BOB + " s/o Kumar" + PHONE_DESC_BOB + ROLE_DESC_BOB,
                 AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
+        assertParseFailure(parser, ROLE_DESC_BOB + " " + PREFIX_NAME + "\"Alex Tan\" a/15",
+                AddCommand.MESSAGE_INVALID_PARAMETER);
+        assertParseFailure(parser, ROLE_DESC_BOB + " " + PREFIX_NAME + "\"Ravi s/o Kumar\" a/15",
+                AddCommand.MESSAGE_INVALID_PARAMETER);
         assertParseFailure(parser, " " + PREFIX_NAME + "Ravi s/o Kumar" + PHONE_DESC_BOB + ROLE_DESC_BOB,
                 AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH);
         assertParseFailure(parser, " " + PREFIX_NAME + "ravi/so" + PHONE_DESC_BOB + ROLE_DESC_BOB,
