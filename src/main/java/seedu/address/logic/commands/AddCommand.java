@@ -7,19 +7,18 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 
 /**
- * Adds a person to the address book.
+ * Adds a student or guardian contact to TutorRoster.
  */
 public class AddCommand extends Command {
 
     public static final String COMMAND_WORD = "add";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a person to the address book.\n"
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a student or guardian contact.\n"
             + "Parameters: "
             + PREFIX_ROLE + "ROLE "
             + PREFIX_NAME + "NAME "
@@ -33,7 +32,7 @@ public class AddCommand extends Command {
             + PREFIX_PHONE + "98765432 "
             + PREFIX_EMAIL + "johnd@example.com";
 
-    public static final String MESSAGE_SUCCESS = "New person added: %1$s";
+    public static final String MESSAGE_SUCCESS = "Added contact: %1$s [%2$s].";
     public static final String MESSAGE_DUPLICATE_PERSON = "This contact already exists.";
     public static final String MESSAGE_POSSIBLE_DUPLICATE = "Warning: A contact with the same role and name exists. "
             + "This contact may be a duplicate, but it was added.";
@@ -84,7 +83,7 @@ public class AddCommand extends Command {
                 .anyMatch(person -> toAdd.hasSameNameAndRole(person) && hasSharedEmptyContactField(person));
 
         model.addPerson(toAdd);
-        String feedback = String.format(MESSAGE_SUCCESS, Messages.format(toAdd));
+        String feedback = String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getRole());
         if (hasSimilarPhone) {
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_PHONE;
         } else if (hasSameEmail) {

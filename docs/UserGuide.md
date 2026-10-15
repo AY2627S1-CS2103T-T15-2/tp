@@ -81,9 +81,9 @@ Shows a message explaining how to access the help page.
 
 Format: `help`
 
-### Adding a person: `add`
+### Adding a contact: `add`
 
-Adds a person to the address book.
+Adds a student or guardian contact.
 
 Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]`
 
@@ -95,7 +95,7 @@ An unsupported role is rejected with `Invalid role. Role must be student or guar
 If `r/` is omitted, the error starts with `Missing required field: r/ROLE.` If `n/` is omitted, it starts with
 `Missing required field: n/NAME.` In either case, that line is followed by the same usage text:
 
-    add: Adds a person to the address book.
+    add: Adds a student or guardian contact.
     Parameters: r/ROLE n/NAME [p/PHONE] [e/EMAIL]
     Students may omit phone and email; guardians must provide at least one.
     Example: add r/student n/John Doe p/98765432 e/johnd@example.com
@@ -187,7 +187,7 @@ Examples:
 
 ### Listing all contacts: `list`
 
-Shows a list of all contacts in the address book.
+Shows a list of all contacts in TutorRoster.
 
 Format: `list`
 
@@ -205,13 +205,13 @@ Format: `list`
 * If a student has no linked guardian, `Guardian: None` is shown.
 * If a contact has no phone number or email address, `Not provided` is shown instead; for example, `Phone: Not provided`.
 
-### Editing a person: `edit`
+### Editing a contact: `edit`
 
-Edits an existing person in the address book.
+Edits an existing contact.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 
-* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
+* Edits the contact at the specified `INDEX`. The index refers to the index number shown in the displayed contact list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * After a successful edit, the edited contact is selected and its details are shown in the details panel.
@@ -243,11 +243,11 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
   matching after ignoring spaces and hyphens exists. This contact may be a duplicate, but it was updated.`
 
 Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower` Edits the name of the 2nd person to be `Betsy Crower`.
-*  `edit 2 e/NONE` Removes the email of the 2nd person.
-*  `edit 2 p/NONE` Removes the phone number of the 2nd person.
-*  `edit 3 n/"Ravi s/o Kumar"` Edits the name of the 3rd person to be `Ravi s/o Kumar`.
+*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st contact to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 2 n/Betsy Crower` Edits the name of the 2nd contact to be `Betsy Crower`.
+*  `edit 2 e/NONE` Removes the email of the 2nd contact.
+*  `edit 2 p/NONE` Removes the phone number of the 2nd contact.
+*  `edit 3 n/"Ravi s/o Kumar"` Edits the name of the 3rd contact to be `Ravi s/o Kumar`.
 
 ### Locating contacts by name: `find`
 
@@ -342,7 +342,7 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Clears all entries from the address book.
+Clears all contacts from TutorRoster.
 
 Format: `clear`
 

@@ -4,7 +4,7 @@
   pageNav: 3
 ---
 
-# AB-3 Developer Guide
+# TutorRoster Developer Guide
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -731,9 +731,9 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
-### Adding a person
+### Adding a contact
 
-1. Start with an empty address book or use names and details not already in the address book.
+1. Start with an empty contact list or use names and details not already in TutorRoster.
 
 1. Test case: `add r/student n/Ben Lim`<br>
    Expected: The student is added with no phone number or email address.
@@ -772,26 +772,26 @@ testers are expected to do more *exploratory* testing.
 1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
    Expected: Both report the role error first, following the fixed parameter order regardless of command order.
 
-### Deleting a person
+### Deleting a contact
 
-1. Deleting a person while all persons are being shown
+1. Deleting a contact while all contacts are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Prerequisites: List all contacts using the `list` command, with multiple contacts in the list.
 
    1. Test case: `delete 1`<br>
       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No contact is deleted. The status message shows error details.
 
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
 
-### Editing a person
+### Editing a contact
 
-1. Prerequisites: start with an empty address book, for example by running `clear`. Then add three contacts:
+1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add three contacts:
    `add r/student n/Bernice Yu p/99272758`, `add r/guardian n/David Li p/91031282` and
    `add r/student n/Irfan Ibrahim e/irfan@example.com`.
 
@@ -829,7 +829,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Listing contacts
 
-1. Prerequisites: start with an empty address book, for example by running `clear`.
+1. Prerequisites: start with an empty contact list, for example by running `clear`.
 
 1. Test case: `list`<br>
    Expected: No contacts are shown. The status message shows `No contacts found.`
@@ -845,7 +845,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Finding contacts
 
-1. Prerequisites: start with an empty address book, for example by running `clear`. Then add three contacts:
+1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add three contacts:
    `add r/student n/Alex Yeoh`, `add r/student n/Charlotte Oliveiro` and `add r/guardian n/David Li p/91031282`.
 
 1. Test case: `find ale`<br>
@@ -867,7 +867,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Ordering and displaying contacts
 
-1. Prerequisites: start with an empty address book, for example by running `clear`. Then add four contacts in this
+1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add four contacts in this
    order: `add r/guardian n/David Li p/91031282`, `add r/student n/Charlotte Oliveiro`, `add r/student n/Alex Yeoh`
    and `add r/guardian n/Bernice Yu p/99272758`.
 

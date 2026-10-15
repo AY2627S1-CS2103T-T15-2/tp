@@ -23,7 +23,7 @@ import seedu.address.model.person.Role;
 @JsonRootName(value = "addressbook")
 class JsonSerializableAddressBook {
 
-    public static final String MESSAGE_DUPLICATE_PERSON = "Persons list contains duplicate person(s).";
+    public static final String MESSAGE_DUPLICATE_PERSON = "Contact list contains duplicate contacts.";
     public static final String MESSAGE_DUPLICATE_ID = "Contacts contain duplicate IDs.";
     public static final String MESSAGE_INVALID_RELATIONSHIP = "A student link must refer to an existing guardian.";
 
