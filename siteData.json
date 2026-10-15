@@ -40,7 +40,7 @@
       "src": "DeveloperGuide.md",
       "title": "Developer Guide",
       "headings": {
-        "ab-3-developer-guide": "AB-3 Developer Guide",
+        "tutorroster-developer-guide": "TutorRoster Developer Guide",
         "acknowledgements": "Acknowledgements",
         "setting-up-getting-started": "Setting up, getting started",
         "design": "Design",
@@ -68,9 +68,9 @@
         "glossary": "Glossary",
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
-        "adding-a-person": "Adding a person",
-        "deleting-a-person": "Deleting a person",
-        "editing-a-person": "Editing a person",
+        "adding-a-contact": "Adding a contact",
+        "deleting-a-contact": "Deleting a contact",
+        "editing-a-contact": "Editing a contact",
         "listing-contacts": "Listing contacts",
         "finding-contacts": "Finding contacts",
         "ordering-and-displaying-contacts-2": "Ordering and displaying contacts",
@@ -123,9 +123,9 @@
         "quick-start": "Quick start",
         "features": "Features",
         "viewing-help-help": "Viewing help: help",
-        "adding-a-person-add": "Adding a person: add",
+        "adding-a-contact-add": "Adding a contact: add",
         "listing-all-contacts-list": "Listing all contacts: list",
-        "editing-a-person-edit": "Editing a person: edit",
+        "editing-a-contact-edit": "Editing a contact: edit",
         "locating-contacts-by-name-find": "Locating contacts by name: find",
         "linking-a-student-to-a-guardian-link": "Linking a student to a guardian: link",
         "deleting-a-contact-delete": "Deleting a contact: delete",
@@ -144,7 +144,7 @@
       "src": "index.md",
       "title": "",
       "headings": {
-        "addressbook-level-3": "AddressBook Level-3"
+        "tutorroster": "TutorRoster"
       },
       "headingKeywords": {}
     },
