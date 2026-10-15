@@ -31,7 +31,7 @@ public class ContactDisplayFormatterTest {
     }
 
     @Test
-    public void formatContactMethod_presentEmail_returnsEmailWithCapitalisationPreserved() {
+    public void formatContactMethod_presentEmail_returnsEmailWithCapitalizationPreserved() {
         Optional<Email> email = Optional.of(new Email("Alex@Example.COM"));
         assertEquals("Alex@Example.COM", ContactDisplayFormatter.formatContactMethod(email));
     }

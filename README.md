@@ -15,7 +15,7 @@ TutorRoster is designed to provide a fast, focused, keyboard-driven way to:
 * update or remove inaccurate contact information; and
 * store contact information locally on a single device.
 
-TutorRoster aims to keep student and guardian contact information organised and up to date, allowing tutors to retrieve accurate details quickly when communicating with students and families.
+TutorRoster aims to keep student and guardian contact information organized and up to date, allowing tutors to retrieve accurate details quickly when communicating with students and families.
 
 For more information, visit the [TutorRoster product website](https://ay2627s1-cs2103t-t15-2.github.io/tp/). Refer to the [User Guide](https://ay2627s1-cs2103t-t15-2.github.io/tp/UserGuide.html) for usage instructions and the [Developer Guide](https://ay2627s1-cs2103t-t15-2.github.io/tp/DeveloperGuide.html) for technical documentation.
 
