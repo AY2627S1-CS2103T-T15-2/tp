@@ -65,6 +65,30 @@ public class PersonDisplayOrderComparatorTest {
     }
 
     @Test
+    public void compare_letterWithStrokeOrLigature_orderedWithBaseLetter() {
+        Person sophia = new PersonBuilder().withName("Sophia Lim").build();
+        Person soren = new PersonBuilder().withName("S\u00f8ren Tan").build();
+        Person sun = new PersonBuilder().withName("Sun Li").build();
+        Person lukasz = new PersonBuilder().withName("\u0141ukasz Ng").build();
+        Person lydia = new PersonBuilder().withName("Lydia Ong").build();
+        Person zoe = new PersonBuilder().withName("Zoe Lim").build();
+
+        assertTrue(comparator.compare(sophia, soren) < 0);
+        assertTrue(comparator.compare(soren, sun) < 0);
+        assertTrue(comparator.compare(lukasz, lydia) < 0);
+        assertTrue(comparator.compare(lukasz, zoe) < 0);
+    }
+
+    @Test
+    public void compare_nameWithStrokeAndPlainName_plainNameFirst() {
+        Person soren = new PersonBuilder().withName("Soren Tan").withRole("student").build();
+        Person strokedSoren = new PersonBuilder().withName("S\u00f8ren Tan").withRole("guardian").build();
+
+        assertTrue(comparator.compare(soren, strokedSoren) < 0);
+        assertTrue(comparator.compare(strokedSoren, soren) > 0);
+    }
+
+    @Test
     public void compare_nameIsPrefixOfLongerName_shorterNameFirst() {
         Person alexTan = new PersonBuilder().withName("Alex Tan").build();
         Person alexa = new PersonBuilder().withName("Alexa Lim").build();

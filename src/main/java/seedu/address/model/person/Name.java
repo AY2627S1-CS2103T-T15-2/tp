@@ -3,6 +3,10 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.text.Normalizer;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 /**
  * Represents a Person's name in the address book.
  * Guarantees: immutable; is valid as declared in {@link #isValidName(String)}
@@ -15,6 +19,24 @@ public class Name {
                     + "Names may contain letters, digits, spaces, apostrophes, hyphens, periods, and slashes.";
 
     public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N}\\p{Pd} './’]+";
+
+    private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
+
+    /**
+     * Replacements for letters that Unicode does not decompose into a base letter and an accent, such as
+     * letters with a stroke (ø, ł), ligatures (æ, œ), ß and þ.
+     */
+    private static final Map<Character, String> STANDALONE_LETTER_REPLACEMENTS = Map.ofEntries(
+            Map.entry('\u00f8', "o"), Map.entry('\u00d8', "O"), // ø, Ø
+            Map.entry('\u0142', "l"), Map.entry('\u0141', "L"), // ł, Ł
+            Map.entry('\u0111', "d"), Map.entry('\u0110', "D"), // đ, Đ
+            Map.entry('\u00f0', "d"), Map.entry('\u00d0', "D"), // ð, Ð
+            Map.entry('\u0127', "h"), Map.entry('\u0126', "H"), // ħ, Ħ
+            Map.entry('\u0131', "i"), // ı
+            Map.entry('\u00fe', "th"), Map.entry('\u00de', "Th"), // þ, Þ
+            Map.entry('\u00e6', "ae"), Map.entry('\u00c6', "Ae"), // æ, Æ
+            Map.entry('\u0153', "oe"), Map.entry('\u0152', "Oe"), // œ, Œ
+            Map.entry('\u00df', "ss"), Map.entry('\u1e9e', "SS")); // ß, ẞ
 
     public final String fullName;
 
@@ -55,6 +77,23 @@ public class Name {
                     + "hyphens, periods, and slashes.";
         }
         return null;
+    }
+
+    /**
+     * Returns {@code text} with accents removed from its letters, for example "Elise" for "Élise".
+     * Each letter is decomposed into its base letter and combining marks, and the combining marks are
+     * removed. Letters that cannot be decomposed in this way are replaced by their base letters, for
+     * example "Soren" for "Søren", "Lukasz" for "Łukasz" and "Strauss" for "Strauß".
+     */
+    public static String removeAccents(String text) {
+        requireNonNull(text);
+        String decomposedText = Normalizer.normalize(text, Normalizer.Form.NFD);
+        String textWithoutMarks = COMBINING_MARKS.matcher(decomposedText).replaceAll("");
+        StringBuilder result = new StringBuilder(textWithoutMarks.length());
+        for (char letter : textWithoutMarks.toCharArray()) {
+            result.append(STANDALONE_LETTER_REPLACEMENTS.getOrDefault(letter, String.valueOf(letter)));
+        }
+        return result.toString();
     }
 
     /**

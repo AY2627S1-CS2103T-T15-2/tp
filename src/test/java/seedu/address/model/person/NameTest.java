@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -73,6 +74,32 @@ public class NameTest {
 
         // different values -> returns false
         assertFalse(name.equals(new Name("Other Valid Name")));
+    }
+
+    @Test
+    public void removeAccents() {
+        // null -> throws NullPointerException
+        assertThrows(NullPointerException.class, () -> Name.removeAccents(null));
+
+        // precomposed accented letters -> base letters
+        assertEquals("Elise", Name.removeAccents("\u00c9lise"));
+        assertEquals("Zoe Nunez", Name.removeAccents("Zo\u00eb N\u00fa\u00f1ez"));
+
+        // letter followed by a combining mark -> base letter
+        assertEquals("Elise", Name.removeAccents("E\u0301lise"));
+
+        // letters with a stroke -> base letters, keeping letter case
+        assertEquals("Soren Lukasz", Name.removeAccents("S\u00f8ren \u0141ukasz"));
+        assertEquals("OLE DOKOVIC", Name.removeAccents("\u00d8LE \u0110OKOVI\u0106"));
+
+        // ligatures and sharp s -> two letters
+        assertEquals("Aesa Strauss", Name.removeAccents("\u00c6sa Strau\u00df"));
+
+        // letter with a stroke and an accent -> base letter
+        assertEquals("o", Name.removeAccents("\u01ff"));
+
+        // no accents -> unchanged
+        assertEquals("Alex O'Brien-Tan 2", Name.removeAccents("Alex O'Brien-Tan 2"));
     }
 
     @Test
