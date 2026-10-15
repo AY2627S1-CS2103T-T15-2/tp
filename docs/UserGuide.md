@@ -319,6 +319,9 @@ Format: `delete INDEX`
 * Deletes the contact at the specified `INDEX`.
 * The index refers to the index number shown in the displayed contact list.
 * The index **must be a positive integer** 1, 2, 3, ...
+* A value that is not a positive integer is rejected with
+  `The contact index must be a positive integer shown in the list.`
+* An index outside the displayed list is rejected with `No contact exists at index INDEX.`
 
 Deleting an unlinked contact does not remove any student-guardian relationships. Deleting a linked student removes
 that student's relationship while retaining the guardian. Deleting a guardian clears the relationships of all students
