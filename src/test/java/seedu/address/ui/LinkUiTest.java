@@ -7,12 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -32,6 +34,7 @@ import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Region;
@@ -42,6 +45,7 @@ import seedu.address.MainApp;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
@@ -184,6 +188,9 @@ public class LinkUiTest {
             assertEquals(Color.WHITE, label(personDetailsRoot, "name").getTextFill());
             assertEquals(20.0, label(personDetailsRoot, "name").getFont().getSize(), 0.01);
             assertEquals("", command.getText());
+            root.applyCss();
+            root.layout();
+            saveSnapshot(root);
             command.setText("link s/1 g/2");
             command.fireEvent(new ActionEvent());
             assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
@@ -192,7 +199,6 @@ public class LinkUiTest {
             command.clear();
             root.applyCss();
             root.layout();
-            saveSnapshot(root);
 
             command.setText("edit 2 n/Sarah Tan p/91234567");
             command.fireEvent(new ActionEvent());
@@ -347,5 +353,134 @@ public class LinkUiTest {
             contacts.set(0, new PersonBuilder(student).withEmail("Alex@Example.COM").build());
             assertEquals("Email: Alex@Example.COM", label(panel.getRoot(), "email").getText());
         });
+    }
+
+    @Test
+    public void command_linkReplacementSaveFailure_preservesSelectionDetailsFileAndFocus() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person student = new PersonBuilder().withName("Alex Tan").withoutPhone().withoutEmail().build();
+            Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").withoutEmail().build();
+            Person newGuardian = new PersonBuilder().withName("Sarah Tan").withRole("guardian")
+                    .withoutPhone().withEmail("sarah@example.com").build();
+            AddressBook book = new AddressBook();
+            book.setPersons(List.of(student, guardian, newGuardian,
+                    new PersonBuilder().withName("Zoe Lee").build()));
+            ModelManager model = new ModelManager(book, new UserPrefs());
+            Path dataPath = temporaryFolder.resolve("contacts.json");
+            AtomicBoolean failSave = new AtomicBoolean();
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(dataPath) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    if (failSave.get()) {
+                        throw new IOException("Simulated disk failure");
+                    }
+                    super.saveAddressBook(addressBook);
+                }
+            };
+            LogicManager logic = new LogicManager(model, new StorageManager(storage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+            Stage stage = new Stage();
+            try {
+                MainWindow window = new MainWindow(stage, logic, dataPath);
+                window.fillInnerParts();
+                Scene scene = stage.getScene();
+                Region root = (Region) scene.getRoot();
+                root.resize(960, 640);
+                root.applyCss();
+                root.layout();
+                TextField command = (TextField) root.lookup("#commandTextField");
+                TextArea feedback = (TextArea) root.lookup("#resultDisplay");
+                command.setText("find Tan");
+                command.fireEvent(new ActionEvent());
+                command.setText("link s/1 g/2");
+                command.fireEvent(new ActionEvent());
+                assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+                assertEquals("Guardian: Mei Tan", label(root, "guardianName").getText());
+                assertEquals(command, scene.getFocusOwner());
+                String originalFile = readFile(dataPath);
+
+                failSave.set(true);
+                command.setText("link s/1 g/3");
+                command.fireEvent(new ActionEvent());
+                assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+                assertEquals("Guardian: Mei Tan", label(root, "guardianName").getText());
+                assertEquals("Guardian phone: " + guardian.getPhone().orElseThrow(),
+                        label(root, "guardianPhone").getText());
+                assertEquals("Guardian email: Not provided", label(root, "guardianEmail").getText());
+                assertEquals(Optional.of(guardian.getId()), model.getFilteredPersonList().getFirst().getGuardianId());
+                assertEquals(3, model.getFilteredPersonList().size());
+                assertEquals(originalFile, readFile(dataPath));
+                assertEquals(LogicManager.MESSAGE_SAVE_FAILURE, feedback.getText());
+                assertEquals("link s/1 g/3", command.getText());
+                assertEquals(command, scene.getFocusOwner());
+
+                failSave.set(false);
+                command.setText("link g/3 s/1");
+                command.fireEvent(new ActionEvent());
+                assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+                assertEquals("Guardian: Sarah Tan", label(root, "guardianName").getText());
+                assertEquals("Guardian phone: Not provided", label(root, "guardianPhone").getText());
+                assertEquals("Guardian email: sarah@example.com", label(root, "guardianEmail").getText());
+                assertEquals("", command.getText());
+                assertEquals(command, scene.getFocusOwner());
+                assertEquals(Optional.of(newGuardian.getId()),
+                        model.getFilteredPersonList().getFirst().getGuardianId());
+
+                command.setText("find Alex");
+                command.fireEvent(new ActionEvent());
+                assertEquals(1, model.getFilteredPersonList().size());
+                assertEquals("Guardian: Sarah Tan", label(root, "guardianName").getText());
+                assertEquals("Guardian email: sarah@example.com", label(root, "guardianEmail").getText());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void command_sameNameStudents_linksAndSelectsSecondRecord() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person first = new PersonBuilder().withName("Alex Tan").withoutPhone().withoutEmail().build();
+            Person second = new PersonBuilder().withName("Alex Tan").withoutPhone().withoutEmail().build();
+            Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+            AddressBook book = new AddressBook();
+            book.setPersons(List.of(first, second, guardian));
+            ModelManager model = new ModelManager(book, new UserPrefs());
+            Path dataPath = temporaryFolder.resolve("contacts.json");
+            LogicManager logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataPath),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+            Stage stage = new Stage();
+            try {
+                MainWindow window = new MainWindow(stage, logic, dataPath);
+                window.fillInnerParts();
+                Region root = (Region) stage.getScene().getRoot();
+                root.resize(960, 640);
+                root.applyCss();
+                root.layout();
+                TextField command = (TextField) root.lookup("#commandTextField");
+                command.setText("link s/2 g/3");
+                command.fireEvent(new ActionEvent());
+
+                assertEquals(second.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+                assertEquals(Optional.of(guardian.getId()),
+                        window.getPersonListPanel().getSelectedPerson().getGuardianId());
+                assertTrue(model.getFilteredPersonList().getFirst().getGuardianId().isEmpty());
+                assertEquals("Guardian: Mei Tan", label(root, "guardianName").getText());
+                assertEquals(command, stage.getScene().getFocusOwner());
+
+                window.getPersonListPanel().selectPerson(first.getId());
+                assertEquals("Guardian: None", label(root, "guardianName").getText());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    private String readFile(Path path) {
+        try {
+            return Files.readString(path);
+        } catch (IOException exception) {
+            throw new AssertionError("Could not read saved contacts", exception);
+        }
     }
 }

@@ -9,7 +9,7 @@ public enum Role {
     STUDENT("Student"),
     GUARDIAN("Guardian");
 
-    public static final String MESSAGE_CONSTRAINTS = "Role must be student or guardian.";
+    public static final String MESSAGE_CONSTRAINTS = "Invalid role. Role must be student or guardian.";
 
     private final String displayName;
 

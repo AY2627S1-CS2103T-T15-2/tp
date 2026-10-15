@@ -273,6 +273,12 @@ The edit is then rejected if it would leave a guardian with no phone number and 
 would duplicate another contact. The duplicate check is skipped when the edited contact still matches its original
 duplicate identity, so changing only the capitalization of a name is allowed.
 
+If the edit is allowed, `getPossibleDuplicateWarning` compares the edited contact with every other contact, excluding
+itself by ID, using the same rules as `add`. A contact with the same role and name that also has a matching phone
+number (ignoring spaces and hyphens), the same email address, or a shared missing phone number or email produces a
+warning, which is appended to the success message. The edit is still applied, because different people may share a
+name.
+
 On success, `Model#setPerson` replaces the contact and the full list is shown again. The `CommandResult` carries the
 edited contact's ID, and `MainWindow` selects that contact so the detail panel shows the update. Like other
 data-changing commands, `LogicManager` runs the edit on a candidate model and saves it before replacing the live
@@ -283,6 +289,8 @@ model, so a failed save leaves the contact unchanged.
 * **Removing a field:** `p/NONE` and `e/NONE` were chosen over an empty `p/` or `e/`, which is rejected as a likely
   typo. `NONE` cannot be a valid phone number or email, so it never clashes with real data. Letter case is ignored as
   a deliberate choice for ease of typing.
+* **Possible duplicates:** a warning was chosen over rejecting the edit, matching `add`, so that two people with
+  the same name can both be recorded. Rejecting would force the tutor to change one name just to save the record.
 * **Rejecting unknown parameters:** silently keeping `a/15` as part of a name would save data the user did not intend.
   The cost is that names containing a word ending in `/` must be quoted.
 
@@ -290,34 +298,53 @@ model, so a failed save leaves the contact unchanged.
 
 `LinkCommandParser` accepts `link s/STUDENT_INDEX g/GUARDIAN_INDEX` in either parameter order. It rejects missing, repeated and unknown prefixes, extra text and invalid integer indexes. `LinkCommand` resolves both indexes against the filtered, sorted display list, validates their roles, rejects duplicate links and replaces an existing guardian when requested.
 
-Every `Person` has an immutable `ContactId`, represented by a UUID. A student has an optional `guardianId` referencing a guardian's ID. This gives each student at most one guardian while allowing several students to refer to the same guardian. References use IDs because names can change and display indexes change after sorting or filtering. Contact-field duplicate detection continues to use `isSamePerson`; an ID does not allow duplicate contact details. `Person.equals` includes the guardian relationship as contact data.
+Every `Person` has an immutable `ContactId`, represented by a UUID. A student has an optional `guardianId` referencing a guardian's ID. This gives each student at most one guardian while allowing several students to refer to the same guardian. References use IDs because names can change and display indexes change after sorting or filtering. Contact-field duplicate detection continues to use `isSamePerson`, including the exception for students without either contact method described below. `Person.equals` includes the guardian relationship as contact data.
+
+`UniquePersonList` locates update and removal targets by `ContactId`, rather than contact-field equality. Two students
+with the same name and no contact methods can have equal fields but must remain separate records. Linking, editing
+or deleting the second displayed student must therefore use its ID. Otherwise replacing the first equal contact with
+the second contact's updated record would lose the first ID and save the second ID twice, making the file invalid.
 
 `EditCommand` preserves both IDs when constructing the edited person. `AddressBook.removePerson` clears references to a removed guardian. The detail panel resolves the guardian against the complete contact list, including contacts outside the current search results, and refreshes when either contact changes. The command result carries the student's ID so the UI can select that contact after a successful save.
 
 ### Contact details and Add validation
 
-`AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE` and `e/EMAIL` as optional fields. A student
-may omit both contact methods. The parser rejects a guardian if both are absent to provide a user-facing command
-error, and `EditCommand` applies the same rule to the resulting contact before updating the model. `Person` stores
+`AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE` and `e/EMAIL` as optional fields. It validates
+supplied values in the fixed order role, name, phone, then email, regardless of the order in which parameters appear.
+Missing required fields and invalid roles are also reported in that order. A student may omit both contact methods. The
+parser rejects a guardian if both are absent to provide a user-facing command error, and `EditCommand` applies the same
+rule to the resulting contact before updating the model. `Person` stores
 phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
 method. This model invariant applies regardless of which code path creates a `Person`.
+
+The Add parser rejects unknown parameters with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE, and
+e/EMAIL.` If the unknown parameter occurs while parsing a name, the message also instructs the user to quote the full
+name. For Add, every name containing `/` must be enclosed in double quotes, including an embedded slash such as
+`AC/DC`. Edit retains its separate behavior, which accepts unquoted embedded slashes. Missing `r/ROLE` or `n/NAME`
+errors identify the missing field and append the add command usage. Repeated parameters return
+`Each of r/, n/, p/, and e/ may appear only once.` Empty roles receive a separate error from unsupported roles; an
+unsupported role reports `Invalid role. Role must be student or guardian.` When multiple supplied values are invalid,
+the parser reports the first error in the fixed order role, name, phone, then email.
 
 `AddCommand` rejects an exact duplicate using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Duplicate
 identity consists of role, name, phone and email. Name and email comparisons ignore capitalization; phone numbers are
 compared after trimming leading and trailing whitespace, while internal spaces and hyphens remain significant. Two
-absent values for an optional field match, provided both contacts have at least one contact method. This gives
-students with neither a phone number nor an email address a specific exception: matching role and name alone does not
-make them exact duplicates. They may both be added, with a general possible-duplicate warning. For other contacts,
-matching role and name with different details is allowed, and Add may display a possible-duplicate warning when a
-phone number matches after spaces and hyphens are ignored, when the email addresses match, or when both contacts are
-missing the same contact method.
+absent values for an optional field match, provided both contacts have at least one contact method. Exact duplicates
+are rejected with `This contact already exists.` This gives students with neither a phone number nor an email address
+a specific exception: matching role and name alone does not make them exact duplicates. They may both be added, with a
+general possible-duplicate warning. For other contacts, matching role and name with different details is allowed. Add
+checks possible duplicates in this order: a phone number that matches after spaces and hyphens are ignored; an email
+address that matches case-insensitively; then a contact method that is absent from both contacts. It displays only the
+first matching warning, appends it after the normal success message, and still adds the contact. Contacts with
+different roles or names do not receive these warnings.
 
 ### Saving contacts and relationships
 
 Contact JSON records contain an `id` UUID string and an optional `guardianId` UUID string, alongside the existing fields. `JsonAdaptedPerson` restores saved IDs; legacy records without IDs receive new IDs that are persisted on the next successful save. `JsonSerializableAddressBook` first loads all contacts, rejecting duplicate IDs and duplicate contact details, then validates that every guardian reference points to an existing contact with the guardian role. A guardian cannot carry a guardian reference. Repeated JSON object fields are rejected during parsing.
 
 `Person` stores phone and email as non-null `Optional` values. `Phone` and `Email` always represent valid, present
-values. The JSON adapter keeps both fields as nullable strings: missing or null means absent, while empty and invalid
+values. Phone details contain at least 3 digits and no more than 100 characters. The JSON adapter keeps both fields as
+nullable strings: missing or null means absent, while empty and invalid
 strings are rejected. Existing valid strings retain their capitalization. Single-label email domains and domains
 whose final label has fewer than two characters are invalid; incompatible files fail loading without being rewritten
 automatically. `JsonAdaptedPerson` rejects a guardian record that has neither a phone number nor an email address
@@ -335,8 +362,9 @@ Each command declares whether it changes data through `Command.isDataChanging()`
 
 If loading fails, storage records that failure for the session. The UI displays the startup error, and all data-changing commands are disabled until the user fixes the file and restarts the application. The invalid file is never overwritten during that session. A missing data file starts with an empty list and is created by the first successful data-changing command.
 
-Relevant tests cover Add parsing and validation, optional student contact methods, guardian contact-method requirements,
-exact duplicates, displayed indexes, role validation, first links, replacements, shared guardians, ID preservation,
+Relevant tests cover Add parsing and validation, repeated parameters, fixed validation-error ordering, quoted names
+containing slashes, the phone length limit, optional student contact methods, guardians with either one contact method, guardian contact-method
+requirements, exact duplicates and possible-duplicate warning priority, displayed indexes, role validation, first links, replacements, shared guardians, ID preservation,
 relationship persistence, deletion cleanup, invalid references, failed saves and UI selection/details. JavaFX UI tests
 run on Windows desktop environments; the remaining tests run on all supported platforms.
 
@@ -691,7 +719,8 @@ testers are expected to do more *exploratory* testing.
    1. Download the JAR file and copy it into an empty folder.
 
    1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+      Expected: The GUI opens with an empty contact list, no selected contact and the command box focused.
+      No data file is created until the first successful data-changing command. The window size may not be optimal.
 
 1. Saving window preferences
 
@@ -719,7 +748,29 @@ testers are expected to do more *exploratory* testing.
    Expected: No contact is added. The result says `A guardian must have at least one contact method: phone or email.`
 
 1. Repeat the first command.<br>
-   Expected: No duplicate is added. The result says `This person already exists in the address book.`
+   Expected: A second contact is added with the same role and name. The success message is followed by the general
+   possible-duplicate warning because both contacts have no phone number or email address.
+
+1. Test case: `add r/student n/Alex Tan p/91234567 e/alex@example.com`, then repeat the command with the same values.<br>
+   Expected: The second command is rejected with `This contact already exists.`
+
+1. Test case: `add r/student n/Casey Lee p/9123 4567`, then `add r/student n/Casey Lee p/91234567`.<br>
+   Expected: The second contact is added with the phone-related possible-duplicate warning.
+
+1. Test case: `add r/student n/Jamie Ng p/12345678 e/jamie@example.com`, then `add r/student n/Jamie Ng p/87654321 e/JAMIE@example.com`.<br>
+   Expected: The second contact is added with the email-related possible-duplicate warning.
+
+1. Test case: `add r/student n/Alex Tan p/12`.<br>
+   Expected: The phone error says it must contain at least 3 digits.
+
+1. Test case: `add r/student n/Alex Tan p/`.<br>
+   Expected: The result says `Empty phone parameter: Phone cannot be empty when p/ is specified.`
+
+1. Test case: `add r/student n/Alex Tan p/<101-character value>`.<br>
+   Expected: The result says `Phone details cannot exceed 100 characters.`
+
+1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
+   Expected: Both report the role error first, following the fixed parameter order regardless of command order.
 
 ### Deleting a person
 
@@ -740,8 +791,9 @@ testers are expected to do more *exploratory* testing.
 
 ### Editing a person
 
-1. Prerequisites: start from the sample data and run `list`. Note which contacts are students and which are
-   guardians.
+1. Prerequisites: start with an empty address book, for example by running `clear`. Then add three contacts:
+   `add r/student n/Bernice Yu p/99272758`, `add r/guardian n/David Li p/91031282` and
+   `add r/student n/Irfan Ibrahim e/irfan@example.com`.
 
 1. Test case: `edit 1 n/Alex Yeoh p/91234567`<br>
    Expected: The first contact's name and phone are updated. The status message shows
@@ -759,6 +811,11 @@ testers are expected to do more *exploratory* testing.
 
 1. Test case: `edit 1 n/"Ravi s/o Kumar"`<br>
    Expected: The name becomes `Ravi s/o Kumar`. Without the quotes, the command is rejected with `Unknown parameter`.
+
+1. Test case: `add r/student n/Roy Balakrishnan p/92624417 e/irfan@example.com`, then `edit INDEX n/Irfan Ibrahim`
+   using Roy's index.<br>
+   Expected: The name is updated. Below the success message, a warning says another contact with the same role and
+   name, and the same email address exists, and that the contact may be a duplicate but was updated.
 
 1. Incorrect commands to try, each leaving the contacts unchanged:
    * `edit 1` gives `At least one of n/, p/, or e/ must be provided.`
@@ -837,10 +894,92 @@ testers are expected to do more *exploratory* testing.
    Expected: The whole name is visible. If it does not fit on one line, it wraps onto the next line instead of being
    cut off.
 
+### Linking students to guardians
+
+Use a disposable copy of TutorRoster in a separate folder so these tests do not change real contact data.
+Run the following cases in order.
+
+1. Prerequisites: run `clear`, then add `add r/student n/Alex Tan`, `add r/student n/Bea Tan`,
+   `add r/guardian n/Mei Tan p/98765432` and `add r/guardian n/Sarah Lim e/sarah@example.com`.
+   Run `list`. The displayed indexes are Alex 1, Bea 2, Mei 3 and Sarah 4.
+
+1. Test case: `link s/01 g/03`<br>
+   Expected: `Linked student Alex Tan to guardian Mei Tan.` Alex is selected. His card shows `Guardian: Mei Tan`,
+   and the detail panel shows Mei's name, `Guardian phone: 98765432` and `Guardian email: Not provided`.
+   The command box is empty and retains focus. The relationship is saved automatically.
+
+1. Test case: `link g/3 s/1`<br>
+   Expected: `Alex Tan is already linked to Mei Tan.` Contacts, links, selection, details and saved data are unchanged.
+   The failed command remains in the command box, which retains focus.
+
+1. Test case: `link g/4 s/1`<br>
+   Expected: `Changed Alex Tan’s guardian from Mei Tan to Sarah Lim.` Alex remains selected, with Sarah's name,
+   `Guardian phone: Not provided` and `Guardian email: sarah@example.com` in the detail panel.
+
+1. Test case: `find Tan`, then `link s/1 g/3`<br>
+   Expected: The displayed contacts are Alex, Bea and Mei. Alex's guardian changes from Sarah to Mei even though
+   Sarah is outside the search results. Only those three contacts remain displayed after linking.
+
+1. Test case: `find Alex`<br>
+   Expected: Alex's card and detail panel still show Mei's details even though Mei is hidden by the search.
+   `link s/1 g/3` now reports `No contact exists at guardian index 3.` without changing the existing link. Run `list`.
+
+1. Test case: `link s/2 g/3`, then close and restart TutorRoster.<br>
+   Expected: Alex and Bea both retain their links to Mei. All four contacts reload in alphabetical order.
+   No contact is initially selected. Selecting either student shows Mei's current details.
+
+1. Test case: `edit 3 n/Zara Tan p/NONE e/zara@example.com`<br>
+   Expected: The edited guardian is selected and moves to index 4. Select Alex, then Bea; each shows
+   `Guardian: Zara Tan`, `Guardian phone: Not provided` and `Guardian email: zara@example.com`.
+   Restart and check that both links and the updated guardian details remain.
+
+1. Test case: `delete 4`<br>
+   Expected: Zara is deleted and two relationships are reported removed. Alex and Bea remain with `Guardian: None`.
+   Restart and check that the guardian and both links remain absent.
+
+1. Incorrect commands to try while all contacts are displayed:
+   * `link s/1` or `link s/1 g/3 extra`: `Invalid link command. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX`
+   * `link s/1 g/3 x/4`: `Unknown parameter. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX`
+   * `link s/1 s/2 g/3`: `Each of s/ and g/ may appear only once.`
+   * `link s/0 g/3`: `Student index must be a positive integer shown in the list.`
+   * `link s/1 g/-1`: `Guardian index must be a positive integer shown in the list.`
+   * `link s/999 g/3`: `No contact exists at student index 999.`
+   * `link s/3 g/3`: `Student index must refer to a student.`
+   * `link s/1 g/2`: `Guardian index must refer to a guardian.`
+   Expected for every failure: contacts, relationships, selection, details and saved data remain unchanged.
+
+1. Same-name students: run `clear`, add `add r/student n/Alex Tan` twice, then add
+   `add r/guardian n/Mei Tan p/98765432`. Run `link s/2 g/3`.<br>
+   Expected: Only the second Alex is linked and selected. The first Alex still shows `Guardian: None`.
+   Restart and check that both students are present with their separate links. Run `link s/1 g/3`, then
+   `edit 2 n/Bea Tan`. Only the second student is renamed and both retain Mei as guardian. Rename Bea back to Alex,
+   then `delete 2`; only the second student is removed. Restart and check that the first Alex and Mei remain linked.
+
 ### Saving data
 
-1. Dealing with missing/corrupted data files
+Use a disposable application folder and keep a backup of its data file before testing failures.
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+1. Missing data file: launch TutorRoster in a folder without `data/addressbook.json`.<br>
+   Expected: An empty list, no selected contact and no load error. `list` does not create the file.
+   Add a student and a guardian, link them, then restart. Both contacts and their relationship reload.
 
-1. _{ more test cases … }_
+1. Invalid data file: close TutorRoster, replace `data/addressbook.json` with `{invalid json}`, and restart.<br>
+   Expected: An empty list and `Data changes are disabled because the data file could not be loaded.
+   Fix the file and restart TutorRoster.` Valid `add`, `link`, `edit`, `delete` and `clear` commands are blocked.
+   `list` still works, and the invalid file remains unchanged. Restore the backup and restart to recover the contacts.
+
+1. Invalid relationship: close the app and change a student's `guardianId` in the test file to the ID of a student,
+   or to a UUID that is absent from the contact records. Restart.<br>
+   Expected: The same load-failure behavior as above, with no contacts partially loaded or invalid file overwritten.
+   Restore the backup before continuing.
+
+1. Save failure on Windows: start with two students and two guardians in the disposable folder. Link one student,
+   select that student, and use `find` to display both that student and a different guardian. Keep the app open and
+   lock `data/addressbook.json` against replacement, for example by opening it in a separate PowerShell session with
+   `File.Open` using `FileMode.Open`, `FileAccess.Read` and `FileShare.None`. Attempt to link to the other guardian.<br>
+   Expected: `Changes could not be saved. No changes were made.` The old guardian, filtered list, selected contact
+   and detail panel remain unchanged. Release the lock by disposing the file stream; the file is unchanged and
+   restarting restores the old link. Retrying the command after releasing the lock succeeds.
+
+   Automated `LinkPersistenceTest` and `LinkUiTest` also exercise failed saves using a storage implementation that
+   throws `IOException`, without requiring file-permission changes.

@@ -87,7 +87,20 @@ Adds a person to the address book.
 
 Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]`
 
-`r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case.
+`r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case. The parameters may
+appear in any order, but each may appear only once. If multiple supplied values are invalid, errors are checked in the
+fixed parameter order `r/ROLE`, `n/NAME`, `p/PHONE`, then `e/EMAIL`, regardless of the order entered.
+An empty `r/` is rejected with `Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.`
+An unsupported role is rejected with `Invalid role. Role must be student or guardian.`
+If `r/` is omitted, the error starts with `Missing required field: r/ROLE.` If `n/` is omitted, it starts with
+`Missing required field: n/NAME.` In either case, that line is followed by the same usage text:
+
+    add: Adds a person to the address book.
+    Parameters: r/ROLE n/NAME [p/PHONE] [e/EMAIL]
+    Students may omit phone and email; guardians must provide at least one.
+    Example: add r/student n/John Doe p/98765432 e/johnd@example.com
+
+Repeating any parameter is rejected with `Each of r/, n/, p/, and e/ may appear only once.`
 Phone and email are optional fields, subject to the guardian requirement below.
 
 Phone is optional. Omit `p/` to save a contact without a phone number; the contact displays `Not provided`.
@@ -98,12 +111,15 @@ A guardian must have at least one contact method. Adding a guardian with neither
 `A guardian must have at least one contact method: phone or email.`
 For students, phone and email are independently optional. A student can have both, either one, or neither.
 
-The phone field accepts contact details with at least 3 digits and no maximum length. You can include multiple
+The phone field accepts contact details with at least 3 digits and a maximum of 100 characters. You can include multiple
 numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
 has no position restriction. The `@` character is reserved for email addresses, and `/` is reserved for command
-prefixes. Control characters such as tabs and line breaks are not accepted; surrounding whitespace is trimmed.
-Invalid phone values report:
-`Phone details must contain at least 3 digits and cannot contain control characters, '@' or '/'.`
+prefixes. Control characters such as tabs and line breaks are not accepted; surrounding whitespace is trimmed. Invalid
+phone values report the relevant reason: `Phone number must contain at least 3 digits.`,
+`Phone details cannot exceed 100 characters.`, or
+`Phone number cannot contain control characters, '@', or '/'.`
+
+For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first even though `p/` appears first in the command.
 
 Email is optional. Omit `e/` to save a contact without an email; the contact displays `Not provided`.
 Supplying `e/` with an empty or whitespace-only value is rejected with:
@@ -131,11 +147,35 @@ characters cannot start or end the local part or appear consecutively. Domain la
 alphanumeric and hyphen placement restrictions, and the final label must contain at least two characters.
 Validation checks the address format; it does not verify that a mailbox exists.
 
-Contacts are duplicates when their role, name, phone and email all match. Name and email comparisons ignore
-capitalization; phone details are compared as entered, including spaces and punctuation. Two omitted phone numbers
-or emails match, while an omitted value differs from a supplied one. Identical details with different roles are
-allowed. An exact duplicate is rejected with `This person already exists in the address book.` Contacts with the
-same role and name but different details are added as separate contacts.
+Contacts are exact duplicates when their role, name, phone and email all match. Name and email comparisons ignore
+capitalization; phone details are compared after trimming surrounding whitespace, while internal spaces and hyphens
+remain significant. Two omitted values match. Exact duplicates with at least one contact method are rejected with
+`This contact already exists.` A student with neither a phone number nor an email address is not rejected as an exact
+duplicate based on role and name alone.
+
+When a contact has the same role and name as an existing contact, Add may display a possible-duplicate warning and
+still add the contact. A matching phone after spaces and hyphens are removed produces a phone warning. A matching
+email produces an email warning. If either contact method is missing from both contacts, and neither of those more
+specific warnings applies, a general warning is shown. A contact with the same role and name but different phone and
+email values receives no warning when neither value matches under these rules. Contacts with different roles or names
+do not trigger these warnings. The normal success message is displayed together with any warning.
+
+Examples:
+
+* `add r/student n/Alex Tan p/91234567 e/alex@example.com` followed by `add r/student n/alex tan p/91234567 e/ALEX@example.com`
+  is rejected as an exact duplicate because name and email capitalization are ignored.
+* `add r/student n/Alex Tan p/9123 4567` followed by `add r/student n/Alex Tan p/91234567` is added with a phone
+  warning. The phone values are similar after spaces are removed, but internal spaces are significant for exact duplicates.
+* Two contacts with the same role and name and the same phone after spaces and hyphens are removed receive the phone
+  warning if they are not exact duplicates.
+* Two contacts with the same role and name and the same email but different phone values receive the email warning.
+* Two students with the same role and name and no phone or email receive a general warning; both are added.
+
+An unknown parameter such as `a/15` is rejected with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
+and e/EMAIL.` If an unquoted slash occurs in the name, the message also says to enclose the entire name in double
+quotes. For example, use `add r/student n/"AC/DC"` or `add r/student n/"Ravi s/o Kumar"`. For Add, every slash in a
+name must be quoted, including an embedded slash such as the one in `AC/DC`. Edit has its own parsing behavior and
+continues to accept unquoted embedded slashes.
 
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`
@@ -194,6 +234,13 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * An index that is not a positive whole number is rejected with
   `The contact index must be a positive integer shown in the list.` Leading zeroes are accepted, so `02` means 2.
   An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
+* An edit that would make the contact identical to another contact is rejected with
+  `This edit would create a duplicate contact.`
+* If the edited contact has the same role and name as another contact, and the two also share a phone number,
+  an email address, or a missing phone number or email, the edit still goes ahead but a warning is shown below the
+  success message, as with `add`. For example, renaming a student to the name of another student with the same phone
+  number but a different email shows `Warning: Another contact with the same role and name, and a phone number
+  matching after ignoring spaces and hyphens exists. This contact may be a duplicate, but it was updated.`
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
@@ -232,8 +279,11 @@ Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
 * Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
 * Each student can have one guardian; a guardian can be linked to several students.
+* Students with the same name remain separate contacts, even if both have no phone or email.
+  Use the intended student's displayed index; linking one does not change the other student's guardian.
 * Linking to a different guardian replaces the previous relationship. Linking to the same guardian again is rejected.
 * A successful command selects the student and shows the guardian's current name, phone and email in the detail panel.
+  The command box stays focused so you can immediately enter the next command.
 * The relationship is saved automatically and survives edits, reordering and restarting the application.
 
 Examples, assuming Alex Tan is student `1`, Mei Tan is guardian `2`, and Sarah Lim is guardian `3`:
@@ -258,6 +308,8 @@ Common errors:
 
 Failed link commands leave the contacts, relationships, selected contact, detail panel and saved data unchanged.
 
+![A linked student selected with the guardian's contact details displayed](images/StudentGuardianLink.png)
+
 ### Deleting a contact: `delete`
 
 Deletes the specified contact from TutorRoster.
@@ -267,6 +319,9 @@ Format: `delete INDEX`
 * Deletes the contact at the specified `INDEX`.
 * The index refers to the index number shown in the displayed contact list.
 * The index **must be a positive integer** 1, 2, 3, ...
+* A value that is not a positive integer is rejected with
+  `The contact index must be a positive integer shown in the list.`
+* An index outside the displayed list is rejected with `No contact exists at index INDEX.`
 
 Deleting an unlinked contact does not remove any student-guardian relationships. Deleting a linked student removes
 that student's relationship while retaining the guardian. Deleting a guardian clears the relationships of all students

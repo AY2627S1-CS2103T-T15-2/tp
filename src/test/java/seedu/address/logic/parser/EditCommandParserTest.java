@@ -24,7 +24,6 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.model.person.Email;
-import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 
@@ -100,16 +99,20 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidValue_failure() {
-        assertParseFailure(parser, "1" + INVALID_NAME_DESC, Name.MESSAGE_CONSTRAINTS); // invalid name
-        assertParseFailure(parser, "1" + INVALID_PHONE_DESC, Phone.MESSAGE_CONSTRAINTS); // invalid phone
-        assertParseFailure(parser, "1" + INVALID_EMAIL_DESC, Email.MESSAGE_CONSTRAINTS); // invalid email
+        assertParseFailure(parser, "1" + INVALID_NAME_DESC,
+                "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
+                        + "hyphens, periods, and slashes."); // invalid name
+        assertParseFailure(parser, "1" + INVALID_PHONE_DESC, Phone.MESSAGE_TOO_FEW_DIGITS); // invalid phone
+        assertParseFailure(parser, "1" + INVALID_EMAIL_DESC,
+                "Email address must contain exactly one @ symbol."); // invalid email
 
         // invalid phone followed by valid email
-        assertParseFailure(parser, "1" + INVALID_PHONE_DESC + EMAIL_DESC_AMY, Phone.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1" + INVALID_PHONE_DESC + EMAIL_DESC_AMY, Phone.MESSAGE_TOO_FEW_DIGITS);
 
         // multiple invalid values, but only the first invalid value is captured
         assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + VALID_PHONE_AMY,
-                Name.MESSAGE_CONSTRAINTS);
+                "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
+                        + "hyphens, periods, and slashes.");
     }
 
     @Test
@@ -197,7 +200,8 @@ public class EditCommandParserTest {
     public void parse_emptyEmail_failure() {
         assertParseFailure(parser, "1 e/", Email.MESSAGE_EMPTY);
         assertParseFailure(parser, "1 e/   ", Email.MESSAGE_EMPTY);
-        assertParseFailure(parser, "1 e/alex@example", Email.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 e/alex@example",
+                "Email domain must contain at least two labels separated by a period.");
     }
 
     @Test
