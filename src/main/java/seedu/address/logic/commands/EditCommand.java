@@ -57,6 +57,13 @@ public class EditCommand extends Command {
     public static final String MESSAGE_NOT_EDITED = "At least one of " + PREFIX_NAME + ", " + PREFIX_PHONE
             + ", or " + PREFIX_EMAIL + " must be provided.";
     public static final String MESSAGE_DUPLICATE_PERSON = "This edit would create a duplicate contact.";
+    public static final String MESSAGE_POSSIBLE_DUPLICATE = "Warning: Another contact with the same role and name "
+            + "exists. This contact may be a duplicate, but it was updated.";
+    public static final String MESSAGE_POSSIBLE_DUPLICATE_PHONE = "Warning: Another contact with the same role and "
+            + "name, and a phone number matching after ignoring spaces and hyphens exists. "
+            + "This contact may be a duplicate, but it was updated.";
+    public static final String MESSAGE_POSSIBLE_DUPLICATE_EMAIL = "Warning: Another contact with the same role and "
+            + "name, and the same email address exists. This contact may be a duplicate, but it was updated.";
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
@@ -99,10 +106,42 @@ public class EditCommand extends Command {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
 
+        List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
+                .filter(person -> !person.getId().equals(editedPerson.getId()))
+                .toList();
+        Optional<String> warning = getPossibleDuplicateWarning(editedPerson, otherPersons);
+
         model.setPerson(personToEdit, editedPerson);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, editedPerson.getName(),
-                editedPerson.getRole()), editedPerson.getId());
+        String feedback = String.format(MESSAGE_EDIT_PERSON_SUCCESS, editedPerson.getName(), editedPerson.getRole());
+        return new CommandResult(warning.map(message -> feedback + "\n" + message).orElse(feedback),
+                editedPerson.getId());
+    }
+
+    /**
+     * Returns a warning if {@code editedPerson} has the same role and name as any of {@code otherPersons},
+     * using the same rules as {@code add}. A matching phone number is reported before a matching email address,
+     * which is reported before a phone number or email address that both contacts lack.
+     */
+    private static Optional<String> getPossibleDuplicateWarning(Person editedPerson, List<Person> otherPersons) {
+        List<Person> sameNameAndRole = otherPersons.stream()
+                .filter(editedPerson::hasSameNameAndRole)
+                .toList();
+        if (sameNameAndRole.stream().anyMatch(editedPerson::hasSamePhoneIgnoringFormatting)) {
+            return Optional.of(MESSAGE_POSSIBLE_DUPLICATE_PHONE);
+        }
+        if (sameNameAndRole.stream().anyMatch(editedPerson::hasSameEmailAddress)) {
+            return Optional.of(MESSAGE_POSSIBLE_DUPLICATE_EMAIL);
+        }
+        if (sameNameAndRole.stream().anyMatch(person -> hasSharedEmptyContactField(editedPerson, person))) {
+            return Optional.of(MESSAGE_POSSIBLE_DUPLICATE);
+        }
+        return Optional.empty();
+    }
+
+    private static boolean hasSharedEmptyContactField(Person person, Person otherPerson) {
+        return person.getPhone().isEmpty() && otherPerson.getPhone().isEmpty()
+                || person.getEmail().isEmpty() && otherPerson.getEmail().isEmpty();
     }
 
     /**

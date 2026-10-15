@@ -138,6 +138,151 @@ public class EditCommandTest {
         assertFalse(studentModel.getFilteredPersonList().get(0).hasContactMethod());
     }
 
+    /**
+     * Returns a model holding {@code existing} and {@code secondContact}, where {@code secondContact} is listed second.
+     */
+    private Model createModelWithSecondContact(Person existing, Person secondContact) {
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(existing);
+        addressBook.addPerson(secondContact);
+        return new ModelManager(addressBook, new UserPrefs());
+    }
+
+    @Test
+    public void execute_renameToSameNameWithEquivalentPhone_warnsAboutPhone() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withPhone("+65 9123 4567").build();
+        Person other = new PersonBuilder().withName("Zoe Ng").withPhone("+65-9123-4567")
+                .withEmail("zoe@example.com").build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+
+        CommandResult result = new EditCommand(INDEX_SECOND_PERSON,
+                new EditPersonDescriptorBuilder().withName("alex tan").build()).execute(warningModel);
+
+        assertTrue(result.getFeedbackToUser().endsWith("\n" + EditCommand.MESSAGE_POSSIBLE_DUPLICATE_PHONE));
+        assertEquals(2, warningModel.getFilteredPersonList().size());
+    }
+
+    @Test
+    public void execute_renameToSameNameWithSameEmail_warnsAboutEmail() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withPhone("91234567")
+                .withEmail("alex@example.com").build();
+        Person other = new PersonBuilder().withName("Zoe Ng").withPhone("87654321")
+                .withEmail("ALEX@example.com").build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+
+        CommandResult result = new EditCommand(INDEX_SECOND_PERSON,
+                new EditPersonDescriptorBuilder().withName("Alex Tan").build()).execute(warningModel);
+
+        assertTrue(result.getFeedbackToUser().endsWith("\n" + EditCommand.MESSAGE_POSSIBLE_DUPLICATE_EMAIL));
+    }
+
+    @Test
+    public void execute_renameToSameNameBothWithoutEmail_warns() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withPhone("91234567").withoutEmail().build();
+        Person other = new PersonBuilder().withName("Zoe Ng").withPhone("87654321").withoutEmail().build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+
+        CommandResult result = new EditCommand(INDEX_SECOND_PERSON,
+                new EditPersonDescriptorBuilder().withName("Alex Tan").build()).execute(warningModel);
+
+        assertTrue(result.getFeedbackToUser().endsWith("\n" + EditCommand.MESSAGE_POSSIBLE_DUPLICATE));
+    }
+
+    @Test
+    public void execute_renameToSameNameBothWithoutPhone_warns() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withoutPhone().withEmail("alex@example.com").build();
+        Person other = new PersonBuilder().withName("Zoe Ng").withoutPhone().withEmail("zoe@example.com").build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+
+        CommandResult result = new EditCommand(INDEX_SECOND_PERSON,
+                new EditPersonDescriptorBuilder().withName("Alex Tan").build()).execute(warningModel);
+
+        assertTrue(result.getFeedbackToUser().endsWith("\n" + EditCommand.MESSAGE_POSSIBLE_DUPLICATE));
+    }
+
+    @Test
+    public void execute_editPhoneToMatchSameNameContact_warnsAboutPhone() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withPhone("91234567")
+                .withEmail("alex@example.com").build();
+        Person other = new PersonBuilder().withName("Alex Tan").withPhone("87654321")
+                .withEmail("other@example.com").build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+        Index otherIndex = Index.fromZeroBased(warningModel.getFilteredPersonList().indexOf(other));
+
+        CommandResult result = new EditCommand(otherIndex,
+                new EditPersonDescriptorBuilder().withPhone("9123-4567").build()).execute(warningModel);
+
+        assertTrue(result.getFeedbackToUser().endsWith("\n" + EditCommand.MESSAGE_POSSIBLE_DUPLICATE_PHONE));
+    }
+
+    @Test
+    public void execute_editEmailToMatchSameNameContact_warnsAboutEmail() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withPhone("91234567")
+                .withEmail("alex@example.com").build();
+        Person other = new PersonBuilder().withName("Alex Tan").withPhone("87654321")
+                .withEmail("other@example.com").build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+        Index otherIndex = Index.fromZeroBased(warningModel.getFilteredPersonList().indexOf(other));
+
+        CommandResult result = new EditCommand(otherIndex,
+                new EditPersonDescriptorBuilder().withEmail("ALEX@example.com").build()).execute(warningModel);
+
+        assertTrue(result.getFeedbackToUser().endsWith("\n" + EditCommand.MESSAGE_POSSIBLE_DUPLICATE_EMAIL));
+    }
+
+    @Test
+    public void execute_renameContactlessStudentToNameOfStudentWithContactDetails_noWarning() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withPhone("91234567")
+                .withEmail("alex@example.com").build();
+        Person other = new PersonBuilder().withName("Zoe Ng").withoutPhone().withoutEmail().build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+
+        CommandResult result = new EditCommand(INDEX_SECOND_PERSON,
+                new EditPersonDescriptorBuilder().withName("Alex Tan").build()).execute(warningModel);
+
+        assertFalse(result.getFeedbackToUser().contains("Warning"));
+    }
+
+    @Test
+    public void execute_renameToSameNameWithDifferentContactDetails_noWarning() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withPhone("91234567")
+                .withEmail("alex@example.com").build();
+        Person other = new PersonBuilder().withName("Zoe Ng").withPhone("87654321")
+                .withEmail("zoe@example.com").build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+
+        CommandResult result = new EditCommand(INDEX_SECOND_PERSON,
+                new EditPersonDescriptorBuilder().withName("Alex Tan").build()).execute(warningModel);
+
+        assertEquals(String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, "Alex Tan", other.getRole()),
+                result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_sameNameDifferentRole_noWarning() throws Exception {
+        Person existing = new PersonBuilder().withName("Alex Tan").withRole("guardian").build();
+        Person other = new PersonBuilder().withName("Zoe Ng").withRole("student").build();
+        Model warningModel = createModelWithSecondContact(existing, other);
+
+        CommandResult result = new EditCommand(INDEX_SECOND_PERSON,
+                new EditPersonDescriptorBuilder().withName("Alex Tan").build()).execute(warningModel);
+
+        assertFalse(result.getFeedbackToUser().contains("Warning"));
+    }
+
+    @Test
+    public void execute_editOnlyContactWithoutEmail_noWarning() throws Exception {
+        Person student = new PersonBuilder().withName("Alex Tan").withoutEmail().build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(student);
+        Model studentModel = new ModelManager(addressBook, new UserPrefs());
+
+        CommandResult result = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withPhone("87654321").build()).execute(studentModel);
+
+        assertFalse(result.getFeedbackToUser().contains("Warning"));
+    }
+
     @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
         Person editedPerson = new PersonBuilder().build();
