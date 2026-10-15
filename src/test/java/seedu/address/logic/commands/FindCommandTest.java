@@ -100,6 +100,18 @@ public class FindCommandTest {
     }
 
     @Test
+    public void execute_straightApostropheSearchTerm_findsNameWithCurlyApostrophe() {
+        Person obrien = new PersonBuilder().withName("Liam O’Brien").withRole("student").build();
+        model.addPerson(obrien);
+        expectedModel.addPerson(obrien);
+        NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("o'brien");
+        expectedModel.updateFilteredPersonList(predicate);
+
+        assertCommandSuccess(new FindCommand(predicate), model, "Found 1 contact matching: o'brien.", expectedModel);
+        assertEquals(List.of(obrien), model.getFilteredPersonList());
+    }
+
+    @Test
     public void toStringMethod() {
         NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("keyword");
         FindCommand findCommand = new FindCommand(predicate);

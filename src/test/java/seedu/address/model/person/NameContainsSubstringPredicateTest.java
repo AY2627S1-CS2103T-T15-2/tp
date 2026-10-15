@@ -62,6 +62,25 @@ public class NameContainsSubstringPredicateTest {
     }
 
     @Test
+    public void test_curlyAndStraightApostrophes_treatedAsSame() {
+        // straight apostrophe in search term, curly apostrophe in name
+        NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("o'brien");
+        assertTrue(predicate.test(new PersonBuilder().withName("Liam O’Brien").build()));
+
+        // curly apostrophe in search term, straight apostrophe in name
+        predicate = new NameContainsSubstringPredicate("O’Brien");
+        assertTrue(predicate.test(new PersonBuilder().withName("Liam O'Brien").build()));
+
+        // left single quotation mark in search term
+        predicate = new NameContainsSubstringPredicate("o‘brien");
+        assertTrue(predicate.test(new PersonBuilder().withName("Liam O'Brien").build()));
+
+        // apostrophe in search term, none in name
+        predicate = new NameContainsSubstringPredicate("o'brien");
+        assertFalse(predicate.test(new PersonBuilder().withName("Liam OBrien").build()));
+    }
+
+    @Test
     public void test_nameDoesNotContainSearchTerm_returnsFalse() {
         // non-matching search term
         NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("Carol");

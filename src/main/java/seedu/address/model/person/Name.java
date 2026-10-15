@@ -20,6 +20,9 @@ public class Name {
 
     public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N}\\p{Pd} './’]+";
 
+    private static final char APOSTROPHE_STRAIGHT = '\'';
+    private static final char APOSTROPHE_CURLY_LEFT = '\u2018';
+    private static final char APOSTROPHE_CURLY_RIGHT = '\u2019';
     private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
 
     /**
@@ -77,6 +80,17 @@ public class Name {
                     + "hyphens, periods, and slashes.";
         }
         return null;
+    }
+
+    /**
+     * Returns {@code text} with curly single quotation marks, such as the apostrophe in "O’Brien",
+     * replaced by straight apostrophes. This allows names copied from other apps to be matched and
+     * ordered in the same way as names typed with a straight apostrophe.
+     */
+    public static String replaceCurlyApostrophes(String text) {
+        requireNonNull(text);
+        return text.replace(APOSTROPHE_CURLY_LEFT, APOSTROPHE_STRAIGHT)
+                .replace(APOSTROPHE_CURLY_RIGHT, APOSTROPHE_STRAIGHT);
     }
 
     /**

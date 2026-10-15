@@ -77,6 +77,24 @@ public class NameTest {
     }
 
     @Test
+    public void replaceCurlyApostrophes() {
+        // null -> throws NullPointerException
+        assertThrows(NullPointerException.class, () -> Name.replaceCurlyApostrophes(null));
+
+        // right single quotation mark -> straight apostrophe
+        assertEquals("O'Brien", Name.replaceCurlyApostrophes("O’Brien"));
+
+        // left single quotation mark -> straight apostrophe
+        assertEquals("O'Brien", Name.replaceCurlyApostrophes("O‘Brien"));
+
+        // several curly apostrophes -> all replaced
+        assertEquals("D'Souza 'Ali'", Name.replaceCurlyApostrophes("D’Souza ‘Ali’"));
+
+        // straight apostrophe and other characters -> unchanged
+        assertEquals("Nur 'Aisyah-Tan", Name.replaceCurlyApostrophes("Nur 'Aisyah-Tan"));
+    }
+
+    @Test
     public void removeAccents() {
         // null -> throws NullPointerException
         assertThrows(NullPointerException.class, () -> Name.removeAccents(null));

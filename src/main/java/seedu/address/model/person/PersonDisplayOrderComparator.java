@@ -27,16 +27,18 @@ public class PersonDisplayOrderComparator implements Comparator<Person> {
     }
 
     /**
-     * Returns the name of {@code person} in lower case, with consecutive spaces reduced to a single space.
+     * Returns the name of {@code person} in lower case, with consecutive spaces reduced to a single space
+     * and curly apostrophes replaced by straight apostrophes.
      */
     private static String toNormalisedName(Person person) {
-        return person.getName().fullName.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+        String name = person.getName().fullName.replaceAll("\\s+", " ");
+        return Name.replaceCurlyApostrophes(name).toLowerCase(Locale.ROOT);
     }
 
     /**
-     * Returns the name of {@code person} in lower case, with consecutive spaces reduced to a single space
-     * and accents removed as described in {@link Name#removeAccents(String)}. For example, "Élise  Tan"
-     * gives "elise tan".
+     * Returns the name of {@code person} as given by {@link #toNormalisedName(Person)}, with accents removed
+     * as described in {@link Name#removeAccents(String)}. For example, "Élise  O’Brien" gives
+     * "elise o'brien".
      */
     private static String toUnaccentedName(Person person) {
         return Name.removeAccents(toNormalisedName(person));
