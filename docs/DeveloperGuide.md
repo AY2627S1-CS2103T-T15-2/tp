@@ -388,6 +388,10 @@ space. `FindCommand` applies the predicate with `Model#updateFilteredPersonList`
 The term is matched as a whole, so word order matters: `find tan alex` does not match `Alex Tan`. Matching only the
 name keeps results predictable for the tutor, who searches for a person rather than for a phone number or email.
 
+Curly apostrophes (`’` and `‘`) in the name and the term are treated as straight apostrophes, using
+`Name#replaceCurlyApostrophes`. Names copied from messaging apps often contain `’`, while tutors usually type `'`.
+`PersonDisplayOrderComparator` applies the same replacement, so these names are also ordered together.
+
 The sequence diagram below shows how `find ale` is executed.
 
 <puml src="diagrams/FindSequenceDiagram.puml" alt="Interactions for the `find ale` command" />
