@@ -390,7 +390,11 @@ name keeps results predictable for the tutor, who searches for a person rather t
 
 Curly apostrophes (`’` and `‘`) in the name and the term are treated as straight apostrophes, using
 `Name#replaceCurlyApostrophes`. Names copied from messaging apps often contain `’`, while tutors usually type `'`.
-`PersonDisplayOrderComparator` applies the same replacement, so these names are also ordered together.
+`PersonDisplayOrderComparator` applies the same replacement, so these names are also ordered together. Accents are also
+ignored, using `Name#removeAccents`, so `find elise` matches `Élise` and `find soren` matches `Søren`. Tutors may not
+know how to type accented letters, and the contact list already orders accented letters with their unaccented forms.
+Both the name and the term are processed in the same way, so a match is never lost; scripts that use combining marks for
+vowels may match slightly more names.
 
 The sequence diagram below shows how `find ale` is executed.
 
