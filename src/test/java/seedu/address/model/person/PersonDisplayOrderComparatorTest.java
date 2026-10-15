@@ -44,6 +44,35 @@ public class PersonDisplayOrderComparatorTest {
     }
 
     @Test
+    public void compare_accentedName_orderedWithUnaccentedLetter() {
+        Person bernice = new PersonBuilder().withName("Bernice Yu").build();
+        Person elise = new PersonBuilder().withName("Élise Tan").build();
+        Person zoe = new PersonBuilder().withName("Zoe Lim").build();
+
+        assertTrue(comparator.compare(bernice, elise) < 0);
+        assertTrue(comparator.compare(elise, zoe) < 0);
+        assertTrue(comparator.compare(zoe, elise) > 0);
+    }
+
+    @Test
+    public void compare_namesDifferingOnlyInAccents_unaccentedNameFirst() {
+        Person elise = new PersonBuilder().withName("Elise Tan").withRole("student").build();
+        Person accentedElise = new PersonBuilder().withName("Élise Tan").withRole("guardian").build();
+
+        // name takes precedence over role
+        assertTrue(comparator.compare(elise, accentedElise) < 0);
+        assertTrue(comparator.compare(accentedElise, elise) > 0);
+    }
+
+    @Test
+    public void compare_nameIsPrefixOfLongerName_shorterNameFirst() {
+        Person alexTan = new PersonBuilder().withName("Alex Tan").build();
+        Person alexa = new PersonBuilder().withName("Alexa Lim").build();
+
+        assertTrue(comparator.compare(alexTan, alexa) < 0);
+    }
+
+    @Test
     public void compare_sameNameDifferentRole_guardianBeforeStudent() {
         Person guardian = new PersonBuilder().withName("Alex Tan").withRole("guardian").build();
         Person student = new PersonBuilder().withName("Alex Tan").withRole("student").build();

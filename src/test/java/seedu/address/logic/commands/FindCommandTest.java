@@ -13,10 +13,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.NameContainsSubstringPredicate;
+import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) for {@code FindCommand}.
@@ -78,6 +81,22 @@ public class FindCommandTest {
         expectedModel.updateFilteredPersonList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
         assertEquals(List.of(BENSON, DANIEL), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_multipleMatches_resultsInDisplayOrder() {
+        Person zoe = new PersonBuilder().withName("Zoe Tan").withRole("student").build();
+        Person accentedElise = new PersonBuilder().withName("Élise Tan").withRole("student").build();
+        Person alexStudent = new PersonBuilder().withName("Alex Tan").withRole("student").build();
+        Person alexGuardian = new PersonBuilder().withName("alex tan").withRole("guardian").build();
+        Person bernice = new PersonBuilder().withName("Bernice Yu").withRole("student").build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(zoe, accentedElise, alexStudent, bernice, alexGuardian));
+        Model unsortedModel = new ModelManager(addressBook, new UserPrefs());
+
+        new FindCommand(new NameContainsSubstringPredicate("tan")).execute(unsortedModel);
+
+        assertEquals(List.of(alexGuardian, alexStudent, accentedElise, zoe), unsortedModel.getFilteredPersonList());
     }
 
     @Test
