@@ -19,7 +19,7 @@ public class PersonDisplayOrderComparator implements Comparator<Person> {
         if (unaccentedNameComparison != 0) {
             return unaccentedNameComparison;
         }
-        int nameComparison = toNormalisedName(firstPerson).compareTo(toNormalisedName(secondPerson));
+        int nameComparison = toNormalizedName(firstPerson).compareTo(toNormalizedName(secondPerson));
         if (nameComparison != 0) {
             return nameComparison;
         }
@@ -30,18 +30,18 @@ public class PersonDisplayOrderComparator implements Comparator<Person> {
      * Returns the name of {@code person} in lower case, with consecutive spaces reduced to a single space
      * and curly apostrophes replaced by straight apostrophes.
      */
-    private static String toNormalisedName(Person person) {
+    private static String toNormalizedName(Person person) {
         String name = person.getName().fullName.replaceAll("\\s+", " ");
         return Name.replaceCurlyApostrophes(name).toLowerCase(Locale.ROOT);
     }
 
     /**
-     * Returns the name of {@code person} as given by {@link #toNormalisedName(Person)}, with accents removed
+     * Returns the name of {@code person} as given by {@link #toNormalizedName(Person)}, with accents removed
      * as described in {@link Name#removeAccents(String)}. For example, "Élise  O’Brien" gives
      * "elise o'brien".
      */
     private static String toUnaccentedName(Person person) {
-        return Name.removeAccents(toNormalisedName(person));
+        return Name.removeAccents(toNormalizedName(person));
     }
 
     /**
