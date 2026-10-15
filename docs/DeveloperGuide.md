@@ -338,6 +338,10 @@ address that matches case-insensitively; then a contact method that is absent fr
 first matching warning, appends it after the normal success message, and still adds the contact. Contacts with
 different roles or names do not receive these warnings.
 
+After adding the contact, `AddCommand` resets the filter with `PREDICATE_SHOW_ALL_PERSONS`, so that the new contact is
+displayed even if an earlier `find` filtered the list. The command result carries the new contact's ID so the UI can
+select it, in the same way as `EditCommand` and `LinkCommand`.
+
 ### Saving contacts and relationships
 
 Contact JSON records contain an `id` UUID string and an optional `guardianId` UUID string, alongside the existing fields. `JsonAdaptedPerson` restores saved IDs; legacy records without IDs receive new IDs that are persisted on the next successful save. `JsonSerializableAddressBook` first loads all contacts, rejecting duplicate IDs and duplicate contact details, then validates that every guardian reference points to an existing contact with the guardian role. A guardian cannot carry a guardian reference. Repeated JSON object fields are rejected during parsing.
