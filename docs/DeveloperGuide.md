@@ -473,7 +473,7 @@ _{Explain here how the data archiving feature will be implemented}_
 * prefer using a desktop application that stores their contacts locally on a single device
 * can type quickly and prefer keyboard-driven commands to mouse interactions
 
-**Value proposition**: TutorRoster helps independent private tutors keep student and guardian contact information organised and up to date, allowing them to retrieve accurate details quickly when communicating with students and families.
+**Value proposition**: TutorRoster helps independent private tutors keep student and guardian contact information organized and up to date, allowing them to retrieve accurate details quickly when communicating with students and families.
 
 
 ### User stories
@@ -710,7 +710,7 @@ The performance requirements below assume a computer with at least 4GB of RAM an
 * **Active student**: A student who is currently receiving tuition from the private tutor
 * **Former student**: A student who is no longer receiving tuition but whose contact record is retained
 * **Tutoring context**: Concise information about a student, such as the student's education level or subject
-* **Normalised value**: A value after leading and trailing spaces are removed and repeated spaces inside a name are collapsed to one. This is the form used to store contacts and check for duplicates
+* **Normalized value**: A value after leading and trailing spaces are removed and repeated spaces inside a name are collapsed to one. This is the form used to store contacts and check for duplicates
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -900,7 +900,7 @@ testers are expected to do more *exploratory* testing.
    the same name.
 
 1. Test case: `add r/guardian n/aaron lim p/81234567`<br>
-   Expected: The new guardian `aaron lim` is shown first, as the order ignores capitalisation.
+   Expected: The new guardian `aaron lim` is shown first, as the order ignores capitalization.
 
 1. Test case: `add r/student n/Maximilian Alexander Christopher Bartholomew Montgomery Fitzgerald`<br>
    Expected: The whole name is visible. If it does not fit on one line, it wraps onto the next line instead of being

@@ -68,7 +68,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
 
 **Contact order:**<br>
 
-* Contacts are always displayed in alphabetical order of name, ignoring capitalisation.
+* Contacts are always displayed in alphabetical order of name, ignoring capitalization.
 * Contacts with the same name are displayed with guardians before students.
 * Accented letters are ordered with their unaccented forms, so `Élise Tan` is displayed between `Edward Lim` and
   `Felix Ng`. Letters without a separate accent mark are also ordered with the letters they are based on: `ø` with
