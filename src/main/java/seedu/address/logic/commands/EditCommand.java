@@ -31,8 +31,8 @@ public class EditCommand extends Command {
     /** Value, ignoring case, that removes an optional field when given in place of the field's value. */
     public static final String REMOVE_FIELD_VALUE = "NONE";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the person identified "
-            + "by the index number used in the displayed person list. "
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the contact identified "
+            + "by the index number used in the displayed contact list. "
             + "Existing values will be overwritten by the input values.\n"
             + "Parameters: INDEX (must be a positive integer) "
             + "[" + PREFIX_NAME + "NAME] "

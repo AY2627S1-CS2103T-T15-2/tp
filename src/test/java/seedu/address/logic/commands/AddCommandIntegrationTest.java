@@ -7,7 +7,6 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -35,7 +34,7 @@ public class AddCommandIntegrationTest {
         expectedModel.addPerson(validPerson);
 
         assertCommandSuccess(new AddCommand(validPerson), model,
-                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(validPerson)),
+                String.format(AddCommand.MESSAGE_SUCCESS, validPerson.getName(), validPerson.getRole()),
                 expectedModel);
     }
 
@@ -47,7 +46,7 @@ public class AddCommandIntegrationTest {
         expectedModel.addPerson(student);
 
         assertCommandSuccess(new AddCommand(student), model,
-                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(student)), expectedModel);
+                String.format(AddCommand.MESSAGE_SUCCESS, student.getName(), student.getRole()), expectedModel);
     }
 
     @Test
@@ -59,7 +58,7 @@ public class AddCommandIntegrationTest {
         expectedModel.addPerson(guardian);
 
         assertCommandSuccess(new AddCommand(guardian), model,
-                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(guardian)), expectedModel);
+                String.format(AddCommand.MESSAGE_SUCCESS, guardian.getName(), guardian.getRole()), expectedModel);
     }
 
     @Test
@@ -71,7 +70,7 @@ public class AddCommandIntegrationTest {
         expectedModel.addPerson(guardian);
 
         assertCommandSuccess(new AddCommand(guardian), model,
-                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(guardian)), expectedModel);
+                String.format(AddCommand.MESSAGE_SUCCESS, guardian.getName(), guardian.getRole()), expectedModel);
     }
 
     @Test
