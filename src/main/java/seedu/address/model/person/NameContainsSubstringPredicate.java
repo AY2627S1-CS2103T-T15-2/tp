@@ -9,8 +9,8 @@ import seedu.address.commons.util.ToStringBuilder;
 
 /**
  * Tests that a {@code Person}'s {@code Name} contains the given search term, ignoring letter case.
- * Consecutive spaces in the name are treated as a single space when matching, and curly apostrophes
- * in the name or search term are treated as straight apostrophes.
+ * Consecutive spaces in the name are treated as a single space when matching. Curly apostrophes
+ * in the name or search term are treated as straight apostrophes, and accents are ignored.
  */
 public class NameContainsSubstringPredicate implements Predicate<Person> {
     private final String searchTerm;
@@ -34,10 +34,11 @@ public class NameContainsSubstringPredicate implements Predicate<Person> {
     }
 
     /**
-     * Returns {@code text} in lower case, with curly apostrophes replaced by straight apostrophes.
+     * Returns {@code text} in lower case, with curly apostrophes replaced by straight apostrophes
+     * and accents removed as described in {@link Name#removeAccents(String)}.
      */
     private static String toSearchableText(String text) {
-        return Name.replaceCurlyApostrophes(text).toLowerCase(Locale.ROOT);
+        return Name.removeAccents(Name.replaceCurlyApostrophes(text).toLowerCase(Locale.ROOT));
     }
 
     @Override
