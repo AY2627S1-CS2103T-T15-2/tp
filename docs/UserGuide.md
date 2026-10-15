@@ -181,6 +181,9 @@ quotes. For example, use `add r/student n/"AC/DC"` or `add r/student n/"Ravi s/o
 name must be quoted, including an embedded slash such as the one in `AC/DC`. Edit has its own parsing behavior and
 continues to accept unquoted embedded slashes.
 
+After a contact is added, TutorRoster shows all contacts, even if the list was filtered by an earlier `find`, and
+selects the new contact so that its details appear in the detail panel.
+
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`
 * `add r/student n/Alex Tan p/91234567` saves a contact without an email.
