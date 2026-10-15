@@ -266,6 +266,8 @@ Format: `find NAME`
 * Partial names match; for example, `Han` matches `Hans`.
 * `NAME` is matched as a whole, so word order matters; for example, `Hans Bo` matches `Hans Bonnie` but not `Bo Hans`.
 * Leading and trailing spaces are ignored, and consecutive spaces are treated as one space.
+* Curly and straight apostrophes are treated as the same; for example, `o'brien` matches `O’Brien`.
+* Accents are ignored; for example, `elise` matches `Élise`, `élise` matches `Elise`, and `soren` matches `Søren`.
 * The search considers only names.
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.
 * The result shows the number of matches; for example, `Found 2 contacts matching: li.`

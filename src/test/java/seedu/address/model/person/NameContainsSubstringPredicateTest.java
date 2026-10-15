@@ -62,6 +62,56 @@ public class NameContainsSubstringPredicateTest {
     }
 
     @Test
+    public void test_accentedAndUnaccentedLetters_treatedAsSame() {
+        // unaccented search term, accented name
+        NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("elise");
+        assertTrue(predicate.test(new PersonBuilder().withName("Élise Tan").build()));
+
+        // accented search term, unaccented name
+        predicate = new NameContainsSubstringPredicate("élise");
+        assertTrue(predicate.test(new PersonBuilder().withName("Elise Tan").build()));
+
+        // name with a combining mark
+        predicate = new NameContainsSubstringPredicate("elise");
+        assertTrue(predicate.test(new PersonBuilder().withName("E\u0301lise Tan").build()));
+
+        // partial name with accent in the middle
+        predicate = new NameContainsSubstringPredicate("zoe n");
+        assertTrue(predicate.test(new PersonBuilder().withName("Zoë Núñez").build()));
+
+        // letters that cannot be decomposed, matched by their base letters
+        predicate = new NameContainsSubstringPredicate("soren");
+        assertTrue(predicate.test(new PersonBuilder().withName("S\u00f8ren Tan").build()));
+        predicate = new NameContainsSubstringPredicate("lukasz");
+        assertTrue(predicate.test(new PersonBuilder().withName("\u0141ukasz Ng").build()));
+        predicate = new NameContainsSubstringPredicate("strauss");
+        assertTrue(predicate.test(new PersonBuilder().withName("Anna Strau\u00df").build()));
+
+        // accents ignored, but other letters must still match
+        predicate = new NameContainsSubstringPredicate("elsie");
+        assertFalse(predicate.test(new PersonBuilder().withName("Élise Tan").build()));
+    }
+
+    @Test
+    public void test_curlyAndStraightApostrophes_treatedAsSame() {
+        // straight apostrophe in search term, curly apostrophe in name
+        NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("o'brien");
+        assertTrue(predicate.test(new PersonBuilder().withName("Liam O’Brien").build()));
+
+        // curly apostrophe in search term, straight apostrophe in name
+        predicate = new NameContainsSubstringPredicate("O’Brien");
+        assertTrue(predicate.test(new PersonBuilder().withName("Liam O'Brien").build()));
+
+        // left single quotation mark in search term
+        predicate = new NameContainsSubstringPredicate("o‘brien");
+        assertTrue(predicate.test(new PersonBuilder().withName("Liam O'Brien").build()));
+
+        // apostrophe in search term, none in name
+        predicate = new NameContainsSubstringPredicate("o'brien");
+        assertFalse(predicate.test(new PersonBuilder().withName("Liam OBrien").build()));
+    }
+
+    @Test
     public void test_nameDoesNotContainSearchTerm_returnsFalse() {
         // non-matching search term
         NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("Carol");

@@ -97,6 +97,18 @@ public class PersonDisplayOrderComparatorTest {
     }
 
     @Test
+    public void compare_curlyApostrophe_orderedAsStraightApostrophe() {
+        Person curlyObrien = new PersonBuilder().withName("O’Brien Tan").build();
+        Person straightObrien = new PersonBuilder().withName("O'Brien Tan").build();
+        Person oliver = new PersonBuilder().withName("Oliver Lim").build();
+        Person zoe = new PersonBuilder().withName("Zoe Lim").build();
+
+        assertTrue(comparator.compare(curlyObrien, oliver) < 0);
+        assertTrue(comparator.compare(curlyObrien, zoe) < 0);
+        assertEquals(0, comparator.compare(curlyObrien, straightObrien));
+    }
+
+    @Test
     public void compare_sameNameDifferentRole_guardianBeforeStudent() {
         Person guardian = new PersonBuilder().withName("Alex Tan").withRole("guardian").build();
         Person student = new PersonBuilder().withName("Alex Tan").withRole("student").build();
