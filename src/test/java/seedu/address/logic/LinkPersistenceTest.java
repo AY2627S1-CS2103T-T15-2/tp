@@ -53,6 +53,58 @@ public class LinkPersistenceTest {
     }
 
     @Test
+    public void execute_linkSecondContactlessStudentWithSameName_updatesOnlyDisplayedTarget() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json"));
+        Model model = new ModelManager();
+        Logic logic = createLogic(model, storage);
+        logic.execute("add r/student n/Alex Tan");
+        logic.execute("add r/student n/Alex Tan");
+        logic.execute("add r/guardian n/Mei Tan p/98765432");
+        ContactId firstStudentId = model.getFilteredPersonList().get(0).getId();
+        ContactId secondStudentId = model.getFilteredPersonList().get(1).getId();
+        ContactId guardianId = model.getFilteredPersonList().get(2).getId();
+
+        assertEquals(Optional.of(secondStudentId), logic.execute("link s/2 g/3").getSelectedContactId());
+
+        assertTrue(findContact(model, firstStudentId).getGuardianId().isEmpty());
+        assertEquals(Optional.of(guardianId), findContact(model, secondStudentId).getGuardianId());
+        Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertTrue(findContact(reloaded, firstStudentId).getGuardianId().isEmpty());
+        assertEquals(Optional.of(guardianId), findContact(reloaded, secondStudentId).getGuardianId());
+        assertEquals(3, reloaded.getAddressBook().getPersonList().size());
+    }
+
+    @Test
+    public void execute_sameNameStudentsSharingGuardian_editDeleteAndReloadPreserveOtherStudent() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json"));
+        Model model = new ModelManager();
+        Logic logic = createLogic(model, storage);
+        logic.execute("add r/student n/Alex Tan");
+        logic.execute("add r/student n/Alex Tan");
+        logic.execute("add r/guardian n/Mei Tan e/mei@example.com");
+        ContactId firstStudentId = model.getFilteredPersonList().get(0).getId();
+        ContactId secondStudentId = model.getFilteredPersonList().get(1).getId();
+        ContactId guardianId = model.getFilteredPersonList().get(2).getId();
+        logic.execute("link s/2 g/3");
+        logic.execute("link s/1 g/3");
+
+        logic.execute("edit 2 n/Bea Tan");
+
+        assertEquals("Alex Tan", findContact(model, firstStudentId).getName().fullName);
+        assertEquals("Bea Tan", findContact(model, secondStudentId).getName().fullName);
+        assertEquals(Optional.of(guardianId), findContact(model, firstStudentId).getGuardianId());
+        assertEquals(Optional.of(guardianId), findContact(model, secondStudentId).getGuardianId());
+        logic.execute("edit 2 n/Alex Tan");
+        logic.execute("delete 2");
+
+        Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertTrue(PersonLookup.findById(reloaded.getAddressBook().getPersonList(), secondStudentId).isEmpty());
+        assertEquals(Optional.of(guardianId), findContact(reloaded, firstStudentId).getGuardianId());
+        assertEquals(guardianId, findContact(reloaded, guardianId).getId());
+        assertEquals(2, reloaded.getAddressBook().getPersonList().size());
+    }
+
+    @Test
     public void execute_linkEditAndReload_preservesIdsAndRelationship() throws Exception {
         Path file = temporaryFolder.resolve("contacts.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);

@@ -15,8 +15,8 @@ import seedu.address.model.person.exceptions.PersonNotFoundException;
  * A list of persons that enforces uniqueness between its elements and does not allow nulls.
  * A person is considered unique by comparing using {@code Person#isSamePerson(Person)}. As such, adding and updating of
  * persons uses Person#isSamePerson(Person) for equality so as to ensure that the person being added or updated is
- * unique in terms of identity in the UniquePersonList. However, the removal of a person uses Person#equals(Object) so
- * as to ensure that the person with exactly the same fields will be removed.
+ * unique in terms of contact details in the UniquePersonList. Update and removal targets are located by immutable
+ * contact ID, so students with equal details but different IDs remain separate records.
  *
  * Supports a minimal set of list operations.
  *
@@ -56,7 +56,7 @@ public class UniquePersonList implements Iterable<Person> {
     public void setPerson(Person target, Person editedPerson) {
         requireAllNonNull(target, editedPerson);
 
-        int index = internalList.indexOf(target);
+        int index = indexOfId(target.getId());
         if (index == -1) {
             throw new PersonNotFoundException();
         }
@@ -69,14 +69,28 @@ public class UniquePersonList implements Iterable<Person> {
     }
 
     /**
-     * Removes the equivalent person from the list.
+     * Removes the person with the given contact ID from the list.
      * The person must exist in the list.
      */
     public void remove(Person toRemove) {
         requireNonNull(toRemove);
-        if (!internalList.remove(toRemove)) {
+        int index = indexOfId(toRemove.getId());
+        if (index == -1) {
             throw new PersonNotFoundException();
         }
+        internalList.remove(index);
+    }
+
+    /**
+     * Returns the index of the contact with {@code id}, or -1 if it is absent.
+     */
+    private int indexOfId(ContactId id) {
+        for (int index = 0; index < internalList.size(); index++) {
+            if (internalList.get(index).getId().equals(id)) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     public void setPersons(UniquePersonList replacement) {
