@@ -27,9 +27,9 @@
         <Label fx:id="name" text="\$first" styleClass="cell_big_label" wrapText="true" maxWidth="Infinity"
             HBox.hgrow="ALWAYS" />
       </HBox>
-      <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
-      <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
-      <Label fx:id="guardian" styleClass="cell_small_label" text="\$guardian" />
+      <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" wrapText="true" />
+      <Label fx:id="email" styleClass="cell_small_label" text="\$email" wrapText="true" />
+      <Label fx:id="guardian" styleClass="cell_small_label" text="\$guardian" wrapText="true" />
     </VBox>
   </GridPane>
 </HBox>

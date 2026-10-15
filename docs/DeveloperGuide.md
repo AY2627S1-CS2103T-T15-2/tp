@@ -407,6 +407,7 @@ the index always refers to the order shown on screen. The order is kept after `l
 **List cards.** `PersonCard` shows each contact as `NAME [ROLE]` followed by `Phone:` and `Email:` lines.
 `ContactDisplayFormatter` formats these values, showing `Not provided` for a missing phone number or email address.
 A student's card also shows `Guardian: NAME`, or `Guardian: None` if the student has no linked guardian.
+Each line wraps instead of being cut off, so long names, email addresses and guardian names are shown in full.
 
 `PersonListPanel` receives both the displayed list and the complete contact list. It looks up a student's guardian in
 the complete list, so the guardian is still named when `find` hides the guardian from the displayed list. The panel

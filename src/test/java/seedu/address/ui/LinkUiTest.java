@@ -28,15 +28,20 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import seedu.address.MainApp;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
@@ -54,6 +59,9 @@ import seedu.address.testutil.PersonBuilder;
  */
 @EnabledOnOs(OS.WINDOWS)
 public class LinkUiTest {
+
+    /** Minimum width of the contact list in {@code MainWindow.fxml}. */
+    private static final int NARROWEST_LIST_WIDTH = 240;
 
     @TempDir
     public Path temporaryFolder;
@@ -101,6 +109,53 @@ public class LinkUiTest {
             assertNull(card.getRoot().lookup("#role"));
             assertEquals("Guardian: None", label(card.getRoot(), "guardian").getText());
             assertNull(card.getRoot().lookup("#tags"));
+        });
+    }
+
+    @Test
+    public void personCard_contactDetailLabels_wrapText() throws Exception {
+        runOnJavaFxThread(() -> {
+            PersonCard card = new PersonCard(new PersonBuilder().build(), 1, Optional.empty());
+            new Scene(card.getRoot());
+            for (String id : List.of("name", "phone", "email", "guardian")) {
+                assertTrue(label(card.getRoot(), id).isWrapText());
+            }
+        });
+    }
+
+    @Test
+    public void personListPanel_longDetailsInNarrowList_shownInFullAndCardGrows() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person guardian = new PersonBuilder().withRole("guardian")
+                    .withName("Maximilian Alexander Christopher Wellington-Fitzgerald Tan Wei Ming").build();
+            Person longStudent = new PersonBuilder().withName("Aloysius Bartholomew Cornelius Tan")
+                    .withPhone("(HP) +65 1234 5678 (Office) +65 8765 4321 (Home) +65 1111 2222 (Mum) +65 3333 4444")
+                    .withEmail("averyveryveryverylongemailaddressfortesting@example-school-domain.com")
+                    .withGuardianId(guardian.getId()).build();
+            Person shortStudent = new PersonBuilder().withName("Al").withPhone("123").withEmail("a@b.co").build();
+            ObservableList<Person> contacts = FXCollections.observableArrayList(longStudent, shortStudent, guardian);
+            PersonListPanel panel = new PersonListPanel(contacts, contacts);
+            Scene scene = new Scene(panel.getRoot(), NARROWEST_LIST_WIDTH, 700);
+            scene.getStylesheets().add(MainApp.class.getResource("/view/DarkTheme.css").toExternalForm());
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            stage.show();
+            panel.getRoot().applyCss();
+            panel.getRoot().layout();
+
+            ListCell<?> longCell = cell(panel.getRoot(), longStudent);
+            ListCell<?> shortCell = cell(panel.getRoot(), shortStudent);
+            for (String id : List.of("name", "phone", "email", "guardian")) {
+                Label detail = label(longCell, id);
+                Text displayedText = (Text) detail.lookup(".text");
+                assertEquals(detail.getText(), displayedText.getText());
+                assertTrue(detail.localToScene(detail.getBoundsInLocal()).getMaxX()
+                        <= longCell.localToScene(longCell.getBoundsInLocal()).getMaxX());
+            }
+            assertTrue(longCell.getHeight() > shortCell.getHeight());
+            assertTrue(panel.getRoot().lookupAll(".scroll-bar").stream()
+                    .noneMatch(bar -> bar.isVisible() && ((ScrollBar) bar).getOrientation() == Orientation.HORIZONTAL));
+            stage.close();
         });
     }
 
@@ -234,6 +289,14 @@ public class LinkUiTest {
     private static boolean hasLabelWithText(Region root, String text) {
         return root.lookupAll(".label").stream()
                 .anyMatch(node -> node instanceof Label textLabel && text.equals(textLabel.getText()));
+    }
+
+    private static ListCell<?> cell(Region root, Person person) {
+        return root.lookupAll(".list-cell").stream()
+                .map(node -> (ListCell<?>) node)
+                .filter(listCell -> person.equals(listCell.getItem()))
+                .findFirst()
+                .orElseThrow();
     }
 
     private static Label label(Region root, String id) {
