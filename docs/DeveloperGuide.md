@@ -395,13 +395,15 @@ The sequence diagram below shows how `find ale` is executed.
 ### Ordering and displaying contacts
 
 **Ordering.** `ModelManager` wraps its `FilteredList` in a `SortedList` that uses `PersonDisplayOrderComparator`, and
-`Model#getFilteredPersonList` returns this sorted view. The comparator orders contacts by name, ignoring letter case
-and treating consecutive spaces as one space. It first compares names with accents removed, by decomposing them with
-`java.text.Normalizer` and removing the combining marks, so that `Élise` is ordered with `Elise` rather than after
-`Zoe`. Names that are still equal are then compared with their accents, so that names differing only in accents have a
-fixed order. `java.text.Collator` was not used because it ignores spaces and some punctuation, which would place
-`Alexa Lim` before `Alex Tan`. Contacts with the same name are ordered by role, with guardians before students. The
-specification does not order contacts with the same name and role, so the comparator treats them as equal.
+`Model#getFilteredPersonList` returns this sorted view. The comparator orders contacts by name, ignoring letter case and
+treating consecutive spaces as one space. It first compares names with accents removed using `Name#removeAccents`, so
+that `Élise` is ordered with `Elise` rather than after `Zoe`. This method decomposes the name with
+`java.text.Normalizer` and removes the combining marks. Some letters, such as `ø`, `ł`, `æ` and `ß`, are separate
+letters in Unicode and cannot be decomposed, so the method replaces them with their base letters from a fixed table, for
+example `Søren` with `Soren`. Names that are still equal are then compared with their accents, so that names differing
+only in accents have a fixed order. `java.text.Collator` was not used because it ignores spaces and some punctuation,
+which would place `Alexa Lim` before `Alex Tan`. Contacts with the same name are ordered by role, with guardians before
+students. The specification does not order contacts with the same name and role, so the comparator treats them as equal.
 
 Commands that take an index, such as `edit`, `delete` and `link`, look it up in `Model#getFilteredPersonList`, so
 the index always refers to the order shown on screen. The order is kept after `list`, `find`, `add` and
