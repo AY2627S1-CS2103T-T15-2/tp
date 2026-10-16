@@ -89,108 +89,92 @@ Format: `help`
 
 Adds a student or guardian contact.
 
-Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]`
+Format: `add r/ROLE n/NAME [p/PHONE] [e/EMAIL]`
 
-`r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case. The parameters may
-appear in any order, but each may appear only once. If multiple supplied values are invalid, errors are checked in the
-fixed parameter order `r/ROLE`, `n/NAME`, `p/PHONE`, then `e/EMAIL`, regardless of the order entered.
-An empty `r/` is rejected with `Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.`
-An unsupported role is rejected with `Invalid role. Role must be student or guardian.`
-If `r/` is omitted, the error starts with `Missing required field: r/ROLE.` If `n/` is omitted, it starts with
-`Missing required field: n/NAME.` In either case, that line is followed by the same usage text:
-
-    add: Adds a student or guardian contact.
-    Parameters: r/ROLE n/NAME [p/PHONE] [e/EMAIL]
-    Students may omit phone and email; guardians must provide at least one.
-    Example: add r/student n/John Doe p/98765432 e/johnd@example.com
-
-Repeating any parameter is rejected with `Each of r/, n/, p/, and e/ may appear only once.`
-Phone and email are optional fields, subject to the guardian requirement below.
-
-Phone is optional. Omit `p/` to save a contact without a phone number; the contact displays `Not provided`.
-Supplying `p/` with an empty or whitespace-only value is rejected with:
-`Empty phone parameter: Phone cannot be empty when p/ is specified.`
-
-A guardian must have at least one contact method. Adding a guardian with neither `p/` nor `e/` is rejected with:
-`A guardian must have at least one contact method: phone or email.`
-For students, phone and email are independently optional. A student can have both, either one, or neither.
-
-The phone field accepts contact details with at least 3 digits and a maximum of 100 characters. You can include multiple
-numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
-has no position restriction. The `@` character is reserved for email addresses, and `/` is reserved for command
-prefixes. Control characters such as tabs and line breaks are not accepted; surrounding whitespace is trimmed. Invalid
-phone values report the relevant reason: `Phone number must contain at least 3 digits.`,
-`Phone details cannot exceed 100 characters.`, or
-`Phone number cannot contain control characters, '@', or '/'.`
-
-For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first even though `p/` appears first in the command.
-
-Email is optional. Omit `e/` to save a contact without an email; the contact displays `Not provided`.
-Supplying `e/` with an empty or whitespace-only value is rejected with:
-`Empty email parameter: Email cannot be empty when e/ is specified.`
-
-An email must have exactly one `@`, a non-empty local part, and at least two non-empty domain labels
-separated by periods. The final domain label must contain at least two characters. Surrounding whitespace is
-trimmed; internal whitespace is rejected.
-The local part allows ASCII letters, digits, periods, underscores, percentage signs, plus signs and hyphens.
-Domain labels allow ASCII letters, digits and hyphens. Capitalization is preserved for display.
-Invalid values report:
-`Invalid email address: Email must contain one @ symbol, a non-empty local part, and at least two non-empty domain labels separated by periods, without spaces.`
-
-| Accepted email | Rejected email | Reason for rejection |
-| --- | --- | --- |
-| `alex.tan@example.com` | `alex@example` | Fewer than two domain labels |
-| `alex+tuition@example.com` | `alex@example.c` | Final domain label has fewer than two characters |
-| `Alex_Tan%25@Example.COM` | `.alex@example.com` | Local part starts with a special character |
-| `alex%school@example.com` | `alex..tan@example.com` | Consecutive special characters in the local part |
-| `alex-tan@example.com` | `alex-@example.com` | Local part ends with a special character |
-| `alex@example.com` | `alex@-example.com` | Domain label starts with a hyphen |
-
-The local part accepts `%` in addition to the original `+`, `_`, `.`, and `-` characters, while special
-characters cannot start or end the local part or appear consecutively. Domain labels retain the original
-alphanumeric and hyphen placement restrictions, and the final label must contain at least two characters.
-Validation checks the address format; it does not verify that a mailbox exists.
-
-Contacts are exact duplicates when their role, name, phone and email all match. Name and email comparisons ignore
-capitalization; phone details are compared after trimming surrounding whitespace, while internal spaces and hyphens
-remain significant. Two omitted values match. Exact duplicates with at least one contact method are rejected with
-`This contact already exists.` A student with neither a phone number nor an email address is not rejected as an exact
-duplicate based on role and name alone.
-
-When a contact has the same role and name as an existing contact, Add may display a possible-duplicate warning and
-still add the contact. A matching phone after spaces and hyphens are removed produces a phone warning. A matching
-email produces an email warning. If either contact method is missing from both contacts, and neither of those more
-specific warnings applies, a general warning is shown. A contact with the same role and name but different phone and
-email values receives no warning when neither value matches under these rules. Contacts with different roles or names
-do not trigger these warnings. The normal success message is displayed together with any warning.
+**Role and name are required.** Students may provide phone, email, both, or neither; guardians must provide at
+least one contact method.
 
 Examples:
 
-* `add r/student n/Alex Tan p/91234567 e/alex@example.com` followed by `add r/student n/alex tan p/91234567 e/ALEX@example.com`
-  is rejected as an exact duplicate because name and email capitalization are ignored.
-* `add r/student n/Alex Tan p/9123 4567` followed by `add r/student n/Alex Tan p/91234567` is added with a phone
-  warning. The phone values are similar after spaces are removed, but internal spaces are significant for exact duplicates.
-* Two contacts with the same role and name and the same phone after spaces and hyphens are removed receive the phone
-  warning if they are not exact duplicates.
-* Two contacts with the same role and name and the same email but different phone values receive the email warning.
-* Two students with the same role and name and no phone or email receive a general warning; both are added.
+| To add... | Enter |
+| --- | --- |
+| A student with phone and email | `add r/student n/Alex Tan p/91234567 e/alex@example.com` |
+| A student without contact details | `add r/student n/Ben Lim` |
+| A guardian with email only | `add r/guardian n/Mei Tan e/mei@example.com` |
+| A student whose name contains `/` | `add r/student n/"Ravi s/o Kumar" p/98765432` |
 
-An unknown parameter such as `a/15` is rejected with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
-and e/EMAIL.` If an unquoted slash occurs in the name, the message also says to enclose the entire name in double
-quotes. For example, use `add r/student n/"AC/DC"` or `add r/student n/"Ravi s/o Kumar"`. For Add, every slash in a
-name must be quoted, including an embedded slash such as the one in `AC/DC`. Edit has its own parsing behavior and
-continues to accept unquoted embedded slashes.
+Use lowercase `add` and prefixes (`r/`, `n/`, `p/`, `e/`). Parameters may appear in any order, once each.
+Omit an optional field's prefix rather than leaving its value empty, as in `p/`.
 
-After a contact is added, TutorRoster shows all contacts, even if the list was filtered by an earlier `find`, and
-selects the new contact so that its details appear in the detail panel.
+On success, the contact is saved and selected, and its details appear in the detail panel. All contacts are shown,
+clearing any `find` filter. The command box clears and stays focused. The first example reports
+`Added contact: Alex Tan [Student].`
 
-Examples:
-* `add r/student n/John Doe p/98765432 e/johnd@example.com`
-* `add r/student n/Alex Tan p/91234567` saves a contact without an email.
-* `add r/student n/Alex Tan p/91234567 e/alex+tuition@example.com` saves a contact with an email.
-* `add r/guardian n/Mei Tan e/mei@example.com` saves a guardian without a phone number.
-* `add r/student n/Ben Lim` saves a student without a phone number or email.
-* `add r/guardian n/Betsy Crowe e/betsycrowe@example.com p/1234567`
+#### Field rules
+
+Surrounding whitespace is removed from field values. Names and emails keep their capitalization.
+
+**Role (`r/`)**: `student` or `guardian`, ignoring letter case.
+
+**Name (`n/`)**: A non-blank name of **1–70 characters**, allowing letters and numbers (including non-English
+scripts), spaces, apostrophes (`'` or `’`), hyphens, periods, and slashes. Consecutive spaces become one space
+before the length check. Enclose the **entire name** in double quotes if it contains `/`, even for `n/"AC/DC"`.
+The enclosing quotes are not saved.
+
+**Phone (`p/`)**: At least **3 digits from `0–9`**, with a maximum of **100 characters**. Other numerals are allowed
+as text but do not count. Labels, multiple numbers, spaces, and punctuation are accepted, for example
+`p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` may appear anywhere. Do not include `@`, `/`, or control
+characters such as tabs and line breaks.
+
+**Email (`e/`)**: At most **254 characters**. TutorRoster checks the format, not whether the mailbox exists:
+
+* Exactly one `@`, a non-empty part on each side, and no internal whitespace.
+* Before `@`: English letters (`A–Z`, `a–z`), digits (`0–9`), and `.`, `_`, `%`, `+`, or `-`.
+  Punctuation must appear singly between letters or digits, as in `alex+tuition@example.com`.
+* After `@`: at least two non-empty labels separated by periods, as in `example.com`. Labels allow English
+  letters, digits, and single hyphens between letters or digits. The final label needs at least two characters.
+
+Common email mistakes:
+
+| Invalid input | Reason |
+| --- | --- |
+| `alex @example.com` | Internal whitespace. |
+| `@example.com` | Missing part before `@`. |
+| `alex@.com` or `alex@example..com` | Empty domain label. |
+| `alex@example` or `alex@example.c` | Missing second label or final label too short. |
+| `.alex@example.com` or `alex..tan@example.com` | Invalid punctuation placement. |
+
+#### Duplicate contacts and warnings
+
+Checks include **all saved contacts**, even those hidden by a search. These rules apply to contacts with the
+**same role and name**, ignoring name capitalization:
+
+| Condition, checked in this order | Result |
+| --- | --- |
+| Phone and email both match, with at least one contact method present | Rejected: `This contact already exists.` |
+| Phone matches after spaces and hyphens are removed | Added with a phone warning. |
+| Email matches, ignoring capitalization | Added with an email warning. |
+| Phone is missing from both contacts, or email is missing from both | Added with a general warning. |
+| None of the above | Added without a warning. |
+
+Exact duplicates ignore email capitalization and treat two omitted values as matching. **Internal phone spaces and
+hyphens remain significant for rejection**: `p/9123 4567` and `p/91234567` produce a warning instead.
+
+Two students named `Ben Lim` with no phone or email are both saved, with a general warning for the second.
+Different roles or names trigger no duplicate checks. Only the highest-priority warning is shown, after the success
+message; **a warning does not prevent saving**.
+
+#### Correcting an unsuccessful add
+
+Missing required fields, empty values, repeated parameters, and unknown prefixes such as `a/15` are rejected.
+A missing role or name error identifies the field and shows the command format. Other invalid values receive a
+specific reason, such as `Email address cannot exceed 254 characters.` Correct the indicated problem and try again.
+
+For example, `add r/guardian n/Mei Tan` reports
+`A guardian must have at least one contact method: phone or email.` Supply `p/PHONE` or `e/EMAIL`.
+
+On failure, contacts, selection, and saved data stay unchanged; the command remains for correction.
+For saving errors, see [Saving the data](#saving-the-data).
 
 ### Listing all contacts: `list`
 
@@ -402,7 +386,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com`
+**Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
