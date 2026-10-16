@@ -96,6 +96,20 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_phoneWithOnlyNonAsciiNumerals_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, "\u0661\u0662\u0663", VALID_EMAIL,
+                VALID_ROLE, null);
+        assertThrows(IllegalValueException.class, Phone.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_phoneWithAsciiDigitsAndUnicodeText_preservesValue() throws Exception {
+        String phone = "(手机) 123 \u0661\u0662\u0663";
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, phone, VALID_EMAIL, VALID_ROLE, null);
+        assertEquals(phone, person.toModelType().getPhone().orElseThrow().value);
+    }
+
+    @Test
     public void toModelType_nullPhone_returnsPersonWithoutPhone() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, null, VALID_EMAIL,
                 VALID_ROLE, null);
@@ -109,6 +123,15 @@ public class JsonAdaptedPersonTest {
                         null);
         String expectedMessage = Email.MESSAGE_CONSTRAINTS;
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_emailLengthLimit_validatesSavedValues() throws Exception {
+        String email = "a.".repeat(120) + "aa@example.com";
+        JsonAdaptedPerson valid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, email, VALID_ROLE, null);
+        assertEquals(email, valid.toModelType().getEmail().orElseThrow().value);
+        JsonAdaptedPerson invalid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, "a" + email, VALID_ROLE, null);
+        assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, invalid::toModelType);
     }
 
     @Test

@@ -9,16 +9,12 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Email {
 
+    public static final int MAX_LENGTH = 254;
     public static final String MESSAGE_CONSTRAINTS = "Invalid email address: Email must contain one @ symbol, "
-            + "a non-empty local part, and at least two non-empty domain labels separated by periods, without spaces.";
+            + "a non-empty local part, and at least two non-empty domain labels separated by periods, without spaces. "
+            + "Email cannot exceed " + MAX_LENGTH + " characters.";
+    public static final String MESSAGE_TOO_LONG = "Email address cannot exceed " + MAX_LENGTH + " characters.";
     public static final String MESSAGE_EMPTY = "Empty email parameter: Email cannot be empty when e/ is specified.";
-    private static final String ALPHANUMERIC = "[A-Za-z0-9]+";
-    private static final String LOCAL_PART = ALPHANUMERIC + "([._%+\\-]" + ALPHANUMERIC + ")*";
-    private static final String DOMAIN_LABEL = ALPHANUMERIC + "(-" + ALPHANUMERIC + ")*";
-    private static final String FINAL_DOMAIN_LABEL = "(?=[A-Za-z0-9-]{2,}$)" + DOMAIN_LABEL;
-    public static final String VALIDATION_REGEX = LOCAL_PART + "@" + DOMAIN_LABEL
-            + "(\\." + DOMAIN_LABEL + ")*\\." + FINAL_DOMAIN_LABEL;
-
     public final String value;
 
     /**
@@ -36,7 +32,7 @@ public class Email {
      * Returns true if a given string is a valid email.
      */
     public static boolean isValidEmail(String test) {
-        return test.matches(VALIDATION_REGEX);
+        return getValidationErrorMessage(test) == null;
     }
 
     /**
@@ -44,6 +40,9 @@ public class Email {
      */
     public static String getValidationErrorMessage(String test) {
         requireNonNull(test);
+        if (test.length() > MAX_LENGTH) {
+            return MESSAGE_TOO_LONG;
+        }
         if (test.chars().filter(character -> character == '@').count() != 1) {
             return "Email address must contain exactly one @ symbol.";
         }
@@ -60,7 +59,7 @@ public class Email {
         if (test.chars().anyMatch(Character::isWhitespace)) {
             return "Email address cannot contain whitespace.";
         }
-        if (!localPart.matches(LOCAL_PART)) {
+        if (!isValidPart(localPart, "._%+-")) {
             return "Email local part contains unsupported characters or invalid punctuation placement.";
         }
 
@@ -72,7 +71,7 @@ public class Email {
             if (domainLabels[i].isEmpty()) {
                 return "Email domain labels cannot be empty.";
             }
-            if (!domainLabels[i].matches(DOMAIN_LABEL)) {
+            if (!isValidPart(domainLabels[i], "-")) {
                 return "Email domain labels may contain letters, digits, and internal hyphens only.";
             }
         }
@@ -83,10 +82,35 @@ public class Email {
         if (finalLabel.length() < 2) {
             return "Email's final domain label must contain at least two characters.";
         }
-        if (!finalLabel.matches(DOMAIN_LABEL)) {
+        if (!isValidPart(finalLabel, "-")) {
             return "Email's final domain label may contain letters, digits, and internal hyphens only.";
         }
         return null;
+    }
+
+    /**
+     * Checks an email part without recursive regular-expression matching. Allowed punctuation must
+     * occur singly between ASCII alphanumeric characters, so long inputs use constant stack space.
+     */
+    private static boolean isValidPart(String part, String allowedPunctuation) {
+        boolean isPreviousAlphanumeric = false;
+        for (int i = 0; i < part.length(); i++) {
+            char character = part.charAt(i);
+            if (isAsciiAlphanumeric(character)) {
+                isPreviousAlphanumeric = true;
+            } else if (isPreviousAlphanumeric && allowedPunctuation.indexOf(character) >= 0) {
+                isPreviousAlphanumeric = false;
+            } else {
+                return false;
+            }
+        }
+        return isPreviousAlphanumeric;
+    }
+
+    private static boolean isAsciiAlphanumeric(char character) {
+        return character >= 'a' && character <= 'z'
+                || character >= 'A' && character <= 'Z'
+                || character >= '0' && character <= '9';
     }
 
     /**
