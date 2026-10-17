@@ -115,11 +115,12 @@ A guardian must have at least one contact method. Adding a guardian with neither
 `A guardian must have at least one contact method: phone or email.`
 For students, phone and email are independently optional. A student can have both, either one, or neither.
 
-The phone field accepts contact details with at least 3 digits and a maximum of 100 characters. You can include multiple
+The phone field accepts contact details with at least 3 digits from `0–9` and a maximum of 100 characters.
+Other numeral characters may appear as text, but do not count towards the minimum. You can include multiple
 numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
 has no position restriction. The `@` character is reserved for email addresses, and `/` is reserved for command
 prefixes. Control characters such as tabs and line breaks are not accepted; surrounding whitespace is trimmed. Invalid
-phone values report the relevant reason: `Phone number must contain at least 3 digits.`,
+phone values report the relevant reason: `Phone number must contain at least 3 digits (0-9).`,
 `Phone details cannot exceed 100 characters.`, or
 `Phone number cannot contain control characters, '@', or '/'.`
 
@@ -132,6 +133,8 @@ Supplying `e/` with an empty or whitespace-only value is rejected with:
 An email must have exactly one `@`, a non-empty local part, and at least two non-empty domain labels
 separated by periods. The final domain label must contain at least two characters. Surrounding whitespace is
 trimmed; internal whitespace is rejected.
+The email address may contain at most 254 characters after trimming surrounding whitespace. Longer values report
+`Email address cannot exceed 254 characters.`
 The local part allows ASCII letters, digits, periods, underscores, percentage signs, plus signs and hyphens.
 Domain labels allow ASCII letters, digits and hyphens. Capitalization is preserved for display.
 Invalid values report:

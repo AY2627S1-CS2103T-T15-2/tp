@@ -375,6 +375,39 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_emailAtMaximumLength_acceptsTrimmedValue() {
+        String localPart = "a.".repeat(120) + "aa";
+        String email = localPart + "@example.com";
+        Person expected = new PersonBuilder(AMY).withoutPhone().withEmail(email).build();
+        assertParseSuccess(parser, NAME_DESC_AMY + " e/  " + email + "  " + ROLE_DESC_AMY, new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_emailExceedingMaximumLength_reportsLengthError() {
+        for (String localPart : new String[] {"a".repeat(243), "a.".repeat(10_000) + "a"}) {
+            assertParseFailure(parser, NAME_DESC_AMY + " e/" + localPart + "@example.com" + ROLE_DESC_AMY,
+                    Email.MESSAGE_TOO_LONG);
+        }
+    }
+
+    @Test
+    public void parse_emailWithManySeparators_reportsInvalidPunctuation() {
+        String localPart = "a.".repeat(120);
+        assertParseFailure(parser, NAME_DESC_AMY + " e/" + localPart + "@example.com" + ROLE_DESC_AMY,
+                "Email local part contains unsupported characters or invalid punctuation placement.");
+    }
+
+    @Test
+    public void parse_phoneWithNonAsciiNumerals_requiresThreeAsciiDigits() {
+        String numerals = "\u0661\u0662\u0663";
+        assertParseFailure(parser, NAME_DESC_AMY + " p/12 " + numerals + ROLE_DESC_AMY,
+                Phone.MESSAGE_TOO_FEW_DIGITS);
+        String phone = "(手机) 123 " + numerals;
+        Person expected = new PersonBuilder(AMY).withoutEmail().withPhone(phone).build();
+        assertParseSuccess(parser, NAME_DESC_AMY + " p/" + phone + ROLE_DESC_AMY, new AddCommand(expected));
+    }
+
+    @Test
     public void parse_phoneAtMaximumLength_success() {
         String phoneDetails = "1".repeat(Phone.MAX_LENGTH);
         Person expected = new PersonBuilder(AMY).withPhone(phoneDetails).withoutEmail().build();

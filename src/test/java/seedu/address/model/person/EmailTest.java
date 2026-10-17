@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class EmailTest {
@@ -72,6 +74,36 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("peter_jack@very-very-very-long-example.com")); // long domain name
         assertTrue(Email.isValidEmail("if.you.dream.it_you.can.do.it@example.com")); // long local part
         assertTrue(Email.isValidEmail("e1234567@u.nus.edu")); // more than one period in domain
+    }
+
+    @Test
+    public void constructor_validValuesAtMaximumLength_preservesEmail() {
+        for (String value : List.of("a.".repeat(120) + "aa@example.com",
+                "alex@" + "a-".repeat(122) + "a.com",
+                "a@" + "a.".repeat(124) + "info",
+                "a@example." + "a-".repeat(121) + "aa")) {
+            assertEquals(Email.MAX_LENGTH, value.length());
+            assertTrue(Email.isValidEmail(value));
+            assertEquals(value, new Email(value).value);
+            String overlongValue = "a" + value;
+            assertFalse(Email.isValidEmail(overlongValue));
+            assertEquals(Email.MESSAGE_TOO_LONG, Email.getValidationErrorMessage(overlongValue));
+            assertThrows(IllegalArgumentException.class, () -> new Email(overlongValue));
+        }
+    }
+
+    @Test
+    public void isValidEmail_extremelyLongValues_reportsLengthError() {
+        for (String value : List.of("a.".repeat(10_000) + "a@example.com",
+                "a.".repeat(10_000) + "@example.com",
+                "a.".repeat(10_000) + "a!@example.com",
+                "alex@" + "a-".repeat(10_000) + ".com",
+                "alex@" + "a.".repeat(10_000) + ".com",
+                "alex@example." + "a-".repeat(10_000))) {
+            assertFalse(Email.isValidEmail(value));
+            assertEquals(Email.MESSAGE_TOO_LONG, Email.getValidationErrorMessage(value));
+            assertThrows(IllegalArgumentException.class, () -> new Email(value));
+        }
     }
 
     @Test
