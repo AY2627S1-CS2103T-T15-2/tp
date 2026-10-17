@@ -178,6 +178,6 @@ public class JsonAdaptedPersonTest {
     public void toModelType_formerGuardian_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
                 "GUARDIAN", null, "FORMER");
-        assertThrows(IllegalValueException.class, Person.MESSAGE_FORMER_GUARDIAN, person::toModelType);
+        assertThrows(IllegalValueException.class, Person.MESSAGE_INVALID_FORMER_STATUS, person::toModelType);
     }
 }

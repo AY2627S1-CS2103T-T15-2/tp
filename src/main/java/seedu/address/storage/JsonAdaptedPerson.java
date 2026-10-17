@@ -121,9 +121,11 @@ class JsonAdaptedPerson {
         if (status != null && !StudentStatus.isValidStatus(status)) {
             throw new IllegalValueException(StudentStatus.MESSAGE_CONSTRAINTS);
         }
-        final StudentStatus modelStatus = status == null ? StudentStatus.ACTIVE : StudentStatus.fromString(status);
+        final StudentStatus modelStatus = status == null
+                ? StudentStatus.ACTIVE
+                : StudentStatus.fromString(status);
         if (modelStatus != StudentStatus.ACTIVE && modelRole != Role.STUDENT) {
-            throw new IllegalValueException(Person.MESSAGE_FORMER_GUARDIAN);
+            throw new IllegalValueException(Person.MESSAGE_INVALID_FORMER_STATUS);
         }
 
         return new Person(modelId, modelName, modelPhone, modelEmail, modelRole,

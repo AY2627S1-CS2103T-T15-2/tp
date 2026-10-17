@@ -47,10 +47,11 @@ public class EditCommandTest {
     public void execute_editFormerStudent_preservesStatus() throws Exception {
         Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         model.setPerson(original, original.withStatus(StudentStatus.FORMER));
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withPhone(VALID_PHONE_BOB).build();
         new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
         Person edited = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        assertTrue(edited.isFormer());
+        assertTrue(edited.isFormerStudent());
     }
 
     @Test

@@ -217,30 +217,37 @@ public class PersonTest {
     }
 
     @Test
-    public void constructor_defaultStatus_isActive() {
-        assertEquals(StudentStatus.ACTIVE, new PersonBuilder().build().getStatus());
-        assertFalse(new PersonBuilder().build().isFormer());
+    public void constructor_noStatus_defaultsToActive() {
+        Person person = new PersonBuilder().build();
+        assertEquals(StudentStatus.ACTIVE, person.getStatus());
+        assertFalse(person.isFormerStudent());
     }
 
     @Test
     public void constructor_formerGuardian_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, Person.MESSAGE_FORMER_GUARDIAN, () ->
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_INVALID_FORMER_STATUS, () ->
                 new PersonBuilder().withRole("guardian").withStatus(StudentStatus.FORMER).build());
     }
 
     @Test
     public void withStatus_student_changesOnlyStatus() {
         Person former = ALICE.withStatus(StudentStatus.FORMER);
-        assertTrue(former.isFormer());
+        assertTrue(former.isFormerStudent());
         assertEquals(ALICE.getId(), former.getId());
         assertEquals(ALICE.getName(), former.getName());
         assertEquals(ALICE, former.withStatus(StudentStatus.ACTIVE));
     }
 
     @Test
+    public void withStatus_activeGuardian_returnsEqualGuardian() {
+        Person guardian = new PersonBuilder().withRole("guardian").build();
+        assertEquals(guardian, guardian.withStatus(StudentStatus.ACTIVE));
+    }
+
+    @Test
     public void withGuardianId_formerStudent_preservesStatus() {
         Person former = ALICE.withStatus(StudentStatus.FORMER);
-        assertTrue(former.withGuardianId(Optional.of(ContactId.generate())).isFormer());
+        assertTrue(former.withGuardianId(Optional.of(ContactId.generate())).isFormerStudent());
     }
 
     @Test

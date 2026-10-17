@@ -17,7 +17,7 @@ public class Person {
     public static final String MESSAGE_INVALID_GUARDIAN_OWNER = "Only a student can have a linked guardian.";
     public static final String MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD =
             "A guardian must have at least one contact method: phone or email.";
-    public static final String MESSAGE_FORMER_GUARDIAN = "Only a student can be marked as former.";
+    public static final String MESSAGE_INVALID_FORMER_STATUS = "Only a student can be marked as former.";
 
     // Identity fields
     private final ContactId id;
@@ -63,7 +63,7 @@ public class Person {
         checkArgument(guardianId.isEmpty() || role == Role.STUDENT, MESSAGE_INVALID_GUARDIAN_OWNER);
         checkArgument(role != Role.GUARDIAN || phone.isPresent() || email.isPresent(),
                 MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
-        checkArgument(status == StudentStatus.ACTIVE || role == Role.STUDENT, MESSAGE_FORMER_GUARDIAN);
+        checkArgument(status == StudentStatus.ACTIVE || role == Role.STUDENT, MESSAGE_INVALID_FORMER_STATUS);
         this.id = id;
         this.name = name;
         this.phone = phone;
@@ -95,16 +95,16 @@ public class Person {
     /**
      * Returns true if this contact is a former student.
      */
-    public boolean isFormer() {
+    public boolean isFormerStudent() {
         return status == StudentStatus.FORMER;
     }
 
     /**
-     * Returns a copy of this student with the specified status.
-     * Only students can have their status changed.
+     * Returns a copy of this contact with the specified status.
+     * Only students can be marked as former.
      */
     public Person withStatus(StudentStatus updatedStatus) {
-        assert role == Role.STUDENT : "Only students can change status";
+        assert role == Role.STUDENT || updatedStatus == StudentStatus.ACTIVE : "Only students can be former";
         return new Person(id, name, phone, email, role, guardianId, updatedStatus);
     }
 
