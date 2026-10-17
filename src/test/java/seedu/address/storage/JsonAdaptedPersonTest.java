@@ -17,6 +17,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.StudentStatus;
 
 public class JsonAdaptedPersonTest {
 
@@ -151,5 +152,32 @@ public class JsonAdaptedPersonTest {
                     VALID_ROLE, null);
             assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, person::toModelType);
         }
+    }
+
+    @Test
+    public void toModelType_missingStatus_loadsAsActive() throws Exception {
+        JsonAdaptedPerson legacy = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ROLE, null, null);
+        assertEquals(StudentStatus.ACTIVE, legacy.toModelType().getStatus());
+    }
+
+    @Test
+    public void toModelType_formerStudent_preservesStatus() throws Exception {
+        Person former = BENSON.withStatus(StudentStatus.FORMER);
+        assertEquals(former, new JsonAdaptedPerson(former).toModelType());
+    }
+
+    @Test
+    public void toModelType_invalidStatus_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ROLE, null, "archived");
+        assertThrows(IllegalValueException.class, StudentStatus.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_formerGuardian_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                "GUARDIAN", null, "FORMER");
+        assertThrows(IllegalValueException.class, Person.MESSAGE_INVALID_FORMER_STATUS, person::toModelType);
     }
 }

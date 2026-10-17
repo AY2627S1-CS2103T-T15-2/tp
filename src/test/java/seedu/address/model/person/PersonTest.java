@@ -187,7 +187,7 @@ public class PersonTest {
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", email=" + ALICE.getEmail() + ", role=" + ALICE.getRole()
-                + "}";
+                + ", status=" + ALICE.getStatus() + "}";
         assertEquals(expected, ALICE.toString());
     }
 
@@ -214,5 +214,46 @@ public class PersonTest {
         assertEquals(linkedStudent.hashCode(), sameLink.hashCode());
         assertEquals(student.getId(), linkedStudent.getId());
         assertTrue(student.getGuardianId().isEmpty());
+    }
+
+    @Test
+    public void constructor_noStatus_defaultsToActive() {
+        Person person = new PersonBuilder().build();
+        assertEquals(StudentStatus.ACTIVE, person.getStatus());
+        assertFalse(person.isFormerStudent());
+    }
+
+    @Test
+    public void constructor_formerGuardian_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_INVALID_FORMER_STATUS, () ->
+                new PersonBuilder().withRole("guardian").withStatus(StudentStatus.FORMER).build());
+    }
+
+    @Test
+    public void withStatus_student_changesOnlyStatus() {
+        Person former = ALICE.withStatus(StudentStatus.FORMER);
+        assertTrue(former.isFormerStudent());
+        assertEquals(ALICE.getId(), former.getId());
+        assertEquals(ALICE.getName(), former.getName());
+        assertEquals(ALICE, former.withStatus(StudentStatus.ACTIVE));
+    }
+
+    @Test
+    public void withStatus_activeGuardian_returnsEqualGuardian() {
+        Person guardian = new PersonBuilder().withRole("guardian").build();
+        assertEquals(guardian, guardian.withStatus(StudentStatus.ACTIVE));
+    }
+
+    @Test
+    public void withGuardianId_formerStudent_preservesStatus() {
+        Person former = ALICE.withStatus(StudentStatus.FORMER);
+        assertTrue(former.withGuardianId(Optional.of(ContactId.generate())).isFormerStudent());
+    }
+
+    @Test
+    public void equals_differentStatus_statusAffectsEqualityButNotIdentity() {
+        Person former = ALICE.withStatus(StudentStatus.FORMER);
+        assertFalse(ALICE.equals(former));
+        assertTrue(ALICE.isSamePerson(former));
     }
 }
