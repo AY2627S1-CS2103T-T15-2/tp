@@ -331,8 +331,9 @@ Examples:
 Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 
 * Run `list` or `find NAME` first and use the indexes in the **currently displayed list**.
-* Both contacts must be visible. If a search hides either contact, run `list` before linking.
-  Former students are hidden from `list`, so unarchive a former student before linking them.
+* Both contacts must be visible. If a search hides either contact, run `list` before linking an active student.
+  To link a former student without reactivating them, use `find NAME` with a search term that shows both contacts;
+  for example, `find Tan` can show former student Alex Tan and guardian Mei Tan together.
 * `s/` must identify a student and `g/` must identify a guardian.
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
 * Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.

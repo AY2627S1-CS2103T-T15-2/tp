@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
+import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.DANIEL;
@@ -19,6 +20,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.NameContainsSubstringPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -70,6 +72,35 @@ public class FindCommandTest {
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredPersonList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals(List.of(ALICE), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_formerStudent_findsStudentHiddenFromDefaultList() {
+        Person former = BENSON.withStatus(StudentStatus.FORMER);
+        model.setPerson(BENSON, former);
+        expectedModel.setPerson(BENSON, former);
+        assertFalse(model.getFilteredPersonList().contains(former));
+        NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("benson");
+        expectedModel.updateFilteredPersonList(predicate);
+
+        assertCommandSuccess(new FindCommand(predicate), model, "Found 1 contact matching: benson.", expectedModel);
+
+        assertEquals(List.of(former), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_formerView_findsMatchingActiveStudent() {
+        Person former = BENSON.withStatus(StudentStatus.FORMER);
+        model.setPerson(BENSON, former);
+        expectedModel.setPerson(BENSON, former);
+        model.updateFilteredPersonList(PREDICATE_SHOW_FORMER_STUDENTS);
+        assertEquals(List.of(former), model.getFilteredPersonList());
+        NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("alice");
+        expectedModel.updateFilteredPersonList(predicate);
+
+        assertCommandSuccess(new FindCommand(predicate), model, "Found 1 contact matching: alice.", expectedModel);
+
         assertEquals(List.of(ALICE), model.getFilteredPersonList());
     }
 
