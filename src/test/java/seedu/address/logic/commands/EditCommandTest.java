@@ -10,6 +10,8 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_CONTACTS;
+import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -47,11 +49,37 @@ public class EditCommandTest {
     public void execute_editFormerStudent_preservesStatus() throws Exception {
         Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         model.setPerson(original, original.withStatus(StudentStatus.FORMER));
+        model.updateFilteredPersonList(PREDICATE_SHOW_FORMER_STUDENTS);
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
                 .withPhone(VALID_PHONE_BOB).build();
         new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
         Person edited = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         assertTrue(edited.isFormerStudent());
+        assertEquals(original.getId(), edited.getId());
+    }
+
+    @Test
+    public void execute_editFormerStudentFromFind_showsFormerStudents() throws Exception {
+        Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.setPerson(original, original.withStatus(StudentStatus.FORMER));
+        model.updateFilteredPersonList(person -> person.getId().equals(original.getId()));
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
+        assertEquals(PREDICATE_SHOW_FORMER_STUDENTS, model.getPersonFilter());
+        assertEquals(1, model.getFilteredPersonList().size());
+        assertEquals(VALID_NAME_BOB, model.getFilteredPersonList().get(0).getName().fullName);
+    }
+
+    @Test
+    public void execute_editActiveContact_showsActiveContacts() throws Exception {
+        Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person former = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.setPerson(former, former.withStatus(StudentStatus.FORMER));
+        model.updateFilteredPersonList(person -> person.getId().equals(original.getId()));
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
+        assertEquals(PREDICATE_SHOW_ACTIVE_CONTACTS, model.getPersonFilter());
+        assertFalse(model.getFilteredPersonList().stream().anyMatch(Person::isFormerStudent));
     }
 
     @Test

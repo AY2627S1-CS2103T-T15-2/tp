@@ -18,8 +18,10 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ContactId;
+import seedu.address.model.person.NameContainsSubstringPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonLookup;
+import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.PersonBuilder;
 
 public class LinkCommandTest {
@@ -60,6 +62,19 @@ public class LinkCommandTest {
         assertEquals(Optional.of(guardian.getId()), getCurrentStudent().getGuardianId());
         assertEquals(2, model.getFilteredPersonList().size());
         assertUnchangedFailure(createLinkCommand(1, 3), "No contact exists at guardian index 3.");
+    }
+
+    @Test
+    public void execute_formerStudentInSearchResults_linksWithoutReactivating() throws Exception {
+        model.setPerson(student, student.withStatus(StudentStatus.FORMER));
+        new FindCommand(new NameContainsSubstringPredicate("Tan")).execute(model);
+
+        CommandResult result = createLinkCommand(1, 2).execute(model);
+
+        assertEquals(StudentStatus.FORMER, getCurrentStudent().getStatus());
+        assertEquals(Optional.of(guardian.getId()), getCurrentStudent().getGuardianId());
+        assertEquals(Optional.of(student.getId()), result.getSelectedContactId());
+        assertEquals(List.of(getCurrentStudent(), guardian), List.copyOf(model.getFilteredPersonList()));
     }
 
     @Test
