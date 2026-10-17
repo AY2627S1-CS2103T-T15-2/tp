@@ -24,7 +24,7 @@ public class ModelManager implements Model {
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
-    private Predicate<Person> personFilter = PREDICATE_SHOW_ALL_PERSONS;
+    private Predicate<Person> personFilter = PREDICATE_SHOW_ACTIVE_CONTACTS;
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -88,7 +88,7 @@ public class ModelManager implements Model {
     @Override
     public void addPerson(Person person) {
         addressBook.addPerson(person);
-        updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_CONTACTS);
     }
 
     @Override

@@ -1,9 +1,11 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
+import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.Optional;
@@ -17,6 +19,7 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.NameContainsSubstringPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -84,6 +87,20 @@ public class AddCommandIntegrationTest {
         assertTrue(model.getFilteredPersonList().contains(student));
         assertEquals(model.getAddressBook().getPersonList().size(), model.getFilteredPersonList().size());
         assertEquals(Optional.of(student.getId()), result.getSelectedContactId());
+    }
+
+    @Test
+    public void execute_formerStudentsShown_showsActiveContacts() throws Exception {
+        Person former = model.getFilteredPersonList().get(0);
+        model.setPerson(former, former.withStatus(StudentStatus.FORMER));
+        model.updateFilteredPersonList(PREDICATE_SHOW_FORMER_STUDENTS);
+        Person student = new PersonBuilder().withName("Ben Lim").withRole("student")
+                .withoutPhone().withoutEmail().build();
+
+        new AddCommand(student).execute(model);
+
+        assertTrue(model.getFilteredPersonList().contains(student));
+        assertFalse(model.getFilteredPersonList().stream().anyMatch(Person::isFormerStudent));
     }
 
     @Test

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -39,6 +40,8 @@ public class ArchiveCommandTest {
         expectedModel.setPerson(student, student.withStatus(StudentStatus.FORMER));
 
         assertCommandSuccess(new ArchiveCommand(INDEX_FIRST_PERSON), model, expectedMessage, expectedModel);
+        assertFalse(model.getFilteredPersonList().stream()
+                .anyMatch(person -> person.getId().equals(student.getId())));
     }
 
     @Test
@@ -85,6 +88,7 @@ public class ArchiveCommandTest {
     public void execute_alreadyFormer_throwsCommandException() {
         Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         model.setPerson(student, student.withStatus(StudentStatus.FORMER));
+        model.updateFilteredPersonList(PREDICATE_SHOW_FORMER_STUDENTS);
 
         assertCommandFailure(new ArchiveCommand(INDEX_FIRST_PERSON), model,
                 String.format(ArchiveCommand.MESSAGE_ALREADY_FORMER, student.getName()));

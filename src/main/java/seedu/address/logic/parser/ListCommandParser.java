@@ -10,14 +10,19 @@ public class ListCommandParser implements Parser<ListCommand> {
 
     /**
      * Parses the given {@code String} of arguments in the context of the ListCommand
-     * and returns a ListCommand object for execution.
+     * and returns a ListCommand object for execution. No arguments lists guardians and active students,
+     * and "former", ignoring letter case, lists former students.
      *
-     * @throws ParseException if the user input contains any text after the command word.
+     * @throws ParseException if the user input contains any other text after the command word.
      */
     public ListCommand parse(String args) throws ParseException {
-        if (!args.trim().isEmpty()) {
-            throw new ParseException(ListCommand.MESSAGE_INVALID_FORMAT);
+        String trimmedArgs = args.trim();
+        if (trimmedArgs.isEmpty()) {
+            return new ListCommand();
         }
-        return new ListCommand();
+        if (trimmedArgs.equalsIgnoreCase(ListCommand.FORMER_KEYWORD)) {
+            return new ListCommand(true);
+        }
+        throw new ParseException(ListCommand.MESSAGE_INVALID_FORMAT);
     }
 }

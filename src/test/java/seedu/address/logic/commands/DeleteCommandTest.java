@@ -70,7 +70,8 @@ public class DeleteCommandTest {
         addressBook.setPersons(List.of(student, guardian));
         Model linkedModel = new ModelManager(addressBook, new UserPrefs());
 
-        new DeleteCommand(Index.fromOneBased(2)).execute(linkedModel);
+        // The former student is hidden, so the guardian is the first contact shown.
+        new DeleteCommand(Index.fromOneBased(1)).execute(linkedModel);
 
         assertTrue(linkedModel.getAddressBook().getPersonList().getFirst().isFormerStudent());
     }
