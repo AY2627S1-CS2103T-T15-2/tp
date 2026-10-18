@@ -20,6 +20,9 @@ public class UnarchiveCommand extends StudentStatusCommand {
     public static final String MESSAGE_ALREADY_ACTIVE = "%1$s is already an active student.";
     public static final String MESSAGE_NOT_STUDENT = "Only students can be unarchived.";
 
+    /**
+     * Creates an UnarchiveCommand to mark the former student at {@code targetIndex} as an active student.
+     */
     public UnarchiveCommand(Index targetIndex) {
         super(targetIndex, StudentStatus.ACTIVE);
     }

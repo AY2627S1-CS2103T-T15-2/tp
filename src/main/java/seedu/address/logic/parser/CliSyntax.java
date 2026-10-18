@@ -12,5 +12,6 @@ public class CliSyntax {
     public static final Prefix PREFIX_ROLE = new Prefix("r/");
     public static final Prefix PREFIX_STUDENT = new Prefix("s/");
     public static final Prefix PREFIX_GUARDIAN = new Prefix("g/");
+    public static final Prefix PREFIX_STATUS = new Prefix("st/");
 
 }

@@ -62,26 +62,26 @@ public class ContactDisplayFormatterTest {
     }
 
     @Test
-    public void formatRole_null_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> ContactDisplayFormatter.formatRole(null));
+    public void formatRoleWithStatus_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ContactDisplayFormatter.formatRoleWithStatus(null));
     }
 
     @Test
-    public void formatRole_activeStudent_returnsRole() {
+    public void formatRoleWithStatus_activeStudent_returnsRole() {
         Person student = new PersonBuilder().withRole("student").build();
-        assertEquals("Student", ContactDisplayFormatter.formatRole(student));
+        assertEquals("Student", ContactDisplayFormatter.formatRoleWithStatus(student));
     }
 
     @Test
-    public void formatRole_guardian_returnsRole() {
+    public void formatRoleWithStatus_guardian_returnsRole() {
         Person guardian = new PersonBuilder().withRole("guardian").build();
-        assertEquals("Guardian", ContactDisplayFormatter.formatRole(guardian));
+        assertEquals("Guardian", ContactDisplayFormatter.formatRoleWithStatus(guardian));
     }
 
     @Test
-    public void formatRole_formerStudent_returnsRoleWithFormerLabel() {
+    public void formatRoleWithStatus_formerStudent_returnsRoleWithFormerLabel() {
         Person student = new PersonBuilder().withRole("student").withStatus(StudentStatus.FORMER).build();
-        assertEquals("Student (Former)", ContactDisplayFormatter.formatRole(student));
+        assertEquals("Student [Former]", ContactDisplayFormatter.formatRoleWithStatus(student));
     }
 
     @Test

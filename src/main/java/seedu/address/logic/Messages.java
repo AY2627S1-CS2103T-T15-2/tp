@@ -36,4 +36,13 @@ public class Messages {
         return count + (count == 1 ? " contact" : " contacts");
     }
 
+    /**
+     * Returns {@code count} followed by "former student" if {@code count} is 1,
+     * or "former students" otherwise.
+     * For example, 1 gives "1 former student" and 5 gives "5 former students".
+     */
+    public static String formatFormerStudentCount(int count) {
+        return count + (count == 1 ? " former student" : " former students");
+    }
+
 }

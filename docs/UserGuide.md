@@ -196,18 +196,18 @@ Examples:
 
 Shows guardians and active students, or only former students.
 
-Format: `list [former]`
+Format: `list [st/former]`
 
 * `list` shows all guardians and active students. Former students are hidden; see
   [Marking a student as former](#marking-a-student-as-former-archive).
-* `list former` shows only former students. `former` ignores letter case.
+* `list st/former` shows only former students. `former` ignores letter case.
 * TutorRoster also starts with guardians and active students shown.
 * Any other text after `list` is rejected; for example, `list 3` shows
-  `Invalid list command. Use: list or list former`.
+  `Invalid list command. Use: list or list st/former`.
 * The result shows the number of contacts listed; for example, `Listed 6 contacts` or `Listed 2 former students`.
 * If there are no saved contacts, `No contacts found.` is shown. If every saved contact is a former student,
-  `No active contacts found. Use list former to see former students.` is shown. If there are no former students,
-  `list former` shows `No former students found.`
+  `No active contacts found. Use list st/former to see former students.` is shown. If there are no former students,
+  `list st/former` shows `No former students found.`
 * Each contact is shown with its index, name and role, phone number, and email address. Students also show
   their linked guardian. For example:
   ```
@@ -219,7 +219,7 @@ Format: `list [former]`
 * If a student has no linked guardian, `Guardian: None` is shown.
 * If a contact has no phone number or email address, `Not provided` is shown instead; for example, `Phone: Not provided`.
 * A former student is labelled `[Former]` after their role, for example `Alex Tan [Student] [Former]`, and the
-  details panel shows `Role: Student (Former)`.
+  details panel shows `Role: Student [Former]`.
 
 ### Marking a student as former: `archive`
 
@@ -246,8 +246,8 @@ Marks a former student as active again, for example when they return for lessons
 
 Format: `unarchive INDEX`
 
-* Run `list former` or `find NAME` first, since former students are hidden from `list`.
-* The displayed list is kept and refreshed. After `list former`, the student disappears straight away; after
+* Run `list st/former` or `find NAME` first, since former students are hidden from `list`.
+* The displayed list is kept and refreshed. After `list st/former`, the student disappears straight away; after
   `find`, they stay in the results without the `[Former]` label. The result names the student; for example,
   `Marked Alex Tan as an active student.`
 * Only students can be unarchived. Unarchiving a guardian is rejected with `Only students can be unarchived.`
@@ -255,7 +255,7 @@ Format: `unarchive INDEX`
 * Index rules are the same as for `archive`.
 
 Examples:
-* `list former` followed by `unarchive 1` marks the 1st former student as active again.
+* `list st/former` followed by `unarchive 1` marks the 1st former student as active again.
 
 ### Editing a contact: `edit`
 
@@ -267,7 +267,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * After a successful edit, the edited contact is selected and its details are shown in the details panel.
-  Editing a former student shows `list former`, and editing any other contact shows `list`, so the edited contact
+  Editing a former student shows `list st/former`, and editing any other contact shows `list`, so the edited contact
   stays visible.
 * Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
   as `add`. An empty `e/` is rejected.
@@ -458,7 +458,7 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
-**List**   | `list [former]`<br> e.g., `list former`
+**List**   | `list [st/former]`<br> e.g., `list st/former`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
 **Help**   | `help`

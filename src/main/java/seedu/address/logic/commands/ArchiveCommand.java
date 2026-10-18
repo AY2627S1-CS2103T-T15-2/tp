@@ -20,6 +20,9 @@ public class ArchiveCommand extends StudentStatusCommand {
     public static final String MESSAGE_ALREADY_FORMER = "%1$s is already a former student.";
     public static final String MESSAGE_NOT_STUDENT = "Only students can be archived.";
 
+    /**
+     * Creates an ArchiveCommand to mark the student at {@code targetIndex} as a former student.
+     */
     public ArchiveCommand(Index targetIndex) {
         super(targetIndex, StudentStatus.FORMER);
     }

@@ -19,15 +19,20 @@ public class ListCommandParserTest {
 
     @Test
     public void parse_former_returnsListFormerCommand() {
-        assertParseSuccess(parser, " former", new ListCommand(true));
-        assertParseSuccess(parser, "  FORMER  ", new ListCommand(true));
+        assertParseSuccess(parser, " st/former", new ListCommand(true));
+        assertParseSuccess(parser, "  st/FORMER  ", new ListCommand(true));
     }
 
     @Test
     public void parse_extraText_throwsParseException() {
         assertParseFailure(parser, " 3", ListCommand.MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " all", ListCommand.MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " former 1", ListCommand.MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " formers", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " former", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " st/former 1", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " st/formers", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " st/", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " st/active", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " st/former st/former", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " r/student", ListCommand.MESSAGE_INVALID_FORMAT);
     }
 }

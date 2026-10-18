@@ -90,9 +90,9 @@ public class StudentStatusUiTest {
                 MainWindow window = createWindow(stage, StudentStatus.FORMER);
                 Region root = (Region) stage.getScene().getRoot();
                 Region details = (Region) root.lookup("#personDetailsPanelPlaceholder");
-                executeCommand(root, "list former");
+                executeCommand(root, "list st/former");
                 window.getPersonListPanel().selectPerson(student.getId());
-                assertEquals("Role: Student (Former)", label(details, "role").getText());
+                assertEquals("Role: Student [Former]", label(details, "role").getText());
 
                 executeCommand(root, "unarchive 1");
 
@@ -125,7 +125,7 @@ public class StudentStatusUiTest {
 
                 assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
                 assertTrue(window.getPersonListPanel().getSelectedPerson().isFormerStudent());
-                assertEquals("Role: Student (Former)", label(details, "role").getText());
+                assertEquals("Role: Student [Former]", label(details, "role").getText());
                 assertEquals("Guardian: Mei Tan", label(details, "guardianName").getText());
                 assertTrue(hasLabelWithText(root, "Alex Tan [Student] [Former]"));
                 assertFalse(hasLabelWithText(root, "Mei Tan [Guardian]"));

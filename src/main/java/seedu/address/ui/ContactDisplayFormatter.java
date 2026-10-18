@@ -28,9 +28,8 @@ public class ContactDisplayFormatter {
     }
 
     /**
-     * Returns the name of {@code person} followed by its role in square brackets,
-     * for example "Alex Tan [Student]". A former student is also labelled, for example
-     * "Alex Tan [Student] [Former]".
+     * Returns the name of {@code person} followed by its role, and its status if it is a former student,
+     * each in square brackets, for example "Alex Tan [Student]" or "Alex Tan [Student] [Former]".
      */
     public static String formatNameWithRole(Person person) {
         requireNonNull(person);
@@ -39,13 +38,13 @@ public class ContactDisplayFormatter {
     }
 
     /**
-     * Returns the role of {@code person}, for example "Student". A former student is also labelled,
-     * as in "Student (Former)".
+     * Returns the role of {@code person}, followed by its status in square brackets
+     * if it is a former student, for example "Student" or "Student [Former]".
      */
-    public static String formatRole(Person person) {
+    public static String formatRoleWithStatus(Person person) {
         requireNonNull(person);
         String role = person.getRole().toString();
-        return person.isFormerStudent() ? role + " (" + FORMER_LABEL + ")" : role;
+        return person.isFormerStudent() ? role + " [" + FORMER_LABEL + "]" : role;
     }
 
     /**

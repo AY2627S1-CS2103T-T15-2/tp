@@ -11,8 +11,9 @@ public class UnarchiveCommandParser implements Parser<UnarchiveCommand> {
 
     /**
      * Parses the given {@code String} of arguments in the context of the UnarchiveCommand
-     * and returns a UnarchiveCommand object for execution.
-     * @throws ParseException if the user input is not a single positive index
+     * and returns an UnarchiveCommand object for execution.
+     *
+     * @throws ParseException if the user input is not a single positive index.
      */
     public UnarchiveCommand parse(String args) throws ParseException {
         try {

@@ -1,7 +1,7 @@
 package seedu.address.ui;
 
 import static seedu.address.ui.ContactDisplayFormatter.formatContactMethod;
-import static seedu.address.ui.ContactDisplayFormatter.formatRole;
+import static seedu.address.ui.ContactDisplayFormatter.formatRoleWithStatus;
 
 import java.util.Optional;
 
@@ -69,7 +69,7 @@ public class PersonDetailsPanel extends UiPart<Region> {
         }
 
         name.setText(contact.getName().fullName);
-        role.setText("Role: " + formatRole(contact));
+        role.setText("Role: " + formatRoleWithStatus(contact));
         phone.setText("Phone: " + formatContactMethod(contact.getPhone()));
         email.setText("Email: " + formatContactMethod(contact.getEmail()));
         boolean isStudent = contact.getRole() == Role.STUDENT;
