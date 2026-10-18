@@ -12,7 +12,8 @@ public class Email {
     public static final int MAX_LENGTH = 254;
     public static final int MAX_LOCAL_PART_LENGTH = 64;
     public static final int MAX_DOMAIN_LABEL_LENGTH = 63;
-    public static final String MESSAGE_CONSTRAINTS = "Invalid email address: Email must contain one @ symbol, "
+    public static final String MESSAGE_CONSTRAINTS =
+            "Invalid email address: Email must contain one @ symbol, "
             + "a non-empty local part, and at least two non-empty domain labels "
             + "separated by periods, without spaces. Email cannot exceed " + MAX_LENGTH + " characters; "
             + "the local part cannot exceed " + MAX_LOCAL_PART_LENGTH + " characters, and each domain label "
@@ -23,7 +24,8 @@ public class Email {
             "Email local part cannot exceed " + MAX_LOCAL_PART_LENGTH + " characters.";
     public static final String MESSAGE_DOMAIN_LABEL_TOO_LONG =
             "Email domain labels cannot exceed " + MAX_DOMAIN_LABEL_LENGTH + " characters.";
-    public static final String MESSAGE_EMPTY = "Empty email parameter: Email cannot be empty when e/ is specified.";
+    public static final String MESSAGE_EMPTY =
+            "Empty email parameter: Email cannot be empty when e/ is specified.";
     public final String value;
 
     /**
