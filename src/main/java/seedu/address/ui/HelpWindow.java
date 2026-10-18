@@ -5,8 +5,10 @@ import java.util.logging.Logger;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 
@@ -16,7 +18,8 @@ import seedu.address.commons.core.LogsCenter;
 public class HelpWindow extends UiPart<Stage> {
 
     public static final String USERGUIDE_URL = "https://ay2627s1-cs2103t-t15-2.github.io/tp/UserGuide.html";
-    public static final String HELP_MESSAGE = "Refer to the user guide: " + USERGUIDE_URL;
+    public static final String HELP_MESSAGE = "For full instructions, examples and field rules, "
+            + "copy the User Guide URL and open it in your browser.";
 
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";
@@ -27,6 +30,9 @@ public class HelpWindow extends UiPart<Stage> {
     @FXML
     private Label helpMessage;
 
+    @FXML
+    private TextField userGuideUrl;
+
     /**
      * Creates a new HelpWindow.
      *
@@ -35,6 +41,7 @@ public class HelpWindow extends UiPart<Stage> {
     public HelpWindow(Stage root) {
         super(FXML, root);
         helpMessage.setText(HELP_MESSAGE);
+        userGuideUrl.setText(USERGUIDE_URL);
     }
 
     /**
@@ -65,6 +72,8 @@ public class HelpWindow extends UiPart<Stage> {
     public void show() {
         logger.fine("Showing help page about the application.");
         getRoot().show();
+        getRoot().setWidth(Math.min(getRoot().getWidth(), Screen.getPrimary().getVisualBounds().getWidth()));
+        getRoot().setHeight(Math.min(getRoot().getHeight(), Screen.getPrimary().getVisualBounds().getHeight()));
         getRoot().centerOnScreen();
     }
 

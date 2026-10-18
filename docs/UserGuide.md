@@ -79,7 +79,9 @@ TutorRoster is a **desktop application for managing student and guardian contact
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
+Opens a command reference listing the available commands and their formats. For full instructions, examples and
+field rules, use **Copy URL** to copy the User Guide link and open it in your browser.
+The Help window can be resized and scrolled.
 
 ![help message](images/helpMessage.png)
 
