@@ -105,7 +105,8 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_phoneWithAsciiDigitsAndUnicodeText_preservesValue() throws Exception {
         String phone = "(手机) 123 \u0661\u0662\u0663";
-        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, phone, VALID_EMAIL, VALID_ROLE, null);
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, phone, VALID_EMAIL,
+                VALID_ROLE, null);
         assertEquals(phone, person.toModelType().getPhone().orElseThrow().value);
     }
 
@@ -127,11 +128,24 @@ public class JsonAdaptedPersonTest {
 
     @Test
     public void toModelType_emailLengthLimit_validatesSavedValues() throws Exception {
-        String email = "a.".repeat(120) + "aa@example.com";
-        JsonAdaptedPerson valid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, email, VALID_ROLE, null);
+        String email = "a".repeat(64) + "@" + "b".repeat(63)
+                + "." + "c".repeat(63) + "." + "d".repeat(61);
+        JsonAdaptedPerson valid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, email,
+                VALID_ROLE, null);
         assertEquals(email, valid.toModelType().getEmail().orElseThrow().value);
-        JsonAdaptedPerson invalid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, "a" + email, VALID_ROLE, null);
+        JsonAdaptedPerson invalid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, "a" + email,
+                VALID_ROLE, null);
         assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, invalid::toModelType);
+    }
+
+    @Test
+    public void toModelType_emailComponentTooLong_throwsIllegalValueException() {
+        for (String email : List.of("a".repeat(65) + "@example.com",
+                "a@" + "b".repeat(64) + ".com", "a@example." + "b".repeat(64))) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, email,
+                    VALID_ROLE, null);
+            assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
     }
 
     @Test

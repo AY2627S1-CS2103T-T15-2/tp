@@ -10,10 +10,19 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Email {
 
     public static final int MAX_LENGTH = 254;
+    public static final int MAX_LOCAL_PART_LENGTH = 64;
+    public static final int MAX_DOMAIN_LABEL_LENGTH = 63;
     public static final String MESSAGE_CONSTRAINTS = "Invalid email address: Email must contain one @ symbol, "
-            + "a non-empty local part, and at least two non-empty domain labels separated by periods, without spaces. "
-            + "Email cannot exceed " + MAX_LENGTH + " characters.";
-    public static final String MESSAGE_TOO_LONG = "Email address cannot exceed " + MAX_LENGTH + " characters.";
+            + "a non-empty local part, and at least two non-empty domain labels "
+            + "separated by periods, without spaces. Email cannot exceed " + MAX_LENGTH + " characters; "
+            + "the local part cannot exceed " + MAX_LOCAL_PART_LENGTH + " characters, and each domain label "
+            + "cannot exceed " + MAX_DOMAIN_LABEL_LENGTH + " characters.";
+    public static final String MESSAGE_TOO_LONG =
+            "Email address cannot exceed " + MAX_LENGTH + " characters.";
+    public static final String MESSAGE_LOCAL_PART_TOO_LONG =
+            "Email local part cannot exceed " + MAX_LOCAL_PART_LENGTH + " characters.";
+    public static final String MESSAGE_DOMAIN_LABEL_TOO_LONG =
+            "Email domain labels cannot exceed " + MAX_DOMAIN_LABEL_LENGTH + " characters.";
     public static final String MESSAGE_EMPTY = "Empty email parameter: Email cannot be empty when e/ is specified.";
     public final String value;
 
@@ -53,6 +62,9 @@ public class Email {
         if (localPart.isEmpty()) {
             return "Email local part cannot be empty.";
         }
+        if (localPart.length() > MAX_LOCAL_PART_LENGTH) {
+            return MESSAGE_LOCAL_PART_TOO_LONG;
+        }
         if (domain.isEmpty()) {
             return "Email domain cannot be empty.";
         }
@@ -64,6 +76,11 @@ public class Email {
         }
 
         String[] domainLabels = domain.split("\\.", -1);
+        for (String label : domainLabels) {
+            if (label.length() > MAX_DOMAIN_LABEL_LENGTH) {
+                return MESSAGE_DOMAIN_LABEL_TOO_LONG;
+            }
+        }
         if (domainLabels.length < 2) {
             return "Email domain must contain at least two labels separated by a period.";
         }
@@ -89,8 +106,9 @@ public class Email {
     }
 
     /**
-     * Checks an email part without recursive regular-expression matching. Allowed punctuation must
-     * occur singly between ASCII alphanumeric characters, so long inputs use constant stack space.
+     * Returns true if {@code part} contains only ASCII letters and digits, with each character from
+     * {@code allowedPunctuation} appearing singly between two letters or digits.
+     * Uses a loop instead of a regex so long inputs cannot overflow the stack.
      */
     private static boolean isValidPart(String part, String allowedPunctuation) {
         boolean isPreviousAlphanumeric = false;
@@ -108,9 +126,9 @@ public class Email {
     }
 
     private static boolean isAsciiAlphanumeric(char character) {
-        return character >= 'a' && character <= 'z'
-                || character >= 'A' && character <= 'Z'
-                || character >= '0' && character <= '9';
+        return (character >= 'a' && character <= 'z')
+                || (character >= 'A' && character <= 'Z')
+                || (character >= '0' && character <= '9');
     }
 
     /**

@@ -25,6 +25,8 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.TypicalPersons.AMY;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.AddCommand;
@@ -376,15 +378,16 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_emailAtMaximumLength_acceptsTrimmedValue() {
-        String localPart = "a.".repeat(120) + "aa";
-        String email = localPart + "@example.com";
+        String email = "a".repeat(64) + "@" + "b".repeat(63)
+                + "." + "c".repeat(63) + "." + "d".repeat(61);
         Person expected = new PersonBuilder(AMY).withoutPhone().withEmail(email).build();
-        assertParseSuccess(parser, NAME_DESC_AMY + " e/  " + email + "  " + ROLE_DESC_AMY, new AddCommand(expected));
+        assertParseSuccess(parser, NAME_DESC_AMY + " e/  " + email + "  " + ROLE_DESC_AMY,
+                new AddCommand(expected));
     }
 
     @Test
     public void parse_emailExceedingMaximumLength_reportsLengthError() {
-        for (String localPart : new String[] {"a".repeat(243), "a.".repeat(10_000) + "a"}) {
+        for (String localPart : List.of("a".repeat(243), "a.".repeat(10_000) + "a")) {
             assertParseFailure(parser, NAME_DESC_AMY + " e/" + localPart + "@example.com" + ROLE_DESC_AMY,
                     Email.MESSAGE_TOO_LONG);
         }
@@ -392,7 +395,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_emailWithManySeparators_reportsInvalidPunctuation() {
-        String localPart = "a.".repeat(120);
+        String localPart = "a.".repeat(32);
         assertParseFailure(parser, NAME_DESC_AMY + " e/" + localPart + "@example.com" + ROLE_DESC_AMY,
                 "Email local part contains unsupported characters or invalid punctuation placement.");
     }
