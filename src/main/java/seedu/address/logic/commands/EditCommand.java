@@ -161,7 +161,8 @@ public class EditCommand extends Command {
         Role role = personToEdit.getRole();
 
         return new Person(personToEdit.getId(), updatedName, updatedPhone,
-                updatedEmail, role, personToEdit.getGuardianId(), personToEdit.getStatus());
+                updatedEmail, role, personToEdit.getGuardianId(), personToEdit.getStatus(),
+                personToEdit.getLevel(), personToEdit.getSubject());
     }
 
     private static Optional<Phone> getUpdatedPhone(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {

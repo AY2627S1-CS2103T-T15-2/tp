@@ -93,6 +93,22 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_editPhone_preservesExistingLevelAndSubject() throws Exception {
+        Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person student = new PersonBuilder(original).withLevel("Sec 3").withSubject("Math").build();
+        model.setPerson(original, student);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
+
+        Person edited = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(VALID_PHONE_BOB, edited.getPhone().orElseThrow().value);
+        assertEquals(student.getLevel(), edited.getLevel());
+        assertEquals(student.getSubject(), edited.getSubject());
+        assertEquals(student.getId(), edited.getId());
+    }
+
+    @Test
     public void execute_validEdit_selectsEditedContact() throws Exception {
         Person original = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build();

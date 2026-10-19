@@ -67,6 +67,7 @@ public class LevelSubjectUiTest {
             PersonListPanel listPanel = new PersonListPanel(contacts, contacts);
             PersonDetailsPanel details = new PersonDetailsPanel(contacts, listPanel.selectedPersonProperty());
             new Scene(details.getRoot());
+            details.getRoot().applyCss();
 
             listPanel.selectPerson(student.getId());
             assertTrue(details.getRoot().lookup("#studentDetails").isVisible());
