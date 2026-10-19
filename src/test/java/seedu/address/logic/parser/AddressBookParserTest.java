@@ -22,6 +22,7 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.LinkCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.UnarchiveCommand;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsSubstringPredicate;
 import seedu.address.model.person.Person;
@@ -61,6 +62,13 @@ public class AddressBookParserTest {
     public void parseCommand_unarchive() throws Exception {
         assertEquals(new UnarchiveCommand(INDEX_FIRST_PERSON),
                 parser.parseCommand(UnarchiveCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased()));
+    }
+
+    @Test
+    public void parseCommand_view() throws Exception {
+        ViewCommand command = (ViewCommand) parser.parseCommand(
+                ViewCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
+        assertEquals(new ViewCommand(INDEX_FIRST_PERSON), command);
     }
 
     @Test
