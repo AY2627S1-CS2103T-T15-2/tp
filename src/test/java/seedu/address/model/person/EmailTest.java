@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class EmailTest {
@@ -72,6 +74,59 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("peter_jack@very-very-very-long-example.com")); // long domain name
         assertTrue(Email.isValidEmail("if.you.dream.it_you.can.do.it@example.com")); // long local part
         assertTrue(Email.isValidEmail("e1234567@u.nus.edu")); // more than one period in domain
+    }
+
+    @Test
+    public void constructor_maximumLength_preservesEmail() {
+        String email = "a".repeat(64) + "@" + "b".repeat(63)
+                + "." + "c".repeat(63) + "." + "d".repeat(61);
+        assertEquals(Email.MAX_LENGTH, email.length());
+        assertEquals(email, new Email(email).value);
+    }
+
+    @Test
+    public void constructor_oneOverMaximumLength_rejected() {
+        String email = "a".repeat(64) + "@" + "b".repeat(63)
+                + "." + "c".repeat(63) + "." + "d".repeat(62);
+        assertEquals(Email.MAX_LENGTH + 1, email.length());
+        assertEquals(Email.MESSAGE_TOO_LONG, Email.getValidationErrorMessage(email));
+        assertThrows(IllegalArgumentException.class, () -> new Email(email));
+    }
+
+    @Test
+    public void constructor_localPartLength_checksBoundary() {
+        String valid = "a".repeat(64) + "@example.com";
+        String invalid = "a" + valid;
+        assertEquals(valid, new Email(valid).value);
+        assertEquals(Email.MESSAGE_LOCAL_PART_TOO_LONG, Email.getValidationErrorMessage(invalid));
+        assertThrows(IllegalArgumentException.class, () -> new Email(invalid));
+    }
+
+    @Test
+    public void constructor_domainLabelLength_checksEveryLabel() {
+        for (String valid : List.of("a@" + "b".repeat(63) + ".com", "a@example." + "b".repeat(63),
+                "a@example." + "b".repeat(63) + ".com")) {
+            assertEquals(valid, new Email(valid).value);
+        }
+        for (String invalid : List.of("a@" + "b".repeat(64) + ".com", "a@example." + "b".repeat(64),
+                "a@example." + "b".repeat(64) + ".com")) {
+            assertEquals(Email.MESSAGE_DOMAIN_LABEL_TOO_LONG, Email.getValidationErrorMessage(invalid));
+            assertThrows(IllegalArgumentException.class, () -> new Email(invalid));
+        }
+    }
+
+    @Test
+    public void isValidEmail_extremelyLongValues_reportsLengthError() {
+        for (String value : List.of("a.".repeat(10_000) + "a@example.com",
+                "a.".repeat(10_000) + "@example.com",
+                "a.".repeat(10_000) + "a!@example.com",
+                "alex@" + "a-".repeat(10_000) + ".com",
+                "alex@" + "a.".repeat(10_000) + ".com",
+                "alex@example." + "a-".repeat(10_000))) {
+            assertFalse(Email.isValidEmail(value));
+            assertEquals(Email.MESSAGE_TOO_LONG, Email.getValidationErrorMessage(value));
+            assertThrows(IllegalArgumentException.class, () -> new Email(value));
+        }
     }
 
     @Test

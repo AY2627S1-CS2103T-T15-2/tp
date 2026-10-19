@@ -174,6 +174,23 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseEmail_maximumLength_checksAfterTrimming() throws Exception {
+        String email = "a".repeat(64) + "@" + "b".repeat(63)
+                + "." + "c".repeat(63) + "." + "d".repeat(61);
+        assertEquals(email, ParserUtil.parseEmail(" \t" + email + " \r\n").value);
+        assertThrows(ParseException.class, Email.MESSAGE_TOO_LONG, ()
+                -> ParserUtil.parseEmail(" a" + email + " "));
+    }
+
+    @Test
+    public void parseEmail_componentLengths_reportsSpecificErrors() {
+        assertThrows(ParseException.class, Email.MESSAGE_LOCAL_PART_TOO_LONG, ()
+                -> ParserUtil.parseEmail("a".repeat(65) + "@example.com"));
+        assertThrows(ParseException.class, Email.MESSAGE_DOMAIN_LABEL_TOO_LONG, ()
+                -> ParserUtil.parseEmail("a@" + "b".repeat(64) + ".com"));
+    }
+
+    @Test
     public void parseEmail_emptyOrWhitespace_reportsExactMessage() {
         String expectedMessage = "Empty email parameter: Email cannot be empty when e/ is specified.";
         for (String value : List.of("", " ", "\t\r\n")) {

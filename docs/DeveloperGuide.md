@@ -347,13 +347,28 @@ select it, in the same way as `EditCommand` and `LinkCommand`.
 Contact JSON records contain an `id` UUID string and an optional `guardianId` UUID string, alongside the existing fields. `JsonAdaptedPerson` restores saved IDs; legacy records without IDs receive new IDs that are persisted on the next successful save. `JsonSerializableAddressBook` first loads all contacts, rejecting duplicate IDs and duplicate contact details, then validates that every guardian reference points to an existing contact with the guardian role. A guardian cannot carry a guardian reference. Repeated JSON object fields are rejected during parsing.
 
 `Person` stores phone and email as non-null `Optional` values. `Phone` and `Email` always represent valid, present
-values. Phone details contain at least 3 digits and no more than 100 characters. The JSON adapter keeps both fields as
+values. Phone details contain at least 3 ASCII digits (`0-9`) and no more than 100 characters. Other numerals and
+Unicode text remain allowed but do not count towards the minimum. Saved phone values with fewer than 3 ASCII digits
+are rejected during loading, including values that previously passed using only non-ASCII numerals.
+The JSON adapter keeps both fields as
 nullable strings: missing or null means absent, while empty and invalid
 strings are rejected. Existing valid strings retain their capitalization. Single-label email domains and domains
 whose final label has fewer than two characters are invalid; incompatible files fail loading without being rewritten
 automatically. `JsonAdaptedPerson` rejects a guardian record that has neither a phone number nor an email address
 while converting it to a model object. The `Person` constructor enforces the same invariant, so saved data cannot
 bypass the guardian contact-method requirement.
+
+Email validation uses iterative character scans for the local part and domain labels, avoiding recursive regex
+matching on long inputs. `Email.isValidEmail` and the parser share the same validation rules and specific errors.
+An email is limited to 254 characters, with at most 64 in the local part and 63 in each domain label.
+The parser trims surrounding whitespace before checking these limits and reports
+`Email address cannot exceed 254 characters.` for longer values. The same limits apply to saved email values;
+overlong values cause loading to fail without rewriting the file.
+Email component length validation also applies during Add, Edit and JSON loading. Previously accepted emails
+with local parts longer than 64 characters or domain labels longer than 63 characters fail loading. The original
+file is preserved; correct the invalid values and restart to re-enable data-changing commands. Length errors
+report the exceeded limit in CLI parsing. Email accepts ASCII characters only, so character and byte counts agree.
+
 
 Duplicate identity is Role + Name + Phone + Email. `Name.isSameName` and `Email.isSameEmail` ignore capitalization;
 two absent values for optional fields match when each contact has at least one contact method. A contactless student
@@ -778,7 +793,7 @@ testers are expected to do more *exploratory* testing.
    Expected: The second contact is added with the email-related possible-duplicate warning.
 
 1. Test case: `add r/student n/Alex Tan p/12`.<br>
-   Expected: The phone error says it must contain at least 3 digits.
+   Expected: The phone error says it must contain at least 3 digits (0-9).
 
 1. Test case: `add r/student n/Alex Tan p/`.<br>
    Expected: The result says `Empty phone parameter: Phone cannot be empty when p/ is specified.`
