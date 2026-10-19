@@ -20,6 +20,7 @@ import seedu.address.model.person.StudentStatus;
 public class ListCommandParser implements Parser<ListCommand> {
 
     private static final List<Prefix> LIST_PREFIXES = List.of(PREFIX_ROLE, PREFIX_STATUS);
+    // Matches any word ending in "/" at the start of a token, such as "r/", "n/" or "xyz/".
     private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([^\\s/]+/)");
 
     /**
