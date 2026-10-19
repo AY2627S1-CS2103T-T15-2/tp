@@ -13,6 +13,12 @@ public interface Model {
     /** {@code Predicate} that always evaluates to true */
     Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
 
+    /** {@code Predicate} that shows guardians and active students, hiding former students */
+    Predicate<Person> PREDICATE_SHOW_ACTIVE_CONTACTS = person -> !person.isFormerStudent();
+
+    /** {@code Predicate} that shows former students only */
+    Predicate<Person> PREDICATE_SHOW_FORMER_STUDENTS = Person::isFormerStudent;
+
     /**
      * Returns the user prefs.
      */

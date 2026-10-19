@@ -11,8 +11,9 @@ public class ArchiveCommandParser implements Parser<ArchiveCommand> {
 
     /**
      * Parses the given {@code String} of arguments in the context of the ArchiveCommand
-     * and returns a ArchiveCommand object for execution.
-     * @throws ParseException if the user input is not a single positive index
+     * and returns an ArchiveCommand object for execution.
+     *
+     * @throws ParseException if the user input is not a single positive index.
      */
     public ArchiveCommand parse(String args) throws ParseException {
         try {

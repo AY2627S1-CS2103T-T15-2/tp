@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
+import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -34,12 +35,15 @@ public class UnarchiveCommandTest {
         Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person former = student.withStatus(StudentStatus.FORMER);
         model.setPerson(student, former);
+        model.updateFilteredPersonList(PREDICATE_SHOW_FORMER_STUDENTS);
         String expectedMessage = String.format(UnarchiveCommand.MESSAGE_SUCCESS, student.getName());
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.updateFilteredPersonList(PREDICATE_SHOW_FORMER_STUDENTS);
         expectedModel.setPerson(former, student);
 
         assertCommandSuccess(new UnarchiveCommand(INDEX_FIRST_PERSON), model, expectedMessage, expectedModel);
+        assertTrue(model.getFilteredPersonList().isEmpty());
     }
 
     @Test

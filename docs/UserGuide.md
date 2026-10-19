@@ -29,7 +29,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list` : Lists guardians and active students.
 
    * `add r/student n/John Doe p/98765432 e/johnd@example.com` : Adds a student named `John Doe`.
 
@@ -198,15 +198,22 @@ Examples:
 * `add r/student n/Ben Lim` saves a student without a phone number or email.
 * `add r/guardian n/Betsy Crowe e/betsycrowe@example.com p/1234567`
 
-### Listing all contacts: `list`
+### Listing contacts: `list`
 
-Shows a list of all contacts in TutorRoster.
+Shows guardians and active students, or only former students.
 
-Format: `list`
+Format: `list [st/former]`
 
-* Any text after `list` is rejected; for example, `list 3` shows `Invalid list command. Use: list`.
-* The result shows the number of contacts listed; for example, `Listed 6 contacts`.
-* If there are no saved contacts, `No contacts found.` is shown.
+* `list` shows all guardians and active students. Former students are hidden; see
+  [Marking a student as former](#marking-a-student-as-former-archive).
+* `list st/former` shows only former students. `former` ignores letter case.
+* TutorRoster also starts with guardians and active students shown.
+* Any other text after `list` is rejected; for example, `list 3` shows
+  `Invalid list command. Use: list or list st/former`.
+* The result shows the number of contacts listed; for example, `Listed 6 contacts` or `Listed 2 former students`.
+* If there are no saved contacts, `No contacts found.` is shown. If every saved contact is a former student,
+  `No active contacts found. Use list st/former to see former students.` is shown. If there are no former students,
+  `list st/former` shows `No former students found.`
 * Each contact is shown with its index, name and role, phone number, and email address. Students also show
   their linked guardian. For example:
   ```
@@ -217,6 +224,44 @@ Format: `list`
   ```
 * If a student has no linked guardian, `Guardian: None` is shown.
 * If a contact has no phone number or email address, `Not provided` is shown instead; for example, `Phone: Not provided`.
+* A former student is labelled `[Former]` after their role, for example `Alex Tan [Student] [Former]`, and the
+  details panel shows `Role: Student [Former]`.
+
+### Marking a student as former: `archive`
+
+Marks a student who no longer takes lessons as a former student, so that they are hidden from `list`.
+
+Format: `archive INDEX`
+
+* `INDEX` is the index shown in the displayed contact list, and must be a positive integer 1, 2, 3, ...
+* The student keeps their details and guardian link. Their guardian stays in `list`.
+* The displayed list is kept and refreshed. After `list`, the student disappears straight away; after `find`, they
+  stay in the results, labelled `[Former]`. The result names the student; for example,
+  `Marked Alex Tan as a former student.`
+* Only students can be archived. Archiving a guardian is rejected with `Only students can be archived.`
+* Archiving a student who is already former is rejected with `Alex Tan is already a former student.`
+* An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
+
+Examples:
+* `list` followed by `archive 2` marks the 2nd contact in the list as a former student.
+* `find Alex` followed by `archive 1` marks the 1st search result as a former student.
+
+### Marking a former student as active: `unarchive`
+
+Marks a former student as active again, for example when they return for lessons.
+
+Format: `unarchive INDEX`
+
+* Run `list st/former` or `find NAME` first, since former students are hidden from `list`.
+* The displayed list is kept and refreshed. After `list st/former`, the student disappears straight away; after
+  `find`, they stay in the results without the `[Former]` label. The result names the student; for example,
+  `Marked Alex Tan as an active student.`
+* Only students can be unarchived. Unarchiving a guardian is rejected with `Only students can be unarchived.`
+* Unarchiving a student who is already active is rejected with `Alex Tan is already an active student.`
+* Index rules are the same as for `archive`.
+
+Examples:
+* `list st/former` followed by `unarchive 1` marks the 1st former student as active again.
 
 ### Editing a contact: `edit`
 
@@ -228,6 +273,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * After a successful edit, the edited contact is selected and its details are shown in the details panel.
+  Editing a former student shows `list st/former`, and editing any other contact shows `list`, so the edited contact
+  stays visible.
 * Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
   as `add`. An empty `e/` is rejected.
 * `e/NONE` removes the existing email. `NONE` ignores letter case, so `e/none` also works.
@@ -275,6 +322,7 @@ Format: `find NAME`
 * Curly and straight apostrophes are treated as the same; for example, `o'brien` matches `O’Brien`.
 * Accents are ignored; for example, `elise` matches `Élise`, `élise` matches `Elise`, and `soren` matches `Søren`.
 * The search considers only names.
+* Former students are included in the results, labelled `[Former]`.
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.
 * The result shows the number of matches; for example, `Found 2 contacts matching: li.`
 * If no contact matches, `No contacts found matching: NAME` is shown.
@@ -289,7 +337,9 @@ Examples:
 Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 
 * Run `list` or `find NAME` first and use the indexes in the **currently displayed list**.
-* Both contacts must be visible. If a search hides either contact, run `list` before linking.
+* Both contacts must be visible. If a search hides either contact, run `list` before linking an active student.
+  To link a former student without reactivating them, use `find NAME` with a search term that shows both contacts;
+  for example, `find Tan` can show former student Alex Tan and guardian Mei Tan together.
 * `s/` must identify a student and `g/` must identify a guardian.
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
 * Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
@@ -414,5 +464,7 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
-**List**   | `list`
+**List**   | `list [st/former]`<br> e.g., `list st/former`
+**Archive** | `archive INDEX`<br> e.g., `archive 2`
+**Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
 **Help**   | `help`
