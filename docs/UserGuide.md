@@ -200,20 +200,37 @@ Examples:
 
 ### Listing contacts: `list`
 
-Shows guardians and active students, or only former students.
+Shows guardians and active students, or only the contacts you choose.
 
-Format: `list [st/former]`
+Format: `list [r/ROLE] [st/former]`
+
+Command | Shows
+--------|------
+`list` | Guardians and active students
+`list r/student` | Active students only
+`list r/guardian` | Guardians only
+`list st/former` | Former students only
+`list r/student st/former` | Former students only (the same as `list st/former`)
 
 * `list` shows all guardians and active students. Former students are hidden; see
   [Marking a student as former](#marking-a-student-as-former-archive).
-* `list st/former` shows only former students. `former` ignores letter case.
+* `r/ROLE` shows only contacts with that role. `ROLE` must be `student` or `guardian`, and ignores letter case.
+* `st/former` shows only former students. `former` ignores letter case.
+* `r/` and `st/` can be given in either order, and each can appear only once. A contact must match both.
+* Guardians are never former, so `list r/guardian st/former` is rejected with
+  `Guardians cannot be former. Remove r/guardian or st/former.`
 * TutorRoster also starts with guardians and active students shown.
 * Any other text after `list` is rejected; for example, `list 3` shows
-  `Invalid list command. Use: list or list st/former`.
+  `Invalid list command. Use: list [r/ROLE] [st/former]`.
+* An invalid role is rejected with `Invalid role. Role must be student or guardian.`, and repeating `r/` or `st/`
+  is rejected with `Each of r/ and st/ may appear only once.`
 * The result shows the number of contacts listed; for example, `Listed 6 contacts` or `Listed 2 former students`.
 * If there are no saved contacts, `No contacts found.` is shown. If every saved contact is a former student,
   `No active contacts found. Use list st/former to see former students.` is shown. If there are no former students,
   `list st/former` shows `No former students found.`
+* If no contact has the chosen role, `list r/guardian` shows `No guardians found.` and `list r/student` shows
+  `No students found.` If every student is former, `list r/student` shows
+  `No active students found. Use list r/student st/former to see former students.`
 * Each contact is shown with its index, name and role, phone number, and email address. Students also show
   their linked guardian. For example:
   ```
@@ -464,7 +481,7 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
-**List**   | `list [st/former]`<br> e.g., `list st/former`
+**List**   | `list [r/ROLE] [st/former]`<br> e.g., `list r/student`, `list st/former`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
 **Help**   | `help`
