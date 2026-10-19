@@ -11,9 +11,11 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.Subject;
 
 public class ParserUtilTest {
 
@@ -246,5 +248,40 @@ public class ParserUtilTest {
                 "alex@-example.com", "alex@example-.com", "a@b.c")) {
             assertThrows(ParseException.class, () -> ParserUtil.parseEmail(value));
         }
+    }
+
+    @Test
+    public void parseLevel_validValueWithExtraSpaces_returnsTrimmedAndCollapsedLevel() throws Exception {
+        assertEquals(new Level("Sec 3"), ParserUtil.parseLevel("  Sec   3  "));
+    }
+
+    @Test
+    public void parseLevel_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Level.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseLevel(" "));
+        assertThrows(ParseException.class, Level.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseLevel("Sec #3"));
+    }
+
+    @Test
+    public void parseLevel_none_throwsParseException() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_RESERVED_REMOVE_VALUE, () ->
+                ParserUtil.parseLevel("none"));
+    }
+
+    @Test
+    public void parseSubject_validValueWithExtraSpaces_returnsTrimmedAndCollapsedSubject() throws Exception {
+        assertEquals(new Subject("Pure Chem"), ParserUtil.parseSubject(" Pure  Chem "));
+    }
+
+    @Test
+    public void parseSubject_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Subject.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseSubject(""));
+        assertThrows(ParseException.class, Subject.MESSAGE_CONSTRAINTS, () ->
+                ParserUtil.parseSubject("Math & Sci"));
+    }
+
+    @Test
+    public void parseSubject_none_throwsParseException() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_RESERVED_REMOVE_VALUE, () ->
+                ParserUtil.parseSubject("NONE"));
     }
 }

@@ -14,6 +14,10 @@
       <Label fx:id="role" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
       <Label fx:id="phone" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
       <Label fx:id="email" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+      <VBox fx:id="studentDetails" spacing="12">
+        <Label fx:id="level" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+        <Label fx:id="subject" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+      </VBox>
       <VBox fx:id="guardianDetails" spacing="8">
         <Label fx:id="guardianName" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
         <Label fx:id="guardianPhone" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>

@@ -8,16 +8,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
 import seedu.address.model.person.StudentStatus;
+import seedu.address.model.person.Subject;
 
 /**
  * Jackson-friendly version of {@link Person}.
  * Legacy address and tags properties are ignored by JsonUtil and omitted when saving.
  * Contacts saved before student status existed have no status property and load as active.
+ * Contacts without a level or subject have no level or subject property.
  */
 class JsonAdaptedPerson {
 
@@ -30,6 +33,8 @@ class JsonAdaptedPerson {
     private final String email;
     private final String role;
     private final String status;
+    private final String level;
+    private final String subject;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -40,7 +45,9 @@ class JsonAdaptedPerson {
             @JsonProperty("email") String email,
             @JsonProperty("role") String role,
             @JsonProperty("guardianId") String guardianId,
-            @JsonProperty("status") String status) {
+            @JsonProperty("status") String status,
+            @JsonProperty("level") String level,
+            @JsonProperty("subject") String subject) {
         this.id = id;
         this.guardianId = guardianId;
         this.name = name;
@@ -48,6 +55,17 @@ class JsonAdaptedPerson {
         this.email = email;
         this.role = role;
         this.status = status;
+        this.level = level;
+        this.subject = subject;
+    }
+
+    /**
+     * Constructs a {@code JsonAdaptedPerson} with the given person details and status,
+     * and no level or subject.
+     */
+    public JsonAdaptedPerson(String id, String name, String phone, String email, String role,
+            String guardianId, String status) {
+        this(id, name, phone, email, role, guardianId, status, null, null);
     }
 
     /**
@@ -68,6 +86,8 @@ class JsonAdaptedPerson {
         email = source.getEmail().map(Email::toString).orElse(null);
         role = source.getRole().name();
         status = source.getStatus().name();
+        level = source.getLevel().map(Level::toString).orElse(null);
+        subject = source.getSubject().map(Subject::toString).orElse(null);
     }
 
     /**
@@ -128,8 +148,20 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Person.MESSAGE_INVALID_FORMER_STATUS);
         }
 
+        if (level != null && !Level.isValidLevel(level)) {
+            throw new IllegalValueException(Level.MESSAGE_CONSTRAINTS);
+        }
+        final Optional<Level> modelLevel = Optional.ofNullable(level).map(Level::new);
+        if (subject != null && !Subject.isValidSubject(subject)) {
+            throw new IllegalValueException(Subject.MESSAGE_CONSTRAINTS);
+        }
+        final Optional<Subject> modelSubject = Optional.ofNullable(subject).map(Subject::new);
+        if (modelRole != Role.STUDENT && (modelLevel.isPresent() || modelSubject.isPresent())) {
+            throw new IllegalValueException(Person.MESSAGE_INVALID_STUDENT_DETAILS);
+        }
+
         return new Person(modelId, modelName, modelPhone, modelEmail, modelRole,
-                modelGuardianId, modelStatus);
+                modelGuardianId, modelStatus, modelLevel, modelSubject);
     }
 
 }

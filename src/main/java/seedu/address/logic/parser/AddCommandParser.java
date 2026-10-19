@@ -1,19 +1,25 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
 import java.util.Optional;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.StudentStatus;
+import seedu.address.model.person.Subject;
 
 /**
  * Parses input arguments and creates a new AddCommand object
@@ -25,11 +31,13 @@ public class AddCommandParser implements Parser<AddCommand> {
     public static final String MESSAGE_MISSING_ROLE = "Missing required field: r/ROLE.\n\n"
             + AddCommand.MESSAGE_USAGE;
     public static final String MESSAGE_DUPLICATE_PREFIXES =
-            "Each of r/, n/, p/, and e/ may appear only once.";
+            "Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.";
     public static final String MESSAGE_EMPTY_ROLE =
             "Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.";
     public static final String MESSAGE_UNEXPECTED_TEXT = "Unexpected text outside a field. "
-            + "Use n/NAME, r/ROLE, p/PHONE, or e/EMAIL.";
+            + "Use n/NAME, r/ROLE, p/PHONE, e/EMAIL, lv/LEVEL, or sub/SUBJECT.";
+    public static final String MESSAGE_GUARDIAN_STUDENT_DETAILS =
+            "Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.";
 
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
@@ -44,7 +52,7 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                        PREFIX_ROLE);
+                        PREFIX_ROLE, PREFIX_LEVEL, PREFIX_SUBJECT);
 
         verifyNoDuplicatePrefixes(argMultimap);
         if (!argMultimap.getValue(PREFIX_ROLE).isPresent()) {
@@ -71,7 +79,23 @@ public class AddCommandParser implements Parser<AddCommand> {
             throw new ParseException(AddCommand.MESSAGE_CONTACT_METHOD_REQUIRED);
         }
 
-        Person person = new Person(name, phone, email, role);
+        boolean hasStudentDetails = argMultimap.getValue(PREFIX_LEVEL).isPresent()
+                || argMultimap.getValue(PREFIX_SUBJECT).isPresent();
+        if (role != Role.STUDENT && hasStudentDetails) {
+            throw new ParseException(MESSAGE_GUARDIAN_STUDENT_DETAILS);
+        }
+        Optional<Level> level = Optional.empty();
+        if (argMultimap.getValue(PREFIX_LEVEL).isPresent()) {
+            level = Optional.of(ParserUtil.parseLevel(argMultimap.getValue(PREFIX_LEVEL).orElseThrow()));
+        }
+        Optional<Subject> subject = Optional.empty();
+        if (argMultimap.getValue(PREFIX_SUBJECT).isPresent()) {
+            subject = Optional.of(
+                    ParserUtil.parseSubject(argMultimap.getValue(PREFIX_SUBJECT).orElseThrow()));
+        }
+
+        Person person = new Person(ContactId.generate(), name, phone, email, role, Optional.empty(),
+                StudentStatus.ACTIVE, level, subject);
 
         return new AddCommand(person);
     }
@@ -80,7 +104,9 @@ public class AddCommandParser implements Parser<AddCommand> {
         if (argMultimap.getAllValues(PREFIX_ROLE).size() > 1
                 || argMultimap.getAllValues(PREFIX_NAME).size() > 1
                 || argMultimap.getAllValues(PREFIX_PHONE).size() > 1
-                || argMultimap.getAllValues(PREFIX_EMAIL).size() > 1) {
+                || argMultimap.getAllValues(PREFIX_EMAIL).size() > 1
+                || argMultimap.getAllValues(PREFIX_LEVEL).size() > 1
+                || argMultimap.getAllValues(PREFIX_SUBJECT).size() > 1) {
             throw new ParseException(MESSAGE_DUPLICATE_PREFIXES);
         }
     }
@@ -144,6 +170,10 @@ public class AddCommandParser implements Parser<AddCommand> {
             return PREFIX_EMAIL;
         } else if (PREFIX_ROLE.getPrefix().equals(prefix)) {
             return PREFIX_ROLE;
+        } else if (PREFIX_LEVEL.getPrefix().equals(prefix)) {
+            return PREFIX_LEVEL;
+        } else if (PREFIX_SUBJECT.getPrefix().equals(prefix)) {
+            return PREFIX_SUBJECT;
         }
         return null;
     }

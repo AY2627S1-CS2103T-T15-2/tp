@@ -317,14 +317,20 @@ rule to the resulting contact before updating the model. `Person` stores
 phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
 method. This model invariant applies regardless of which code path creates a `Person`.
 
-The Add parser rejects unknown parameters with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE, and
-e/EMAIL.` If the unknown parameter occurs while parsing a name, the message also instructs the user to quote the full
+The Add parser rejects unknown parameters with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
+e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If the unknown parameter occurs while parsing a name, the message also instructs the user to quote the full
 name. For Add, every name containing `/` must be enclosed in double quotes, including an embedded slash such as
 `AC/DC`. Edit retains its separate behavior, which accepts unquoted embedded slashes. Missing `r/ROLE` or `n/NAME`
 errors identify the missing field and append the add command usage. Repeated parameters return
-`Each of r/, n/, p/, and e/ may appear only once.` Empty roles receive a separate error from unsupported roles; an
+`Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.` Empty roles receive a separate error from unsupported roles; an
 unsupported role reports `Invalid role. Role must be student or guardian.` When multiple supplied values are invalid,
 the parser reports the first error in the fixed order role, name, phone, then email.
+
+`Person` also stores an optional `Level` and `Subject` for students. Both are free-text value classes that allow 1 to
+30 letters, digits, spaces, hyphens, periods, plus signs and parentheses. `ParserUtil` trims the value, reduces repeated
+spaces to one and rejects `NONE`, which `edit` reserves for removing the field. The `Person` constructor rejects a
+guardian with a level or subject, and the Add parser reports this before it parses either value. `isSameValue` compares
+two values ignoring letter case and spaces, so that filters can treat `Sec 3` and `sec3` as the same level.
 
 `AddCommand` rejects an exact duplicate using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Duplicate
 identity consists of role, name, phone and email. Name and email comparisons ignore capitalization; phone numbers are

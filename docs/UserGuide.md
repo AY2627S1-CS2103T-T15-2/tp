@@ -89,7 +89,7 @@ Format: `help`
 
 Adds a student or guardian contact.
 
-Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]`
+Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
 `r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case. The parameters may
 appear in any order, but each may appear only once. If multiple supplied values are invalid, errors are checked in the
@@ -100,11 +100,12 @@ If `r/` is omitted, the error starts with `Missing required field: r/ROLE.` If `
 `Missing required field: n/NAME.` In either case, that line is followed by the same usage text:
 
     add: Adds a student or guardian contact.
-    Parameters: r/ROLE n/NAME [p/PHONE] [e/EMAIL]
+    Parameters: r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]
     Students may omit phone and email; guardians must provide at least one.
-    Example: add r/student n/John Doe p/98765432 e/johnd@example.com
+    Only students can have a level and subject.
+    Example: add r/student n/John Doe p/98765432 e/johnd@example.com lv/Sec 3 sub/Math
 
-Repeating any parameter is rejected with `Each of r/, n/, p/, and e/ may appear only once.`
+Repeating any parameter is rejected with `Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.`
 Phone and email are optional fields, subject to the guardian requirement below.
 
 Phone is optional. Omit `p/` to save a contact without a phone number; the contact displays `Not provided`.
@@ -123,6 +124,14 @@ prefixes. Control characters such as tabs and line breaks are not accepted; surr
 phone values report the relevant reason: `Phone number must contain at least 3 digits (0-9).`,
 `Phone details cannot exceed 100 characters.`, or
 `Phone number cannot contain control characters, '@', or '/'.`
+
+A student can optionally have one level, such as `lv/Sec 3`, and one subject, such as `sub/A-Math`. Each is free
+text of 1 to 30 characters containing at least one letter or digit. Letters, digits, spaces, hyphens (`-`), periods
+(`.`), plus signs (`+`) and parentheses are allowed. Surrounding spaces are trimmed, repeated spaces are reduced to one,
+and capitalization is kept as typed. `NONE` cannot be used as a level or subject, because `edit` uses it to remove one.
+Adding a guardian with `lv/` or `sub/` is rejected with
+`Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
+For example, `add r/student n/Alex Tan lv/Sec 3 sub/Math` adds a Secondary 3 student taking Math.
 
 For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first even though `p/` appears first in the command.
 
@@ -182,7 +191,7 @@ Examples:
 * Two students with the same role and name and no phone or email receive a general warning; both are added.
 
 An unknown parameter such as `a/15` is rejected with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
-and e/EMAIL.` If an unquoted slash occurs in the name, the message also says to enclose the entire name in double
+e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unquoted slash occurs in the name, the message also says to enclose the entire name in double
 quotes. For example, use `add r/student n/"AC/DC"` or `add r/student n/"Ravi s/o Kumar"`. For Add, every slash in a
 name must be quoted, including an embedded slash such as the one in `AC/DC`. Edit has its own parsing behavior and
 continues to accept unquoted embedded slashes.
@@ -458,7 +467,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com`
+**Add**    | `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
