@@ -106,8 +106,9 @@ Examples:
 Use lowercase `add` and prefixes (`r/`, `n/`, `p/`, `e/`). Parameters may appear in any order, once each.
 Omit an optional field's prefix rather than leaving its value empty, as in `p/`.
 
-On success, the contact is saved and selected, and its details appear in the detail panel. All contacts are shown,
-clearing any `find` filter. The command box clears and stays focused. The first example reports
+On success, the contact is saved and selected, and its details appear in the detail panel. Guardians and active
+students are shown, clearing any `find` filter. Former students remain hidden. The command box clears and stays
+focused. The first example reports
 `Added contact: Alex Tan [Student].`
 
 #### Field rules
@@ -148,8 +149,8 @@ Common email mistakes:
 
 #### Duplicate contacts and warnings
 
-Checks include **all saved contacts**, even those hidden by a search. These rules apply to contacts with the
-**same role and name**, ignoring name capitalization:
+Checks include **all saved contacts**, including former students and contacts hidden by a search or list filter.
+These rules apply to contacts with the **same role and name**, ignoring name capitalization:
 
 | Condition, checked in this order | Result |
 | --- | --- |
