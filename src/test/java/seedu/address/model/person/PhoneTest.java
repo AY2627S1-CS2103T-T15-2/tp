@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class PhoneTest {
@@ -55,6 +57,16 @@ public class PhoneTest {
     public void isValidPhone_withFewerThanThreeDigits_isInvalid() {
         assertFalse(Phone.isValidPhone("(HP) +65"));
         assertFalse(Phone.isValidPhone("办公室 12"));
+    }
+
+    @Test
+    public void isValidPhone_nonAsciiNumerals_doNotCountTowardsMinimum() {
+        for (String numerals : List.of("\u0661\u0662\u0663", "\uff11\uff12\uff13",
+                "\uD835\uDFCF\uD835\uDFD0\uD835\uDFD1")) {
+            assertFalse(Phone.isValidPhone(numerals));
+            assertFalse(Phone.isValidPhone("12 " + numerals));
+            assertTrue(Phone.isValidPhone("123 " + numerals));
+        }
     }
 
     @Test

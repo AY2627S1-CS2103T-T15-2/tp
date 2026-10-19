@@ -8,6 +8,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.StudentStatus;
 
 /**
  * A utility class to help with building Person objects.
@@ -25,6 +26,7 @@ public class PersonBuilder {
     private Optional<Phone> phone;
     private Optional<Email> email;
     private Role role;
+    private StudentStatus status = StudentStatus.ACTIVE;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -47,6 +49,7 @@ public class PersonBuilder {
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         role = personToCopy.getRole();
+        status = personToCopy.getStatus();
     }
 
     /**
@@ -113,8 +116,16 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the {@code StudentStatus} of the student being built.
+     */
+    public PersonBuilder withStatus(StudentStatus status) {
+        this.status = status;
+        return this;
+    }
+
     public Person build() {
-        return new Person(id, name, phone, email, role, guardianId);
+        return new Person(id, name, phone, email, role, guardianId, status);
     }
 
 }

@@ -56,7 +56,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
   For example, `edit INDEX [n/NAME] [p/PHONE]` can be used as `edit 1 n/John Doe` or as `edit 1 p/91234567`.
 
 * Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
+  For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -130,9 +130,11 @@ characters such as tabs and line breaks.
 
 * Exactly one `@`, a non-empty part on each side, and no internal whitespace.
 * Before `@`: English letters (`A–Z`, `a–z`), digits (`0–9`), and `.`, `_`, `%`, `+`, or `-`.
-  Punctuation must appear singly between letters or digits, as in `alex+tuition@example.com`.
+  The local part is limited to **64 characters**. Punctuation must appear singly between letters or digits,
+  as in `alex+tuition@example.com`.
 * After `@`: at least two non-empty labels separated by periods, as in `example.com`. Labels allow English
-  letters, digits, and single hyphens between letters or digits. The final label needs at least two characters.
+  letters, digits, and single hyphens between letters or digits. Each label is limited to **63 characters**.
+  The final label needs at least two characters.
 
 Common email mistakes:
 
@@ -218,6 +220,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * A name containing a word that ends in `/`, such as `s/o`, must be wrapped in double quotes. Anything inside the
   quotes is treated as part of the name, so `edit 1 n/"Randy p/e ratio"` sets the name to `Randy p/e ratio` without
   reading `p/` as a phone. Unquoted, `edit 1 n/Ravi s/o Kumar` is rejected because `s/` is read as a parameter.
+  Unlike `add`, `edit` accepts embedded slashes without quotes, for example `edit 1 n/AC/DC`.
 * Each of `n/`, `p/` and `e/` may appear only once. Any other parameter, such as `r/` or `a/`, is rejected with
   `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`. The role of a contact cannot be edited.
 * A missing index, or extra text before the first parameter, is rejected with
@@ -389,7 +392,7 @@ Action     | Format, Examples
 **Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
 **List**   | `list`

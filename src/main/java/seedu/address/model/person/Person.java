@@ -17,6 +17,7 @@ public class Person {
     public static final String MESSAGE_INVALID_GUARDIAN_OWNER = "Only a student can have a linked guardian.";
     public static final String MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD =
             "A guardian must have at least one contact method: phone or email.";
+    public static final String MESSAGE_INVALID_FORMER_STATUS = "Only a student can be marked as former.";
 
     // Identity fields
     private final ContactId id;
@@ -27,6 +28,7 @@ public class Person {
     // Data fields
     private final Role role;
     private final Optional<ContactId> guardianId;
+    private final StudentStatus status;
 
     /**
      * Creates a new person with a generated contact ID.
@@ -49,16 +51,26 @@ public class Person {
      */
     public Person(ContactId id, Name name, Optional<Phone> phone, Optional<Email> email,
             Role role, Optional<ContactId> guardianId) {
-        requireAllNonNull(id, name, phone, email, role, guardianId);
+        this(id, name, phone, email, role, guardianId, StudentStatus.ACTIVE);
+    }
+
+    /**
+     * Creates a person with the specified ID, details, optional guardian relationship and status.
+     */
+    public Person(ContactId id, Name name, Optional<Phone> phone, Optional<Email> email,
+            Role role, Optional<ContactId> guardianId, StudentStatus status) {
+        requireAllNonNull(id, name, phone, email, role, guardianId, status);
         checkArgument(guardianId.isEmpty() || role == Role.STUDENT, MESSAGE_INVALID_GUARDIAN_OWNER);
         checkArgument(role != Role.GUARDIAN || phone.isPresent() || email.isPresent(),
                 MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
+        checkArgument(status == StudentStatus.ACTIVE || role == Role.STUDENT, MESSAGE_INVALID_FORMER_STATUS);
         this.id = id;
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.role = role;
         this.guardianId = guardianId;
+        this.status = status;
     }
 
     public ContactId getId() {
@@ -73,7 +85,27 @@ public class Person {
      * Returns a copy of this contact with the specified guardian relationship.
      */
     public Person withGuardianId(Optional<ContactId> updatedGuardianId) {
-        return new Person(id, name, phone, email, role, updatedGuardianId);
+        return new Person(id, name, phone, email, role, updatedGuardianId, status);
+    }
+
+    public StudentStatus getStatus() {
+        return status;
+    }
+
+    /**
+     * Returns true if this contact is a former student.
+     */
+    public boolean isFormerStudent() {
+        return status == StudentStatus.FORMER;
+    }
+
+    /**
+     * Returns a copy of this contact with the specified status.
+     * Only students can be marked as former.
+     */
+    public Person withStatus(StudentStatus updatedStatus) {
+        assert role == Role.STUDENT || updatedStatus == StudentStatus.ACTIVE : "Only students can be former";
+        return new Person(id, name, phone, email, role, guardianId, updatedStatus);
     }
 
     public Name getName() {
@@ -191,13 +223,14 @@ public class Person {
                 && phone.equals(otherPerson.phone)
                 && email.equals(otherPerson.email)
                 && role.equals(otherPerson.role)
-                && guardianId.equals(otherPerson.guardianId);
+                && guardianId.equals(otherPerson.guardianId)
+                && status.equals(otherPerson.status);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, role, guardianId);
+        return Objects.hash(name, phone, email, role, guardianId, status);
     }
 
     @Override
@@ -207,6 +240,7 @@ public class Person {
                 .add("phone", phone)
                 .add("email", email)
                 .add("role", role)
+                .add("status", status)
                 .toString();
     }
 

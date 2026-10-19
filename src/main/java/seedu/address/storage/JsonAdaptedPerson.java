@@ -12,10 +12,12 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.StudentStatus;
 
 /**
  * Jackson-friendly version of {@link Person}.
  * Legacy address and tags properties are ignored by JsonUtil and omitted when saving.
+ * Contacts saved before student status existed have no status property and load as active.
  */
 class JsonAdaptedPerson {
 
@@ -27,6 +29,7 @@ class JsonAdaptedPerson {
     private final String phone;
     private final String email;
     private final String role;
+    private final String status;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -36,13 +39,22 @@ class JsonAdaptedPerson {
             @JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email,
             @JsonProperty("role") String role,
-            @JsonProperty("guardianId") String guardianId) {
+            @JsonProperty("guardianId") String guardianId,
+            @JsonProperty("status") String status) {
         this.id = id;
         this.guardianId = guardianId;
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.role = role;
+        this.status = status;
+    }
+
+    /**
+     * Constructs a {@code JsonAdaptedPerson} with the given person details and no saved status.
+     */
+    public JsonAdaptedPerson(String id, String name, String phone, String email, String role, String guardianId) {
+        this(id, name, phone, email, role, guardianId, null);
     }
 
     /**
@@ -55,6 +67,7 @@ class JsonAdaptedPerson {
         phone = source.getPhone().map(Phone::toString).orElse(null);
         email = source.getEmail().map(Email::toString).orElse(null);
         role = source.getRole().name();
+        status = source.getStatus().name();
     }
 
     /**
@@ -105,8 +118,18 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
         }
 
+        if (status != null && !StudentStatus.isValidStatus(status)) {
+            throw new IllegalValueException(StudentStatus.MESSAGE_CONSTRAINTS);
+        }
+        final StudentStatus modelStatus = status == null
+                ? StudentStatus.ACTIVE
+                : StudentStatus.fromString(status);
+        if (modelStatus != StudentStatus.ACTIVE && modelRole != Role.STUDENT) {
+            throw new IllegalValueException(Person.MESSAGE_INVALID_FORMER_STATUS);
+        }
+
         return new Person(modelId, modelName, modelPhone, modelEmail, modelRole,
-                modelGuardianId);
+                modelGuardianId, modelStatus);
     }
 
 }

@@ -17,6 +17,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.StudentStatus;
 
 public class JsonAdaptedPersonTest {
 
@@ -96,6 +97,21 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_phoneWithOnlyNonAsciiNumerals_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, "\u0661\u0662\u0663", VALID_EMAIL,
+                VALID_ROLE, null);
+        assertThrows(IllegalValueException.class, Phone.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_phoneWithAsciiDigitsAndUnicodeText_preservesValue() throws Exception {
+        String phone = "(手机) 123 \u0661\u0662\u0663";
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, phone, VALID_EMAIL,
+                VALID_ROLE, null);
+        assertEquals(phone, person.toModelType().getPhone().orElseThrow().value);
+    }
+
+    @Test
     public void toModelType_nullPhone_returnsPersonWithoutPhone() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, null, VALID_EMAIL,
                 VALID_ROLE, null);
@@ -109,6 +125,28 @@ public class JsonAdaptedPersonTest {
                         null);
         String expectedMessage = Email.MESSAGE_CONSTRAINTS;
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_emailLengthLimit_validatesSavedValues() throws Exception {
+        String email = "a".repeat(64) + "@" + "b".repeat(63)
+                + "." + "c".repeat(63) + "." + "d".repeat(61);
+        JsonAdaptedPerson valid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, email,
+                VALID_ROLE, null);
+        assertEquals(email, valid.toModelType().getEmail().orElseThrow().value);
+        JsonAdaptedPerson invalid = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, "a" + email,
+                VALID_ROLE, null);
+        assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, invalid::toModelType);
+    }
+
+    @Test
+    public void toModelType_emailComponentTooLong_throwsIllegalValueException() {
+        for (String email : List.of("a".repeat(65) + "@example.com",
+                "a@" + "b".repeat(64) + ".com", "a@example." + "b".repeat(64))) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, email,
+                    VALID_ROLE, null);
+            assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
     }
 
     @Test
@@ -151,5 +189,32 @@ public class JsonAdaptedPersonTest {
                     VALID_ROLE, null);
             assertThrows(IllegalValueException.class, Email.MESSAGE_CONSTRAINTS, person::toModelType);
         }
+    }
+
+    @Test
+    public void toModelType_missingStatus_loadsAsActive() throws Exception {
+        JsonAdaptedPerson legacy = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ROLE, null, null);
+        assertEquals(StudentStatus.ACTIVE, legacy.toModelType().getStatus());
+    }
+
+    @Test
+    public void toModelType_formerStudent_preservesStatus() throws Exception {
+        Person former = BENSON.withStatus(StudentStatus.FORMER);
+        assertEquals(former, new JsonAdaptedPerson(former).toModelType());
+    }
+
+    @Test
+    public void toModelType_invalidStatus_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ROLE, null, "archived");
+        assertThrows(IllegalValueException.class, StudentStatus.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_formerGuardian_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                "GUARDIAN", null, "FORMER");
+        assertThrows(IllegalValueException.class, Person.MESSAGE_INVALID_FORMER_STATUS, person::toModelType);
     }
 }
