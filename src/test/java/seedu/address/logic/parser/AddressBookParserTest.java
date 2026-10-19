@@ -8,6 +8,8 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.AddCommand;
@@ -26,6 +28,8 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.ContactFilter;
 import seedu.address.model.person.NameContainsSubstringPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Role;
+import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -103,6 +107,8 @@ public class AddressBookParserTest {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
         assertEquals(new ListCommand(ContactFilter.FORMER_STUDENTS),
                 parser.parseCommand(ListCommand.COMMAND_WORD + " st/former"));
+        assertEquals(new ListCommand(new ContactFilter(Optional.of(Role.GUARDIAN), StudentStatus.ACTIVE)),
+                parser.parseCommand(ListCommand.COMMAND_WORD + " r/guardian"));
         assertThrows(ParseException.class, ListCommand.MESSAGE_INVALID_FORMAT, ()
             -> parser.parseCommand(ListCommand.COMMAND_WORD + " 3"));
     }

@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -18,8 +19,13 @@ public class ListCommand extends Command {
     public static final String FORMER_STATUS = "former";
     public static final String LIST_FORMER_COMMAND = COMMAND_WORD + " " + PREFIX_STATUS + FORMER_STATUS;
 
-    public static final String MESSAGE_INVALID_FORMAT = "Invalid list command. Use: " + COMMAND_WORD
-            + " or " + LIST_FORMER_COMMAND;
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " [" + PREFIX_ROLE + "ROLE] ["
+            + PREFIX_STATUS + FORMER_STATUS + "]";
+
+    public static final String MESSAGE_INVALID_FORMAT = "Invalid list command. Use: " + COMMAND_FORMAT;
+    public static final String MESSAGE_REPEATED_PARAMETER = "Each of r/ and st/ may appear only once.";
+    public static final String MESSAGE_GUARDIAN_NOT_FORMER =
+            "Guardians cannot be former. Remove r/guardian or st/former.";
     public static final String MESSAGE_SUCCESS = "Listed %1$s";
     public static final String MESSAGE_NO_CONTACTS = "No contacts found.";
     public static final String MESSAGE_ONLY_FORMER_STUDENTS = "No active contacts found. Use "
