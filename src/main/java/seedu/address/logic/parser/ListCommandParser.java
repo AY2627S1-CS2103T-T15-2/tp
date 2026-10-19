@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.ContactFilter;
 
 /**
  * Parses input arguments and creates a new ListCommand object.
@@ -30,7 +31,7 @@ public class ListCommandParser implements Parser<ListCommand> {
             return new ListCommand();
         }
         if (status.get().trim().equalsIgnoreCase(ListCommand.FORMER_STATUS)) {
-            return new ListCommand(true);
+            return new ListCommand(ContactFilter.FORMER_STUDENTS);
         }
         throw new ParseException(ListCommand.MESSAGE_INVALID_FORMAT);
     }

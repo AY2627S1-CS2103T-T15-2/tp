@@ -23,6 +23,7 @@ import seedu.address.logic.commands.LinkCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.UnarchiveCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.ContactFilter;
 import seedu.address.model.person.NameContainsSubstringPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -100,7 +101,8 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
-        assertEquals(new ListCommand(true), parser.parseCommand(ListCommand.COMMAND_WORD + " st/former"));
+        assertEquals(new ListCommand(ContactFilter.FORMER_STUDENTS),
+                parser.parseCommand(ListCommand.COMMAND_WORD + " st/former"));
         assertThrows(ParseException.class, ListCommand.MESSAGE_INVALID_FORMAT, ()
             -> parser.parseCommand(ListCommand.COMMAND_WORD + " 3"));
     }

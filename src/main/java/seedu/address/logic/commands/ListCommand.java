@@ -2,16 +2,15 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
-import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_CONTACTS;
-import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
+import seedu.address.model.person.ContactFilter;
 import seedu.address.model.person.Person;
 
 /**
- * Lists guardians and active students in the address book to the user, or former students only.
+ * Lists the contacts that match a {@code ContactFilter}. By default, guardians and active students are listed.
  */
 public class ListCommand extends Command {
 
@@ -27,35 +26,36 @@ public class ListCommand extends Command {
             + LIST_FORMER_COMMAND + " to see former students.";
     public static final String MESSAGE_NO_FORMER_STUDENTS = "No former students found.";
 
-    private final boolean isFormerList;
+    private final ContactFilter filter;
 
     /**
      * Creates a ListCommand that shows guardians and active students.
      */
     public ListCommand() {
-        this(false);
+        this(ContactFilter.ACTIVE_CONTACTS);
     }
 
     /**
-     * Creates a ListCommand that shows former students only if {@code isFormerList} is true,
-     * or guardians and active students otherwise.
+     * Creates a ListCommand that shows the contacts matching {@code filter}.
      */
-    public ListCommand(boolean isFormerList) {
-        this.isFormerList = isFormerList;
+    public ListCommand(ContactFilter filter) {
+        requireNonNull(filter);
+        this.filter = filter;
     }
 
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        model.updateFilteredPersonList(isFormerList
-                ? PREDICATE_SHOW_FORMER_STUDENTS
-                : PREDICATE_SHOW_ACTIVE_CONTACTS);
+        model.updateFilteredPersonList(filter);
 
         int contactCount = model.getFilteredPersonList().size();
-        if (isFormerList) {
+        if (filter.isFormerOnly()) {
             return new CommandResult(contactCount == 0
                     ? MESSAGE_NO_FORMER_STUDENTS
                     : String.format(MESSAGE_SUCCESS, Messages.formatFormerStudentCount(contactCount)));
+        }
+        if (contactCount == 0 && filter.getRole().isPresent()) {
+            return new CommandResult(MESSAGE_NO_CONTACTS);
         }
         if (contactCount == 0) {
             // The active view hides only former students, so any saved contact here must be one.
@@ -77,13 +77,13 @@ public class ListCommand extends Command {
             return false;
         }
 
-        return isFormerList == otherListCommand.isFormerList;
+        return filter.equals(otherListCommand.filter);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .add("isFormerList", isFormerList)
+                .add("filter", filter)
                 .toString();
     }
 }

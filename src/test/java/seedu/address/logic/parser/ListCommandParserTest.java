@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.model.person.ContactFilter;
 
 public class ListCommandParserTest {
 
@@ -19,8 +20,8 @@ public class ListCommandParserTest {
 
     @Test
     public void parse_former_returnsListFormerCommand() {
-        assertParseSuccess(parser, " st/former", new ListCommand(true));
-        assertParseSuccess(parser, "  st/FORMER  ", new ListCommand(true));
+        assertParseSuccess(parser, " st/former", new ListCommand(ContactFilter.FORMER_STUDENTS));
+        assertParseSuccess(parser, "  st/FORMER  ", new ListCommand(ContactFilter.FORMER_STUDENTS));
     }
 
     @Test
