@@ -196,8 +196,9 @@ quotes. For example, use `add r/student n/"AC/DC"` or `add r/student n/"Ravi s/o
 name must be quoted, including an embedded slash such as the one in `AC/DC`. Edit has its own parsing behavior and
 continues to accept unquoted embedded slashes.
 
-After a contact is added, TutorRoster shows all contacts, even if the list was filtered by an earlier `find`, and
-selects the new contact so that its details appear in the detail panel.
+After a contact is added, TutorRoster shows all guardians and active students, even if the list was filtered by an
+earlier command. Former students are hidden. The new contact is selected so that its details appear in the detail
+panel.
 
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`
@@ -233,6 +234,11 @@ Format: `list [st/former]`
   ```
 * If a student has no linked guardian, `Guardian: None` is shown.
 * If a contact has no phone number or email address, `Not provided` is shown instead; for example, `Phone: Not provided`.
+* If a student has a level or subject, their card shows both on one line, for example
+  `Level: Sec 3 | Subject: Math`. A missing value is shown as `Not set`, for example
+  `Level: Sec 3 | Subject: Not set`. The line is hidden when both fields are missing.
+* Selecting a student shows separate `Level:` and `Subject:` lines in the details panel. Each missing value is shown
+  as `Not set`. Guardians do not show level or subject details.
 * A former student is labelled `[Former]` after their role, for example `Alex Tan [Student] [Former]`, and the
   details panel shows `Role: Student [Former]`.
 
@@ -428,7 +434,8 @@ Format: `exit`
 
 ### Saving the data
 
-TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear` and `link` commands. You do not need to save manually. Read-only commands do not write the data file.
+TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear`, `link`, `archive` and `unarchive` commands.
+You do not need to save manually. Read-only commands do not write the data file.
 
 If saving fails, the command reports `Changes could not be saved. No changes were made.` Contacts, relationships and the previously saved data remain unchanged.
 
