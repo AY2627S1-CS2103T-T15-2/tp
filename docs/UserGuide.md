@@ -227,7 +227,10 @@ Command | Shows
 * The result shows the number of contacts listed; for example, `Listed 6 contacts` or `Listed 2 former students`.
 * If there are no saved contacts, `No contacts found.` is shown. If every saved contact is a former student,
   `No active contacts found. Use list st/former to see former students.` is shown. If there are no former students,
-  `list st/former` shows `No former students found.` If no contact has the chosen role, `No contacts found.` is shown.
+  `list st/former` shows `No former students found.`
+* If no contact has the chosen role, `list r/guardian` shows `No guardians found.` and `list r/student` shows
+  `No students found.` If every student is former, `list r/student` shows
+  `No active students found. Use list r/student st/former to see former students.`
 * Each contact is shown with its index, name and role, phone number, and email address. Students also show
   their linked guardian. For example:
   ```

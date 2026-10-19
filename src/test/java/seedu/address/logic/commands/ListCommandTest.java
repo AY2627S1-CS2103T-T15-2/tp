@@ -159,13 +159,38 @@ public class ListCommandTest {
     }
 
     @Test
-    public void execute_roleWithNoMatches_noContactsFoundMessage() {
+    public void execute_guardianRoleWithNoGuardians_noGuardiansMessage() {
         Model expectedStudentsOnlyModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         ContactFilter guardiansOnly = new ContactFilter(Optional.of(Role.GUARDIAN), StudentStatus.ACTIVE);
         expectedStudentsOnlyModel.updateFilteredPersonList(guardiansOnly);
 
-        assertCommandSuccess(new ListCommand(guardiansOnly), model, ListCommand.MESSAGE_NO_CONTACTS,
+        assertCommandSuccess(new ListCommand(guardiansOnly), model, ListCommand.MESSAGE_NO_GUARDIANS,
                 expectedStudentsOnlyModel);
+    }
+
+    @Test
+    public void execute_studentRoleWithOnlyFormerStudents_suggestsListingFormerStudents() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(FORMER_STUDENT, GUARDIAN));
+        Model formerStudentsModel = new ModelManager(addressBook, new UserPrefs());
+
+        CommandResult result = new ListCommand(
+                new ContactFilter(Optional.of(Role.STUDENT), StudentStatus.ACTIVE)).execute(formerStudentsModel);
+
+        assertEquals("No active students found. Use list r/student st/former to see former students.",
+                result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_studentRoleWithNoStudents_noStudentsMessage() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(GUARDIAN));
+        Model guardiansOnlyModel = new ModelManager(addressBook, new UserPrefs());
+
+        CommandResult result = new ListCommand(
+                new ContactFilter(Optional.of(Role.STUDENT), StudentStatus.ACTIVE)).execute(guardiansOnlyModel);
+
+        assertEquals(ListCommand.MESSAGE_NO_STUDENTS, result.getFeedbackToUser());
     }
 
     @Test

@@ -9,6 +9,7 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.person.ContactFilter;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Role;
 
 /**
  * Lists the contacts that match a {@code ContactFilter}. By default, guardians and active students are listed.
@@ -31,6 +32,10 @@ public class ListCommand extends Command {
     public static final String MESSAGE_ONLY_FORMER_STUDENTS = "No active contacts found. Use "
             + LIST_FORMER_COMMAND + " to see former students.";
     public static final String MESSAGE_NO_FORMER_STUDENTS = "No former students found.";
+    public static final String MESSAGE_NO_GUARDIANS = "No guardians found.";
+    public static final String MESSAGE_NO_STUDENTS = "No students found.";
+    public static final String MESSAGE_NO_ACTIVE_STUDENTS = "No active students found. Use " + COMMAND_WORD + " "
+            + PREFIX_ROLE + "student " + PREFIX_STATUS + FORMER_STATUS + " to see former students.";
 
     private final ContactFilter filter;
 
@@ -61,7 +66,7 @@ public class ListCommand extends Command {
                     : String.format(MESSAGE_SUCCESS, Messages.formatFormerStudentCount(contactCount)));
         }
         if (contactCount == 0 && filter.getRole().isPresent()) {
-            return new CommandResult(MESSAGE_NO_CONTACTS);
+            return new CommandResult(getNoMatchingRoleMessage(model, filter.getRole().get()));
         }
         if (contactCount == 0) {
             // The active view hides only former students, so any saved contact here must be one.
@@ -70,6 +75,20 @@ public class ListCommand extends Command {
             return new CommandResult(hasFormerStudents ? MESSAGE_ONLY_FORMER_STUDENTS : MESSAGE_NO_CONTACTS);
         }
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.formatContactCount(contactCount)));
+    }
+
+    /**
+     * Returns the message shown when no active contact has {@code role}. For students, the message suggests
+     * listing former students if there are any.
+     */
+    private static String getNoMatchingRoleMessage(Model model, Role role) {
+        if (role == Role.GUARDIAN) {
+            return MESSAGE_NO_GUARDIANS;
+        }
+        assert role == Role.STUDENT;
+        boolean hasFormerStudents = model.getAddressBook().getPersonList().stream()
+                .anyMatch(Person::isFormerStudent);
+        return hasFormerStudents ? MESSAGE_NO_ACTIVE_STUDENTS : MESSAGE_NO_STUDENTS;
     }
 
     @Override
