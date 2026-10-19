@@ -349,6 +349,29 @@ Examples:
 * `find ale` returns `Alex Yeoh`
 * `find li` returns `Charlotte Oliveiro` and `David Li`
 
+### Viewing a contact's details: `view`
+
+Shows the full details of the specified contact in the details panel.
+
+Format: `view INDEX`
+
+* Shows the details of the contact at the specified `INDEX` in the details panel, and selects that contact in the list.
+* The index refers to the index number shown in the displayed contact list.
+* The index **must be a positive integer** 1, 2, 3, ...
+* A value that is not a positive integer is rejected with
+  `The contact index must be a positive integer shown in the list.`
+* An index outside the displayed list is rejected with `No contact exists at index INDEX.`
+* The details panel shows the contact's name, role, phone number and email address. For a student, it also shows the
+  linked guardian's name, phone number and email address, or `Guardian: None` if no guardian is linked.
+* `view` also works on the results of `list st/former` and `find`. A former student's role is shown as
+  `Role: Student [Former]`.
+* The displayed list does not change, so you can keep using the same indexes afterwards.
+* The result names the contact; for example, `Viewing contact: Alex Tan [Student].`
+
+Examples:
+* `list` followed by `view 2` shows the details of the 2nd contact in the displayed contact list.
+* `find Alex` followed by `view 1` shows the details of the 1st contact in the results of the `find` command.
+
 ### Linking a student to a guardian: `link`
 
 Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
@@ -484,4 +507,5 @@ Action     | Format, Examples
 **List**   | `list [r/ROLE] [st/former]`<br> e.g., `list r/student`, `list st/former`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
+**View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
