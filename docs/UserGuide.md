@@ -346,6 +346,8 @@ Format: `view INDEX`
 * An index outside the displayed list is rejected with `No contact exists at index INDEX.`
 * The details panel shows the contact's name, role, phone number and email address. For a student, it also shows the
   linked guardian's name, phone number and email address, or `Guardian: None` if no guardian is linked.
+* `view` also works on the results of `list st/former` and `find`. A former student's role is shown as
+  `Role: Student [Former]`.
 * The displayed list does not change, so you can keep using the same indexes afterwards.
 * The result names the contact; for example, `Viewing contact: Alex Tan [Student].`
 
