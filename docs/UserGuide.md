@@ -105,7 +105,9 @@ Examples:
 | A student whose name contains `/` | `add r/student n/"Ravi s/o Kumar" p/98765432` |
 
 Use lowercase `add` and prefixes (`r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`). Parameters may appear in any order,
-once each. Omit an optional field's prefix rather than leaving its value empty, as in `p/`.
+once each. Omit an optional field's prefix if unused; an empty prefix such as `p/` is rejected.
+Whitespace before a prefix, including pasted tabs or line breaks, separates parameters just like a space.
+Whitespace inside a value follows that field's rules; for example, a tab inside a phone number is rejected.
 Omitted phone and email values display as `Not provided`.
 
 On success, the contact is saved and selected, and its details appear in the detail panel. Guardians and active
@@ -122,6 +124,8 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 scripts), spaces, apostrophes (`'` or `’`), hyphens, periods, and slashes. Consecutive spaces become one space
 before the length check. Enclose the **entire name** in double quotes if it contains `/`, even for `n/"AC/DC"`.
 The enclosing quotes are not saved.
+Use straight double quotes (`"`), with no extra text outside them. Prefix-like text inside a quoted name stays
+part of the name: `n/"Ravi p/e ratio"` does not supply a phone number. Quotes protect names only, not other fields.
 
 **Phone (`p/`)**: At least **3 digits from `0-9`**, with a maximum of **100 characters**. Other numerals are allowed
 as text but do not count. Labels, multiple numbers, spaces, and punctuation are accepted, for example
@@ -182,6 +186,7 @@ the valid prefixes; a slash in an unquoted name also prompts you to quote the en
 
 After parameter syntax checks, field values are checked in the order `r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`.
 For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first.
+For guardians, the contact-method requirement is checked after phone and email; any `lv/` or `sub/` is then rejected.
 
 Other errors explain the reason, for example:
 

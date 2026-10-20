@@ -8,6 +8,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.ContactFilter;
 import seedu.address.model.person.NameContainsSubstringPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
 import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -38,6 +40,23 @@ import seedu.address.testutil.PersonUtil;
 public class AddressBookParserTest {
 
     private final AddressBookParser parser = new AddressBookParser();
+
+    @Test
+    public void parseCommand_addWithWhitespaceSeparators_returnsAddCommand() throws Exception {
+        Person student = new PersonBuilder().withName("Alex").withRole("student")
+                .withoutPhone().withoutEmail().withLevel("Sec 3").withSubject("Math").build();
+        for (String separator : List.of(" ", "\t", "\n", "\r\n", "\u2003", " \t ")) {
+            String command = String.join(separator,
+                    "add", "r/student", "n/Alex", "lv/Sec 3", "sub/Math");
+            assertEquals(new AddCommand(student), parser.parseCommand(command));
+        }
+    }
+
+    @Test
+    public void parseCommand_addWithLineBreakInsidePhone_reportsInvalidPhone() {
+        assertThrows(ParseException.class, Phone.MESSAGE_INVALID_CHARACTERS, ()
+                -> parser.parseCommand("add r/student n/Alex p/123\n456"));
+    }
 
     @Test
     public void parseCommand_link_dispatchesToLinkParser() throws Exception {

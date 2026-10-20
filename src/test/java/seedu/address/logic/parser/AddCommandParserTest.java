@@ -46,6 +46,82 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_multipleInvalidFields_reportsFirstInFormatOrder() {
+        String invalidDetails = " sub/Math& lv/Sec#3";
+        assertParseFailure(parser, invalidDetails + " e/bad p/12 n/Alex! r/teacher",
+                Role.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, invalidDetails + " e/bad p/12 n/Alex! r/student",
+                Name.getValidationErrorMessage("Alex!"));
+        assertParseFailure(parser, invalidDetails + " e/bad p/12 n/Alex r/student",
+                Phone.MESSAGE_TOO_FEW_DIGITS);
+        assertParseFailure(parser, invalidDetails + " e/bad p/123 n/Alex r/student",
+                "Email address must contain exactly one @ symbol.");
+        assertParseFailure(parser, invalidDetails + " e/alex@example.com p/123 n/Alex r/student",
+                Level.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " sub/Math& lv/Sec 3 e/alex@example.com p/123 n/Alex r/student",
+                Subject.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_emptyStudentDetails_checksLevelBeforeSubjectRegardlessOfInputOrder() {
+        for (String details : List.of(" lv/ sub/", " sub/ lv/", "\tsub/\tlv/")) {
+            assertParseFailure(parser, " r/student n/Alex" + details, Level.MESSAGE_EMPTY);
+        }
+        assertParseFailure(parser, " sub/ lv/Sec 3 n/Alex r/student", Subject.MESSAGE_EMPTY);
+    }
+
+    @Test
+    public void parse_guardianWithInvalidDetails_checksContactMethodsFirst() {
+        assertParseFailure(parser, " sub/Math& lv/Sec#3 n/Alex r/guardian",
+                AddCommand.MESSAGE_CONTACT_METHOD_REQUIRED);
+        assertParseFailure(parser, " sub/Math& lv/Sec#3 p/12 n/Alex r/guardian",
+                Phone.MESSAGE_TOO_FEW_DIGITS);
+        assertParseFailure(parser, " sub/Math& lv/Sec#3 e/bad n/Alex r/guardian",
+                "Email address must contain exactly one @ symbol.");
+        assertParseFailure(parser, " sub/Math& lv/Sec#3 p/123 n/Alex r/guardian",
+                AddCommandParser.MESSAGE_GUARDIAN_STUDENT_DETAILS);
+    }
+
+    @Test
+    public void parse_quotedNameWithStudentDetailPrefixes_keepsNameIntact() {
+        Person expected = new PersonBuilder(AMY).withName("Ravi lv/Sec sub/Math")
+                .withoutPhone().withoutEmail().withLevel("Sec 3").withSubject("Math").build();
+        assertParseSuccess(parser, "\tr/student\tn/\t\"Ravi lv/Sec sub/Math\"\tlv/Sec 3\tsub/Math",
+                new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_tabsInsideValues_remainInvalid() {
+        String fields = " r/student n/Alex";
+        assertParseFailure(parser, fields + " p/123\t456", Phone.MESSAGE_INVALID_CHARACTERS);
+        assertParseFailure(parser, fields + " e/alex\t@example.com", "Email address cannot contain whitespace.");
+        assertParseFailure(parser, fields + " lv/Sec\t3", Level.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, fields + " sub/Pure\tMath", Subject.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " r/student n/\"Alex\tTan\"", Name.getValidationErrorMessage("Alex\tTan"));
+    }
+
+    @Test
+    public void parse_tabSeparatedUnknownOrRepeatedPrefixes_reportsSyntaxError() {
+        assertParseFailure(parser, " r/student n/Alex p/123\tx/15", AddCommand.MESSAGE_INVALID_PARAMETER);
+        assertParseFailure(parser, " r/student n/Alex lv/Sec 3\tlv/Sec 4",
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
+        assertParseFailure(parser, " r/student n/Alex sub/Math\tsub/Physics",
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
+    }
+
+    @Test
+    public void parse_studentDetailLength_checksAfterNormalizingSpaces() {
+        String normalized = "a".repeat(28) + " b";
+        Person expected = new PersonBuilder(AMY).withoutPhone().withoutEmail()
+                .withLevel(normalized).withSubject(normalized).build();
+        assertParseSuccess(parser, NAME_DESC_AMY + ROLE_DESC_AMY
+                + " lv/" + "a".repeat(28) + "    b sub/" + "a".repeat(28) + "    b", new AddCommand(expected));
+        assertParseFailure(parser, " r/student n/Alex lv/" + "a".repeat(31), Level.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " r/student n/Alex sub/" + "a".repeat(31), Subject.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " r/student n/Alex lv/" + "a".repeat(20_000), Level.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
     public void parse_removedContactFieldPrefixes_failure() {
         String fields = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB;
         assertParseFailure(parser, " t/friends" + fields, AddCommand.MESSAGE_INVALID_PARAMETER);
