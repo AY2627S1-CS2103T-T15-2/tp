@@ -257,8 +257,15 @@ public class ParserUtilTest {
 
     @Test
     public void parseLevel_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, Level.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseLevel(" "));
         assertThrows(ParseException.class, Level.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseLevel("Sec #3"));
+    }
+
+    @Test
+    public void parseLevel_emptyOrWhitespace_reportsEmptyParameter() {
+        String expectedMessage = "Empty level parameter: Level cannot be empty when lv/ is specified.";
+        for (String value : List.of("", " ", "\t\r\n")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseLevel(value));
+        }
     }
 
     @Test
@@ -274,9 +281,16 @@ public class ParserUtilTest {
 
     @Test
     public void parseSubject_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, Subject.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseSubject(""));
         assertThrows(ParseException.class, Subject.MESSAGE_CONSTRAINTS, () ->
                 ParserUtil.parseSubject("Math & Sci"));
+    }
+
+    @Test
+    public void parseSubject_emptyOrWhitespace_reportsEmptyParameter() {
+        String expectedMessage = "Empty subject parameter: Subject cannot be empty when sub/ is specified.";
+        for (String value : List.of("", " ", "\t\r\n")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseSubject(value));
+        }
     }
 
     @Test

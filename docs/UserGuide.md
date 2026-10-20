@@ -93,7 +93,7 @@ Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
 `r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case. The parameters may
 appear in any order, but each may appear only once. If multiple supplied values are invalid, errors are checked in the
-fixed parameter order `r/ROLE`, `n/NAME`, `p/PHONE`, then `e/EMAIL`, regardless of the order entered.
+fixed parameter order `r/ROLE`, `n/NAME`, `p/PHONE`, `e/EMAIL`, `lv/LEVEL`, then `sub/SUBJECT`, regardless of the order entered.
 An empty `r/` is rejected with `Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.`
 An unsupported role is rejected with `Invalid role. Role must be student or guardian.`
 If `r/` is omitted, the error starts with `Missing required field: r/ROLE.` If `n/` is omitted, it starts with
@@ -129,6 +129,9 @@ A student can optionally have one level, such as `lv/Sec 3`, and one subject, su
 text of 1 to 30 characters containing at least one letter or digit. Letters, digits, spaces, hyphens (`-`), periods
 (`.`), plus signs (`+`) and parentheses are allowed. Surrounding spaces are trimmed, repeated spaces are reduced to one,
 and capitalization is kept as typed. `NONE` cannot be used as a level or subject, because `edit` uses it to remove one.
+Supplying `lv/` or `sub/` with an empty or whitespace-only value is rejected with
+`Empty level parameter: Level cannot be empty when lv/ is specified.` or
+`Empty subject parameter: Subject cannot be empty when sub/ is specified.`, respectively.
 Adding a guardian with `lv/` or `sub/` is rejected with
 `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
 For example, `add r/student n/Alex Tan lv/Sec 3 sub/Math` adds a Secondary 3 student taking Math.

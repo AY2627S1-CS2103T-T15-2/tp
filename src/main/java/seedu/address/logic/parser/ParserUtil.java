@@ -123,6 +123,9 @@ public class ParserUtil {
     public static Level parseLevel(String level) throws ParseException {
         requireNonNull(level);
         String normalizedLevel = normalizeStudentDetail(level);
+        if (normalizedLevel.isEmpty()) {
+            throw new ParseException(Level.MESSAGE_EMPTY);
+        }
         if (!Level.isValidLevel(normalizedLevel)) {
             throw new ParseException(Level.MESSAGE_CONSTRAINTS);
         }
@@ -138,6 +141,9 @@ public class ParserUtil {
     public static Subject parseSubject(String subject) throws ParseException {
         requireNonNull(subject);
         String normalizedSubject = normalizeStudentDetail(subject);
+        if (normalizedSubject.isEmpty()) {
+            throw new ParseException(Subject.MESSAGE_EMPTY);
+        }
         if (!Subject.isValidSubject(normalizedSubject)) {
             throw new ParseException(Subject.MESSAGE_CONSTRAINTS);
         }
