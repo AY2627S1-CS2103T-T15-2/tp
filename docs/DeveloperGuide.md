@@ -323,13 +323,14 @@ rule to the resulting contact before updating the model. `Person` stores
 phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
 method. This model invariant applies regardless of which code path creates a `Person`.
 
-The Add parser rejects unknown parameters with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
-e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unknown parameter follows an unquoted name, the message also suggests
+The Add parser identifies the unknown prefix, for example `Invalid parameter: a/. Valid parameters are r/ROLE,
+n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unknown parameter follows an unquoted name, it also suggests
 quoting the full name. After a quoted name, it reports only the invalid parameter. For Add, every name containing
 `/` must be enclosed in double quotes, including an embedded slash such as
 `AC/DC`. Edit retains its separate behavior, which accepts unquoted embedded slashes. Missing `r/ROLE` or `n/NAME`
 errors identify the missing field and append the add command usage. Repeated parameters return
-`Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.` Empty roles receive a separate error from unsupported roles; an
+`Repeated parameter: lv/. Each parameter may appear only once.`, substituting the repeated prefix. If several
+prefixes repeat, it reports the first in the fixed field order. Empty roles receive a separate error from unsupported roles; an
 unsupported role reports `Invalid role. Role must be student or guardian.`
 
 `Person` also stores an optional `Level` and `Subject` for students. Both are free-text value classes that allow 1 to
@@ -337,7 +338,9 @@ unsupported role reports `Invalid role. Role must be student or guardian.`
 one letter or digit. `ParserUtil` trims the value, reduces repeated
 spaces to one and rejects `NONE`, which `edit` reserves for removing the field. The `Level` and `Subject` constructors
 reject blank values with their constraints messages. For command input, `ParserUtil` instead reports the specific
-empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. The `Person` constructor rejects a
+empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. For other invalid values, it uses
+`getValidationErrorMessage` to distinguish excessive length, unsupported characters, and the absence of a letter or
+digit, in that order. The `Person` constructor rejects a
 guardian with a level or subject. After validating phone and email, the Add parser checks the guardian contact-method
 requirement, then rejects student-only prefixes before parsing either value. `isSameValue` compares
 two values ignoring letter case and spaces, so that filters can treat `Sec 3` and `sec3` as the same level.
@@ -383,6 +386,9 @@ invalid strings and guardian records containing either field are rejected during
 
 Email validation uses iterative character scans for the local part and domain labels, avoiding recursive regex
 matching on long inputs. `Email.isValidEmail` and the parser share the same validation rules and specific errors.
+For each component, unsupported characters are reported separately from punctuation-placement errors. Only ASCII
+letters and digits are accepted; allowed punctuation must appear singly between letters or digits. The domain
+permits hyphens only, while the local part also permits periods, underscores, percent signs and plus signs.
 An email is limited to 254 characters, with at most 64 in the local part and 63 in each domain label.
 The parser trims surrounding whitespace before checking these limits and reports
 `Email address cannot exceed 254 characters.` for longer values. The same limits apply to saved email values;

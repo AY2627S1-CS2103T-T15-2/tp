@@ -31,7 +31,7 @@ public class AddCommandParser implements Parser<AddCommand> {
     public static final String MESSAGE_MISSING_ROLE = "Missing required field: r/ROLE.\n\n"
             + AddCommand.MESSAGE_USAGE;
     public static final String MESSAGE_DUPLICATE_PREFIXES =
-            "Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.";
+            "Repeated parameter: %s. Each parameter may appear only once.";
     public static final String MESSAGE_EMPTY_ROLE =
             "Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.";
     public static final String MESSAGE_UNEXPECTED_TEXT = "Unexpected text outside a field. "
@@ -101,13 +101,11 @@ public class AddCommandParser implements Parser<AddCommand> {
     }
 
     private static void verifyNoDuplicatePrefixes(ArgumentMultimap argMultimap) throws ParseException {
-        if (argMultimap.getAllValues(PREFIX_ROLE).size() > 1
-                || argMultimap.getAllValues(PREFIX_NAME).size() > 1
-                || argMultimap.getAllValues(PREFIX_PHONE).size() > 1
-                || argMultimap.getAllValues(PREFIX_EMAIL).size() > 1
-                || argMultimap.getAllValues(PREFIX_LEVEL).size() > 1
-                || argMultimap.getAllValues(PREFIX_SUBJECT).size() > 1) {
-            throw new ParseException(MESSAGE_DUPLICATE_PREFIXES);
+        Prefix[] prefixes = {PREFIX_ROLE, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL, PREFIX_SUBJECT};
+        for (Prefix prefix : prefixes) {
+            if (argMultimap.getAllValues(prefix).size() > 1) {
+                throw new ParseException(String.format(MESSAGE_DUPLICATE_PREFIXES, prefix));
+            }
         }
     }
 
@@ -149,9 +147,10 @@ public class AddCommandParser implements Parser<AddCommand> {
                 if (recognizedPrefix == null) {
                     boolean nameValueIsQuoted = currentField == PREFIX_NAME
                             && args.substring(currentFieldValueStart, tokenStart).stripLeading().startsWith("\"");
-                    String errorMessage = currentField == PREFIX_NAME && !nameValueIsQuoted
-                            ? AddCommand.MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH
-                            : AddCommand.MESSAGE_INVALID_PARAMETER;
+                    String errorMessage = String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, prefix);
+                    if (currentField == PREFIX_NAME && !nameValueIsQuoted) {
+                        errorMessage += AddCommand.MESSAGE_NAME_SLASH_HINT;
+                    }
                     return Optional.of(errorMessage);
                 }
                 currentField = recognizedPrefix;

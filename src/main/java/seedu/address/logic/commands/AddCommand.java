@@ -54,8 +54,13 @@ public class AddCommand extends Command {
     public static final String MESSAGE_INVALID_PARAMETER =
             "Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, "
                     + "and sub/SUBJECT.";
+    public static final String MESSAGE_UNKNOWN_PARAMETER =
+            "Invalid parameter: %s. Valid parameters are r/ROLE, n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, "
+                    + "and sub/SUBJECT.";
+    public static final String MESSAGE_NAME_SLASH_HINT =
+            " If '/' is part of the name, enclose the entire name in double quotes.";
     public static final String MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH = MESSAGE_INVALID_PARAMETER
-            + " If '/' is part of the name, enclose the entire name in double quotes.";
+            + MESSAGE_NAME_SLASH_HINT;
 
     private final Person toAdd;
 

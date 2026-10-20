@@ -18,7 +18,13 @@ public class Subject {
             + " characters, including at least one letter or digit. It may contain letters, digits, spaces, "
             + "hyphens, periods, plus signs and parentheses.";
 
-    private static final String VALIDATION_REGEX = "[\\p{L}\\p{N} .+()-]*[\\p{L}\\p{N}][\\p{L}\\p{N} .+()-]*";
+    public static final String MESSAGE_TOO_LONG = "Subject cannot exceed " + MAX_LENGTH + " characters.";
+    public static final String MESSAGE_INVALID_CHARACTERS =
+            "Subject contains unsupported characters. Use letters, digits, spaces, hyphens, "
+                    + "periods, plus signs and parentheses.";
+    public static final String MESSAGE_MISSING_ALPHANUMERIC = "Subject must contain at least one letter or digit.";
+
+    private static final String ALLOWED_CHARACTERS_REGEX = "[\\p{L}\\p{N} .+()-]*";
 
     public final String value;
 
@@ -38,9 +44,27 @@ public class Subject {
      */
     public static boolean isValidSubject(String test) {
         requireNonNull(test);
-        return test.equals(test.trim())
-                && test.codePointCount(0, test.length()) <= MAX_LENGTH
-                && test.matches(VALIDATION_REGEX);
+        return getValidationErrorMessage(test) == null;
+    }
+
+    /**
+     * Returns the failed constraint for {@code test}, or {@code null} for a valid, trimmed value.
+     */
+    public static String getValidationErrorMessage(String test) {
+        requireNonNull(test);
+        if (test.codePointCount(0, test.length()) > MAX_LENGTH) {
+            return MESSAGE_TOO_LONG;
+        }
+        if (!test.matches(ALLOWED_CHARACTERS_REGEX)) {
+            return MESSAGE_INVALID_CHARACTERS;
+        }
+        if (!test.matches(".*[\\p{L}\\p{N}].*")) {
+            return MESSAGE_MISSING_ALPHANUMERIC;
+        }
+        if (!test.equals(test.trim())) {
+            return "Subject cannot start or end with spaces.";
+        }
+        return null;
     }
 
     /**
