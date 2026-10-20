@@ -3,6 +3,9 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
+import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +25,8 @@ public class DeleteCommandParserTest {
     @Test
     public void parse_validArgs_returnsDeleteCommand() {
         assertParseSuccess(parser, "1", new DeleteCommand(INDEX_FIRST_PERSON));
+        assertParseSuccess(parser, "1 2", new DeleteCommand(List.of(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON)));
+        assertParseSuccess(parser, "  2   1  ", new DeleteCommand(List.of(INDEX_SECOND_PERSON, INDEX_FIRST_PERSON)));
     }
 
     @Test
@@ -32,6 +37,11 @@ public class DeleteCommandParserTest {
         assertParseFailure(parser, "1.5", DeleteCommand.MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, "99999999999", DeleteCommand.MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, "", DeleteCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "1 2", DeleteCommand.MESSAGE_INVALID_INDEX);
+    }
+
+    @Test
+    public void parse_duplicateIndex_throwsParseException() {
+        assertParseFailure(parser, "1 1", DeleteCommand.MESSAGE_DUPLICATE_INDEX);
+        assertParseFailure(parser, "01 1", DeleteCommand.MESSAGE_DUPLICATE_INDEX);
     }
 }
