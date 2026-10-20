@@ -311,8 +311,9 @@ the second contact's updated record would lose the first ID and save the second 
 
 ### Contact details and Add validation
 
-`AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE` and `e/EMAIL` as optional fields. It validates
-supplied values in the fixed order role, name, phone, then email, regardless of the order in which parameters appear.
+`AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE`, `e/EMAIL`, `lv/LEVEL` and `sub/SUBJECT` as optional
+fields. It validates supplied values in the fixed order role, name, phone, email, level, then subject, regardless of
+the order in which parameters appear.
 Missing required fields and invalid roles are also reported in that order. A student may omit both contact methods. The
 parser rejects a guardian if both are absent to provide a user-facing command error, and `EditCommand` applies the same
 rule to the resulting contact before updating the model. `Person` stores
@@ -326,11 +327,13 @@ name. For Add, every name containing `/` must be enclosed in double quotes, incl
 errors identify the missing field and append the add command usage. Repeated parameters return
 `Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.` Empty roles receive a separate error from unsupported roles; an
 unsupported role reports `Invalid role. Role must be student or guardian.` When multiple supplied values are invalid,
-the parser reports the first error in the fixed order role, name, phone, then email.
+the parser reports the first error in the fixed order role, name, phone, email, level, then subject.
 
 `Person` also stores an optional `Level` and `Subject` for students. Both are free-text value classes that allow 1 to
 30 letters, digits, spaces, hyphens, periods, plus signs and parentheses. `ParserUtil` trims the value, reduces repeated
-spaces to one and rejects `NONE`, which `edit` reserves for removing the field. The `Person` constructor rejects a
+spaces to one and rejects `NONE`, which `edit` reserves for removing the field. The `Level` and `Subject` constructors
+reject blank values with their constraints messages. For command input, `ParserUtil` instead reports the specific
+empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. The `Person` constructor rejects a
 guardian with a level or subject, and the Add parser reports this before it parses either value. `isSameValue` compares
 two values ignoring letter case and spaces, so that filters can treat `Sec 3` and `sec3` as the same level.
 

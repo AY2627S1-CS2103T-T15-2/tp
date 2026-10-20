@@ -12,6 +12,7 @@ import java.util.Locale;
 public class Level {
 
     public static final int MAX_LENGTH = 30;
+    public static final String MESSAGE_EMPTY = "Empty level parameter: Level cannot be empty when lv/ is specified.";
     public static final String MESSAGE_CONSTRAINTS = "Level must contain 1 to " + MAX_LENGTH
             + " characters, including at least one letter or digit. It may contain letters, digits, spaces, "
             + "hyphens, periods, plus signs and parentheses.";

@@ -479,8 +479,26 @@ public class AddCommandParserTest {
     public void parse_invalidLevelOrSubject_failure() {
         String fields = NAME_DESC_AMY + PHONE_DESC_AMY + ROLE_DESC_AMY;
         assertParseFailure(parser, fields + " " + PREFIX_LEVEL + "Sec #3", Level.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, fields + " " + PREFIX_SUBJECT, Subject.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, fields + " " + PREFIX_SUBJECT + "Math & Sci", Subject.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, fields + " " + PREFIX_LEVEL + "NONE",
                 ParserUtil.MESSAGE_RESERVED_REMOVE_VALUE);
+    }
+
+    @Test
+    public void parse_emptyLevel_reportsEmptyParameter() {
+        String fields = NAME_DESC_AMY + PHONE_DESC_AMY + ROLE_DESC_AMY;
+        for (String value : List.of("", "   ", "\t\r\n")) {
+            assertParseFailure(parser, fields + " " + PREFIX_LEVEL + value,
+                    "Empty level parameter: Level cannot be empty when lv/ is specified.");
+        }
+    }
+
+    @Test
+    public void parse_emptySubject_reportsEmptyParameter() {
+        String fields = NAME_DESC_AMY + PHONE_DESC_AMY + ROLE_DESC_AMY;
+        for (String value : List.of("", "   ", "\t\r\n")) {
+            assertParseFailure(parser, fields + " " + PREFIX_SUBJECT + value,
+                    "Empty subject parameter: Subject cannot be empty when sub/ is specified.");
+        }
     }
 }

@@ -12,6 +12,8 @@ import java.util.Locale;
 public class Subject {
 
     public static final int MAX_LENGTH = 30;
+    public static final String MESSAGE_EMPTY =
+            "Empty subject parameter: Subject cannot be empty when sub/ is specified.";
     public static final String MESSAGE_CONSTRAINTS = "Subject must contain 1 to " + MAX_LENGTH
             + " characters, including at least one letter or digit. It may contain letters, digits, spaces, "
             + "hyphens, periods, plus signs and parentheses.";
@@ -43,7 +45,7 @@ public class Subject {
 
     /**
      * Returns true if both subjects are the same after ignoring letter case and spaces,
-     * for example "Sec 3" and "sec3".
+     * for example "A Math" and "amath".
      */
     public boolean isSameValue(Subject other) {
         return other != null && normalize(value).equals(normalize(other.value));

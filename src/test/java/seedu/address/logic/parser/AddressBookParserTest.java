@@ -8,6 +8,8 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.AddCommand;
@@ -22,9 +24,13 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.LinkCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.UnarchiveCommand;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.ContactFilter;
 import seedu.address.model.person.NameContainsSubstringPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Role;
+import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -64,6 +70,13 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_view() throws Exception {
+        ViewCommand command = (ViewCommand) parser.parseCommand(
+                ViewCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
+        assertEquals(new ViewCommand(INDEX_FIRST_PERSON), command);
+    }
+
+    @Test
     public void parseCommand_delete() throws Exception {
         DeleteCommand command = (DeleteCommand) parser.parseCommand(
                 DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
@@ -100,7 +113,10 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
-        assertEquals(new ListCommand(true), parser.parseCommand(ListCommand.COMMAND_WORD + " st/former"));
+        assertEquals(new ListCommand(ContactFilter.FORMER_STUDENTS),
+                parser.parseCommand(ListCommand.COMMAND_WORD + " st/former"));
+        assertEquals(new ListCommand(new ContactFilter(Optional.of(Role.GUARDIAN), StudentStatus.ACTIVE)),
+                parser.parseCommand(ListCommand.COMMAND_WORD + " r/guardian"));
         assertThrows(ParseException.class, ListCommand.MESSAGE_INVALID_FORMAT, ()
             -> parser.parseCommand(ListCommand.COMMAND_WORD + " 3"));
     }

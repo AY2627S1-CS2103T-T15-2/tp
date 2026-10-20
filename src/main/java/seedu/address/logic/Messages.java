@@ -15,6 +15,9 @@ public class Messages {
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
+    public static final String MESSAGE_INVALID_CONTACT_INDEX =
+            "The contact index must be a positive integer shown in the list.";
+    public static final String MESSAGE_CONTACT_NOT_FOUND = "No contact exists at index %1$d.";
 
     /**
      * Returns an error message indicating the duplicate prefixes.

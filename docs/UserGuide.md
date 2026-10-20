@@ -93,7 +93,7 @@ Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
 `r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case. The parameters may
 appear in any order, but each may appear only once. If multiple supplied values are invalid, errors are checked in the
-fixed parameter order `r/ROLE`, `n/NAME`, `p/PHONE`, then `e/EMAIL`, regardless of the order entered.
+fixed parameter order `r/ROLE`, `n/NAME`, `p/PHONE`, `e/EMAIL`, `lv/LEVEL`, then `sub/SUBJECT`, regardless of the order entered.
 An empty `r/` is rejected with `Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.`
 An unsupported role is rejected with `Invalid role. Role must be student or guardian.`
 If `r/` is omitted, the error starts with `Missing required field: r/ROLE.` If `n/` is omitted, it starts with
@@ -129,6 +129,9 @@ A student can optionally have one level, such as `lv/Sec 3`, and one subject, su
 text of 1 to 30 characters containing at least one letter or digit. Letters, digits, spaces, hyphens (`-`), periods
 (`.`), plus signs (`+`) and parentheses are allowed. Surrounding spaces are trimmed, repeated spaces are reduced to one,
 and capitalization is kept as typed. `NONE` cannot be used as a level or subject, because `edit` uses it to remove one.
+Supplying `lv/` or `sub/` with an empty or whitespace-only value is rejected with
+`Empty level parameter: Level cannot be empty when lv/ is specified.` or
+`Empty subject parameter: Subject cannot be empty when sub/ is specified.`, respectively.
 Adding a guardian with `lv/` or `sub/` is rejected with
 `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
 For example, `add r/student n/Alex Tan lv/Sec 3 sub/Math` adds a Secondary 3 student taking Math.
@@ -196,8 +199,9 @@ quotes. For example, use `add r/student n/"AC/DC"` or `add r/student n/"Ravi s/o
 name must be quoted, including an embedded slash such as the one in `AC/DC`. Edit has its own parsing behavior and
 continues to accept unquoted embedded slashes.
 
-After a contact is added, TutorRoster shows all contacts, even if the list was filtered by an earlier `find`, and
-selects the new contact so that its details appear in the detail panel.
+After a contact is added, TutorRoster shows all guardians and active students, even if the list was filtered by an
+earlier command. Former students are hidden. The new contact is selected so that its details appear in the detail
+panel.
 
 Examples:
 * `add r/student n/John Doe p/98765432 e/johnd@example.com`
@@ -209,20 +213,37 @@ Examples:
 
 ### Listing contacts: `list`
 
-Shows guardians and active students, or only former students.
+Shows guardians and active students, or only the contacts you choose.
 
-Format: `list [st/former]`
+Format: `list [r/ROLE] [st/former]`
+
+Command | Shows
+--------|------
+`list` | Guardians and active students
+`list r/student` | Active students only
+`list r/guardian` | Guardians only
+`list st/former` | Former students only
+`list r/student st/former` | Former students only (the same as `list st/former`)
 
 * `list` shows all guardians and active students. Former students are hidden; see
   [Marking a student as former](#marking-a-student-as-former-archive).
-* `list st/former` shows only former students. `former` ignores letter case.
+* `r/ROLE` shows only contacts with that role. `ROLE` must be `student` or `guardian`, and ignores letter case.
+* `st/former` shows only former students. `former` ignores letter case.
+* `r/` and `st/` can be given in either order, and each can appear only once. A contact must match both.
+* Guardians are never former, so `list r/guardian st/former` is rejected with
+  `Guardians cannot be former. Remove r/guardian or st/former.`
 * TutorRoster also starts with guardians and active students shown.
 * Any other text after `list` is rejected; for example, `list 3` shows
-  `Invalid list command. Use: list or list st/former`.
+  `Invalid list command. Use: list [r/ROLE] [st/former]`.
+* An invalid role is rejected with `Invalid role. Role must be student or guardian.`, and repeating `r/` or `st/`
+  is rejected with `Each of r/ and st/ may appear only once.`
 * The result shows the number of contacts listed; for example, `Listed 6 contacts` or `Listed 2 former students`.
 * If there are no saved contacts, `No contacts found.` is shown. If every saved contact is a former student,
   `No active contacts found. Use list st/former to see former students.` is shown. If there are no former students,
   `list st/former` shows `No former students found.`
+* If no contact has the chosen role, `list r/guardian` shows `No guardians found.` and `list r/student` shows
+  `No students found.` If every student is former, `list r/student` shows
+  `No active students found. Use list r/student st/former to see former students.`
 * Each contact is shown with its index, name and role, phone number, and email address. Students also show
   their linked guardian. For example:
   ```
@@ -233,6 +254,11 @@ Format: `list [st/former]`
   ```
 * If a student has no linked guardian, `Guardian: None` is shown.
 * If a contact has no phone number or email address, `Not provided` is shown instead; for example, `Phone: Not provided`.
+* If a student has a level or subject, their card shows both on one line, for example
+  `Level: Sec 3 | Subject: Math`. A missing value is shown as `Not set`, for example
+  `Level: Sec 3 | Subject: Not set`. The line is hidden when both fields are missing.
+* Selecting a student shows separate `Level:` and `Subject:` lines in the details panel. Each missing value is shown
+  as `Not set`. Guardians do not show level or subject details.
 * A former student is labelled `[Former]` after their role, for example `Alex Tan [Student] [Former]`, and the
   details panel shows `Role: Student [Former]`.
 
@@ -347,6 +373,29 @@ Examples:
 * `find ale` returns `Alex Yeoh`
 * `find li` returns `Charlotte Oliveiro` and `David Li`
 
+### Viewing a contact's details: `view`
+
+Shows the full details of the specified contact in the details panel.
+
+Format: `view INDEX`
+
+* Shows the details of the contact at the specified `INDEX` in the details panel, and selects that contact in the list.
+* The index refers to the index number shown in the displayed contact list.
+* The index **must be a positive integer** 1, 2, 3, ...
+* A value that is not a positive integer is rejected with
+  `The contact index must be a positive integer shown in the list.`
+* An index outside the displayed list is rejected with `No contact exists at index INDEX.`
+* The details panel shows the contact's name, role, phone number and email address. For a student, it also shows the
+  linked guardian's name, phone number and email address, or `Guardian: None` if no guardian is linked.
+* `view` also works on the results of `list st/former` and `find`. A former student's role is shown as
+  `Role: Student [Former]`.
+* The displayed list does not change, so you can keep using the same indexes afterwards.
+* The result names the contact; for example, `Viewing contact: Alex Tan [Student].`
+
+Examples:
+* `list` followed by `view 2` shows the details of the 2nd contact in the displayed contact list.
+* `find Alex` followed by `view 1` shows the details of the 1st contact in the results of the `find` command.
+
 ### Linking a student to a guardian: `link`
 
 Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
@@ -434,7 +483,8 @@ Format: `exit`
 
 ### Saving the data
 
-TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear` and `link` commands. You do not need to save manually. Read-only commands do not write the data file.
+TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear`, `link`, `archive` and `unarchive` commands.
+You do not need to save manually. Read-only commands do not write the data file.
 
 If saving fails, the command reports `Changes could not be saved. No changes were made.` Contacts, relationships and the previously saved data remain unchanged.
 
@@ -464,8 +514,7 @@ _Details coming soon ..._
 
 ## Known issues
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -479,7 +528,8 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
-**List**   | `list [st/former]`<br> e.g., `list st/former`
+**List**   | `list [r/ROLE] [st/former]`<br> e.g., `list r/student`, `list st/former`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
+**View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
