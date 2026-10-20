@@ -11,9 +11,9 @@ public class Phone {
 
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Phone details must contain at least 3 digits, cannot exceed 100 characters, and cannot contain control "
-                    + "characters, '@' or '/'.";
-    public static final String MESSAGE_TOO_FEW_DIGITS = "Phone number must contain at least 3 digits.";
+            "Phone details must contain at least 3 digits (0-9), cannot exceed 100 characters, "
+                    + "and cannot contain control characters, '@' or '/'.";
+    public static final String MESSAGE_TOO_FEW_DIGITS = "Phone number must contain at least 3 digits (0-9).";
     public static final String MESSAGE_TOO_LONG = "Phone details cannot exceed 100 characters.";
     public static final String MESSAGE_INVALID_CHARACTERS =
             "Phone number cannot contain control characters, '@', or '/'.";
@@ -58,13 +58,15 @@ public class Phone {
     }
 
     /**
-     * Returns the number of digits in the phone details.
+     * Returns the number of ASCII digits (0-9) in the phone details. Other numerals remain allowed
+     * as text but do not count towards the minimum digit requirement.
      */
     public static int getDigitCount(String test) {
         requireNonNull(test);
         int digitCount = 0;
         for (int i = 0; i < test.length(); i++) {
-            if (Character.isDigit(test.charAt(i))) {
+            char character = test.charAt(i);
+            if (character >= '0' && character <= '9') {
                 digitCount++;
             }
         }

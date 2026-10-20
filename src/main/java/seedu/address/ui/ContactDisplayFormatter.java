@@ -13,6 +13,8 @@ public class ContactDisplayFormatter {
 
     public static final String MISSING_CONTACT_METHOD = "Not provided";
     public static final String MISSING_GUARDIAN = "None";
+    public static final String FORMER_LABEL = "Former";
+    public static final String MISSING_STUDENT_DETAIL = "Not set";
 
     private ContactDisplayFormatter() {
         // Prevents instantiation, as this class only has static methods.
@@ -27,12 +29,45 @@ public class ContactDisplayFormatter {
     }
 
     /**
-     * Returns the name of {@code person} followed by its role in square brackets,
-     * for example "Alex Tan [Student]".
+     * Returns the name of {@code person} followed by its role, and its status if it is a former student,
+     * each in square brackets, for example "Alex Tan [Student]" or "Alex Tan [Student] [Former]".
      */
     public static String formatNameWithRole(Person person) {
         requireNonNull(person);
-        return person.getName().fullName + " [" + person.getRole() + "]";
+        String nameWithRole = person.getName().fullName + " [" + person.getRole() + "]";
+        return person.isFormerStudent() ? nameWithRole + " [" + FORMER_LABEL + "]" : nameWithRole;
+    }
+
+    /**
+     * Returns the role of {@code person}, followed by its status in square brackets
+     * if it is a former student, for example "Student" or "Student [Former]".
+     */
+    public static String formatRoleWithStatus(Person person) {
+        requireNonNull(person);
+        String role = person.getRole().toString();
+        return person.isFormerStudent() ? role + " [" + FORMER_LABEL + "]" : role;
+    }
+
+    /**
+     * Returns the text of {@code detail}, such as a level or subject,
+     * or "Not set" if {@code detail} is empty.
+     */
+    public static String formatStudentDetail(Optional<?> detail) {
+        requireNonNull(detail);
+        return detail.map(Object::toString).orElse(MISSING_STUDENT_DETAIL);
+    }
+
+    /**
+     * Returns the level and subject of {@code person} on one line,
+     * for example "Level: Sec 3 | Subject: Math", or an empty {@code Optional} if {@code person} has neither.
+     */
+    public static Optional<String> formatLevelAndSubject(Person person) {
+        requireNonNull(person);
+        if (person.getLevel().isEmpty() && person.getSubject().isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of("Level: " + formatStudentDetail(person.getLevel())
+                + " | Subject: " + formatStudentDetail(person.getSubject()));
     }
 
     /**

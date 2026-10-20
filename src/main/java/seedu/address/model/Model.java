@@ -4,6 +4,7 @@ import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.model.person.ContactFilter;
 import seedu.address.model.person.Person;
 
 /**
@@ -12,6 +13,12 @@ import seedu.address.model.person.Person;
 public interface Model {
     /** {@code Predicate} that always evaluates to true */
     Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
+
+    /** {@code Predicate} that shows guardians and active students, hiding former students */
+    Predicate<Person> PREDICATE_SHOW_ACTIVE_CONTACTS = ContactFilter.ACTIVE_CONTACTS;
+
+    /** {@code Predicate} that shows former students only */
+    Predicate<Person> PREDICATE_SHOW_FORMER_STUDENTS = ContactFilter.FORMER_STUDENTS;
 
     /**
      * Returns the user prefs.

@@ -18,6 +18,8 @@ public class Person {
     public static final String MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD =
             "A guardian must have at least one contact method: phone or email.";
     public static final String MESSAGE_INVALID_FORMER_STATUS = "Only a student can be marked as former.";
+    public static final String MESSAGE_INVALID_STUDENT_DETAILS =
+            "Only a student can have a level or subject.";
 
     // Identity fields
     private final ContactId id;
@@ -29,6 +31,8 @@ public class Person {
     private final Role role;
     private final Optional<ContactId> guardianId;
     private final StudentStatus status;
+    private final Optional<Level> level;
+    private final Optional<Subject> subject;
 
     /**
      * Creates a new person with a generated contact ID.
@@ -59,11 +63,23 @@ public class Person {
      */
     public Person(ContactId id, Name name, Optional<Phone> phone, Optional<Email> email,
             Role role, Optional<ContactId> guardianId, StudentStatus status) {
-        requireAllNonNull(id, name, phone, email, role, guardianId, status);
+        this(id, name, phone, email, role, guardianId, status, Optional.empty(), Optional.empty());
+    }
+
+    /**
+     * Creates a person with the specified ID, details, optional guardian relationship, status,
+     * and optional level and subject. Only a student can have a level or subject.
+     */
+    public Person(ContactId id, Name name, Optional<Phone> phone, Optional<Email> email,
+            Role role, Optional<ContactId> guardianId, StudentStatus status,
+            Optional<Level> level, Optional<Subject> subject) {
+        requireAllNonNull(id, name, phone, email, role, guardianId, status, level, subject);
         checkArgument(guardianId.isEmpty() || role == Role.STUDENT, MESSAGE_INVALID_GUARDIAN_OWNER);
         checkArgument(role != Role.GUARDIAN || phone.isPresent() || email.isPresent(),
                 MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
         checkArgument(status == StudentStatus.ACTIVE || role == Role.STUDENT, MESSAGE_INVALID_FORMER_STATUS);
+        checkArgument(role == Role.STUDENT || level.isEmpty() && subject.isEmpty(),
+                MESSAGE_INVALID_STUDENT_DETAILS);
         this.id = id;
         this.name = name;
         this.phone = phone;
@@ -71,6 +87,8 @@ public class Person {
         this.role = role;
         this.guardianId = guardianId;
         this.status = status;
+        this.level = level;
+        this.subject = subject;
     }
 
     public ContactId getId() {
@@ -85,7 +103,7 @@ public class Person {
      * Returns a copy of this contact with the specified guardian relationship.
      */
     public Person withGuardianId(Optional<ContactId> updatedGuardianId) {
-        return new Person(id, name, phone, email, role, updatedGuardianId, status);
+        return new Person(id, name, phone, email, role, updatedGuardianId, status, level, subject);
     }
 
     public StudentStatus getStatus() {
@@ -105,7 +123,15 @@ public class Person {
      */
     public Person withStatus(StudentStatus updatedStatus) {
         assert role == Role.STUDENT || updatedStatus == StudentStatus.ACTIVE : "Only students can be former";
-        return new Person(id, name, phone, email, role, guardianId, updatedStatus);
+        return new Person(id, name, phone, email, role, guardianId, updatedStatus, level, subject);
+    }
+
+    public Optional<Level> getLevel() {
+        return level;
+    }
+
+    public Optional<Subject> getSubject() {
+        return subject;
     }
 
     public Name getName() {
@@ -224,13 +250,15 @@ public class Person {
                 && email.equals(otherPerson.email)
                 && role.equals(otherPerson.role)
                 && guardianId.equals(otherPerson.guardianId)
-                && status.equals(otherPerson.status);
+                && status.equals(otherPerson.status)
+                && level.equals(otherPerson.level)
+                && subject.equals(otherPerson.subject);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, role, guardianId, status);
+        return Objects.hash(name, phone, email, role, guardianId, status, level, subject);
     }
 
     @Override
@@ -241,6 +269,8 @@ public class Person {
                 .add("email", email)
                 .add("role", role)
                 .add("status", status)
+                .add("level", level)
+                .add("subject", subject)
                 .toString();
     }
 

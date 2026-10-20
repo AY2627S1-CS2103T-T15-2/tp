@@ -11,9 +11,11 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.Subject;
 
 public class ParserUtilTest {
 
@@ -174,6 +176,23 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseEmail_maximumLength_checksAfterTrimming() throws Exception {
+        String email = "a".repeat(64) + "@" + "b".repeat(63)
+                + "." + "c".repeat(63) + "." + "d".repeat(61);
+        assertEquals(email, ParserUtil.parseEmail(" \t" + email + " \r\n").value);
+        assertThrows(ParseException.class, Email.MESSAGE_TOO_LONG, ()
+                -> ParserUtil.parseEmail(" a" + email + " "));
+    }
+
+    @Test
+    public void parseEmail_componentLengths_reportsSpecificErrors() {
+        assertThrows(ParseException.class, Email.MESSAGE_LOCAL_PART_TOO_LONG, ()
+                -> ParserUtil.parseEmail("a".repeat(65) + "@example.com"));
+        assertThrows(ParseException.class, Email.MESSAGE_DOMAIN_LABEL_TOO_LONG, ()
+                -> ParserUtil.parseEmail("a@" + "b".repeat(64) + ".com"));
+    }
+
+    @Test
     public void parseEmail_emptyOrWhitespace_reportsExactMessage() {
         String expectedMessage = "Empty email parameter: Email cannot be empty when e/ is specified.";
         for (String value : List.of("", " ", "\t\r\n")) {
@@ -229,5 +248,54 @@ public class ParserUtilTest {
                 "alex@-example.com", "alex@example-.com", "a@b.c")) {
             assertThrows(ParseException.class, () -> ParserUtil.parseEmail(value));
         }
+    }
+
+    @Test
+    public void parseLevel_validValueWithExtraSpaces_returnsTrimmedAndCollapsedLevel() throws Exception {
+        assertEquals(new Level("Sec 3"), ParserUtil.parseLevel("  Sec   3  "));
+    }
+
+    @Test
+    public void parseLevel_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Level.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseLevel("Sec #3"));
+    }
+
+    @Test
+    public void parseLevel_emptyOrWhitespace_reportsEmptyParameter() {
+        String expectedMessage = "Empty level parameter: Level cannot be empty when lv/ is specified.";
+        for (String value : List.of("", " ", "\t\r\n")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseLevel(value));
+        }
+    }
+
+    @Test
+    public void parseLevel_none_throwsParseException() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_RESERVED_REMOVE_VALUE, () ->
+                ParserUtil.parseLevel("none"));
+    }
+
+    @Test
+    public void parseSubject_validValueWithExtraSpaces_returnsTrimmedAndCollapsedSubject() throws Exception {
+        assertEquals(new Subject("Pure Chem"), ParserUtil.parseSubject(" Pure  Chem "));
+    }
+
+    @Test
+    public void parseSubject_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Subject.MESSAGE_CONSTRAINTS, () ->
+                ParserUtil.parseSubject("Math & Sci"));
+    }
+
+    @Test
+    public void parseSubject_emptyOrWhitespace_reportsEmptyParameter() {
+        String expectedMessage = "Empty subject parameter: Subject cannot be empty when sub/ is specified.";
+        for (String value : List.of("", " ", "\t\r\n")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseSubject(value));
+        }
+    }
+
+    @Test
+    public void parseSubject_none_throwsParseException() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_RESERVED_REMOVE_VALUE, () ->
+                ParserUtil.parseSubject("NONE"));
     }
 }

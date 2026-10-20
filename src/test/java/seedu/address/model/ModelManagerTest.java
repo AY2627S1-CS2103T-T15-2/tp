@@ -3,7 +3,9 @@ package seedu.address.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_CONTACTS;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
+import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.NameContainsSubstringPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -114,6 +117,35 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void getFilteredPersonList_formerStudent_hiddenByDefault() {
+        Person former = new PersonBuilder(BENSON).withStatus(StudentStatus.FORMER).build();
+        modelManager = new ModelManager(new AddressBookBuilder().withPerson(ALICE).withPerson(former).build(),
+                new UserPrefs());
+        assertEquals(PREDICATE_SHOW_ACTIVE_CONTACTS, modelManager.getPersonFilter());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void addPerson_formerStudentsShown_showsActiveContacts() {
+        Person former = new PersonBuilder(BENSON).withStatus(StudentStatus.FORMER).build();
+        modelManager.addPerson(former);
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_FORMER_STUDENTS);
+        modelManager.addPerson(ALICE);
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void updateFilteredPersonList_formerStudentPredicate_showsFormerStudentsOnly() {
+        Person former = new PersonBuilder(BENSON).withStatus(StudentStatus.FORMER).build();
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(former);
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_FORMER_STUDENTS);
+        assertEquals(List.of(former), modelManager.getFilteredPersonList());
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        assertEquals(List.of(ALICE, former), modelManager.getFilteredPersonList());
+    }
+
+    @Test
     public void equals() {
         AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
         AddressBook differentAddressBook = new AddressBook();
@@ -141,7 +173,7 @@ public class ModelManagerTest {
         assertFalse(modelManager.equals(new ModelManager(addressBook, userPrefs)));
 
         // resets modelManager to initial state for upcoming tests
-        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_CONTACTS);
 
         // different userPrefs -> returns false
         UserPrefs differentUserPrefs = new UserPrefs();

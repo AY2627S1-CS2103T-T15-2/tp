@@ -4,7 +4,8 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
+import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_CONTACTS;
+import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 
 import java.util.List;
 import java.util.Objects;
@@ -112,7 +113,10 @@ public class EditCommand extends Command {
         Optional<String> warning = getPossibleDuplicateWarning(editedPerson, otherPersons);
 
         model.setPerson(personToEdit, editedPerson);
-        model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        // Show the list that the edited contact belongs to, so that it stays visible.
+        model.updateFilteredPersonList(editedPerson.isFormerStudent()
+                ? PREDICATE_SHOW_FORMER_STUDENTS
+                : PREDICATE_SHOW_ACTIVE_CONTACTS);
         String feedback = String.format(MESSAGE_EDIT_PERSON_SUCCESS, editedPerson.getName(), editedPerson.getRole());
         return new CommandResult(warning.map(message -> feedback + "\n" + message).orElse(feedback),
                 editedPerson.getId());
@@ -157,7 +161,8 @@ public class EditCommand extends Command {
         Role role = personToEdit.getRole();
 
         return new Person(personToEdit.getId(), updatedName, updatedPhone,
-                updatedEmail, role, personToEdit.getGuardianId(), personToEdit.getStatus());
+                updatedEmail, role, personToEdit.getGuardianId(), personToEdit.getStatus(),
+                personToEdit.getLevel(), personToEdit.getSubject());
     }
 
     private static Optional<Phone> getUpdatedPhone(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {

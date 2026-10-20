@@ -32,6 +32,13 @@ public class EditCommandParserTest {
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
+    public void parse_emailExceedingMaximumLength_reportsLengthError() {
+        String email = "a".repeat(64) + "@" + "b".repeat(63)
+                + "." + "c".repeat(63) + "." + "d".repeat(62);
+        assertParseFailure(parser, "1 e/" + email, Email.MESSAGE_TOO_LONG);
+    }
+
+    @Test
     public void parse_missingParts_failure() {
         // no index specified
         assertParseFailure(parser, NAME_DESC_AMY, EditCommand.MESSAGE_INVALID_COMMAND);

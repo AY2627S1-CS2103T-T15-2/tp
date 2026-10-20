@@ -15,6 +15,9 @@ public class Messages {
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
+    public static final String MESSAGE_INVALID_CONTACT_INDEX =
+            "The contact index must be a positive integer shown in the list.";
+    public static final String MESSAGE_CONTACT_NOT_FOUND = "No contact exists at index %1$d.";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
@@ -34,6 +37,15 @@ public class Messages {
      */
     public static String formatContactCount(int count) {
         return count + (count == 1 ? " contact" : " contacts");
+    }
+
+    /**
+     * Returns {@code count} followed by "former student" if {@code count} is 1,
+     * or "former students" otherwise.
+     * For example, 1 gives "1 former student" and 5 gives "5 former students".
+     */
+    public static String formatFormerStudentCount(int count) {
+        return count + (count == 1 ? " former student" : " former students");
     }
 
 }

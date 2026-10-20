@@ -20,6 +20,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -58,6 +59,21 @@ public class DeleteCommandTest {
                 result.getFeedbackToUser());
         assertEquals(student.getId(), linkedModel.getAddressBook().getPersonList().getFirst().getId());
         assertTrue(linkedModel.getAddressBook().getPersonList().getFirst().getGuardianId().isEmpty());
+    }
+
+    @Test
+    public void execute_guardianOfFormerStudent_keepsStudentStatus() throws Exception {
+        Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+        Person student = new PersonBuilder().withName("Alex Tan").withGuardianId(guardian.getId())
+                .withStatus(StudentStatus.FORMER).build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(student, guardian));
+        Model linkedModel = new ModelManager(addressBook, new UserPrefs());
+
+        // The former student is hidden, so the guardian is the first contact shown.
+        new DeleteCommand(Index.fromOneBased(1)).execute(linkedModel);
+
+        assertTrue(linkedModel.getAddressBook().getPersonList().getFirst().isFormerStudent());
     }
 
     @Test
