@@ -451,6 +451,8 @@ Students without a guardian show `Guardian: None` in the detail panel.
 Examples:
 * `list` followed by `delete 2` deletes the 2nd contact in the displayed contact list.
 * `find Betsy` followed by `delete 1` deletes the 1st contact in the results of the `find` command.
+* `list st/former` followed by `delete 1` deletes the 1st former student in the displayed list. If that student
+  is linked to a guardian, the student-guardian relationship is also removed, but the guardian contact is kept.
 
 ### Clearing all entries: `clear`
 
