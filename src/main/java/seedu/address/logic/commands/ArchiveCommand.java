@@ -9,6 +9,7 @@ import seedu.address.model.person.StudentStatus;
 public class ArchiveCommand extends StudentStatusCommand {
 
     public static final String COMMAND_WORD = "archive";
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Marks the student identified by the index number used in the displayed contact list"

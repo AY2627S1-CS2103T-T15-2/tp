@@ -21,15 +21,13 @@ public class AddCommand extends Command {
 
     public static final String COMMAND_WORD = "add";
 
+    public static final String COMMAND_PARAMETERS = PREFIX_ROLE + "ROLE " + PREFIX_NAME + "NAME "
+            + "[" + PREFIX_PHONE + "PHONE] [" + PREFIX_EMAIL + "EMAIL] "
+            + "[" + PREFIX_LEVEL + "LEVEL] [" + PREFIX_SUBJECT + "SUBJECT]";
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " " + COMMAND_PARAMETERS;
+
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a student or guardian contact.\n"
-            + "Parameters: "
-            + PREFIX_ROLE + "ROLE "
-            + PREFIX_NAME + "NAME "
-            + "[" + PREFIX_PHONE + "PHONE] "
-            + "[" + PREFIX_EMAIL + "EMAIL] "
-            + "[" + PREFIX_LEVEL + "LEVEL] "
-            + "[" + PREFIX_SUBJECT + "SUBJECT]"
-            + "\n"
+            + "Parameters: " + COMMAND_PARAMETERS + "\n"
             + "Students may omit phone and email; guardians must provide at least one.\n"
             + "Only students can have a level and subject.\n"
             + "Example: " + COMMAND_WORD + " "

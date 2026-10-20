@@ -1,6 +1,6 @@
 .root, .scroll-pane, .scroll-pane > .viewport {
     -fx-background-color: #2d2d2d;
-    -fx-font-family: "Segoe UI";
+    -fx-font-family: "System";
     -fx-font-size: 14px;
 }
 
@@ -24,7 +24,7 @@
 }
 
 .command-format {
-    -fx-font-family: "Consolas", monospace;
+    -fx-font-family: "Monospaced";
     -fx-text-fill: #a8d8ff;
 }
 

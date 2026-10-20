@@ -4,13 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.awt.image.BufferedImage;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
-import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -22,7 +18,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.Region;
@@ -53,12 +48,9 @@ public class HelpWindowTest {
                 assertFalse(url.isEditable());
                 List<String> formats = root.lookupAll(".command-format").stream()
                         .map(node -> ((Label) node).getText()).toList();
-                assertEquals(9, formats.size());
-                assertTrue(formats.containsAll(List.of("add r/ROLE n/NAME [p/PHONE] [e/EMAIL]",
-                        "edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]", "delete INDEX", "find NAME",
-                        "link s/STUDENT_INDEX g/GUARDIAN_INDEX", "list", "clear", "help", "exit")));
+                assertEquals(HelpWindow.getCommandFormats().size(), formats.size());
+                assertTrue(formats.containsAll(HelpWindow.getCommandFormats()));
                 assertCopyUrl(root);
-                saveScreenshot(root);
             } finally {
                 help.hide();
             }
@@ -98,24 +90,6 @@ public class HelpWindowTest {
             assertEquals(HelpWindow.USERGUIDE_URL, clipboard.getString());
         } finally {
             clipboard.setContent(original);
-        }
-    }
-
-    private void saveScreenshot(Region root) {
-        WritableImage snapshot = root.snapshot(null, null);
-        BufferedImage image = new BufferedImage((int) snapshot.getWidth(), (int) snapshot.getHeight(),
-                BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < image.getHeight(); y++) {
-            for (int x = 0; x < image.getWidth(); x++) {
-                image.setRGB(x, y, snapshot.getPixelReader().getArgb(x, y));
-            }
-        }
-        try {
-            Path destination = Path.of("build", "reports", "help-window.png");
-            Files.createDirectories(destination.getParent());
-            ImageIO.write(image, "png", destination.toFile());
-        } catch (java.io.IOException exception) {
-            throw new AssertionError("Could not save Help window screenshot", exception);
         }
     }
 

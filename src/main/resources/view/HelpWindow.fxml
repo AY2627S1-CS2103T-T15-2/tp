@@ -40,38 +40,11 @@
             <Label text="Command reference" styleClass="help-heading" />
             <Label text="UPPERCASE words are values you supply. [Square brackets] mark optional fields."
                    wrapText="true" maxWidth="Infinity" styleClass="help-note" />
-            <GridPane hgap="16.0" vgap="18.0">
+            <GridPane fx:id="commandReference" hgap="16.0" vgap="18.0">
               <columnConstraints>
                 <ColumnConstraints percentWidth="25.0" />
                 <ColumnConstraints percentWidth="75.0" />
               </columnConstraints>
-              <Label text="Add contact" GridPane.rowIndex="0" wrapText="true" maxWidth="Infinity" />
-              <Label text="add r/ROLE n/NAME [p/PHONE] [e/EMAIL]" GridPane.columnIndex="1" GridPane.rowIndex="0"
-                     styleClass="command-format" wrapText="true" maxWidth="Infinity" />
-              <Label text="Edit contact" GridPane.rowIndex="1" wrapText="true" maxWidth="Infinity" />
-              <Label text="edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]" GridPane.columnIndex="1" GridPane.rowIndex="1"
-                     styleClass="command-format" wrapText="true" maxWidth="Infinity" />
-              <Label text="Delete contact" GridPane.rowIndex="2" wrapText="true" maxWidth="Infinity" />
-              <Label text="delete INDEX" GridPane.columnIndex="1" GridPane.rowIndex="2"
-                     styleClass="command-format" wrapText="true" maxWidth="Infinity" />
-              <Label text="Find by name" GridPane.rowIndex="3" wrapText="true" maxWidth="Infinity" />
-              <Label text="find NAME" GridPane.columnIndex="1" GridPane.rowIndex="3"
-                     styleClass="command-format" wrapText="true" maxWidth="Infinity" />
-              <Label text="Link guardian" GridPane.rowIndex="4" wrapText="true" maxWidth="Infinity" />
-              <Label text="link s/STUDENT_INDEX g/GUARDIAN_INDEX" GridPane.columnIndex="1" GridPane.rowIndex="4"
-                     styleClass="command-format" wrapText="true" maxWidth="Infinity" />
-              <Label text="List contacts" GridPane.rowIndex="5" wrapText="true" maxWidth="Infinity" />
-              <Label text="list" GridPane.columnIndex="1" GridPane.rowIndex="5"
-                     styleClass="command-format" wrapText="true" maxWidth="Infinity" />
-              <Label text="Clear contacts" GridPane.rowIndex="6" wrapText="true" maxWidth="Infinity" />
-              <Label text="clear" GridPane.columnIndex="1" GridPane.rowIndex="6"
-                     styleClass="command-format" wrapText="true" maxWidth="Infinity" />
-              <Label text="Show help" GridPane.rowIndex="7" wrapText="true" maxWidth="Infinity" />
-              <Label text="help" GridPane.columnIndex="1" GridPane.rowIndex="7"
-                     styleClass="command-format" wrapText="true" maxWidth="Infinity" />
-              <Label text="Exit app" GridPane.rowIndex="8" wrapText="true" maxWidth="Infinity" />
-              <Label text="exit" GridPane.columnIndex="1" GridPane.rowIndex="8"
-                     styleClass="command-format" wrapText="true" maxWidth="Infinity" />
             </GridPane>
           </VBox>
         </content>
