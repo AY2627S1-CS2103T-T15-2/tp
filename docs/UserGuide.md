@@ -285,7 +285,7 @@ Examples:
 
 Edits an existing contact.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
 * Edits the contact at the specified `INDEX`. The index refers to the index number shown in the displayed contact list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -302,14 +302,19 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * A guardian must keep at least one contact method. An edit that would leave a guardian with neither a phone number
   nor an email is rejected with `A guardian must have at least one contact method: phone or email.`
   A student can have both removed.
+* `lv/LEVEL` and `sub/SUBJECT` set a student's level and subject, using the same rules as `add`. `lv/NONE` and
+  `sub/NONE` remove them, ignoring letter case. Omitting either keeps the existing value. Editing the level or subject
+  of a guardian is rejected with
+  `Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.`
 * A name containing a word that ends in `/`, such as `s/o`, must be wrapped in double quotes. Anything inside the
   quotes is treated as part of the name, so `edit 1 n/"Randy p/e ratio"` sets the name to `Randy p/e ratio` without
   reading `p/` as a phone. Unquoted, `edit 1 n/Ravi s/o Kumar` is rejected because `s/` is read as a parameter.
   Unlike `add`, `edit` accepts embedded slashes without quotes, for example `edit 1 n/AC/DC`.
-* Each of `n/`, `p/` and `e/` may appear only once. Any other parameter, such as `r/` or `a/`, is rejected with
-  `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`. The role of a contact cannot be edited.
+* Each of `n/`, `p/`, `e/`, `lv/` and `sub/` may appear only once. Any other parameter, such as `r/` or `a/`, is
+  rejected with `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`.
+  The role of a contact cannot be edited.
 * A missing index, or extra text before the first parameter, is rejected with
-  `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`.
+  `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`.
 * An index that is not a positive whole number is rejected with
   `The contact index must be a positive integer shown in the list.` Leading zeroes are accepted, so `02` means 2.
   An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
@@ -326,6 +331,7 @@ Examples:
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd contact to be `Betsy Crower`.
 *  `edit 2 e/NONE` Removes the email of the 2nd contact.
 *  `edit 2 p/NONE` Removes the phone number of the 2nd contact.
+*  `edit 3 lv/Sec 4 sub/NONE` Changes the level of the 3rd contact, a student, to `Sec 4` and removes their subject.
 *  `edit 3 n/"Ravi s/o Kumar"` Edits the name of the 3rd contact to be `Ravi s/o Kumar`.
 
 ### Locating contacts by name: `find`
@@ -510,7 +516,7 @@ Action     | Format, Examples
 **Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
 **Clear**  | `clear`
 **Delete** | `delete INDEX [INDEX...]`<br> e.g., `delete 3`, `delete 1 3 5`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
 **List**   | `list [r/ROLE] [st/former]`<br> e.g., `list r/student`, `list st/former`

@@ -146,6 +146,22 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Removes the level from the student being built.
+     */
+    public PersonBuilder withoutLevel() {
+        level = Optional.empty();
+        return this;
+    }
+
+    /**
+     * Removes the subject from the student being built.
+     */
+    public PersonBuilder withoutSubject() {
+        subject = Optional.empty();
+        return this;
+    }
+
     public Person build() {
         return new Person(id, name, phone, email, role, guardianId, status, level, subject);
     }
