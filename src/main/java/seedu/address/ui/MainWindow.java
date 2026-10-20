@@ -1,16 +1,20 @@
 package seedu.address.ui;
 
+import java.awt.Point;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -138,15 +142,33 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Sets the default size based on {@code guiSettings}.
+     * Sets the default size and position based on {@code guiSettings},
+     * shrinking and moving the window if needed so that it fits on the screen.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        primaryStage.setHeight(guiSettings.getWindowHeight());
-        primaryStage.setWidth(guiSettings.getWindowWidth());
-        if (guiSettings.getWindowCoordinates() != null) {
-            primaryStage.setX(guiSettings.getWindowCoordinates().getX());
-            primaryStage.setY(guiSettings.getWindowCoordinates().getY());
+        GuiSettings fittedSettings = guiSettings.fitWithin(getScreenBounds(guiSettings));
+        primaryStage.setHeight(fittedSettings.getWindowHeight());
+        primaryStage.setWidth(fittedSettings.getWindowWidth());
+        if (fittedSettings.getWindowCoordinates() != null) {
+            primaryStage.setX(fittedSettings.getWindowCoordinates().getX());
+            primaryStage.setY(fittedSettings.getWindowCoordinates().getY());
         }
+    }
+
+    /**
+     * Returns the visible bounds of the screen that the window in {@code guiSettings} is on,
+     * or of the primary screen if the window has no position or is not on any screen.
+     */
+    private static Rectangle2D getScreenBounds(GuiSettings guiSettings) {
+        Point coordinates = guiSettings.getWindowCoordinates();
+        if (coordinates == null) {
+            return Screen.getPrimary().getVisualBounds();
+        }
+
+        List<Screen> screens = Screen.getScreensForRectangle(coordinates.getX(), coordinates.getY(),
+                guiSettings.getWindowWidth(), guiSettings.getWindowHeight());
+        Screen screen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
+        return screen.getVisualBounds();
     }
 
     /**
