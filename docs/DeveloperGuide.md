@@ -426,10 +426,43 @@ run on Windows desktop environments; the remaining tests run on all supported pl
 `list` and `find` change which contacts the list panel shows by updating the predicate of the model's filtered list.
 Neither command changes any contact data.
 
-**Listing.** `AddressBookParser` passes any text after `list` to `ListCommandParser`, which rejects non-blank text
-with `Invalid list command. Use: list`. `ListCommand` resets the filter to `PREDICATE_SHOW_ALL_PERSONS` and reports
-the number of contacts, for example `Listed 6 contacts`. `Messages#formatContactCount` uses the singular `contact`
-when there is exactly one contact. If there are no contacts, `ListCommand` reports `No contacts found.` instead.
+**Listing.** `list [r/ROLE] [st/former]` shows the contacts that match a `ContactFilter`. A `ContactFilter` is a
+`Predicate<Person>` that holds an optional `Role` and a `StudentStatus`. A contact matches when it has that status and,
+if a role is given, that role. Guardians are always `ACTIVE`, so they never match a filter for former contacts.
+`ContactFilter.ACTIVE_CONTACTS` (guardians and active students) is the default, and `ContactFilter.FORMER_STUDENTS`
+shows only former students. `Model#PREDICATE_SHOW_ACTIVE_CONTACTS` and `Model#PREDICATE_SHOW_FORMER_STUDENTS` refer
+to these two filters, so the rules for which contacts are active live in one class.
+
+`ListCommandParser` builds the filter in these steps:
+
+1. It rejects any word ending in `/` that is not `r/` or `st/`, and any text before the first prefix, with
+   `Invalid list command. Use: list [r/ROLE] [st/former]`.
+1. It rejects a repeated `r/` or `st/` with `Each of r/ and st/ may appear only once.`
+1. It parses `r/ROLE` with `ParserUtil#parseRole`, the same method `add` uses, so role values and errors match.
+   An empty `r/` gives the same empty-role message as `add`.
+1. It reads `st/former`, ignoring letter case. Without `st/`, the status is `ACTIVE`.
+1. It rejects `r/guardian st/former` with `Guardians cannot be former. Remove r/guardian or st/former.`, because that
+   filter could never match a contact.
+
+Role errors are reported before status errors, matching the fixed parameter order used by `add`.
+
+`ListCommand#execute` passes its filter to `Model#updateFilteredPersonList`. It then reports the number of contacts
+shown, for example `Listed 6 contacts` or `Listed 2 former students`, using `Messages#formatContactCount` and
+`Messages#formatFormerStudentCount`. When nothing matches, the message explains why, so the tutor knows whether the
+contact list is empty or the filter hid everyone:
+
+* `list` with no saved contacts gives `No contacts found.` If every saved contact is a former student, it gives
+  `No active contacts found. Use list st/former to see former students.`
+* `list st/former` gives `No former students found.`
+* `list r/guardian` gives `No guardians found.` `list r/student` gives `No students found.`, or
+  `No active students found. Use list r/student st/former to see former students.` if every student is former.
+
+`list` changes no contact data, so `LogicManager` runs it directly on the live model, and it still works when data
+changes are disabled after a failed load.
+
+The sequence diagram below shows how `list r/student` is executed.
+
+<puml src="diagrams/ListSequenceDiagram.puml" alt="Interactions for the `list r/student` command" />
 
 **Finding.** `FindCommandParser` treats all the text after `find` as a single search term. It removes leading and
 trailing whitespace, reduces each run of internal whitespace to one space, and rejects a term that is then empty with
@@ -490,6 +523,41 @@ students.
 * **Alternative 2:** Sort in each command or in the UI.
   * Pros: Different views could use different orders.
   * Cons: Each command must remember to sort, and the UI order could differ from the indexes commands use.
+
+**Aspect: Where filtering by role and status happens**
+
+* **Alternative 1 (current choice):** Add optional filters to `list`, and keep `find` for names only.
+  * Pros: `list r/student` reads as "list the students". `find NAME` stays a simple name search. The default `list`
+    already hides former students, so `list r/student` shows only current students without an extra parameter.
+  * Cons: Searching by name and role together needs two steps, `find` and then reading the roles shown on the cards.
+* **Alternative 2:** Add the filters to `find`, so that the name becomes optional.
+  * Pros: One command could combine a name with a role or status.
+  * Cons: `find r/student` with no name reads oddly. `find` includes former students, so `find r/student` would
+    show former students too, which defeats the purpose of hiding them.
+
+**Aspect: How the status is given**
+
+* **Alternative 1 (current choice):** A separate `st/` prefix, independent of `r/`.
+  * Pros: Role and status are separate attributes in the model, as in `Role: Student [Former]`. `r/` accepts the same
+    values in `add` and `list`. This follows common command-line tools, such as `gh issue list --label bug
+    --state closed`, where each attribute has its own option.
+  * Cons: Users must learn a second prefix, and `st/` is close to `link`'s `s/`. The invalid-format message names the
+    valid prefixes to help with this.
+* **Alternative 2:** Treat `former` as a role value, as in `list r/former`.
+  * Pros: Only one prefix to learn.
+  * Cons: `r/former` would be accepted by `list` but not by `add` or `edit`. It could not express "all students,
+    active and former" without another special value.
+
+**Aspect: How `ListCommand` stores what to show**
+
+* **Alternative 1 (current choice):** A single `ContactFilter` object holding the optional role and the status.
+  * Pros: New filters, such as level and subject, are added as fields of one class, without changing how
+    `ListCommand` applies the filter. The filter has `equals`, so parser tests can compare commands directly.
+  * Cons: One more class than a plain lambda.
+* **Alternative 2:** One `boolean` or lambda per option in `ListCommand`, as in the earlier `isFormerList` flag.
+  * Pros: Less code for a single option.
+  * Cons: Each new option adds another constructor argument and branch, and `new ListCommand(true)` does not say what
+    `true` means.
 
 **Aspect: How `find` matches names**
 
