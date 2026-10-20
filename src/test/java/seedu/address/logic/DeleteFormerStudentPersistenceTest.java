@@ -55,17 +55,22 @@ public class DeleteFormerStudentPersistenceTest {
 
         CommandResult result = logic.execute("delete 1");
 
-        assertEquals("Deleted contact: Alex Tan [Student]. Removed 1 student-guardian relationship.",
+        assertEquals(String.format(DeleteCommand.MESSAGE_DELETE_CONTACT_SUCCESS,
+                formerStudent.getName(), formerStudent.getRole()) + DeleteCommand.MESSAGE_REMOVED_RELATIONSHIP,
                 result.getFeedbackToUser());
         assertEquals(List.of(), List.copyOf(model.getFilteredPersonList()));
         assertFalse(model.getAddressBook().getPersonList().contains(formerStudent));
         assertTrue(model.getAddressBook().getPersonList().contains(activeStudent));
         assertTrue(model.getAddressBook().getPersonList().contains(guardian));
+        assertEquals(List.of(activeStudent.getId(), guardian.getId()),
+                model.getAddressBook().getPersonList().stream().map(Person::getId).toList());
 
         Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
         assertFalse(reloaded.getAddressBook().getPersonList().contains(formerStudent));
         assertTrue(reloaded.getAddressBook().getPersonList().contains(activeStudent));
         assertTrue(reloaded.getAddressBook().getPersonList().contains(guardian));
+        assertEquals(List.of(activeStudent.getId(), guardian.getId()),
+                reloaded.getAddressBook().getPersonList().stream().map(Person::getId).toList());
     }
 
     @Test
@@ -93,7 +98,8 @@ public class DeleteFormerStudentPersistenceTest {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         Model model = createModel();
         storage.saveAddressBook(model.getAddressBook());
-        createLogic(model, storage).execute(ListCommand.LIST_FORMER_COMMAND);
+        Logic listingLogic = createLogic(model, storage);
+        listingLogic.execute(ListCommand.LIST_FORMER_COMMAND);
         AddressBook originalContacts = new AddressBook(model.getAddressBook());
         Predicate<Person> originalFilter = model.getPersonFilter();
         List<Person> originalDisplay = List.copyOf(model.getFilteredPersonList());
