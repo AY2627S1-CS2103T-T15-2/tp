@@ -13,11 +13,14 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
 import seedu.address.model.person.StudentStatus;
+import seedu.address.model.person.Subject;
+import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
 
@@ -216,5 +219,38 @@ public class JsonAdaptedPersonTest {
         JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
                 "GUARDIAN", null, "FORMER");
         assertThrows(IllegalValueException.class, Person.MESSAGE_INVALID_FORMER_STATUS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_studentWithLevelAndSubject_preservesLevelAndSubject() throws Exception {
+        Person student = new PersonBuilder(BENSON).withLevel("Sec 3").withSubject("A-Math").build();
+        assertEquals(student, new JsonAdaptedPerson(student).toModelType());
+    }
+
+    @Test
+    public void toModelType_missingLevelAndSubject_loadsWithoutLevelAndSubject() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ROLE, null, null);
+        Person modelPerson = person.toModelType();
+        assertTrue(modelPerson.getLevel().isEmpty());
+        assertTrue(modelPerson.getSubject().isEmpty());
+    }
+
+    @Test
+    public void toModelType_invalidLevelOrSubject_throwsIllegalValueException() {
+        JsonAdaptedPerson invalidLevel = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ROLE, null, null, "Sec #3", null);
+        assertThrows(IllegalValueException.class, Level.MESSAGE_CONSTRAINTS, invalidLevel::toModelType);
+        JsonAdaptedPerson invalidSubject = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ROLE, null, null, null, " ");
+        assertThrows(IllegalValueException.class, Subject.MESSAGE_CONSTRAINTS, invalidSubject::toModelType);
+    }
+
+    @Test
+    public void toModelType_guardianWithLevel_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                "GUARDIAN", null, null, "Sec 3", null);
+        assertThrows(IllegalValueException.class, Person.MESSAGE_INVALID_STUDENT_DETAILS,
+                person::toModelType);
     }
 }

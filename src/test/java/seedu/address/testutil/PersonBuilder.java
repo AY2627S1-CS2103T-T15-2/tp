@@ -4,11 +4,13 @@ import java.util.Optional;
 
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
 import seedu.address.model.person.StudentStatus;
+import seedu.address.model.person.Subject;
 
 /**
  * A utility class to help with building Person objects.
@@ -27,6 +29,8 @@ public class PersonBuilder {
     private Optional<Email> email;
     private Role role;
     private StudentStatus status = StudentStatus.ACTIVE;
+    private Optional<Level> level = Optional.empty();
+    private Optional<Subject> subject = Optional.empty();
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -50,6 +54,8 @@ public class PersonBuilder {
         email = personToCopy.getEmail();
         role = personToCopy.getRole();
         status = personToCopy.getStatus();
+        level = personToCopy.getLevel();
+        subject = personToCopy.getSubject();
     }
 
     /**
@@ -124,8 +130,24 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the {@code Level} of the student being built.
+     */
+    public PersonBuilder withLevel(String level) {
+        this.level = Optional.of(new Level(level));
+        return this;
+    }
+
+    /**
+     * Sets the {@code Subject} of the student being built.
+     */
+    public PersonBuilder withSubject(String subject) {
+        this.subject = Optional.of(new Subject(subject));
+        return this;
+    }
+
     public Person build() {
-        return new Person(id, name, phone, email, role, guardianId, status);
+        return new Person(id, name, phone, email, role, guardianId, status, level, subject);
     }
 
 }

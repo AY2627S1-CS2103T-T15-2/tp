@@ -187,7 +187,8 @@ public class PersonTest {
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", email=" + ALICE.getEmail() + ", role=" + ALICE.getRole()
-                + ", status=" + ALICE.getStatus() + "}";
+                + ", status=" + ALICE.getStatus() + ", level=" + ALICE.getLevel()
+                + ", subject=" + ALICE.getSubject() + "}";
         assertEquals(expected, ALICE.toString());
     }
 
@@ -255,5 +256,38 @@ public class PersonTest {
         Person former = ALICE.withStatus(StudentStatus.FORMER);
         assertFalse(ALICE.equals(former));
         assertTrue(ALICE.isSamePerson(former));
+    }
+
+    @Test
+    public void constructor_guardianWithLevel_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_INVALID_STUDENT_DETAILS, () ->
+                new Person(ContactId.generate(), ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(),
+                        Role.GUARDIAN, Optional.empty(), StudentStatus.ACTIVE,
+                        Optional.of(new Level("Sec 3")), Optional.empty()));
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_INVALID_STUDENT_DETAILS, () ->
+                new Person(ContactId.generate(), ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(),
+                        Role.GUARDIAN, Optional.empty(), StudentStatus.ACTIVE,
+                        Optional.empty(), Optional.of(new Subject("Math"))));
+    }
+
+    @Test
+    public void withStatusAndWithGuardianId_studentWithLevelAndSubject_preservesLevelAndSubject() {
+        Person student = new PersonBuilder(ALICE).withLevel("Sec 3").withSubject("Math").build();
+        Person former = student.withStatus(StudentStatus.FORMER);
+        Person linked = student.withGuardianId(Optional.of(ContactId.generate()));
+        assertEquals(student.getLevel(), former.getLevel());
+        assertEquals(student.getSubject(), former.getSubject());
+        assertEquals(student.getLevel(), linked.getLevel());
+        assertEquals(student.getSubject(), linked.getSubject());
+    }
+
+    @Test
+    public void equals_differentLevelOrSubject_affectsEqualityButNotIdentity() {
+        Person withLevel = new PersonBuilder(ALICE).withLevel("Sec 3").build();
+        Person withSubject = new PersonBuilder(ALICE).withSubject("Math").build();
+        assertFalse(ALICE.equals(withLevel));
+        assertFalse(ALICE.equals(withSubject));
+        assertTrue(ALICE.isSamePerson(withLevel));
+        assertTrue(ALICE.isSamePerson(withSubject));
     }
 }

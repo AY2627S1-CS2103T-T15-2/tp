@@ -99,4 +99,30 @@ public class ContactDisplayFormatterTest {
         Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
         assertEquals("Mei Tan", ContactDisplayFormatter.formatGuardianName(Optional.of(guardian)));
     }
+
+    @Test
+    public void formatStudentDetail_emptyOptional_returnsNotSet() {
+        assertEquals("Not set", ContactDisplayFormatter.formatStudentDetail(Optional.empty()));
+    }
+
+    @Test
+    public void formatLevelAndSubject_neitherSet_returnsEmpty() {
+        Person student = new PersonBuilder().withRole("student").build();
+        assertEquals(Optional.empty(), ContactDisplayFormatter.formatLevelAndSubject(student));
+    }
+
+    @Test
+    public void formatLevelAndSubject_bothSet_returnsBoth() {
+        Person student = new PersonBuilder().withRole("student").withLevel("Sec 3").withSubject("Math")
+                .build();
+        assertEquals(Optional.of("Level: Sec 3 | Subject: Math"),
+                ContactDisplayFormatter.formatLevelAndSubject(student));
+    }
+
+    @Test
+    public void formatLevelAndSubject_onlyLevelSet_returnsNotSetSubject() {
+        Person student = new PersonBuilder().withRole("student").withLevel("JC1").build();
+        assertEquals(Optional.of("Level: JC1 | Subject: Not set"),
+                ContactDisplayFormatter.formatLevelAndSubject(student));
+    }
 }

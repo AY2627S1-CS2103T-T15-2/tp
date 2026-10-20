@@ -2,9 +2,11 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_CONTACTS;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -24,14 +26,19 @@ public class AddCommand extends Command {
             + PREFIX_ROLE + "ROLE "
             + PREFIX_NAME + "NAME "
             + "[" + PREFIX_PHONE + "PHONE] "
-            + "[" + PREFIX_EMAIL + "EMAIL]"
+            + "[" + PREFIX_EMAIL + "EMAIL] "
+            + "[" + PREFIX_LEVEL + "LEVEL] "
+            + "[" + PREFIX_SUBJECT + "SUBJECT]"
             + "\n"
             + "Students may omit phone and email; guardians must provide at least one.\n"
+            + "Only students can have a level and subject.\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_ROLE + "student "
             + PREFIX_NAME + "John Doe "
             + PREFIX_PHONE + "98765432 "
-            + PREFIX_EMAIL + "johnd@example.com";
+            + PREFIX_EMAIL + "johnd@example.com "
+            + PREFIX_LEVEL + "Sec 3 "
+            + PREFIX_SUBJECT + "Math";
 
     public static final String MESSAGE_SUCCESS = "Added contact: %1$s [%2$s].";
     public static final String MESSAGE_DUPLICATE_PERSON = "This contact already exists.";
@@ -45,7 +52,8 @@ public class AddCommand extends Command {
     public static final String MESSAGE_CONTACT_METHOD_REQUIRED =
             "A guardian must have at least one contact method: phone or email.";
     public static final String MESSAGE_INVALID_PARAMETER =
-            "Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE, and e/EMAIL.";
+            "Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, "
+                    + "and sub/SUBJECT.";
     public static final String MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH = MESSAGE_INVALID_PARAMETER
             + " If '/' is part of the name, enclose the entire name in double quotes.";
 

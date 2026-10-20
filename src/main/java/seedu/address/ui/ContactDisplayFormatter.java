@@ -14,6 +14,7 @@ public class ContactDisplayFormatter {
     public static final String MISSING_CONTACT_METHOD = "Not provided";
     public static final String MISSING_GUARDIAN = "None";
     public static final String FORMER_LABEL = "Former";
+    public static final String MISSING_STUDENT_DETAIL = "Not set";
 
     private ContactDisplayFormatter() {
         // Prevents instantiation, as this class only has static methods.
@@ -45,6 +46,28 @@ public class ContactDisplayFormatter {
         requireNonNull(person);
         String role = person.getRole().toString();
         return person.isFormerStudent() ? role + " [" + FORMER_LABEL + "]" : role;
+    }
+
+    /**
+     * Returns the text of {@code detail}, such as a level or subject,
+     * or "Not set" if {@code detail} is empty.
+     */
+    public static String formatStudentDetail(Optional<?> detail) {
+        requireNonNull(detail);
+        return detail.map(Object::toString).orElse(MISSING_STUDENT_DETAIL);
+    }
+
+    /**
+     * Returns the level and subject of {@code person} on one line,
+     * for example "Level: Sec 3 | Subject: Math", or an empty {@code Optional} if {@code person} has neither.
+     */
+    public static Optional<String> formatLevelAndSubject(Person person) {
+        requireNonNull(person);
+        if (person.getLevel().isEmpty() && person.getSubject().isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of("Level: " + formatStudentDetail(person.getLevel())
+                + " | Subject: " + formatStudentDetail(person.getSubject()));
     }
 
     /**
