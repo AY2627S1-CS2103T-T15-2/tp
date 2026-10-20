@@ -568,6 +568,20 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_removeSubjectKeepingLevel_success() throws Exception {
+        Person student = new PersonBuilder().withLevel("Sec 3").withSubject("Math").build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(student);
+        Model studentModel = new ModelManager(addressBook, new UserPrefs());
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withoutSubject().build())
+                .execute(studentModel);
+
+        Person expected = new PersonBuilder(student).withoutSubject().build();
+        assertEquals(expected, studentModel.getFilteredPersonList().get(0));
+    }
+
+    @Test
     public void execute_guardianLevelOrSubject_failure() {
         Person guardian = new PersonBuilder().withRole("guardian").build();
         AddressBook addressBook = new AddressBook();
