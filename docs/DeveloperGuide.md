@@ -1008,7 +1008,41 @@ testers are expected to do more *exploratory* testing.
    Expected: Both contacts are shown. The status message shows `Listed 2 contacts`.
 
 1. Test case: `list 3`<br>
-   Expected: The shown contacts are unchanged. The status message shows `Invalid list command. Use: list`
+   Expected: The shown contacts are unchanged. The status message shows
+   `Invalid list command. Use: list [r/ROLE] [st/former]`
+
+### Filtering the contact list
+
+1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add four contacts:
+   `add r/guardian n/Mei Tan p/98765432`, `add r/student n/Alex Tan p/91234567`, `add r/student n/Bea Lim` and
+   `add r/student n/Chloe Ng`. Mark Chloe Ng as former with `find Chloe`, then `archive 1`.
+
+1. Test case: `list r/student`<br>
+   Expected: Alex Tan and Bea Lim are shown. The status message shows `Listed 2 contacts`.
+
+1. Test case: `list r/GUARDIAN`<br>
+   Expected: Mei Tan is shown. The status message shows `Listed 1 contact`.
+
+1. Test case: `list r/student st/former`<br>
+   Expected: Chloe Ng is shown. The status message shows `Listed 1 former student`.
+
+1. Test case: `list r/guardian st/former`<br>
+   Expected: The shown contacts are unchanged. The status message shows
+   `Guardians cannot be former. Remove r/guardian or st/former.`
+
+1. Test case: `list r/teacher`<br>
+   Expected: The shown contacts are unchanged. The status message shows
+   `Invalid role. Role must be student or guardian.`
+
+1. Test case: `list r/student r/guardian`<br>
+   Expected: The shown contacts are unchanged. The status message shows `Each of r/ and st/ may appear only once.`
+
+1. Test case: `list n/Alex`<br>
+   Expected: The shown contacts are unchanged. The status message shows
+   `Invalid list command. Use: list [r/ROLE] [st/former]`
+
+1. Test case: `find Mei`, then `delete 1`, then `list r/guardian`<br>
+   Expected: No contacts are shown. The status message shows `No guardians found.`
 
 ### Finding contacts
 
