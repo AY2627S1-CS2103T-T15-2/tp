@@ -515,4 +515,85 @@ public class EditCommandTest {
                 localModel.getFilteredPersonList().get(0).getEmail().orElseThrow().value);
         assertEquals(student.getId(), updated.getId());
     }
+
+    @Test
+    public void execute_setLevelAndSubject_success() {
+        Person personToEdit = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person editedPerson = new PersonBuilder(personToEdit).withLevel("Sec 4").withSubject("Physics")
+                .build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withLevel("Sec 4")
+                .withSubject("Physics").build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, editedPerson.getName(),
+                editedPerson.getRole());
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(personToEdit, editedPerson);
+
+        assertCommandSuccess(editCommand, model, createExpectedResult(expectedMessage, INDEX_FIRST_PERSON),
+                expectedModel);
+    }
+
+    @Test
+    public void execute_removeLevelKeepingSubject_success() throws Exception {
+        Person student = new PersonBuilder().withRole("student").withLevel("Sec 3").withSubject("Math")
+                .build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(student);
+        Model studentModel = new ModelManager(addressBook, new UserPrefs());
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withoutLevel().build())
+                .execute(studentModel);
+
+        Person edited = studentModel.getFilteredPersonList().get(0);
+        assertTrue(edited.getLevel().isEmpty());
+        assertEquals(student.getSubject(), edited.getSubject());
+    }
+
+    @Test
+    public void execute_editOtherField_preservesLevelAndSubject() throws Exception {
+        Person student = new PersonBuilder().withRole("student").withLevel("JC1").withSubject("H2 Math")
+                .build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(student);
+        Model studentModel = new ModelManager(addressBook, new UserPrefs());
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB)
+                .build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(studentModel);
+
+        Person edited = studentModel.getFilteredPersonList().get(0);
+        assertEquals(student.getLevel(), edited.getLevel());
+        assertEquals(student.getSubject(), edited.getSubject());
+    }
+
+    @Test
+    public void execute_removeSubjectKeepingLevel_success() throws Exception {
+        Person student = new PersonBuilder().withLevel("Sec 3").withSubject("Math").build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(student);
+        Model studentModel = new ModelManager(addressBook, new UserPrefs());
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withoutSubject().build())
+                .execute(studentModel);
+
+        Person expected = new PersonBuilder(student).withoutSubject().build();
+        assertEquals(expected, studentModel.getFilteredPersonList().get(0));
+    }
+
+    @Test
+    public void execute_guardianLevelOrSubject_failure() {
+        Person guardian = new PersonBuilder().withRole("guardian").build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(guardian);
+        Model guardianModel = new ModelManager(addressBook, new UserPrefs());
+
+        EditCommand setLevel = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withLevel("Sec 3").build());
+        assertCommandFailure(setLevel, guardianModel, EditCommand.MESSAGE_GUARDIAN_STUDENT_DETAILS);
+
+        EditCommand removeSubject = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withoutSubject().build());
+        assertCommandFailure(removeSubject, guardianModel, EditCommand.MESSAGE_GUARDIAN_STUDENT_DETAILS);
+    }
 }

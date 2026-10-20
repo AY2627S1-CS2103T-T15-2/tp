@@ -242,7 +242,8 @@ _{more aspects and alternatives to be added}_
 
 ### Editing contacts
 
-`edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]` changes the name, phone number or email address of a displayed contact.
+`edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` changes the name, phone number, email address,
+level or subject of a displayed contact. Only a student can have a level or subject.
 The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
 first displayed contact `p`. Because edit changes data, `LogicManager` runs it on a candidate copy `c` of the live
 model `m`, saves `c` through `Storage`, and only then copies `c`'s data into `m`. If the save fails, `m` is never
@@ -253,23 +254,24 @@ touched.
 **Parsing.** `EditCommandParser` tokenizes the arguments with `ArgumentTokenizer#tokenizeWithQuotedValue`, so a
 quoted name such as `n/"Randy p/e ratio"` keeps any prefix-like text inside the quotes. It then checks, in order:
 
-1. No unknown parameter. Any word ending in `/` outside a quoted name, other than `n/`, `p/` or `e/`, is rejected
+1. No unknown parameter. Any word ending in `/` outside a quoted name, other than `n/`, `p/`, `e/`, `lv/` or `sub/`, is rejected
    with `Unknown parameter`. This is why an unquoted name such as `Ravi s/o Kumar` must be quoted.
-2. No repeated parameter. Each of `n/`, `p/` and `e/` may appear once.
+2. No repeated parameter. Each of `n/`, `p/`, `e/`, `lv/` and `sub/` may appear once.
 3. A valid index. A missing index, or extra text before the first parameter, gives `Invalid edit command`. A value
    that is not a positive integer gives `The contact index must be a positive integer shown in the list.`
 
 Each supplied value is stored in an `EditPersonDescriptor`. `NONE` in any letter case is stored as a removal
-(`removePhone()` or `removeEmail()`) rather than a value. Setting a value after a removal clears the removal flag.
-An empty descriptor is rejected with `At least one of n/, p/, or e/ must be provided.`
+(such as `removePhone()` or `removeLevel()`) rather than a value. Setting a value after a removal clears the removal flag.
+An empty descriptor is rejected with `At least one of n/, p/, e/, lv/, or sub/ must be provided.`
 
 **Execution.** `EditCommand#execute` resolves the index against the filtered, sorted display list, so the index the
 user sees is the one edited. An index beyond the list gives `No contact exists at index INDEX.` The edited contact is
 built by `createEditedPerson`: each field takes the descriptor's value, is emptied if marked for removal, or keeps the
-current value otherwise. The contact's ID, role and guardian link are always copied, so relationships survive an
+current value otherwise. The contact's ID, role, status and guardian link are always copied, so relationships survive an
 edit.
 
-The edit is then rejected if it would leave a guardian with no phone number and no email, or if the edited contact
+The edit is rejected if it sets or removes the level or subject of a guardian. It is then rejected if it would leave
+a guardian with no phone number and no email, or if the edited contact
 would duplicate another contact. The duplicate check is skipped when the edited contact still matches its original
 duplicate identity, so changing only the capitalization of a name is allowed.
 
@@ -859,12 +861,12 @@ testers are expected to do more *exploratory* testing.
    name, and the same email address exists, and that the contact may be a duplicate but was updated.
 
 1. Incorrect commands to try, each leaving the contacts unchanged:
-   * `edit 1` gives `At least one of n/, p/, or e/ must be provided.`
-   * `edit n/Alex` gives `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
+   * `edit 1` gives `At least one of n/, p/, e/, lv/, or sub/ must be provided.`
+   * `edit n/Alex` gives `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
    * `edit 0 n/Alex` gives `The contact index must be a positive integer shown in the list.`
    * `edit 999 n/Alex` gives `No contact exists at index 999.`
-   * `edit 1 r/guardian` gives `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
-   * `edit 1 n/A n/B` gives `Each of n/, p/, and e/ may appear only once.`
+   * `edit 1 r/guardian` gives `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
+   * `edit 1 n/A n/B` gives `Each of n/, p/, e/, lv/, and sub/ may appear only once.`
    * Editing a contact so that it matches another contact's role, name, phone and email gives
      `This edit would create a duplicate contact.`
 
