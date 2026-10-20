@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static seedu.address.ui.ContactDisplayFormatter.formatContactMethod;
 import static seedu.address.ui.ContactDisplayFormatter.formatGuardianName;
+import static seedu.address.ui.ContactDisplayFormatter.formatLevelAndSubject;
 import static seedu.address.ui.ContactDisplayFormatter.formatNameWithRole;
 
 import java.util.Optional;
@@ -42,11 +43,13 @@ public class PersonCard extends UiPart<Region> {
     private Label email;
     @FXML
     private Label guardian;
+    @FXML
+    private Label studentDetails;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
      * If the person is a student, the card also shows the name of {@code linkedGuardian},
-     * or "None" if the student has no linked guardian.
+     * or "None" if the student has no linked guardian, and the student's level and subject if either is set.
      */
     public PersonCard(Person person, int displayedIndex, Optional<Person> linkedGuardian) {
         super(FXML);
@@ -60,5 +63,10 @@ public class PersonCard extends UiPart<Region> {
         guardian.setVisible(isStudent);
         guardian.setManaged(isStudent);
         guardian.setText(isStudent ? "Guardian: " + formatGuardianName(linkedGuardian) : "");
+
+        Optional<String> levelAndSubject = formatLevelAndSubject(person);
+        studentDetails.setVisible(levelAndSubject.isPresent());
+        studentDetails.setManaged(levelAndSubject.isPresent());
+        studentDetails.setText(levelAndSubject.orElse(""));
     }
 }

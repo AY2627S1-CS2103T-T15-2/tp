@@ -1,6 +1,8 @@
 package seedu.address.ui;
 
 import static seedu.address.ui.ContactDisplayFormatter.formatContactMethod;
+import static seedu.address.ui.ContactDisplayFormatter.formatRoleWithStatus;
+import static seedu.address.ui.ContactDisplayFormatter.formatStudentDetail;
 
 import java.util.Optional;
 
@@ -34,6 +36,12 @@ public class PersonDetailsPanel extends UiPart<Region> {
     @FXML
     private Label email;
     @FXML
+    private VBox studentDetails;
+    @FXML
+    private Label level;
+    @FXML
+    private Label subject;
+    @FXML
     private VBox guardianDetails;
     @FXML
     private Label guardianName;
@@ -62,16 +70,22 @@ public class PersonDetailsPanel extends UiPart<Region> {
             role.setText("");
             phone.setText("");
             email.setText("");
+            studentDetails.setVisible(false);
+            studentDetails.setManaged(false);
             guardianDetails.setVisible(false);
             guardianDetails.setManaged(false);
             return;
         }
 
         name.setText(contact.getName().fullName);
-        role.setText("Role: " + contact.getRole());
+        role.setText("Role: " + formatRoleWithStatus(contact));
         phone.setText("Phone: " + formatContactMethod(contact.getPhone()));
         email.setText("Email: " + formatContactMethod(contact.getEmail()));
         boolean isStudent = contact.getRole() == Role.STUDENT;
+        studentDetails.setVisible(isStudent);
+        studentDetails.setManaged(isStudent);
+        level.setText("Level: " + formatStudentDetail(contact.getLevel()));
+        subject.setText("Subject: " + formatStudentDetail(contact.getSubject()));
         guardianDetails.setVisible(isStudent);
         guardianDetails.setManaged(isStudent);
         Person guardian = contact.getGuardianId().flatMap(id -> PersonLookup.findById(persons, id)).orElse(null);

@@ -18,8 +18,10 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ROLE_BOB;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalPersons.AMY;
@@ -31,10 +33,12 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.Subject;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandParserTest {
@@ -437,5 +441,64 @@ public class AddCommandParserTest {
                 Phone.MESSAGE_INVALID_CHARACTERS);
         assertParseFailure(parser, NAME_DESC_AMY + " p/912\t456" + ROLE_DESC_AMY,
                 Phone.MESSAGE_INVALID_CHARACTERS);
+    }
+
+    @Test
+    public void parse_studentWithLevelAndSubject_success() {
+        Person expectedPerson = new PersonBuilder(AMY).withLevel("Sec 3").withSubject("A-Math").build();
+        assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY + ROLE_DESC_AMY
+                + " " + PREFIX_LEVEL + "Sec  3 " + PREFIX_SUBJECT + "A-Math", new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_studentWithOnlySubject_success() {
+        Person expectedPerson = new PersonBuilder(AMY).withSubject("Math").build();
+        assertParseSuccess(parser, " " + PREFIX_SUBJECT + "Math" + NAME_DESC_AMY + PHONE_DESC_AMY
+                + EMAIL_DESC_AMY + ROLE_DESC_AMY, new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_guardianWithLevelOrSubject_failure() {
+        String guardian = " " + PREFIX_ROLE + "guardian" + NAME_DESC_BOB + PHONE_DESC_BOB;
+        assertParseFailure(parser, guardian + " " + PREFIX_LEVEL + "Sec 3",
+                AddCommandParser.MESSAGE_GUARDIAN_STUDENT_DETAILS);
+        assertParseFailure(parser, guardian + " " + PREFIX_SUBJECT + "Math",
+                AddCommandParser.MESSAGE_GUARDIAN_STUDENT_DETAILS);
+    }
+
+    @Test
+    public void parse_repeatedLevelOrSubject_failure() {
+        String fields = NAME_DESC_AMY + PHONE_DESC_AMY + ROLE_DESC_AMY;
+        assertParseFailure(parser, fields + " " + PREFIX_LEVEL + "Sec 3 " + PREFIX_LEVEL + "Sec 4",
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
+        assertParseFailure(parser, fields + " " + PREFIX_SUBJECT + "Math " + PREFIX_SUBJECT + "Physics",
+                AddCommandParser.MESSAGE_DUPLICATE_PREFIXES);
+    }
+
+    @Test
+    public void parse_invalidLevelOrSubject_failure() {
+        String fields = NAME_DESC_AMY + PHONE_DESC_AMY + ROLE_DESC_AMY;
+        assertParseFailure(parser, fields + " " + PREFIX_LEVEL + "Sec #3", Level.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, fields + " " + PREFIX_SUBJECT + "Math & Sci", Subject.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, fields + " " + PREFIX_LEVEL + "NONE",
+                ParserUtil.MESSAGE_RESERVED_REMOVE_VALUE);
+    }
+
+    @Test
+    public void parse_emptyLevel_reportsEmptyParameter() {
+        String fields = NAME_DESC_AMY + PHONE_DESC_AMY + ROLE_DESC_AMY;
+        for (String value : List.of("", "   ", "\t\r\n")) {
+            assertParseFailure(parser, fields + " " + PREFIX_LEVEL + value,
+                    "Empty level parameter: Level cannot be empty when lv/ is specified.");
+        }
+    }
+
+    @Test
+    public void parse_emptySubject_reportsEmptyParameter() {
+        String fields = NAME_DESC_AMY + PHONE_DESC_AMY + ROLE_DESC_AMY;
+        for (String value : List.of("", "   ", "\t\r\n")) {
+            assertParseFailure(parser, fields + " " + PREFIX_SUBJECT + value,
+                    "Empty subject parameter: Subject cannot be empty when sub/ is specified.");
+        }
     }
 }

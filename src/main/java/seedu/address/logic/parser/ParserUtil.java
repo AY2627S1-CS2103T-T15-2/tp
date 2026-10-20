@@ -4,11 +4,14 @@ import static java.util.Objects.requireNonNull;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.Subject;
 
 /**
  * Contains utility methods used for parsing strings in the various *Parser classes.
@@ -16,6 +19,8 @@ import seedu.address.model.person.Role;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String MESSAGE_RESERVED_REMOVE_VALUE =
+            "NONE cannot be used as a level or subject. Use lv/NONE or sub/NONE in edit to remove it.";
     public static final String MESSAGE_INVALID_NAME_QUOTES =
             "Invalid quoted name. Use n/NAME or n/\"NAME\", with quotation marks surrounding the entire name.";
 
@@ -107,6 +112,56 @@ public class ParserUtil {
             throw new ParseException(emailValidationError);
         }
         return new Email(trimmedEmail);
+    }
+
+    /**
+     * Parses a {@code String level} into a {@code Level}.
+     * Leading and trailing whitespaces will be trimmed, and repeated spaces will be collapsed into one.
+     *
+     * @throws ParseException if the given {@code level} is invalid or is the reserved value NONE.
+     */
+    public static Level parseLevel(String level) throws ParseException {
+        requireNonNull(level);
+        String normalizedLevel = normalizeStudentDetail(level);
+        if (normalizedLevel.isEmpty()) {
+            throw new ParseException(Level.MESSAGE_EMPTY);
+        }
+        if (!Level.isValidLevel(normalizedLevel)) {
+            throw new ParseException(Level.MESSAGE_CONSTRAINTS);
+        }
+        return new Level(normalizedLevel);
+    }
+
+    /**
+     * Parses a {@code String subject} into a {@code Subject}.
+     * Leading and trailing whitespaces will be trimmed, and repeated spaces will be collapsed into one.
+     *
+     * @throws ParseException if the given {@code subject} is invalid or is the reserved value NONE.
+     */
+    public static Subject parseSubject(String subject) throws ParseException {
+        requireNonNull(subject);
+        String normalizedSubject = normalizeStudentDetail(subject);
+        if (normalizedSubject.isEmpty()) {
+            throw new ParseException(Subject.MESSAGE_EMPTY);
+        }
+        if (!Subject.isValidSubject(normalizedSubject)) {
+            throw new ParseException(Subject.MESSAGE_CONSTRAINTS);
+        }
+        return new Subject(normalizedSubject);
+    }
+
+    /**
+     * Returns {@code value} trimmed with repeated spaces collapsed into one.
+     *
+     * @throws ParseException if {@code value} is NONE, ignoring case, which {@code edit} uses to remove
+     *     a field.
+     */
+    private static String normalizeStudentDetail(String value) throws ParseException {
+        String normalizedValue = value.trim().replaceAll(" {2,}", " ");
+        if (normalizedValue.equalsIgnoreCase(EditCommand.REMOVE_FIELD_VALUE)) {
+            throw new ParseException(MESSAGE_RESERVED_REMOVE_VALUE);
+        }
+        return normalizedValue;
     }
 
     /**

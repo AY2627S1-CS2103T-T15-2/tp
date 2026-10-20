@@ -29,7 +29,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list` : Lists guardians and active students.
 
    * `add r/student n/John Doe p/98765432 e/johnd@example.com` : Adds a student named `John Doe`.
 
@@ -89,10 +89,119 @@ Format: `help`
 
 Adds a student or guardian contact.
 
-Format: `add r/ROLE n/NAME [p/PHONE] [e/EMAIL]`
+Format: `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
-**Role and name are required.** Students may provide phone, email, both, or neither; guardians must provide at
-least one contact method.
+`r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case. The parameters may
+appear in any order, but each may appear only once. If multiple supplied values are invalid, errors are checked in the
+fixed parameter order `r/ROLE`, `n/NAME`, `p/PHONE`, `e/EMAIL`, `lv/LEVEL`, then `sub/SUBJECT`, regardless of the order entered.
+An empty `r/` is rejected with `Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.`
+An unsupported role is rejected with `Invalid role. Role must be student or guardian.`
+If `r/` is omitted, the error starts with `Missing required field: r/ROLE.` If `n/` is omitted, it starts with
+`Missing required field: n/NAME.` In either case, that line is followed by the same usage text:
+
+    add: Adds a student or guardian contact.
+    Parameters: r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]
+    Students may omit phone and email; guardians must provide at least one.
+    Only students can have a level and subject.
+    Example: add r/student n/John Doe p/98765432 e/johnd@example.com lv/Sec 3 sub/Math
+
+Repeating any parameter is rejected with `Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.`
+Phone and email are optional fields, subject to the guardian requirement below.
+
+Phone is optional. Omit `p/` to save a contact without a phone number; the contact displays `Not provided`.
+Supplying `p/` with an empty or whitespace-only value is rejected with:
+`Empty phone parameter: Phone cannot be empty when p/ is specified.`
+
+A guardian must have at least one contact method. Adding a guardian with neither `p/` nor `e/` is rejected with:
+`A guardian must have at least one contact method: phone or email.`
+For students, phone and email are independently optional. A student can have both, either one, or neither.
+
+The phone field accepts contact details with at least 3 digits from `0-9` and a maximum of 100 characters.
+Other numeral characters may appear as text, but do not count towards the minimum. You can include multiple
+numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
+has no position restriction. The `@` character is reserved for email addresses, and `/` is reserved for command
+prefixes. Control characters such as tabs and line breaks are not accepted; surrounding whitespace is trimmed. Invalid
+phone values report the relevant reason: `Phone number must contain at least 3 digits (0-9).`,
+`Phone details cannot exceed 100 characters.`, or
+`Phone number cannot contain control characters, '@', or '/'.`
+
+A student can optionally have one level, such as `lv/Sec 3`, and one subject, such as `sub/A-Math`. Each is free
+text of 1 to 30 characters containing at least one letter or digit. Letters, digits, spaces, hyphens (`-`), periods
+(`.`), plus signs (`+`) and parentheses are allowed. Surrounding spaces are trimmed, repeated spaces are reduced to one,
+and capitalization is kept as typed. `NONE` cannot be used as a level or subject, because `edit` uses it to remove one.
+Supplying `lv/` or `sub/` with an empty or whitespace-only value is rejected with
+`Empty level parameter: Level cannot be empty when lv/ is specified.` or
+`Empty subject parameter: Subject cannot be empty when sub/ is specified.`, respectively.
+Adding a guardian with `lv/` or `sub/` is rejected with
+`Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
+For example, `add r/student n/Alex Tan lv/Sec 3 sub/Math` adds a Secondary 3 student taking Math.
+
+For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first even though `p/` appears first in the command.
+
+Email is optional. Omit `e/` to save a contact without an email; the contact displays `Not provided`.
+Supplying `e/` with an empty or whitespace-only value is rejected with:
+`Empty email parameter: Email cannot be empty when e/ is specified.`
+
+An email must have exactly one `@`, a non-empty local part, and at least two non-empty domain labels
+separated by periods. The final domain label must contain at least two characters. Surrounding whitespace is
+trimmed; internal whitespace is rejected.
+The email address may contain at most 254 characters after trimming surrounding whitespace. Longer values report
+`Email address cannot exceed 254 characters.`
+The local part (before `@`) is limited to 64 characters, and each domain label (between periods) to 63.
+Exceeding these limits reports `Email local part cannot exceed 64 characters.` or
+`Email domain labels cannot exceed 63 characters.`, respectively.
+The local part allows ASCII letters, digits, periods, underscores, percentage signs, plus signs and hyphens.
+Domain labels allow ASCII letters, digits and hyphens. Capitalization is preserved for display.
+Invalid input reports the specific reason, such as `Email address cannot contain whitespace.` or
+`Email domain labels cannot be empty.`
+
+| Accepted email | Rejected email | Reason for rejection |
+| --- | --- | --- |
+| `alex.tan@example.com` | `alex@example` | Fewer than two domain labels |
+| `alex+tuition@example.com` | `alex@example.c` | Final domain label has fewer than two characters |
+| `Alex_Tan%25@Example.COM` | `.alex@example.com` | Local part starts with a special character |
+| `alex%school@example.com` | `alex..tan@example.com` | Consecutive special characters in the local part |
+| `alex-tan@example.com` | `alex-@example.com` | Local part ends with a special character |
+| `alex@example.com` | `alex@-example.com` | Domain label starts with a hyphen |
+
+The local part accepts `%` in addition to the original `+`, `_`, `.`, and `-` characters, while special
+characters cannot start or end the local part or appear consecutively. Domain labels retain the original
+alphanumeric and hyphen placement restrictions, and the final label must contain at least two characters.
+Validation checks the address format; it does not verify that a mailbox exists.
+
+Contacts are exact duplicates when their role, name, phone and email all match. Name and email comparisons ignore
+capitalization; phone details are compared after trimming surrounding whitespace, while internal spaces and hyphens
+remain significant. Two omitted values match. Exact duplicates with at least one contact method are rejected with
+`This contact already exists.` A student with neither a phone number nor an email address is not rejected as an exact
+duplicate based on role and name alone.
+
+When a contact has the same role and name as an existing contact, Add may display a possible-duplicate warning and
+still add the contact. A matching phone after spaces and hyphens are removed produces a phone warning. A matching
+email produces an email warning. If either contact method is missing from both contacts, and neither of those more
+specific warnings applies, a general warning is shown. A contact with the same role and name but different phone and
+email values receives no warning when neither value matches under these rules. Contacts with different roles or names
+do not trigger these warnings. The normal success message is displayed together with any warning.
+
+Examples:
+
+* `add r/student n/Alex Tan p/91234567 e/alex@example.com` followed by `add r/student n/alex tan p/91234567 e/ALEX@example.com`
+  is rejected as an exact duplicate because name and email capitalization are ignored.
+* `add r/student n/Alex Tan p/9123 4567` followed by `add r/student n/Alex Tan p/91234567` is added with a phone
+  warning. The phone values are similar after spaces are removed, but internal spaces are significant for exact duplicates.
+* Two contacts with the same role and name and the same phone after spaces and hyphens are removed receive the phone
+  warning if they are not exact duplicates.
+* Two contacts with the same role and name and the same email but different phone values receive the email warning.
+* Two students with the same role and name and no phone or email receive a general warning; both are added.
+
+An unknown parameter such as `a/15` is rejected with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
+e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unquoted slash occurs in the name, the message also says to enclose the entire name in double
+quotes. For example, use `add r/student n/"AC/DC"` or `add r/student n/"Ravi s/o Kumar"`. For Add, every slash in a
+name must be quoted, including an embedded slash such as the one in `AC/DC`. Edit has its own parsing behavior and
+continues to accept unquoted embedded slashes.
+
+After a contact is added, TutorRoster shows all guardians and active students, even if the list was filtered by an
+earlier command. Former students are hidden. The new contact is selected so that its details appear in the detail
+panel.
 
 Examples:
 
@@ -179,15 +288,39 @@ For example, `add r/guardian n/Mei Tan` reports
 On failure, contacts, selection, and saved data stay unchanged; the command remains for correction.
 For saving errors, see [Saving the data](#saving-the-data).
 
-### Listing all contacts: `list`
+### Listing contacts: `list`
 
-Shows a list of all contacts in TutorRoster.
+Shows guardians and active students, or only the contacts you choose.
 
-Format: `list`
+Format: `list [r/ROLE] [st/former]`
 
-* Any text after `list` is rejected; for example, `list 3` shows `Invalid list command. Use: list`.
-* The result shows the number of contacts listed; for example, `Listed 6 contacts`.
-* If there are no saved contacts, `No contacts found.` is shown.
+Command | Shows
+--------|------
+`list` | Guardians and active students
+`list r/student` | Active students only
+`list r/guardian` | Guardians only
+`list st/former` | Former students only
+`list r/student st/former` | Former students only (the same as `list st/former`)
+
+* `list` shows all guardians and active students. Former students are hidden; see
+  [Marking a student as former](#marking-a-student-as-former-archive).
+* `r/ROLE` shows only contacts with that role. `ROLE` must be `student` or `guardian`, and ignores letter case.
+* `st/former` shows only former students. `former` ignores letter case.
+* `r/` and `st/` can be given in either order, and each can appear only once. A contact must match both.
+* Guardians are never former, so `list r/guardian st/former` is rejected with
+  `Guardians cannot be former. Remove r/guardian or st/former.`
+* TutorRoster also starts with guardians and active students shown.
+* Any other text after `list` is rejected; for example, `list 3` shows
+  `Invalid list command. Use: list [r/ROLE] [st/former]`.
+* An invalid role is rejected with `Invalid role. Role must be student or guardian.`, and repeating `r/` or `st/`
+  is rejected with `Each of r/ and st/ may appear only once.`
+* The result shows the number of contacts listed; for example, `Listed 6 contacts` or `Listed 2 former students`.
+* If there are no saved contacts, `No contacts found.` is shown. If every saved contact is a former student,
+  `No active contacts found. Use list st/former to see former students.` is shown. If there are no former students,
+  `list st/former` shows `No former students found.`
+* If no contact has the chosen role, `list r/guardian` shows `No guardians found.` and `list r/student` shows
+  `No students found.` If every student is former, `list r/student` shows
+  `No active students found. Use list r/student st/former to see former students.`
 * Each contact is shown with its index, name and role, phone number, and email address. Students also show
   their linked guardian. For example:
   ```
@@ -198,6 +331,49 @@ Format: `list`
   ```
 * If a student has no linked guardian, `Guardian: None` is shown.
 * If a contact has no phone number or email address, `Not provided` is shown instead; for example, `Phone: Not provided`.
+* If a student has a level or subject, their card shows both on one line, for example
+  `Level: Sec 3 | Subject: Math`. A missing value is shown as `Not set`, for example
+  `Level: Sec 3 | Subject: Not set`. The line is hidden when both fields are missing.
+* Selecting a student shows separate `Level:` and `Subject:` lines in the details panel. Each missing value is shown
+  as `Not set`. Guardians do not show level or subject details.
+* A former student is labelled `[Former]` after their role, for example `Alex Tan [Student] [Former]`, and the
+  details panel shows `Role: Student [Former]`.
+
+### Marking a student as former: `archive`
+
+Marks a student who no longer takes lessons as a former student, so that they are hidden from `list`.
+
+Format: `archive INDEX`
+
+* `INDEX` is the index shown in the displayed contact list, and must be a positive integer 1, 2, 3, ...
+* The student keeps their details and guardian link. Their guardian stays in `list`.
+* The displayed list is kept and refreshed. After `list`, the student disappears straight away; after `find`, they
+  stay in the results, labelled `[Former]`. The result names the student; for example,
+  `Marked Alex Tan as a former student.`
+* Only students can be archived. Archiving a guardian is rejected with `Only students can be archived.`
+* Archiving a student who is already former is rejected with `Alex Tan is already a former student.`
+* An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
+
+Examples:
+* `list` followed by `archive 2` marks the 2nd contact in the list as a former student.
+* `find Alex` followed by `archive 1` marks the 1st search result as a former student.
+
+### Marking a former student as active: `unarchive`
+
+Marks a former student as active again, for example when they return for lessons.
+
+Format: `unarchive INDEX`
+
+* Run `list st/former` or `find NAME` first, since former students are hidden from `list`.
+* The displayed list is kept and refreshed. After `list st/former`, the student disappears straight away; after
+  `find`, they stay in the results without the `[Former]` label. The result names the student; for example,
+  `Marked Alex Tan as an active student.`
+* Only students can be unarchived. Unarchiving a guardian is rejected with `Only students can be unarchived.`
+* Unarchiving a student who is already active is rejected with `Alex Tan is already an active student.`
+* Index rules are the same as for `archive`.
+
+Examples:
+* `list st/former` followed by `unarchive 1` marks the 1st former student as active again.
 
 ### Editing a contact: `edit`
 
@@ -209,6 +385,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * After a successful edit, the edited contact is selected and its details are shown in the details panel.
+  Editing a former student shows `list st/former`, and editing any other contact shows `list`, so the edited contact
+  stays visible.
 * Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
   as `add`. An empty `e/` is rejected.
 * `e/NONE` removes the existing email. `NONE` ignores letter case, so `e/none` also works.
@@ -257,6 +435,7 @@ Format: `find NAME`
 * Curly and straight apostrophes are treated as the same; for example, `o'brien` matches `O’Brien`.
 * Accents are ignored; for example, `elise` matches `Élise`, `élise` matches `Elise`, and `soren` matches `Søren`.
 * The search considers only names.
+* Former students are included in the results, labelled `[Former]`.
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.
 * The result shows the number of matches; for example, `Found 2 contacts matching: li.`
 * If no contact matches, `No contacts found matching: NAME` is shown.
@@ -266,12 +445,37 @@ Examples:
 * `find ale` returns `Alex Yeoh`
 * `find li` returns `Charlotte Oliveiro` and `David Li`
 
+### Viewing a contact's details: `view`
+
+Shows the full details of the specified contact in the details panel.
+
+Format: `view INDEX`
+
+* Shows the details of the contact at the specified `INDEX` in the details panel, and selects that contact in the list.
+* The index refers to the index number shown in the displayed contact list.
+* The index **must be a positive integer** 1, 2, 3, ...
+* A value that is not a positive integer is rejected with
+  `The contact index must be a positive integer shown in the list.`
+* An index outside the displayed list is rejected with `No contact exists at index INDEX.`
+* The details panel shows the contact's name, role, phone number and email address. For a student, it also shows the
+  linked guardian's name, phone number and email address, or `Guardian: None` if no guardian is linked.
+* `view` also works on the results of `list st/former` and `find`. A former student's role is shown as
+  `Role: Student [Former]`.
+* The displayed list does not change, so you can keep using the same indexes afterwards.
+* The result names the contact; for example, `Viewing contact: Alex Tan [Student].`
+
+Examples:
+* `list` followed by `view 2` shows the details of the 2nd contact in the displayed contact list.
+* `find Alex` followed by `view 1` shows the details of the 1st contact in the results of the `find` command.
+
 ### Linking a student to a guardian: `link`
 
 Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 
 * Run `list` or `find NAME` first and use the indexes in the **currently displayed list**.
-* Both contacts must be visible. If a search hides either contact, run `list` before linking.
+* Both contacts must be visible. If a search hides either contact, run `list` before linking an active student.
+  To link a former student without reactivating them, use `find NAME` with a search term that shows both contacts;
+  for example, `find Tan` can show former student Alex Tan and guardian Mei Tan together.
 * `s/` must identify a student and `g/` must identify a guardian.
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
 * Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
@@ -351,7 +555,8 @@ Format: `exit`
 
 ### Saving the data
 
-TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear` and `link` commands. You do not need to save manually. Read-only commands do not write the data file.
+TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear`, `link`, `archive` and `unarchive` commands.
+You do not need to save manually. Read-only commands do not write the data file.
 
 If saving fails, the command reports `Changes could not be saved. No changes were made.` Contacts, relationships and the previously saved data remain unchanged.
 
@@ -381,8 +586,7 @@ _Details coming soon ..._
 
 ## Known issues
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -390,11 +594,14 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com`
+**Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
-**List**   | `list`
+**List**   | `list [r/ROLE] [st/former]`<br> e.g., `list r/student`, `list st/former`
+**Archive** | `archive INDEX`<br> e.g., `archive 2`
+**Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
+**View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
