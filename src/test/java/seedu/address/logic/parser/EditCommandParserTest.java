@@ -18,6 +18,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -301,9 +303,24 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidLevelOrSubject_failure() {
-        assertParseFailure(parser, "1 lv/", Level.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1 lv/Sec #3", Level.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1 sub/Math & Science", Subject.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_emptyLevel_reportsEmptyParameter() {
+        for (String value : List.of("", "   ", "\t\r\n")) {
+            assertParseFailure(parser, "1 lv/" + value,
+                    "Empty level parameter: Level cannot be empty when lv/ is specified.");
+        }
+    }
+
+    @Test
+    public void parse_emptySubject_reportsEmptyParameter() {
+        for (String value : List.of("", "   ", "\t\r\n")) {
+            assertParseFailure(parser, "1 sub/" + value,
+                    "Empty subject parameter: Subject cannot be empty when sub/ is specified.");
+        }
     }
 
     @Test
