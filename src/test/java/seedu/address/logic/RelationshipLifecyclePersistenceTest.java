@@ -24,6 +24,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonLookup;
 import seedu.address.model.person.StudentStatus;
@@ -79,6 +80,7 @@ public class RelationshipLifecyclePersistenceTest {
         Predicate<Person> originalFilter = model.getPersonFilter();
         List<Person> originalDisplay = List.copyOf(model.getFilteredPersonList());
         List<Person> originalContacts = List.copyOf(model.getAddressBook().getPersonList());
+        List<ContactId> originalIds = contactIds(model);
         String originalFile = Files.readString(file);
         JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(file) {
             @Override
@@ -91,10 +93,13 @@ public class RelationshipLifecyclePersistenceTest {
                 createLogic(model, failingStorage).execute("delete 2 1"));
 
         assertEquals(originalContacts, List.copyOf(model.getAddressBook().getPersonList()));
+        assertEquals(originalIds, contactIds(model));
         assertSame(originalFilter, model.getPersonFilter());
         assertEquals(originalDisplay, List.copyOf(model.getFilteredPersonList()));
         assertEquals(originalFile, Files.readString(file));
-        assertEquals(originalContacts, List.copyOf(reload(file).getAddressBook().getPersonList()));
+        Model reloaded = reload(file);
+        assertEquals(originalContacts, List.copyOf(reloaded.getAddressBook().getPersonList()));
+        assertEquals(originalIds, contactIds(reloaded));
     }
 
     @Test
@@ -145,6 +150,10 @@ public class RelationshipLifecyclePersistenceTest {
         AddressBook book = new AddressBook();
         book.setPersons(List.of(guardian, formerStudent, unrelatedStudent, activeStudent));
         return new ModelManager(book, new UserPrefs());
+    }
+
+    private List<ContactId> contactIds(Model model) {
+        return model.getAddressBook().getPersonList().stream().map(Person::getId).toList();
     }
 
     private Logic createLogic(Model model, JsonAddressBookStorage storage) {
