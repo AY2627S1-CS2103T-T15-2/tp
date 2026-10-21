@@ -26,7 +26,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
         }
 
         List<Index> indexes = new ArrayList<>();
-        Set<Integer> uniqueIndexes = new HashSet<>();
+        Set<Integer> seenIndexes = new HashSet<>();
         for (String indexText : trimmedArgs.split("\\s+")) {
             Index index;
             try {
@@ -34,7 +34,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             } catch (ParseException pe) {
                 throw new ParseException(DeleteCommand.MESSAGE_INVALID_INDEX, pe);
             }
-            if (!uniqueIndexes.add(index.getZeroBased())) {
+            if (!seenIndexes.add(index.getZeroBased())) {
                 throw new ParseException(DeleteCommand.MESSAGE_DUPLICATE_INDEX);
             }
             indexes.add(index);

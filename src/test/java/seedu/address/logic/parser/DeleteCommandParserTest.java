@@ -32,6 +32,8 @@ public class DeleteCommandParserTest {
     @Test
     public void parse_invalidIndex_throwsParseException() {
         assertParseFailure(parser, "a", DeleteCommand.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "1 a", DeleteCommand.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "1 0", DeleteCommand.MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, "0", DeleteCommand.MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, "-1", DeleteCommand.MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, "1.5", DeleteCommand.MESSAGE_INVALID_INDEX);

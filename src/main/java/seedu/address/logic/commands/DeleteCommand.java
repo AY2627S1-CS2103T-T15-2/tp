@@ -3,12 +3,14 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
 
 /**
@@ -23,7 +25,8 @@ public class DeleteCommand extends Command {
             + "Parameters: INDEX [INDEX...] (each must be a unique positive integer)\n"
             + "Example: " + COMMAND_WORD + " 1 3 5";
 
-    public static final String MESSAGE_DELETE_CONTACT_SUCCESS = "Deleted contact: %1$s [%2$s].";
+    public static final String MESSAGE_CONTACT_SUMMARY = "%1$s [%2$s]";
+    public static final String MESSAGE_DELETE_CONTACT_SUCCESS = "Deleted contact: " + MESSAGE_CONTACT_SUMMARY + ".";
     public static final String MESSAGE_DELETE_CONTACTS_SUCCESS = "Deleted %1$d contacts:\n%2$s.";
     public static final String MESSAGE_INVALID_INDEX =
             "The contact index must be a positive integer shown in the list.";
@@ -34,6 +37,7 @@ public class DeleteCommand extends Command {
 
     private final List<Index> targetIndexes;
 
+    /** Creates a command that deletes the contact at {@code targetIndex}. */
     public DeleteCommand(Index targetIndex) {
         this(List.of(targetIndex));
     }
@@ -84,12 +88,12 @@ public class DeleteCommand extends Command {
     }
 
     private static long countRemovedRelationships(Model model, List<Person> personsToDelete) {
+        Set<ContactId> deletedIds = personsToDelete.stream().map(Person::getId).collect(Collectors.toSet());
+        // A relationship is removed if either endpoint is deleted, counted once per student.
         return model.getAddressBook().getPersonList().stream()
-                .filter(person -> person.getGuardianId().isPresent())
-                .filter(student -> personsToDelete.stream()
-                        .anyMatch(person -> person.getId().equals(student.getId()))
-                        || personsToDelete.stream().anyMatch(guardian -> student.getGuardianId()
-                                .filter(guardian.getId()::equals).isPresent()))
+                .filter(student -> student.getGuardianId().isPresent())
+                .filter(student -> deletedIds.contains(student.getId())
+                        || deletedIds.contains(student.getGuardianId().get()))
                 .count();
     }
 
@@ -99,7 +103,7 @@ public class DeleteCommand extends Command {
             return String.format(MESSAGE_DELETE_CONTACT_SUCCESS, person.getName(), person.getRole());
         }
         String joinedDescriptions = deletedPersons.stream()
-                .map(person -> String.format("%s [%s]", person.getName(), person.getRole()))
+                .map(person -> String.format(MESSAGE_CONTACT_SUMMARY, person.getName(), person.getRole()))
                 .collect(Collectors.joining("\n"));
         return String.format(MESSAGE_DELETE_CONTACTS_SUCCESS, deletedPersons.size(), joinedDescriptions);
     }

@@ -817,7 +817,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Deleting contacts
 
-1. Deleting a contact while all contacts are being shown
+1. Deleting contacts while all contacts are being shown
 
    1. Prerequisites: Prepare a dataset with at least three active contacts visible after running `list`.
       Back up `data/addressbook.json` with the app closed. Before each successful deletion test below, close
