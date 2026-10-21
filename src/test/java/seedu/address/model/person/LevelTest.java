@@ -56,6 +56,13 @@ public class LevelTest {
     }
 
     @Test
+    public void getValidationErrorMessage_multipleViolations_preservesConstraintPriority() {
+        assertEquals(Level.MESSAGE_TOO_LONG, Level.getValidationErrorMessage("&".repeat(31)));
+        assertEquals(Level.MESSAGE_INVALID_CHARACTERS, Level.getValidationErrorMessage(" & "));
+        assertEquals(Level.MESSAGE_MISSING_ALPHANUMERIC, Level.getValidationErrorMessage(" --- "));
+    }
+
+    @Test
     public void isSameValue() {
         Level level = new Level("Sec 3");
         assertTrue(level.isSameValue(new Level("Sec 3")));

@@ -39,21 +39,21 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String name} into a {@code Name}.
-     * Leading and trailing whitespaces will be trimmed. A name may optionally be enclosed in quotation marks. The
-     * quotation marks are removed before the name is validated and stored.
+     * Leading and trailing whitespace is trimmed, including inside optional enclosing quotation marks.
+     * The quotation marks are removed before the name is validated and stored.
      *
      * @throws ParseException if the given {@code name} is invalid.
      */
     public static Name parseName(String name) throws ParseException {
         requireNonNull(name);
-        String trimmedName = name.trim();
+        String trimmedName = name.trim().strip();
         boolean isQuoted = trimmedName.startsWith("\"");
 
         if (isQuoted) {
             if (trimmedName.length() < 2 || !trimmedName.endsWith("\"")) {
                 throw new ParseException(MESSAGE_INVALID_NAME_QUOTES);
             }
-            trimmedName = trimmedName.substring(1, trimmedName.length() - 1).trim();
+            trimmedName = trimmedName.substring(1, trimmedName.length() - 1).trim().strip();
             if (trimmedName.contains("\"")) {
                 throw new ParseException(MESSAGE_INVALID_NAME_QUOTES);
             }

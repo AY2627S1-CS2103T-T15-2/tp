@@ -56,6 +56,13 @@ public class SubjectTest {
     }
 
     @Test
+    public void getValidationErrorMessage_multipleViolations_preservesConstraintPriority() {
+        assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("&".repeat(31)));
+        assertEquals(Subject.MESSAGE_INVALID_CHARACTERS, Subject.getValidationErrorMessage(" & "));
+        assertEquals(Subject.MESSAGE_MISSING_ALPHANUMERIC, Subject.getValidationErrorMessage(" --- "));
+    }
+
+    @Test
     public void isSameValue() {
         Subject subject = new Subject("A-Math");
         assertTrue(subject.isSameValue(new Subject("A-Math")));

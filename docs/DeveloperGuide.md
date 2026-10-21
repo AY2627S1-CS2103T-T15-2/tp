@@ -13,7 +13,17 @@
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* TutorRoster is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the
+  [SE-EDU initiative](https://se-education.org/). Its code, documentation structure and UML diagrams have been reused
+  and adapted for student and guardian contact management. This includes the proposed undo/redo design below.
+* [JavaFX](https://openjfx.io/) provides the graphical interface, and
+  [Jackson](https://github.com/FasterXML/jackson) handles JSON serialization.
+* [JUnit 5](https://junit.org/junit5/) provides the automated testing framework.
+* [MarkBind](https://markbind.org/) builds the documentation website, with
+  [PlantUML](https://plantuml.com/) rendering the UML diagrams.
+* Build and quality tools include [Gradle](https://gradle.org/),
+  [Shadow](https://github.com/GradleUp/shadow), [Checkstyle](https://checkstyle.org/) and
+  [JaCoCo](https://www.jacoco.org/jacoco/).
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -241,8 +251,6 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
   * Cons: We must ensure that the implementation of each individual command is correct.
 
-_{more aspects and alternatives to be added}_
-
 ### Editing contacts
 
 `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` changes the name, phone number, email address,
@@ -328,6 +336,18 @@ rule to the resulting contact before updating the model. `Person` stores
 phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
 method. This model invariant applies regardless of which code path creates a `Person`.
 
+`parse` delegates syntax handling to `tokenizeArguments` and field parsing to `parsePerson`. Field-specific helpers
+keep the validation sequence visible without mixing it with extraction details. `AddCommand#execute` similarly
+separates rejection checks, feedback preparation and model updates. Feedback is prepared before insertion so the
+new contact cannot match itself when checking for possible duplicates.
+
+Both the Add scanner and tokenizer enter quoted mode only when the first non-whitespace character after `n/` is
+a straight double quote. Quotes in phone text remain literal characters and cannot hide later parameters.
+`ParserUtil#parseName` trims surrounding whitespace before and after removing enclosing quotes, including Java
+whitespace such as em spaces, tabs and line breaks. Internal tabs and other unsupported whitespace still fail name
+validation; only repeated ordinary spaces are collapsed. Keeping these rules consistent lets quotation marks protect
+prefix-like name text without changing whitespace validation.
+
 The Add parser identifies the unknown prefix, for example `Invalid parameter: a/. Valid parameters are r/ROLE,
 n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unknown parameter follows an unquoted name, it also suggests
 quoting the full name. After a quoted name, it reports only the invalid parameter. For Add, every name containing
@@ -345,7 +365,9 @@ spaces to one and rejects `NONE`, which `edit` reserves for removing the field. 
 reject blank values with their constraints messages. For command input, `ParserUtil` instead reports the specific
 empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. For other invalid values, it uses
 `getValidationErrorMessage` to distinguish excessive length, unsupported characters, and the absence of a letter or
-digit, in that order. The `Person` constructor rejects a
+digit, in that order. `Level` and `Subject` delegate these common checks to `StudentDetailValidator` and map its
+validation result to their own field-specific messages. This keeps their rules aligned while preserving distinct
+value types and error messages. The `Person` constructor rejects a
 guardian with a level or subject. After validating phone and email, the Add parser checks the guardian contact-method
 requirement, then rejects student-only prefixes before parsing either value. `isSameValue` compares
 two values ignoring letter case and spaces, so that filters can treat `Sec 3` and `sec3` as the same level.
@@ -361,6 +383,11 @@ checks possible duplicates in this order: a phone number that matches after spac
 address that matches case-insensitively; then a contact method that is absent from both contacts. It displays only the
 first matching warning, appends it after the normal success message, and still adds the contact. Contacts with
 different roles or names do not receive these warnings.
+
+`DuplicateWarning#classify` owns the warning priority shared by Add and Edit and returns `PHONE`, `EMAIL`, `GENERAL`
+or `NONE`. Each command supplies its own wording; Add also logs the selected warning. Edit excludes the contact
+being edited by ID before calling the classifier. Sharing classification prevents the commands' warning rules from
+drifting apart without coupling their success messages or exact-duplicate rejection.
 
 Duplicate and warning checks use the complete saved contact list, including former students, regardless of the
 current filter. Level, subject, IDs and guardian links do not contribute to duplicate identity.
@@ -795,11 +822,11 @@ testers are expected to do more *exploratory* testing.
    1. Relaunch the app by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
 
-1. _{ more test cases … }_
-
 ### Adding a contact
 
-1. Start with an empty contact list or use names and details not already in TutorRoster.
+Use a disposable application folder with an empty contact list. Run the following cases in order.
+For each failed Add command, verify that contacts, selection, details and saved data remain unchanged.
+The failed command should remain in the command box, which keeps focus.
 
 1. Test case: `add r/student n/Ben Lim`<br>
    Expected: The student is added with no phone number or email address.
@@ -837,6 +864,13 @@ testers are expected to do more *exploratory* testing.
 
 1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
    Expected: Both report the role error first, following the fixed parameter order regardless of command order.
+
+1. Syntax errors to try, each leaving the existing contacts unchanged:
+   * `add` reports `Missing required field: r/ROLE.` followed by the command usage.
+   * `add r/student` reports `Missing required field: n/NAME.` followed by the command usage.
+   * `add r/student n/"Alex Tan" a/15` identifies `Invalid parameter: a/.` and lists valid parameters.
+   * `add r/student n/Alex Tan r/guardian` reports
+     `Repeated parameter: r/. Each parameter may appear only once.`
 
 1. Test case: `add r/student n/Casey Lee lv/Sec 3 sub/A-Math`.<br>
    Expected: The student is added with both student details and no contact methods. The same name as an earlier
@@ -885,8 +919,6 @@ testers are expected to do more *exploratory* testing.
 
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
-
-1. _{ more test cases … }_
 
 ### Editing a contact
 

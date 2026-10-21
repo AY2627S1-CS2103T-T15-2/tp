@@ -6,7 +6,9 @@
 
 # TutorRoster User Guide
 
-TutorRoster is a **desktop application for managing student and guardian contacts through typed commands**, with a graphical contact list and a panel for the selected contact's details.
+TutorRoster is a **desktop contact-management application for independent private tutors** managing a small group of
+secondary school or junior college students and their guardians. Typed commands help tutors keep contact details
+up to date and retrieve them quickly, with a graphical contact list and a panel for the selected contact's details.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -124,7 +126,7 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 **Name (`n/`)**: A non-blank name of **1 to 70 characters**, allowing letters and numbers (including non-English
 scripts), spaces, apostrophes (`'` or `’`), hyphens, periods, and slashes. Consecutive spaces become one space
 before the length check. Enclose the **entire name** in double quotes if it contains `/`, even for `n/"AC/DC"`.
-The enclosing quotes are not saved.
+The enclosing quotes are not saved; surrounding whitespace inside them is also removed.
 Use straight double quotes (`"`), with no extra text outside them. Prefix-like text inside a quoted name stays
 part of the name: `n/"Ravi p/e ratio"` does not supply a phone number. Quotes protect names only, not other fields.
 

@@ -24,6 +24,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.AMY;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
@@ -46,6 +47,11 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_nullArgs_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> parser.parse(null));
+    }
+
+    @Test
     public void parse_multipleRepeatedParameters_reportsFirstInFormatOrder() {
         for (String input : List.of(" sub/Math sub/Science lv/Sec 3 lv/Sec 4 n/Alex r/student",
                 " lv/Sec 3 sub/Math lv/Sec 4 sub/Science n/Alex r/student")) {
@@ -62,6 +68,44 @@ public class AddCommandParserTest {
         assertParseFailure(parser, " r/student n/Ravi s/o Kumar",
                 "Invalid parameter: s/. Valid parameters are r/ROLE, n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, "
                         + "and sub/SUBJECT. If '/' is part of the name, enclose the entire name in double quotes.");
+    }
+
+    @Test
+    public void parse_phoneWithQuotes_doesNotInterfereWithQuotedName() {
+        for (String phone : List.of("123\"", "\"123", "\"HP\" 123")) {
+            Person expected = new PersonBuilder().withName("Ravi s/o Kumar").withPhone(phone).withoutEmail().build();
+            assertParseSuccess(parser, " r/student p/" + phone + " n/\"Ravi s/o Kumar\"", new AddCommand(expected));
+            assertParseSuccess(parser, " r/student n/\"Ravi s/o Kumar\" p/" + phone, new AddCommand(expected));
+        }
+    }
+
+    @Test
+    public void parse_phoneWithQuotes_doesNotHideUnknownOrRepeatedParameters() {
+        for (String phone : List.of("123\"", "\"123", "\"HP\" 123")) {
+            String fields = " r/student n/Alex p/" + phone;
+            assertParseFailure(parser, fields + " a/15", String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "a/"));
+            assertParseFailure(parser, fields + " p/456", String.format(
+                    AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "p/"));
+        }
+    }
+
+    @Test
+    public void parse_quoteInsideOtherFields_doesNotHideUnknownParameters() {
+        for (String field : List.of("r/stu\"dent", "n/Al\"ex", "e/al\"ex@example.com", "lv/Sec\"3", "sub/Ma\"th")) {
+            String error = String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "a/");
+            if (field.startsWith("n/")) {
+                error += AddCommand.MESSAGE_NAME_SLASH_HINT;
+            }
+            assertParseFailure(parser, " " + field + " a/15", error);
+        }
+    }
+
+    @Test
+    public void parse_quotedNameAfterPhoneQuote_keepsPrefixLikeTextInName() {
+        Person expected = new PersonBuilder().withName("Ravi p/e ratio lv/Sec 3 sub/Math")
+                .withPhone("123\"").withoutEmail().build();
+        assertParseSuccess(parser, " r/student p/123\" n/\"Ravi p/e ratio lv/Sec 3 sub/Math\"",
+                new AddCommand(expected));
     }
 
     @Test
@@ -125,6 +169,18 @@ public class AddCommandParserTest {
         assertParseFailure(parser, fields + " lv/Sec\t3", Level.MESSAGE_INVALID_CHARACTERS);
         assertParseFailure(parser, fields + " sub/Pure\tMath", Subject.MESSAGE_INVALID_CHARACTERS);
         assertParseFailure(parser, " r/student n/\"Alex\tTan\"", Name.getValidationErrorMessage("Alex\tTan"));
+    }
+
+    @Test
+    public void parse_nameWithSurroundingWhitespace_normalizesQuotedAndUnquotedNames() {
+        Person expected = new PersonBuilder().withName("Alex Tan").withoutPhone().withoutEmail().build();
+        for (String whitespace : List.of(" ", "\u2003", "\u3000", " \t\u2003 ")) {
+            assertParseSuccess(parser, " r/student n/" + whitespace + "Alex   Tan" + whitespace,
+                    new AddCommand(expected));
+            assertParseSuccess(parser, " r/student n/\"" + whitespace + "Alex   Tan" + whitespace + "\"",
+                    new AddCommand(expected));
+            assertParseFailure(parser, " r/student n/\"" + whitespace + "\"", "Name cannot be blank.");
+        }
     }
 
     @Test

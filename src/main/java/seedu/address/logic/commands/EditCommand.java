@@ -142,24 +142,12 @@ public class EditCommand extends Command {
      * which is reported before a phone number or email address that both contacts lack.
      */
     private static Optional<String> getPossibleDuplicateWarning(Person editedPerson, List<Person> otherPersons) {
-        List<Person> sameNameAndRole = otherPersons.stream()
-                .filter(editedPerson::hasSameNameAndRole)
-                .toList();
-        if (sameNameAndRole.stream().anyMatch(editedPerson::hasSamePhoneIgnoringFormatting)) {
-            return Optional.of(MESSAGE_POSSIBLE_DUPLICATE_PHONE);
-        }
-        if (sameNameAndRole.stream().anyMatch(editedPerson::hasSameEmailAddress)) {
-            return Optional.of(MESSAGE_POSSIBLE_DUPLICATE_EMAIL);
-        }
-        if (sameNameAndRole.stream().anyMatch(person -> hasSharedEmptyContactField(editedPerson, person))) {
-            return Optional.of(MESSAGE_POSSIBLE_DUPLICATE);
-        }
-        return Optional.empty();
-    }
-
-    private static boolean hasSharedEmptyContactField(Person person, Person otherPerson) {
-        return person.getPhone().isEmpty() && otherPerson.getPhone().isEmpty()
-                || person.getEmail().isEmpty() && otherPerson.getEmail().isEmpty();
+        return switch (DuplicateWarning.classify(editedPerson, otherPersons)) {
+            case PHONE -> Optional.of(MESSAGE_POSSIBLE_DUPLICATE_PHONE);
+            case EMAIL -> Optional.of(MESSAGE_POSSIBLE_DUPLICATE_EMAIL);
+            case GENERAL -> Optional.of(MESSAGE_POSSIBLE_DUPLICATE);
+            case NONE -> Optional.empty();
+        };
     }
 
     /**
