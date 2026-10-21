@@ -14,6 +14,9 @@ final class StudentDetailValidator {
 
     /**
      * Returns the first failed constraint, preserving length, character, content and spacing priority.
+     *
+     * @param value The student detail to validate.
+     * @param maximumLength Maximum number of Unicode code points allowed.
      */
     static ValidationResult validate(String value, int maximumLength) {
         requireNonNull(value);
