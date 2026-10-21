@@ -88,7 +88,10 @@ The `UI` component,
 
 Here's a (partial) class diagram of the `Logic` component:
 
-<puml src="diagrams/LogicClassDiagram.puml" width="550"/>
+<puml src="diagrams/LogicClassDiagram.puml" width="550" alt="Partial Logic class diagram showing the shared student status command hierarchy"/>
+
+`XYZCommand` represents the concrete commands listed in the diagram. `ArchiveCommand` and `UnarchiveCommand`
+instead extend the abstract `StudentStatusCommand`, which shares their student-status validation and update logic.
 
 The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
 
