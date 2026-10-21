@@ -815,14 +815,30 @@ testers are expected to do more *exploratory* testing.
 1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
    Expected: Both report the role error first, following the fixed parameter order regardless of command order.
 
-### Deleting a contact
+### Deleting contacts
 
-1. Deleting a contact while all contacts are being shown
+1. Deleting contacts while all contacts are being shown
 
-   1. Prerequisites: List all contacts using the `list` command, with multiple contacts in the list.
+   1. Prerequisites: Prepare a dataset with at least three active contacts visible after running `list`.
+      Back up `data/addressbook.json` with the app closed. Before each successful deletion test below, close
+      the app, restore that same backup, restart the app and run `list`. This ensures `delete 1 3` and
+      `delete 3 1` start from the same contacts and indexes. Restarting alone does not restore deleted contacts.
 
    1. Test case: `delete 1`<br>
       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+
+   1. Test case: `delete 1 3`<br>
+      Expected: The contacts originally shown at indexes 1 and 3 are deleted. The status message lists both contacts.
+
+   1. Test case: `delete 3 1`<br>
+      Expected: The same two contacts are deleted, listed in the order supplied.
+
+   1. Test case: `delete 1 1`<br>
+      Expected: No contact is deleted. The status message says each index may appear only once.
+
+   1. Test case: `delete 1 INDEX`, where `INDEX` is larger than the list size.<br>
+      Expected: No contact is deleted, including the valid contact at index 1. The status message identifies the
+      out-of-range index.
 
    1. Test case: `delete 0`<br>
       Expected: No contact is deleted. The status message shows error details.
