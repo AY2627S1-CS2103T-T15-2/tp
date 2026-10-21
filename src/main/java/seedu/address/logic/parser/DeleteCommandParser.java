@@ -1,5 +1,10 @@
 package seedu.address.logic.parser;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -15,12 +20,26 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public DeleteCommand parse(String args) throws ParseException {
-        try {
-            Index index = ParserUtil.parseIndex(args);
-            return new DeleteCommand(index);
-        } catch (ParseException pe) {
-            throw new ParseException(DeleteCommand.MESSAGE_INVALID_INDEX, pe);
+        String trimmedArgs = args.trim();
+        if (trimmedArgs.isEmpty()) {
+            throw new ParseException(DeleteCommand.MESSAGE_INVALID_INDEX);
         }
+
+        List<Index> indexes = new ArrayList<>();
+        Set<Integer> seenIndexes = new HashSet<>();
+        for (String indexText : trimmedArgs.split("\\s+")) {
+            Index index;
+            try {
+                index = ParserUtil.parseIndex(indexText);
+            } catch (ParseException pe) {
+                throw new ParseException(DeleteCommand.MESSAGE_INVALID_INDEX, pe);
+            }
+            if (!seenIndexes.add(index.getZeroBased())) {
+                throw new ParseException(DeleteCommand.MESSAGE_DUPLICATE_INDEX);
+            }
+            indexes.add(index);
+        }
+        return new DeleteCommand(indexes);
     }
 
 }
