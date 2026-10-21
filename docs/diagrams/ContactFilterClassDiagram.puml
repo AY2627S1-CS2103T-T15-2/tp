@@ -1,0 +1,29 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor MODEL_COLOR
+skinparam classBackgroundColor MODEL_COLOR
+
+package Logic <<Rectangle>> {
+class ListCommandParser LOGIC_COLOR
+class ListCommand LOGIC_COLOR
+}
+
+package Model <<Rectangle>> {
+class "<<interface>>\nPredicate<Person>" as Predicate
+class ContactFilter
+enum Role <<enumeration>>
+enum StudentStatus <<enumeration>>
+}
+
+ListCommandParser ..> ContactFilter : creates
+ListCommand --> "1" ContactFilter
+ContactFilter .up.|> Predicate
+ContactFilter --> "0..1" Role
+ContactFilter --> "1" StudentStatus
+
+note right of ContactFilter
+  Planned: optional Level and
+  Subject fields for lv/ and sub/
+end note
+@enduml

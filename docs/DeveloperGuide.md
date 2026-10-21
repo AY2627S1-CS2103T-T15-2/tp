@@ -426,27 +426,31 @@ run on Windows desktop environments; the remaining tests run on all supported pl
 `list` and `find` change which contacts the list panel shows by updating the predicate of the model's filtered list.
 Neither command changes any contact data.
 
-**Listing.** `list [r/ROLE] [st/former]` shows the contacts that match a `ContactFilter`. A `ContactFilter` is a
-`Predicate<Person>` that holds an optional `Role` and a `StudentStatus`. A contact matches when it has that status and,
-if a role is given, that role. Guardians are always `ACTIVE`, so they never match a filter for former contacts.
-`ContactFilter.ACTIVE_CONTACTS` (guardians and active students) is the default, and `ContactFilter.FORMER_STUDENTS`
-shows only former students. `Model#PREDICATE_SHOW_ACTIVE_CONTACTS` and `Model#PREDICATE_SHOW_FORMER_STUDENTS` refer
-to these two filters, so the rules for which contacts are active live in one class.
+**Listing.** `list [r/ROLE] [st/former]` shows the contacts that match a `ContactFilter`, as shown in the class
+diagram below.
 
-`ListCommandParser` builds the filter in these steps:
+<puml src="diagrams/ContactFilterClassDiagram.puml" alt="Classes involved in filtering the contact list" />
 
-1. It rejects any prefix other than `r/` or `st/`, such as `n/` in `n/Alex`, and any text before the first prefix,
-   with `Invalid list command. Use: list [r/ROLE] [st/former]`.
-1. It rejects a repeated `r/` or `st/` with `Each of r/ and st/ may appear only once.`
-1. It parses `r/ROLE` with `ParserUtil#parseRole`, the same method `add` uses, so role values and errors match.
-   An empty `r/` gives the same empty-role message as `add`.
-1. It reads `st/former`, ignoring letter case, and rejects any other `st/` value with the same invalid-format
-   message. Without `st/`, the status is `ACTIVE`.
-1. It rejects `r/guardian st/former` with `Guardians cannot be former. Remove r/guardian or st/former.`, because that
-   filter could never match a contact.
+A `ContactFilter` is a `Predicate<Person>` that holds an optional `Role` and a `StudentStatus`. A contact matches when
+it has that status and, if a role is given, that role. Guardians are always `ACTIVE`, so they never match a filter for
+former contacts. `ContactFilter.ACTIVE_CONTACTS` (guardians and active students) is the default, and
+`ContactFilter.FORMER_STUDENTS` shows only former students. `Model#PREDICATE_SHOW_ACTIVE_CONTACTS` and
+`Model#PREDICATE_SHOW_FORMER_STUDENTS` refer to these two filters, so the rules for which contacts are active live in
+one class.
 
-Like `add`, the parser checks values in a fixed order, so a role error is reported before a status error whatever
-order the user types them in.
+`ListCommandParser` checks the input as shown in the activity diagram below, and stops at the first problem it finds.
+
+<puml src="diagrams/ListParserActivityDiagram.puml" width="380" alt="Checks made by ListCommandParser" />
+
+* **Format error:** any prefix other than `r/` or `st/` (such as `n/` in `n/Alex`), or any text before the first
+  prefix, gives `Invalid list command. Use: list [r/ROLE] [st/former]`. A repeated prefix gives
+  `Each of r/ and st/ may appear only once.`
+* **Role or status error:** `r/ROLE` is parsed with `ParserUtil#parseRole`, the same method `add` uses, so role values
+  and errors match `add`. `st/` accepts only `former`, ignoring letter case; any other value gives the invalid-format
+  message above.
+  Without `st/`, the status is `ACTIVE`. The role is checked before the status, whatever order the user types them in.
+* **Guardians cannot be former:** `r/guardian st/former` gives
+  `Guardians cannot be former. Remove r/guardian or st/former.`, because that filter could never match a contact.
 
 `ListCommand#execute` passes its filter to `Model#updateFilteredPersonList`. It then reports the number of contacts
 shown, for example `Listed 6 contacts` or `Listed 2 former students`, using `Messages#formatContactCount` and
