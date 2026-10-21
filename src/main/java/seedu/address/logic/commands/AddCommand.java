@@ -9,6 +9,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_CONTACTS;
 
+import java.util.logging.Logger;
+
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
@@ -62,6 +65,8 @@ public class AddCommand extends Command {
     public static final String MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH = MESSAGE_INVALID_PARAMETER
             + MESSAGE_NAME_SLASH_HINT;
 
+    private static final Logger logger = LogsCenter.getLogger(AddCommand.class);
+
     private final Person toAdd;
 
     /**
@@ -82,10 +87,12 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (toAdd.isGuardianWithoutContactMethod()) {
+            logger.info("Rejected ADD: guardian has no contact method.");
             throw new CommandException(MESSAGE_CONTACT_METHOD_REQUIRED);
         }
 
         if (model.hasPerson(toAdd)) {
+            logger.info("Rejected ADD: an exact duplicate contact exists.");
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
 
@@ -100,12 +107,16 @@ public class AddCommand extends Command {
         model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_CONTACTS);
         String feedback = String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getRole());
         if (hasSimilarPhone) {
+            logger.info("ADD possible-duplicate warning selected: phone matches ignoring spaces and hyphens.");
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_PHONE;
         } else if (hasSameEmail) {
+            logger.info("ADD possible-duplicate warning selected: email matches ignoring case.");
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_EMAIL;
         } else if (hasSharedEmptyContactField) {
+            logger.info("ADD possible-duplicate warning selected: a contact method is absent from both contacts.");
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE;
         }
+        logger.info("Prepared ADD for contact " + toAdd.getId() + ", pending save.");
         return new CommandResult(feedback, toAdd.getId());
     }
 
