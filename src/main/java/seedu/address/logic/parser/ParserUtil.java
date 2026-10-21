@@ -126,8 +126,9 @@ public class ParserUtil {
         if (normalizedLevel.isEmpty()) {
             throw new ParseException(Level.MESSAGE_EMPTY);
         }
-        if (!Level.isValidLevel(normalizedLevel)) {
-            throw new ParseException(Level.MESSAGE_CONSTRAINTS);
+        String validationError = Level.getValidationErrorMessage(normalizedLevel);
+        if (validationError != null) {
+            throw new ParseException(validationError);
         }
         return new Level(normalizedLevel);
     }
@@ -144,8 +145,9 @@ public class ParserUtil {
         if (normalizedSubject.isEmpty()) {
             throw new ParseException(Subject.MESSAGE_EMPTY);
         }
-        if (!Subject.isValidSubject(normalizedSubject)) {
-            throw new ParseException(Subject.MESSAGE_CONSTRAINTS);
+        String validationError = Subject.getValidationErrorMessage(normalizedSubject);
+        if (validationError != null) {
+            throw new ParseException(validationError);
         }
         return new Subject(normalizedSubject);
     }

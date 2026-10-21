@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -18,6 +20,29 @@ public class ArgumentTokenizerTest {
     private final Prefix eSlash = new Prefix("e/");
     private final Prefix dashT = new Prefix("-t");
     private final Prefix hatQ = new Prefix("^Q");
+
+    @Test
+    public void tokenize_whitespaceSeparators_preservesInternalWhitespace() {
+        for (String separator : List.of(" ", "\t", "\n", "\r\n", "\u2003", " \t ")) {
+            ArgumentMultimap arguments = ArgumentTokenizer.tokenize(
+                    "n/Alex" + separator + "p/123\t456" + separator + "e/alex@example.com",
+                    nSlash, pSlash, eSlash);
+            assertArgumentPresent(arguments, nSlash, "Alex");
+            assertArgumentPresent(arguments, pSlash, "123\t456");
+            assertArgumentPresent(arguments, eSlash, "alex@example.com");
+        }
+    }
+
+    @Test
+    public void tokenizeWithQuotedValue_whitespaceSeparators_keepsQuotedPrefixesLiteral() throws Exception {
+        for (String separator : List.of(" ", "\t", "\n", "\r\n", "\u2003", " \t ")) {
+            ArgumentMultimap arguments = ArgumentTokenizer.tokenizeWithQuotedValue(
+                    "n/" + separator + "\"Alex\tp/example\"" + separator + "p/123\t456",
+                    nSlash, nSlash, pSlash);
+            assertArgumentPresent(arguments, nSlash, "\"Alex\tp/example\"");
+            assertArgumentPresent(arguments, pSlash, "123\t456");
+        }
+    }
 
     @Test
     public void tokenize_emptyArgsString_noValues() {

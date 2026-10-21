@@ -26,6 +26,16 @@ public class Email {
             "Email domain labels cannot exceed " + MAX_DOMAIN_LABEL_LENGTH + " characters.";
     public static final String MESSAGE_EMPTY =
             "Empty email parameter: Email cannot be empty when e/ is specified.";
+    public static final String MESSAGE_LOCAL_CHARACTERS =
+            "Email local part contains unsupported characters. Use ASCII letters (A-Z, a-z), digits (0-9), "
+                    + "and '.', '_', '%', '+', or '-'.";
+    public static final String MESSAGE_LOCAL_PUNCTUATION =
+            "Email local-part punctuation (., _, %, +, -) must appear singly between letters or digits.";
+    public static final String MESSAGE_DOMAIN_CHARACTERS =
+            "Email domain labels contain unsupported characters. Use ASCII letters (A-Z, a-z), digits (0-9), "
+                    + "and hyphens only.";
+    public static final String MESSAGE_DOMAIN_PUNCTUATION =
+            "Email domain hyphens must appear singly between letters or digits.";
     public final String value;
 
     /**
@@ -73,8 +83,11 @@ public class Email {
         if (test.chars().anyMatch(Character::isWhitespace)) {
             return "Email address cannot contain whitespace.";
         }
+        if (hasUnsupportedCharacters(localPart, "._%+-")) {
+            return MESSAGE_LOCAL_CHARACTERS;
+        }
         if (!isValidPart(localPart, "._%+-")) {
-            return "Email local part contains unsupported characters or invalid punctuation placement.";
+            return MESSAGE_LOCAL_PUNCTUATION;
         }
 
         String[] domainLabels = domain.split("\\.", -1);
@@ -90,8 +103,9 @@ public class Email {
             if (domainLabels[i].isEmpty()) {
                 return "Email domain labels cannot be empty.";
             }
-            if (!isValidPart(domainLabels[i], "-")) {
-                return "Email domain labels may contain letters, digits, and internal hyphens only.";
+            String labelError = getDomainLabelError(domainLabels[i]);
+            if (labelError != null) {
+                return labelError;
             }
         }
         String finalLabel = domainLabels[domainLabels.length - 1];
@@ -101,10 +115,24 @@ public class Email {
         if (finalLabel.length() < 2) {
             return "Email's final domain label must contain at least two characters.";
         }
-        if (!isValidPart(finalLabel, "-")) {
-            return "Email's final domain label may contain letters, digits, and internal hyphens only.";
+        return getDomainLabelError(finalLabel);
+    }
+
+    private static String getDomainLabelError(String label) {
+        if (hasUnsupportedCharacters(label, "-")) {
+            return MESSAGE_DOMAIN_CHARACTERS;
         }
-        return null;
+        return isValidPart(label, "-") ? null : MESSAGE_DOMAIN_PUNCTUATION;
+    }
+
+    private static boolean hasUnsupportedCharacters(String part, String allowedPunctuation) {
+        for (int i = 0; i < part.length(); i++) {
+            char character = part.charAt(i);
+            if (!isAsciiAlphanumeric(character) && allowedPunctuation.indexOf(character) < 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

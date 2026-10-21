@@ -215,10 +215,10 @@ public class ParserUtilTest {
         assertThrows(ParseException.class, "Email address must contain exactly one @ symbol.", ()
                 -> ParserUtil.parseEmail("alex@@example.com"));
         assertThrows(ParseException.class,
-                "Email domain labels may contain letters, digits, and internal hyphens only.", ()
+                Email.MESSAGE_DOMAIN_CHARACTERS, ()
                 -> ParserUtil.parseEmail("alex@exam_ple.com"));
         assertThrows(ParseException.class,
-                "Email local part contains unsupported characters or invalid punctuation placement.", ()
+                Email.MESSAGE_LOCAL_CHARACTERS, ()
                 -> ParserUtil.parseEmail("alex!@example.com"));
         assertThrows(ParseException.class, "Email address cannot contain whitespace.", ()
                 -> ParserUtil.parseEmail("alex\t@example.com"));
@@ -256,8 +256,24 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseStudentDetails_invalidValues_reportsFailedConstraint() {
+        assertThrows(ParseException.class, "Level cannot exceed 30 characters.", ()
+                -> ParserUtil.parseLevel("a".repeat(31)));
+        assertThrows(ParseException.class, "Subject cannot exceed 30 characters.", ()
+                -> ParserUtil.parseSubject("a".repeat(31)));
+        assertThrows(ParseException.class, "Level must contain at least one letter or digit.", ()
+                -> ParserUtil.parseLevel(" -. + () "));
+        assertThrows(ParseException.class, "Subject must contain at least one letter or digit.", ()
+                -> ParserUtil.parseSubject(" -. + () "));
+        assertThrows(ParseException.class, Level.MESSAGE_INVALID_CHARACTERS, ()
+                -> ParserUtil.parseLevel("Sec\t3"));
+        assertThrows(ParseException.class, Subject.MESSAGE_INVALID_CHARACTERS, ()
+                -> ParserUtil.parseSubject("Math & Science"));
+    }
+
+    @Test
     public void parseLevel_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, Level.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseLevel("Sec #3"));
+        assertThrows(ParseException.class, Level.MESSAGE_INVALID_CHARACTERS, () -> ParserUtil.parseLevel("Sec #3"));
     }
 
     @Test
@@ -281,7 +297,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseSubject_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, Subject.MESSAGE_CONSTRAINTS, () ->
+        assertThrows(ParseException.class, Subject.MESSAGE_INVALID_CHARACTERS, () ->
                 ParserUtil.parseSubject("Math & Sci"));
     }
 

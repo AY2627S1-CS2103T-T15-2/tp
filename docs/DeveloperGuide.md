@@ -314,27 +314,37 @@ the second contact's updated record would lose the first ID and save the second 
 `AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE`, `e/EMAIL`, `lv/LEVEL` and `sub/SUBJECT` as optional
 fields. It validates supplied values in the fixed order role, name, phone, email, level, then subject, regardless of
 the order in which parameters appear.
-Missing required fields and invalid roles are also reported in that order. A student may omit both contact methods. The
+The shared tokenizer recognizes prefixes at the start of the arguments or after `Character.isWhitespace`
+characters, including tabs and line breaks, while preserving internal value whitespace and quoted names.
+Command dispatch accepts the same separators and preserves multiline arguments for field validation.
+Unknown prefixes, repeated prefixes and unclosed quotes are syntax errors reported before field-value validation.
+The parser checks for a missing role, validates the role, then checks for a missing name and unexpected preamble
+before validating the name. A student may omit both contact methods. The
 parser rejects a guardian if both are absent to provide a user-facing command error, and `EditCommand` applies the same
 rule to the resulting contact before updating the model. `Person` stores
 phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
 method. This model invariant applies regardless of which code path creates a `Person`.
 
-The Add parser rejects unknown parameters with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
-e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If the unknown parameter occurs while parsing a name, the message also instructs the user to quote the full
-name. For Add, every name containing `/` must be enclosed in double quotes, including an embedded slash such as
+The Add parser identifies the unknown prefix, for example `Invalid parameter: a/. Valid parameters are r/ROLE,
+n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unknown parameter follows an unquoted name, it also suggests
+quoting the full name. After a quoted name, it reports only the invalid parameter. For Add, every name containing
+`/` must be enclosed in double quotes, including an embedded slash such as
 `AC/DC`. Edit retains its separate behavior, which accepts unquoted embedded slashes. Missing `r/ROLE` or `n/NAME`
 errors identify the missing field and append the add command usage. Repeated parameters return
-`Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.` Empty roles receive a separate error from unsupported roles; an
-unsupported role reports `Invalid role. Role must be student or guardian.` When multiple supplied values are invalid,
-the parser reports the first error in the fixed order role, name, phone, email, level, then subject.
+`Repeated parameter: lv/. Each parameter may appear only once.`, substituting the repeated prefix. If several
+prefixes repeat, it reports the first in the fixed field order. Empty roles receive a separate error from unsupported roles; an
+unsupported role reports `Invalid role. Role must be student or guardian.`
 
 `Person` also stores an optional `Level` and `Subject` for students. Both are free-text value classes that allow 1 to
-30 letters, digits, spaces, hyphens, periods, plus signs and parentheses. `ParserUtil` trims the value, reduces repeated
+30 Unicode code points, allowing letters, digits, spaces, hyphens, periods, plus signs and parentheses, with at least
+one letter or digit. `ParserUtil` trims the value, reduces repeated
 spaces to one and rejects `NONE`, which `edit` reserves for removing the field. The `Level` and `Subject` constructors
 reject blank values with their constraints messages. For command input, `ParserUtil` instead reports the specific
-empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. The `Person` constructor rejects a
-guardian with a level or subject, and the Add parser reports this before it parses either value. `isSameValue` compares
+empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. For other invalid values, it uses
+`getValidationErrorMessage` to distinguish excessive length, unsupported characters, and the absence of a letter or
+digit, in that order. The `Person` constructor rejects a
+guardian with a level or subject. After validating phone and email, the Add parser checks the guardian contact-method
+requirement, then rejects student-only prefixes before parsing either value. `isSameValue` compares
 two values ignoring letter case and spaces, so that filters can treat `Sec 3` and `sec3` as the same level.
 
 `AddCommand` rejects an exact duplicate using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Duplicate
@@ -349,9 +359,12 @@ address that matches case-insensitively; then a contact method that is absent fr
 first matching warning, appends it after the normal success message, and still adds the contact. Contacts with
 different roles or names do not receive these warnings.
 
-After adding the contact, `AddCommand` resets the filter with `PREDICATE_SHOW_ALL_PERSONS`, so that the new contact is
-displayed even if an earlier `find` filtered the list. The command result carries the new contact's ID so the UI can
-select it, in the same way as `EditCommand` and `LinkCommand`.
+Duplicate and warning checks use the complete saved contact list, including former students, regardless of the
+current filter. Level, subject, IDs and guardian links do not contribute to duplicate identity.
+
+After adding the contact, `AddCommand` resets the filter with `PREDICATE_SHOW_ACTIVE_CONTACTS`, showing guardians
+and active students while hiding former students. The new contact starts active. The command result carries its ID
+so the UI can select it after a successful save, even if an earlier search or list filter hid similar contacts.
 
 ### Saving contacts and relationships
 
@@ -369,8 +382,15 @@ automatically. `JsonAdaptedPerson` rejects a guardian record that has neither a 
 while converting it to a model object. The `Person` constructor enforces the same invariant, so saved data cannot
 bypass the guardian contact-method requirement.
 
+Level and subject are optional JSON strings. Legacy records without these properties, and explicit null values,
+load with the corresponding fields absent. Present values must satisfy their value-class constraints; blank or
+invalid strings and guardian records containing either field are rejected during loading.
+
 Email validation uses iterative character scans for the local part and domain labels, avoiding recursive regex
 matching on long inputs. `Email.isValidEmail` and the parser share the same validation rules and specific errors.
+For each component, unsupported characters are reported separately from punctuation-placement errors. Only ASCII
+letters and digits are accepted; allowed punctuation must appear singly between letters or digits. The domain
+permits hyphens only, while the local part also permits periods, underscores, percent signs and plus signs.
 An email is limited to 254 characters, with at most 64 in the local part and 63 in each domain label.
 The parser trims surrounding whitespace before checking these limits and reports
 `Email address cannot exceed 254 characters.` for longer values. The same limits apply to saved email values;
@@ -381,10 +401,9 @@ file is preserved; correct the invalid values and restart to re-enable data-chan
 report the exceeded limit in CLI parsing. Email accepts ASCII characters only, so character and byte counts agree.
 
 
-Duplicate identity is Role + Name + Phone + Email. `Name.isSameName` and `Email.isSameEmail` ignore capitalization;
-two absent values for optional fields match when each contact has at least one contact method. A contactless student
-is not considered an exact duplicate of another student based on role and name alone. Full object equality remains
-case-sensitive so capitalization-only edits remain observable. Existing same-role records differing only in
+Loading applies the duplicate identity rules described under Contact details and Add validation, including the
+exception for contactless students. Full object equality remains case-sensitive so capitalization-only edits remain
+observable. Existing same-role records differing only in
 capitalization may therefore fail duplicate validation on loading. IDs and guardian links remain independent of
 duplicate identity.
 
@@ -392,8 +411,9 @@ Each command declares whether it changes data through `Command.isDataChanging()`
 
 If loading fails, storage records that failure for the session. The UI displays the startup error, and all data-changing commands are disabled until the user fixes the file and restarts the application. The invalid file is never overwritten during that session. A missing data file starts with an empty list and is created by the first successful data-changing command.
 
-Relevant tests cover Add parsing and validation, repeated parameters, fixed validation-error ordering, quoted names
-containing slashes, the phone length limit, optional student contact methods, guardians with either one contact method, guardian contact-method
+Relevant tests cover Add parsing and validation, repeated parameters, fixed validation-error ordering, whitespace
+separators, literal prefixes inside quoted names, level and subject length boundaries, the phone length limit,
+optional student contact methods, guardians with either one contact method, guardian contact-method
 requirements, exact duplicates and possible-duplicate warning priority, displayed indexes, role validation, first links, replacements, shared guardians, ID preservation,
 relationship persistence, deletion cleanup, invalid references, failed saves and UI selection/details. JavaFX UI tests
 run on Windows desktop environments; the remaining tests run on all supported platforms.
@@ -809,11 +829,28 @@ testers are expected to do more *exploratory* testing.
 1. Test case: `add r/student n/Alex Tan p/`.<br>
    Expected: The result says `Empty phone parameter: Phone cannot be empty when p/ is specified.`
 
-1. Test case: `add r/student n/Alex Tan p/<101-character value>`.<br>
+1. Test case: `add r/student n/Alex Tan p/` followed immediately by 101 ASCII digits.<br>
    Expected: The result says `Phone details cannot exceed 100 characters.`
 
 1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
    Expected: Both report the role error first, following the fixed parameter order regardless of command order.
+
+1. Test case: `add r/student n/Casey Lee lv/Sec 3 sub/A-Math`.<br>
+   Expected: The student is added with both student details and no contact methods. The same name as an earlier
+   student does not cause rejection because the contact methods differ. A general warning is shown because both
+   students have no email. Restart and verify that the level and subject remain saved.
+
+1. Test case: `add r/student n/Ravi lv/ sub/` and `add sub/ lv/ n/Ravi r/student`.<br>
+   Expected: Both report `Empty level parameter: Level cannot be empty when lv/ is specified.`
+   With `lv/Sec 3` instead, both report the empty-subject message. No contact is added.
+
+1. Test case: `add r/guardian n/Mei Tan p/91234567 lv/Sec 3`.<br>
+   Expected: `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
+   Without the phone prefix, the guardian contact-method error takes precedence.
+
+1. Test case: `add r/student n/"Ravi lv/Sec sub/Math"`.<br>
+   Expected: The entire quoted text is saved as the name, with no level or subject set. Repeat with pasted tabs
+   between parameters instead of spaces; the result is unchanged. A tab inside the quoted name is rejected.
 
 ### Deleting contacts
 

@@ -2,6 +2,7 @@ package seedu.address.model.person;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -40,6 +41,18 @@ public class LevelTest {
         assertFalse(Level.isValidLevel("Sec/3")); // slash
         assertFalse(Level.isValidLevel("Sec #3")); // other symbol
         assertFalse(Level.isValidLevel("a".repeat(Level.MAX_LENGTH + 1))); // too long
+    }
+
+    @Test
+    public void getValidationErrorMessage_reportsSpecificConstraint() {
+        assertThrows(NullPointerException.class, () -> Level.getValidationErrorMessage(null));
+        assertEquals(Level.MESSAGE_TOO_LONG, Level.getValidationErrorMessage("a".repeat(31)));
+        assertEquals(Level.MESSAGE_INVALID_CHARACTERS, Level.getValidationErrorMessage("A&B"));
+        assertEquals(Level.MESSAGE_MISSING_ALPHANUMERIC, Level.getValidationErrorMessage("-.+()"));
+        assertEquals("Level cannot start or end with spaces.", Level.getValidationErrorMessage(" A "));
+        assertNull(Level.getValidationErrorMessage("中".repeat(30)));
+        assertNull(Level.getValidationErrorMessage("\uD801\uDC00".repeat(30)));
+        assertEquals(Level.MESSAGE_TOO_LONG, Level.getValidationErrorMessage("\uD801\uDC00".repeat(31)));
     }
 
     @Test
