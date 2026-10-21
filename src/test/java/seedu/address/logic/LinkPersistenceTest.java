@@ -204,6 +204,45 @@ public class LinkPersistenceTest {
     }
 
     @Test
+    public void execute_bulkDelete_persistsAllDeletions() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json"));
+        Model model = createModel();
+        Person retainedStudent = new PersonBuilder().withName("Zoe Tan").build();
+        model.addPerson(retainedStudent);
+        Logic logic = createLogic(model, storage);
+        logic.execute("link s/1 g/2");
+
+        logic.execute("delete 2 1");
+
+        Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertEquals(List.of(retainedStudent.getId()), reloaded.getAddressBook().getPersonList().stream()
+                .map(Person::getId).toList());
+    }
+
+    @Test
+    public void execute_bulkDeleteSaveFailure_keepsEveryContactAndSavedFileUnchanged() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        JsonAddressBookStorage workingStorage = new JsonAddressBookStorage(file);
+        Model model = createModel();
+        createLogic(model, workingStorage).execute("link s/1 g/2");
+        String originalFile = Files.readString(file);
+        List<Person> originalPersons = List.copyOf(model.getAddressBook().getPersonList());
+        JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(file) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook book) throws IOException {
+                throw new IOException("Simulated disk failure");
+            }
+        };
+
+        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () ->
+                createLogic(model, failingStorage).execute("delete 2 1"));
+
+        assertEquals(originalPersons, List.copyOf(model.getAddressBook().getPersonList()));
+        assertEquals(Optional.of(guardian.getId()), findContact(model, student.getId()).getGuardianId());
+        assertEquals(originalFile, Files.readString(file));
+    }
+
+    @Test
     public void execute_deleteSaveFailure_keepsContactsRelationshipsAndSavedFileUnchanged() throws Exception {
         Path file = temporaryFolder.resolve("contacts.json");
         JsonAddressBookStorage workingStorage = new JsonAddressBookStorage(file);
