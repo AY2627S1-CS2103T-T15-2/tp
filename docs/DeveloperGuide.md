@@ -470,6 +470,15 @@ The sequence diagram below shows how `list r/student` is executed.
 
 <puml src="diagrams/ListSequenceDiagram.puml" alt="Interactions for the `list r/student` command" />
 
+**\[Proposed\] More filters.** Two extensions are planned for `list`, both built on `ContactFilter`:
+
+* `st/active` and `st/all`. `st/all` would show contacts of every status, so the status in `ContactFilter`
+  would become optional, with an empty status meaning "any status". `list r/student st/all` would then show all
+  students, active and former.
+* `lv/LEVEL` and `sub/SUBJECT`. These would add an optional `Level` and `Subject` to `ContactFilter`. A
+  student would match when `Level#isSameValue` and `Subject#isSameValue` hold, so `list lv/sec3` would match
+  `Sec 3`, ignoring letter case and spaces.
+
 **Finding.** `FindCommandParser` treats all the text after `find` as a single search term. It removes leading and
 trailing whitespace, reduces each run of internal whitespace to one space, and rejects a term that is then empty with
 `Invalid find command. Use: find NAME`. The term is wrapped in a `NameContainsSubstringPredicate`, which matches a
