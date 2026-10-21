@@ -1,0 +1,36 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+
+start
+:Parse command;
+if (Changes data?) then (no)
+  :Execute on live model;
+  :Return result without saving;
+  stop
+else (yes)
+endif
+if (Data file failed to load?) then (yes)
+  :Reject change;
+  stop
+else (no)
+endif
+:Copy live data and filter into candidate model;
+:Execute command on candidate;
+if (Command succeeds?) then (no)
+  :Report command error;
+  stop
+else (yes)
+endif
+:Write candidate JSON to a temporary file;
+:Atomically replace destination file;
+if (Save succeeds?) then (no)
+  :Report save failure;
+  :Keep live contacts, relationships and filter;
+  stop
+else (yes)
+endif
+:Replace live data and apply candidate filter;
+:Return command result;
+stop
+@enduml

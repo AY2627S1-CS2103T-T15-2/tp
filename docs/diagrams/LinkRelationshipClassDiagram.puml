@@ -1,0 +1,30 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+package Logic <<Rectangle>> {
+class LinkCommandParser LOGIC_COLOR
+class LinkCommand LOGIC_COLOR
+}
+
+package Model <<Rectangle>> {
+class Person MODEL_COLOR
+class ContactId MODEL_COLOR
+enum Role MODEL_COLOR
+enum StudentStatus MODEL_COLOR
+}
+
+LinkCommandParser ..> LinkCommand : creates
+LinkCommand ..> Person : resolves displayed targets
+Person --> "1" ContactId : id
+Person --> "0..1" ContactId : guardianId
+Person --> "1" Role
+Person --> "1" StudentStatus
+
+note bottom of Person
+  Only students hold a guardianId.
+  It references an existing guardian's id.
+  Several students may share one guardian.
+  Names and display indexes are not identifiers.
+end note
+@enduml
