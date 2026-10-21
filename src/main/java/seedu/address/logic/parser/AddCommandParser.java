@@ -50,36 +50,73 @@ public class AddCommandParser implements Parser<AddCommand> {
     @Override
     public AddCommand parse(String args) throws ParseException {
         requireNonNull(args);
+        ArgumentMultimap argMultimap = tokenizeArguments(args);
+        verifyNoDuplicatePrefixes(argMultimap);
+        return new AddCommand(parsePerson(argMultimap));
+    }
+
+    /**
+     * Rejects unknown parameters before tokenizing the supported fields.
+     */
+    private static ArgumentMultimap tokenizeArguments(String args) throws ParseException {
         Optional<String> parameterError = getParameterError(args);
         if (parameterError.isPresent()) {
             throw new ParseException(parameterError.get());
         }
 
-        ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                        PREFIX_ROLE, PREFIX_LEVEL, PREFIX_SUBJECT);
+        return ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
+                PREFIX_ROLE, PREFIX_LEVEL, PREFIX_SUBJECT);
+    }
 
-        verifyNoDuplicatePrefixes(argMultimap);
+    /**
+     * Parses fields in command-format order, applying role-specific rules before student details.
+     */
+    private static Person parsePerson(ArgumentMultimap argMultimap) throws ParseException {
+        Role role = parseRequiredRole(argMultimap);
+        Name name = parseRequiredName(argMultimap);
+        Optional<Phone> phone = parseOptionalPhone(argMultimap);
+        Optional<Email> email = parseOptionalEmail(argMultimap);
+        verifyRoleRequirements(role, phone, email, argMultimap);
+        Optional<Level> level = parseOptionalLevel(argMultimap);
+        Optional<Subject> subject = parseOptionalSubject(argMultimap);
+
+        return new Person(ContactId.generate(), name, phone, email, role, Optional.empty(),
+                StudentStatus.ACTIVE, level, subject);
+    }
+
+    private static Role parseRequiredRole(ArgumentMultimap argMultimap) throws ParseException {
         if (!argMultimap.getValue(PREFIX_ROLE).isPresent()) {
             throw new ParseException(MESSAGE_MISSING_ROLE);
         }
-        Role role = parseRole(argMultimap.getValue(PREFIX_ROLE).orElseThrow());
+        return parseRole(argMultimap.getValue(PREFIX_ROLE).orElseThrow());
+    }
+
+    private static Name parseRequiredName(ArgumentMultimap argMultimap) throws ParseException {
         if (!argMultimap.getValue(PREFIX_NAME).isPresent()) {
             throw new ParseException(MESSAGE_MISSING_NAME);
         }
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(MESSAGE_UNEXPECTED_TEXT);
         }
-        Name name = parseName(argMultimap.getValue(PREFIX_NAME).orElseThrow());
-        Optional<Phone> phone = Optional.empty();
-        if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
-            phone = Optional.of(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).orElseThrow()));
-        }
-        Optional<Email> email = Optional.empty();
-        if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
-            email = Optional.of(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).orElseThrow()));
-        }
+        return parseName(argMultimap.getValue(PREFIX_NAME).orElseThrow());
+    }
 
+    private static Optional<Phone> parseOptionalPhone(ArgumentMultimap argMultimap) throws ParseException {
+        if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
+            return Optional.of(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).orElseThrow()));
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<Email> parseOptionalEmail(ArgumentMultimap argMultimap) throws ParseException {
+        if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
+            return Optional.of(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).orElseThrow()));
+        }
+        return Optional.empty();
+    }
+
+    private static void verifyRoleRequirements(Role role, Optional<Phone> phone, Optional<Email> email,
+            ArgumentMultimap argMultimap) throws ParseException {
         if (role == Role.GUARDIAN && phone.isEmpty() && email.isEmpty()) {
             throw new ParseException(AddCommand.MESSAGE_CONTACT_METHOD_REQUIRED);
         }
@@ -89,19 +126,20 @@ public class AddCommandParser implements Parser<AddCommand> {
         if (role != Role.STUDENT && hasStudentDetails) {
             throw new ParseException(MESSAGE_GUARDIAN_STUDENT_DETAILS);
         }
-        Optional<Level> level = Optional.empty();
+    }
+
+    private static Optional<Level> parseOptionalLevel(ArgumentMultimap argMultimap) throws ParseException {
         if (argMultimap.getValue(PREFIX_LEVEL).isPresent()) {
-            level = Optional.of(ParserUtil.parseLevel(argMultimap.getValue(PREFIX_LEVEL).orElseThrow()));
+            return Optional.of(ParserUtil.parseLevel(argMultimap.getValue(PREFIX_LEVEL).orElseThrow()));
         }
-        Optional<Subject> subject = Optional.empty();
+        return Optional.empty();
+    }
+
+    private static Optional<Subject> parseOptionalSubject(ArgumentMultimap argMultimap) throws ParseException {
         if (argMultimap.getValue(PREFIX_SUBJECT).isPresent()) {
-            subject = Optional.of(ParserUtil.parseSubject(argMultimap.getValue(PREFIX_SUBJECT).orElseThrow()));
+            return Optional.of(ParserUtil.parseSubject(argMultimap.getValue(PREFIX_SUBJECT).orElseThrow()));
         }
-
-        Person person = new Person(ContactId.generate(), name, phone, email, role, Optional.empty(),
-                StudentStatus.ACTIVE, level, subject);
-
-        return new AddCommand(person);
+        return Optional.empty();
     }
 
     private static void verifyNoDuplicatePrefixes(ArgumentMultimap argMultimap) throws ParseException {
@@ -149,19 +187,23 @@ public class AddCommandParser implements Parser<AddCommand> {
                 String prefix = args.substring(tokenStart, i + 1);
                 Prefix recognizedPrefix = getRecognizedPrefix(prefix);
                 if (recognizedPrefix == null) {
-                    boolean isNameValueQuoted = currentField == PREFIX_NAME
-                            && args.substring(currentFieldValueStart, tokenStart).stripLeading().startsWith("\"");
-                    String errorMessage = String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, prefix);
-                    if (currentField == PREFIX_NAME && !isNameValueQuoted) {
-                        errorMessage += AddCommand.MESSAGE_NAME_SLASH_HINT;
-                    }
-                    return Optional.of(errorMessage);
+                    String currentFieldValue = args.substring(currentFieldValueStart, tokenStart);
+                    return Optional.of(formatUnknownParameterError(prefix, currentField, currentFieldValue));
                 }
                 currentField = recognizedPrefix;
                 currentFieldValueStart = i + 1;
             }
         }
         return Optional.empty();
+    }
+
+    private static String formatUnknownParameterError(String prefix, Prefix currentField, String currentFieldValue) {
+        String errorMessage = String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, prefix);
+        boolean isNameValueQuoted = currentFieldValue.stripLeading().startsWith("\"");
+        if (currentField == PREFIX_NAME && !isNameValueQuoted) {
+            errorMessage += AddCommand.MESSAGE_NAME_SLASH_HINT;
+        }
+        return errorMessage;
     }
 
     private static Prefix getRecognizedPrefix(String prefix) {

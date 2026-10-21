@@ -85,7 +85,14 @@ public class AddCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
+        verifyContactCanBeAdded(model);
+        String feedback = createSuccessFeedback(model);
+        addContactToModel(model);
+        logger.info("Prepared ADD for contact " + toAdd.getId() + ", pending save.");
+        return new CommandResult(feedback, toAdd.getId());
+    }
 
+    private void verifyContactCanBeAdded(Model model) throws CommandException {
         if (toAdd.isGuardianWithoutContactMethod()) {
             logger.info("Rejected ADD: guardian has no contact method.");
             throw new CommandException(MESSAGE_CONTACT_METHOD_REQUIRED);
@@ -95,32 +102,47 @@ public class AddCommand extends Command {
             logger.info("Rejected ADD: an exact duplicate contact exists.");
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
+    }
 
-        boolean hasSimilarPhone = model.getAddressBook().getPersonList().stream()
-                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSamePhoneIgnoringFormatting(person));
-        boolean hasSameEmail = model.getAddressBook().getPersonList().stream()
-                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSameEmailAddress(person));
-        boolean hasSharedEmptyContactField = model.getAddressBook().getPersonList().stream()
-                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && hasSharedEmptyContactField(person));
-
+    private void addContactToModel(Model model) {
         model.addPerson(toAdd);
         assert model.getAddressBook().getPersonList().stream()
                 .anyMatch(person -> person.getId().equals(toAdd.getId()))
                 : "Model must contain the added contact ID after addPerson returns.";
         model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_CONTACTS);
+    }
+
+    /**
+     * Builds feedback using existing contacts, before the new contact can match itself.
+     */
+    private String createSuccessFeedback(Model model) {
         String feedback = String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getRole());
-        if (hasSimilarPhone) {
+        if (hasContactWithSimilarPhone(model)) {
             logger.info("ADD possible-duplicate warning selected: phone matches ignoring spaces and hyphens.");
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_PHONE;
-        } else if (hasSameEmail) {
+        } else if (hasContactWithSameEmail(model)) {
             logger.info("ADD possible-duplicate warning selected: email matches ignoring case.");
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_EMAIL;
-        } else if (hasSharedEmptyContactField) {
+        } else if (hasContactWithSharedEmptyField(model)) {
             logger.info("ADD possible-duplicate warning selected: a contact method is absent from both contacts.");
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE;
         }
-        logger.info("Prepared ADD for contact " + toAdd.getId() + ", pending save.");
-        return new CommandResult(feedback, toAdd.getId());
+        return feedback;
+    }
+
+    private boolean hasContactWithSimilarPhone(Model model) {
+        return model.getAddressBook().getPersonList().stream()
+                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSamePhoneIgnoringFormatting(person));
+    }
+
+    private boolean hasContactWithSameEmail(Model model) {
+        return model.getAddressBook().getPersonList().stream()
+                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSameEmailAddress(person));
+    }
+
+    private boolean hasContactWithSharedEmptyField(Model model) {
+        return model.getAddressBook().getPersonList().stream()
+                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && hasSharedEmptyContactField(person));
     }
 
     private boolean hasSharedEmptyContactField(Person otherPerson) {
