@@ -23,7 +23,7 @@ import seedu.address.model.person.StudentStatus;
 import seedu.address.model.person.Subject;
 
 /**
- * Parses input arguments and creates a new AddCommand object
+ * Parses input arguments and creates a new {@code AddCommand} object.
  */
 public class AddCommandParser implements Parser<AddCommand> {
 
@@ -41,11 +41,13 @@ public class AddCommandParser implements Parser<AddCommand> {
             "Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.";
 
     /**
-     * Parses the given {@code String} of arguments in the context of the AddCommand
-     * and returns an AddCommand object for execution.
+     * Parses the given {@code String} of arguments in the context of {@code AddCommand}
+     * and returns an {@code AddCommand} object for execution.
+     *
      * @throws NullPointerException if {@code args} is null
      * @throws ParseException if the user input does not conform to the expected format
      */
+    @Override
     public AddCommand parse(String args) throws ParseException {
         requireNonNull(args);
         Optional<String> parameterError = getParameterError(args);
@@ -93,8 +95,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
         Optional<Subject> subject = Optional.empty();
         if (argMultimap.getValue(PREFIX_SUBJECT).isPresent()) {
-            subject = Optional.of(
-                    ParserUtil.parseSubject(argMultimap.getValue(PREFIX_SUBJECT).orElseThrow()));
+            subject = Optional.of(ParserUtil.parseSubject(argMultimap.getValue(PREFIX_SUBJECT).orElseThrow()));
         }
 
         Person person = new Person(ContactId.generate(), name, phone, email, role, Optional.empty(),
@@ -127,13 +128,13 @@ public class AddCommandParser implements Parser<AddCommand> {
     }
 
     /**
-     * Returns whether the arguments contain an unrecognized parameter prefix. A prefix is a slash
-     * following a whitespace-delimited token, outside a quoted value.
+     * Returns an error message for an unrecognized parameter prefix, or an empty optional if none is found.
+     * A prefix is a whitespace-delimited token ending with a slash, outside a quoted value.
      */
     private static Optional<String> getParameterError(String args) {
         int tokenStart = 0;
         boolean isInsideQuotedValue = false;
-        boolean tokenHasSlash = false;
+        boolean hasSlashInToken = false;
         Prefix currentField = null;
         int currentFieldValueStart = 0;
         for (int i = 0; i < args.length(); i++) {
@@ -142,16 +143,16 @@ public class AddCommandParser implements Parser<AddCommand> {
                 isInsideQuotedValue = !isInsideQuotedValue;
             } else if (!isInsideQuotedValue && Character.isWhitespace(current)) {
                 tokenStart = i + 1;
-                tokenHasSlash = false;
-            } else if (!isInsideQuotedValue && current == '/' && i > tokenStart && !tokenHasSlash) {
-                tokenHasSlash = true;
+                hasSlashInToken = false;
+            } else if (!isInsideQuotedValue && current == '/' && i > tokenStart && !hasSlashInToken) {
+                hasSlashInToken = true;
                 String prefix = args.substring(tokenStart, i + 1);
                 Prefix recognizedPrefix = getRecognizedPrefix(prefix);
                 if (recognizedPrefix == null) {
-                    boolean nameValueIsQuoted = currentField == PREFIX_NAME
+                    boolean isNameValueQuoted = currentField == PREFIX_NAME
                             && args.substring(currentFieldValueStart, tokenStart).stripLeading().startsWith("\"");
                     String errorMessage = String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, prefix);
-                    if (currentField == PREFIX_NAME && !nameValueIsQuoted) {
+                    if (currentField == PREFIX_NAME && !isNameValueQuoted) {
                         errorMessage += AddCommand.MESSAGE_NAME_SLASH_HINT;
                     }
                     return Optional.of(errorMessage);
@@ -179,5 +180,4 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
         return null;
     }
-
 }

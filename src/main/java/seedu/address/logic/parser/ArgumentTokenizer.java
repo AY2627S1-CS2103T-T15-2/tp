@@ -8,14 +8,14 @@ import java.util.stream.Collectors;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /**
- * Tokenizes arguments string of the form: {@code preamble <prefix>value <prefix>value ...}<br>
+ * Tokenizes an argument string of the form: {@code preamble <prefix>value <prefix>value ...}<br>
  *     e.g. {@code some preamble text t/ 11.00 t/12.00 k/ m/ July}  where prefixes are {@code t/ k/ m/}.<br>
  * 1. An argument's value can be an empty string e.g. the value of {@code k/} in the above example.<br>
- * 2. Leading and trailing whitespaces of an argument value will be discarded.<br>
-     * 3. An argument may be repeated and all its values will be accumulated e.g. the value of {@code t/}
+ * 2. Leading and trailing whitespace of an argument value will be discarded.<br>
+ * 3. An argument may be repeated and all its values will be accumulated e.g. the value of {@code t/}
  *    in the above example.<br>
-     * Prefixes start at the beginning of the input or after {@link Character#isWhitespace(char)} whitespace.
-     * Whitespace inside a value is retained for the field parser to validate.
+ * Prefixes start at the beginning of the input or after {@link Character#isWhitespace(char)} whitespace.
+ * Whitespace inside a value is retained for the field parser to validate.
  */
 public class ArgumentTokenizer {
 
@@ -185,9 +185,8 @@ public class ArgumentTokenizer {
      * Returns the trimmed value of the argument in the arguments string specified by {@code currentPrefixPosition}.
      * The end position of the value is determined by {@code nextPrefixPosition}.
      */
-    private static String extractArgumentValue(String argsString,
-                                        PrefixPosition currentPrefixPosition,
-                                        PrefixPosition nextPrefixPosition) {
+    private static String extractArgumentValue(String argsString, PrefixPosition currentPrefixPosition,
+            PrefixPosition nextPrefixPosition) {
         Prefix prefix = currentPrefixPosition.getPrefix();
 
         int valueStartPos = currentPrefixPosition.getStartPosition() + prefix.getPrefix().length();
