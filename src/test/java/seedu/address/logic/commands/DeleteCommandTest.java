@@ -34,6 +34,22 @@ public class DeleteCommandTest {
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void equals_nameTargets_comparesNamesAndTargetTypes() {
+        DeleteCommand command = new DeleteCommand(new Name("Alice Tan"));
+        assertTrue(command.equals(new DeleteCommand(new Name("Alice Tan"))));
+        assertFalse(command.equals(new DeleteCommand(new Name("Bob Tan"))));
+        assertFalse(command.equals(new DeleteCommand(INDEX_FIRST_PERSON)));
+        assertFalse(new DeleteCommand(INDEX_FIRST_PERSON).equals(command));
+    }
+
+    @Test
+    public void toString_nameTarget_includesName() {
+        Name name = new Name("Alice Tan");
+        assertEquals(DeleteCommand.class.getCanonicalName() + "{targetName=" + name + "}",
+                new DeleteCommand(name).toString());
+    }
+
+    @Test
     public void execute_uniqueName_reusesIndexDeletion() throws Exception {
         Person target = model.getFilteredPersonList().getFirst();
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());

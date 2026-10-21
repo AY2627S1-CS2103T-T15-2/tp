@@ -39,6 +39,14 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_quotedNameContainingPrefix_preservesName() {
+        assertParseSuccess(parser, "n/\"Ravi n/o Kumar\"",
+                new DeleteCommand(new Name("Ravi n/o Kumar")));
+        assertParseFailure(parser, "n/\"Ravi n/o Kumar\" n/Alice", DeleteCommand.MESSAGE_INVALID_TARGET);
+        assertParseFailure(parser, "n/\"Ravi n/o Kumar", ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
+    }
+
+    @Test
     public void parse_validArgs_returnsDeleteCommand() {
         assertParseSuccess(parser, "1", new DeleteCommand(INDEX_FIRST_PERSON));
         assertParseSuccess(parser, "1 2", new DeleteCommand(List.of(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON)));

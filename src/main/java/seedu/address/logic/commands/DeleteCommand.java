@@ -111,9 +111,9 @@ public class DeleteCommand extends Command {
         if (matches.isEmpty()) {
             throw new CommandException(String.format(MESSAGE_NAME_NOT_FOUND, targetName));
         }
+        Set<ContactId> matchingIds = matches.stream().map(Person::getId).collect(Collectors.toSet());
         List<Index> matchingIndexes = IntStream.range(0, displayedPersons.size())
-                .filter(index -> matches.stream()
-                        .anyMatch(person -> person.getId().equals(displayedPersons.get(index).getId())))
+                .filter(index -> matchingIds.contains(displayedPersons.get(index).getId()))
                 .mapToObj(Index::fromZeroBased).toList();
         if (matchingIndexes.size() > 1) {
             String choices = matchingIndexes.stream().map(index -> String.format("%d [%s]",
