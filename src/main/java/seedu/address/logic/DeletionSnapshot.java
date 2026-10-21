@@ -3,7 +3,9 @@ package seedu.address.logic;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -27,8 +29,9 @@ public final class DeletionSnapshot {
         if (this.deletedIds.isEmpty() || this.deletedIds.stream().distinct().count() != this.deletedIds.size()) {
             throw new IllegalArgumentException("Deleted contact IDs must be non-empty and unique");
         }
-        if (!this.deletedIds.stream().allMatch(id -> addressBook.getPersonList().stream()
-                .anyMatch(person -> person.getId().equals(id)))) {
+        Set<ContactId> existingIds = addressBook.getPersonList().stream()
+                .map(Person::getId).collect(Collectors.toSet());
+        if (!existingIds.containsAll(this.deletedIds)) {
             throw new IllegalArgumentException("Deleted contact IDs must exist in the pre-deletion data");
         }
         this.addressBook = new AddressBook(addressBook);
