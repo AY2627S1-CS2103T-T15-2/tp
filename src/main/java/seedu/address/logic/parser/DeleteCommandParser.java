@@ -21,6 +21,14 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      */
     public DeleteCommand parse(String args) throws ParseException {
         String trimmedArgs = args.trim();
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenize(trimmedArgs, CliSyntax.PREFIX_NAME);
+        if (arguments.getValue(CliSyntax.PREFIX_NAME).isPresent()) {
+            if (!arguments.getPreamble().isEmpty()
+                    || arguments.getAllValues(CliSyntax.PREFIX_NAME).size() != 1) {
+                throw new ParseException(DeleteCommand.MESSAGE_INVALID_TARGET);
+            }
+            return new DeleteCommand(ParserUtil.parseName(arguments.getValue(CliSyntax.PREFIX_NAME).get()));
+        }
         if (trimmedArgs.isEmpty()) {
             throw new ParseException(DeleteCommand.MESSAGE_INVALID_INDEX);
         }
