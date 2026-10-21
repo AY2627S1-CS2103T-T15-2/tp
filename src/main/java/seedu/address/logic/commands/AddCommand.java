@@ -104,6 +104,9 @@ public class AddCommand extends Command {
                 .anyMatch(person -> toAdd.hasSameNameAndRole(person) && hasSharedEmptyContactField(person));
 
         model.addPerson(toAdd);
+        assert model.getAddressBook().getPersonList().stream()
+                .anyMatch(person -> person.getId().equals(toAdd.getId()))
+                : "Model must contain the added contact ID after addPerson returns.";
         model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_CONTACTS);
         String feedback = String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getRole());
         if (hasSimilarPhone) {

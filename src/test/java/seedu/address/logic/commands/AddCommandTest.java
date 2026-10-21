@@ -298,6 +298,21 @@ public class AddCommandTest {
         assertEquals(expected, addCommand.toString());
     }
 
+    @Test
+    public void execute_modelSilentlyDiscardsContact_throwsAssertionError() {
+        ModelStubAcceptingPersonAdded faultyModel = new ModelStubAcceptingPersonAdded() {
+            @Override
+            public void addPerson(Person person) {
+                // Deliberately violate the model contract to exercise the internal postcondition.
+            }
+        };
+        AddCommand command = new AddCommand(new PersonBuilder().build());
+
+        assertThrows(AssertionError.class, "Model must contain the added contact ID after addPerson returns.", () ->
+                command.execute(faultyModel));
+        assertTrue(faultyModel.personsAdded.isEmpty());
+    }
+
     /**
      * A default model stub that has all of the methods failing.
      */
