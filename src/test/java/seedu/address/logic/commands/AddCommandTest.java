@@ -313,6 +313,13 @@ public class AddCommandTest {
         assertTrue(faultyModel.personsAdded.isEmpty());
     }
 
+    @Test
+    public void execute_nullModel_throwsNullPointerException() {
+        AddCommand command = new AddCommand(new PersonBuilder().build());
+
+        assertThrows(NullPointerException.class, () -> command.execute(null));
+    }
+
     /**
      * A default model stub that has all of the methods failing.
      */
