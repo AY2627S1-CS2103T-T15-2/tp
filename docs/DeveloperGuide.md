@@ -435,16 +435,18 @@ to these two filters, so the rules for which contacts are active live in one cla
 
 `ListCommandParser` builds the filter in these steps:
 
-1. It rejects any word ending in `/` that is not `r/` or `st/`, and any text before the first prefix, with
-   `Invalid list command. Use: list [r/ROLE] [st/former]`.
+1. It rejects any prefix other than `r/` or `st/`, such as `n/` in `n/Alex`, and any text before the first prefix,
+   with `Invalid list command. Use: list [r/ROLE] [st/former]`.
 1. It rejects a repeated `r/` or `st/` with `Each of r/ and st/ may appear only once.`
 1. It parses `r/ROLE` with `ParserUtil#parseRole`, the same method `add` uses, so role values and errors match.
    An empty `r/` gives the same empty-role message as `add`.
-1. It reads `st/former`, ignoring letter case. Without `st/`, the status is `ACTIVE`.
+1. It reads `st/former`, ignoring letter case, and rejects any other `st/` value with the same invalid-format
+   message. Without `st/`, the status is `ACTIVE`.
 1. It rejects `r/guardian st/former` with `Guardians cannot be former. Remove r/guardian or st/former.`, because that
    filter could never match a contact.
 
-Role errors are reported before status errors, matching the fixed parameter order used by `add`.
+Like `add`, the parser checks values in a fixed order, so a role error is reported before a status error whatever
+order the user types them in.
 
 `ListCommand#execute` passes its filter to `Model#updateFilteredPersonList`. It then reports the number of contacts
 shown, for example `Listed 6 contacts` or `Listed 2 former students`, using `Messages#formatContactCount` and
@@ -554,7 +556,7 @@ students.
   * Pros: New filters, such as level and subject, are added as fields of one class, without changing how
     `ListCommand` applies the filter. The filter has `equals`, so parser tests can compare commands directly.
   * Cons: One more class than a plain lambda.
-* **Alternative 2:** One `boolean` or lambda per option in `ListCommand`, as in the earlier `isFormerList` flag.
+* **Alternative 2:** One `boolean` or lambda per option in `ListCommand`.
   * Pros: Less code for a single option.
   * Cons: Each new option adds another constructor argument and branch, and `new ListCommand(true)` does not say what
     `true` means.
