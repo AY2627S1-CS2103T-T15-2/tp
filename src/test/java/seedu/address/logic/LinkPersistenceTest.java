@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -50,6 +51,86 @@ public class LinkPersistenceTest {
 
     private Person findContact(Model model, ContactId id) {
         return PersonLookup.findById(model.getAddressBook().getPersonList(), id).orElseThrow();
+    }
+
+    @Test
+    public void execute_deleteStudentByName_persistsDeletionAndRetainsGuardian() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json"));
+        Model model = createModel();
+        Logic logic = createLogic(model, storage);
+        logic.execute("link s/1 g/2");
+
+        assertEquals("Deleted contact: Alex Tan [Student]. Removed 1 student-guardian relationship.",
+                logic.execute("delete n/  aLeX   tAn").getFeedbackToUser());
+
+        Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertEquals(List.of(guardian.getId()), model.getAddressBook().getPersonList().stream()
+                .map(Person::getId).toList());
+        assertEquals(List.of(guardian.getId()), reloaded.getAddressBook().getPersonList().stream()
+                .map(Person::getId).toList());
+    }
+
+    @Test
+    public void execute_deleteGuardianByName_persistsClearedStudentLink() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json"));
+        Model model = createModel();
+        Logic logic = createLogic(model, storage);
+        logic.execute("link s/1 g/2");
+
+        assertEquals("Deleted contact: Mei Tan [Guardian]. Removed 1 student-guardian relationship.",
+                logic.execute("delete n/Mei Tan").getFeedbackToUser());
+
+        Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertEquals(List.of(student.getId()), reloaded.getAddressBook().getPersonList().stream()
+                .map(Person::getId).toList());
+        assertTrue(findContact(model, student.getId()).getGuardianId().isEmpty());
+        assertTrue(findContact(reloaded, student.getId()).getGuardianId().isEmpty());
+    }
+
+    @Test
+    public void execute_deleteByNameSaveFailure_preservesContactsFilterAndFile() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        Model model = createModel();
+        Logic logic = createLogic(model, storage);
+        logic.execute("link s/1 g/2");
+        logic.execute("find Alex");
+        List<Person> originalContacts = List.copyOf(model.getAddressBook().getPersonList());
+        List<Person> originalDisplay = List.copyOf(model.getFilteredPersonList());
+        String originalFile = Files.readString(file);
+        JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(file) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook book) throws IOException {
+                throw new IOException("Simulated disk failure");
+            }
+        };
+
+        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () ->
+                createLogic(model, failingStorage).execute("delete n/Alex Tan"));
+
+        assertEquals(originalContacts, List.copyOf(model.getAddressBook().getPersonList()));
+        assertEquals(originalDisplay, List.copyOf(model.getFilteredPersonList()));
+        assertEquals(Optional.of(guardian.getId()), findContact(model, student.getId()).getGuardianId());
+        assertEquals(originalFile, Files.readString(file));
+    }
+
+    @Test
+    public void execute_ambiguousOrMissingName_preservesContactsAndFile() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        Model model = createModel();
+        model.addPerson(new PersonBuilder().withName("Alex Tan").withoutPhone().withoutEmail().build());
+        storage.saveAddressBook(model.getAddressBook());
+        Logic logic = createLogic(model, storage);
+        List<Person> originalContacts = List.copyOf(model.getAddressBook().getPersonList());
+        String originalFile = Files.readString(file);
+
+        assertThrows(CommandException.class, () -> logic.execute("delete n/Alex Tan"));
+        assertThrows(CommandException.class, String.format(DeleteCommand.MESSAGE_NAME_NOT_FOUND, "Unknown Name"), () ->
+                logic.execute("delete n/Unknown Name"));
+
+        assertEquals(originalContacts, List.copyOf(model.getAddressBook().getPersonList()));
+        assertEquals(originalFile, Files.readString(file));
     }
 
     @Test

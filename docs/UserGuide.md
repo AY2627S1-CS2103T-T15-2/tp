@@ -429,6 +429,21 @@ Deletes one or more specified contacts from TutorRoster.
 
 Format: `delete INDEX [INDEX...]`
 
+Alternatively, delete one contact by full name: `delete n/NAME`.
+
+* Name matching ignores letter case and repeated or surrounding spaces. Accents, punctuation and word order
+  must match. Partial names do not match.
+* Only the currently displayed contacts are searched. Use `list`, `find NAME` or `list st/former` first to
+  display the intended contact.
+* Exactly one displayed contact must match. If none match, the error is
+  `No displayed contact matches name: NAME.`
+* If multiple contacts match, no contact is deleted. The error lists their displayed indexes and roles;
+  use `delete INDEX` to choose the intended contact.
+* An empty name is rejected. Supply one `n/NAME` parameter and do not combine it with index targets.
+  Digits after `n/` are part of the name, for example `delete n/Alex 2` searches for the full name `Alex 2`.
+* Deletion by name uses the same relationship cleanup and automatic saving as deletion by index.
+  Failed commands or failed saves leave the contacts and saved data unchanged.
+
 * Deletes the contacts at the specified indexes.
 * Each index refers to the index number shown in the displayed contact list.
 * Each index **must be a unique positive integer** 1, 2, 3, ...
@@ -458,6 +473,8 @@ Students without a guardian show `Guardian: None` in the detail panel.
 Examples:
 * `list` followed by `delete 2` deletes the 2nd contact in the displayed contact list.
 * `list` followed by `delete 1 3 5` deletes the 1st, 3rd and 5th displayed contacts.
+* `list` followed by `delete n/Alice Tan` deletes Alice Tan if exactly one displayed contact matches.
+* `delete n/  alice   tan` also matches `Alice Tan`.
 * `find Betsy` followed by `delete 1` deletes the 1st contact in the results of the `find` command.
 * `list st/former` followed by `delete 1` deletes the 1st former student in the displayed list. If that student
   is linked to a guardian, the student-guardian relationship is also removed, but the guardian contact is kept.
@@ -517,7 +534,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
 **Clear**  | `clear`
-**Delete** | `delete INDEX [INDEX...]`<br> e.g., `delete 3`, `delete 1 3 5`
+**Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
