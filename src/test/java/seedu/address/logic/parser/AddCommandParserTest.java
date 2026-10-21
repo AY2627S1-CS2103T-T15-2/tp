@@ -172,6 +172,18 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_nameWithSurroundingWhitespace_normalizesQuotedAndUnquotedNames() {
+        Person expected = new PersonBuilder().withName("Alex Tan").withoutPhone().withoutEmail().build();
+        for (String whitespace : List.of(" ", "\u2003", "\u3000", " \t\u2003 ")) {
+            assertParseSuccess(parser, " r/student n/" + whitespace + "Alex   Tan" + whitespace,
+                    new AddCommand(expected));
+            assertParseSuccess(parser, " r/student n/\"" + whitespace + "Alex   Tan" + whitespace + "\"",
+                    new AddCommand(expected));
+            assertParseFailure(parser, " r/student n/\"" + whitespace + "\"", "Name cannot be blank.");
+        }
+    }
+
+    @Test
     public void parse_tabSeparatedUnknownOrRepeatedPrefixes_reportsSyntaxError() {
         assertParseFailure(parser, " r/student n/Alex p/123\tx/15",
                 String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "x/"));

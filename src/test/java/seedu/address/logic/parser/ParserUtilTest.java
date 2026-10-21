@@ -89,6 +89,37 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseName_surroundingWhitespace_trimsQuotedAndUnquotedNames() throws Exception {
+        for (String whitespace : List.of(WHITESPACE, "\u2003", "\u3000", " \t\u2003\u3000 ")) {
+            Name expected = new Name("Alex Tan");
+            assertEquals(expected, ParserUtil.parseName(whitespace + "Alex   Tan" + whitespace));
+            assertEquals(expected, ParserUtil.parseName(whitespace + "\"" + whitespace
+                    + "Alex   Tan" + whitespace + "\"" + whitespace));
+            assertEquals(new Name("a".repeat(Name.MAX_LENGTH)), ParserUtil.parseName(
+                    "\"" + whitespace + "a".repeat(Name.MAX_LENGTH) + whitespace + "\""));
+        }
+    }
+
+    @Test
+    public void parseName_onlySurroundingWhitespace_reportsBlankName() {
+        for (String whitespace : List.of(WHITESPACE, "\u2003", "\u3000", " \t\u2003\u3000 ")) {
+            assertThrows(ParseException.class, "Name cannot be blank.", () -> ParserUtil.parseName(whitespace));
+            assertThrows(ParseException.class, "Name cannot be blank.", () -> ParserUtil.parseName(
+                    "\"" + whitespace + "\""));
+        }
+    }
+
+    @Test
+    public void parseName_unsupportedInternalWhitespace_remainsInvalid() {
+        for (String whitespace : List.of("\t", "\n", "\u2003", "\u3000", "\u00a0")) {
+            String name = "Alex" + whitespace + "Tan";
+            String error = Name.getValidationErrorMessage(name);
+            assertThrows(ParseException.class, error, () -> ParserUtil.parseName(name));
+            assertThrows(ParseException.class, error, () -> ParserUtil.parseName("\"" + name + "\""));
+        }
+    }
+
+    @Test
     public void parseName_malformedQuotes_throwsParseException() {
         assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_NAME_QUOTES, ()
                 -> ParserUtil.parseName("\""));
