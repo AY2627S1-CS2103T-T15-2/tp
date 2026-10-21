@@ -447,8 +447,8 @@ one class.
   `Each of r/ and st/ may appear only once.`
 * **Role or status error:** `r/ROLE` is parsed with `ParserUtil#parseRole`, the same method `add` uses, so role values
   and errors match `add`. `st/` accepts only `former`, ignoring letter case; any other value gives the invalid-format
-  message above.
-  Without `st/`, the status is `ACTIVE`. The role is checked before the status, whatever order the user types them in.
+  message above. Without `st/`, the status is `ACTIVE`. The role is checked before the status, whatever order the user
+  types them in.
 * **Guardians cannot be former:** `r/guardian st/former` gives
   `Guardians cannot be former. Remove r/guardian or st/former.`, because that filter could never match a contact.
 
@@ -472,9 +472,10 @@ The sequence diagram below shows how `list r/student` is executed.
 
 **\[Proposed\] More filters.** Two extensions are planned for `list`, both built on `ContactFilter`:
 
-* `st/active` and `st/all`. `st/all` would show contacts of every status, so the status in `ContactFilter`
-  would become optional, with an empty status meaning "any status". `list r/student st/all` would then show all
-  students, active and former.
+* `st/active` and `st/all`. `st/active` would name the default status explicitly, so `list st/active` would be the
+  same as `list`. `st/all` would show contacts of every status, so the status in `ContactFilter` would become
+  optional, with an empty status meaning "any status". `list r/student st/all` would then show all students, active
+  and former.
 * `lv/LEVEL` and `sub/SUBJECT`. These would add an optional `Level` and `Subject` to `ContactFilter`. A
   student would match when `Level#isSameValue` and `Subject#isSameValue` hold, so `list lv/sec3` would match
   `Sec 3`, ignoring letter case and spaces.
@@ -500,6 +501,43 @@ vowels may match slightly more names.
 The sequence diagram below shows how `find ale` is executed.
 
 <puml src="diagrams/FindSequenceDiagram.puml" alt="Interactions for the `find ale` command" />
+
+#### Design considerations:
+
+**Aspect: Where filtering by role and status happens**
+
+* **Alternative 1 (current choice):** Add optional filters to `list`, and keep `find` for names only.
+  * Pros: `list r/student` reads as "list the students". `find NAME` stays a simple name search. The default `list`
+    already hides former students, so `list r/student` shows only current students without an extra parameter.
+  * Cons: Searching by name and role together needs two steps, `find` and then reading the roles shown on the cards.
+* **Alternative 2:** Add the filters to `find`, so that the name becomes optional.
+  * Pros: One command could combine a name with a role or status.
+  * Cons: `find r/student` with no name reads oddly. `find` includes former students, so `find r/student` would
+    show former students too, which defeats the purpose of hiding them.
+
+**Aspect: How the status is given**
+
+* **Alternative 1 (current choice):** A separate `st/` prefix, independent of `r/`.
+  * Pros: Role and status are separate attributes in the model, as in `Role: Student [Former]`. `r/` accepts the same
+    values in `add` and `list`. This follows common command-line tools, such as `gh issue list --label bug
+    --state closed`, where each attribute has its own option.
+  * Cons: Users must learn a second prefix, and `st/` is close to `link`'s `s/`. The invalid-format message names the
+    valid prefixes to help with this.
+* **Alternative 2:** Treat `former` as a role value, as in `list r/former`.
+  * Pros: Only one prefix to learn.
+  * Cons: `r/former` would be accepted by `list` but not by `add` or `edit`. It could not express "all students,
+    active and former" without another special value.
+
+**Aspect: How `ListCommand` stores what to show**
+
+* **Alternative 1 (current choice):** A single `ContactFilter` object holding the optional role and the status.
+  * Pros: New filters, such as level and subject, are added as fields of one class, without changing how
+    `ListCommand` applies the filter. The filter has `equals`, so parser tests can compare commands directly.
+  * Cons: One more class than a plain lambda.
+* **Alternative 2:** One `boolean` or lambda per option in `ListCommand`.
+  * Pros: Less code for a single option.
+  * Cons: Each new option adds another constructor argument and branch, and `new ListCommand(true)` does not say what
+    `true` means.
 
 ### Ordering and displaying contacts
 
@@ -538,41 +576,6 @@ students.
 * **Alternative 2:** Sort in each command or in the UI.
   * Pros: Different views could use different orders.
   * Cons: Each command must remember to sort, and the UI order could differ from the indexes commands use.
-
-**Aspect: Where filtering by role and status happens**
-
-* **Alternative 1 (current choice):** Add optional filters to `list`, and keep `find` for names only.
-  * Pros: `list r/student` reads as "list the students". `find NAME` stays a simple name search. The default `list`
-    already hides former students, so `list r/student` shows only current students without an extra parameter.
-  * Cons: Searching by name and role together needs two steps, `find` and then reading the roles shown on the cards.
-* **Alternative 2:** Add the filters to `find`, so that the name becomes optional.
-  * Pros: One command could combine a name with a role or status.
-  * Cons: `find r/student` with no name reads oddly. `find` includes former students, so `find r/student` would
-    show former students too, which defeats the purpose of hiding them.
-
-**Aspect: How the status is given**
-
-* **Alternative 1 (current choice):** A separate `st/` prefix, independent of `r/`.
-  * Pros: Role and status are separate attributes in the model, as in `Role: Student [Former]`. `r/` accepts the same
-    values in `add` and `list`. This follows common command-line tools, such as `gh issue list --label bug
-    --state closed`, where each attribute has its own option.
-  * Cons: Users must learn a second prefix, and `st/` is close to `link`'s `s/`. The invalid-format message names the
-    valid prefixes to help with this.
-* **Alternative 2:** Treat `former` as a role value, as in `list r/former`.
-  * Pros: Only one prefix to learn.
-  * Cons: `r/former` would be accepted by `list` but not by `add` or `edit`. It could not express "all students,
-    active and former" without another special value.
-
-**Aspect: How `ListCommand` stores what to show**
-
-* **Alternative 1 (current choice):** A single `ContactFilter` object holding the optional role and the status.
-  * Pros: New filters, such as level and subject, are added as fields of one class, without changing how
-    `ListCommand` applies the filter. The filter has `equals`, so parser tests can compare commands directly.
-  * Cons: One more class than a plain lambda.
-* **Alternative 2:** One `boolean` or lambda per option in `ListCommand`.
-  * Pros: Less code for a single option.
-  * Cons: Each new option adds another constructor argument and branch, and `new ListCommand(true)` does not say what
-    `true` means.
 
 **Aspect: How `find` matches names**
 
