@@ -23,8 +23,14 @@ if (Command succeeds?) then (no)
 else (yes)
 endif
 :Write candidate JSON to a temporary file;
+if (Temporary-file write succeeds?) then (no)
+  :Report save failure without replacing destination;
+  :Keep live contacts, relationships and filter;
+  stop
+else (yes)
+endif
 :Atomically replace destination file;
-if (Save succeeds?) then (no)
+if (Atomic replacement succeeds?) then (no)
   :Report save failure;
   :Keep live contacts, relationships and filter;
   stop
