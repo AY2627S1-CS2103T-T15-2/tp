@@ -167,7 +167,7 @@ public class AddCommandParser implements Parser<AddCommand> {
 
     /**
      * Returns an error message for an unrecognized parameter prefix, or an empty optional if none is found.
-     * A prefix is a whitespace-delimited token ending with a slash, outside a quoted value.
+     * A prefix is a whitespace-delimited token ending with a slash, outside a quoted name.
      */
     private static Optional<String> getParameterError(String args) {
         int tokenStart = 0;
@@ -175,14 +175,19 @@ public class AddCommandParser implements Parser<AddCommand> {
         boolean hasSlashInToken = false;
         Prefix currentField = null;
         int currentFieldValueStart = 0;
+        int quotedNameStart = -1;
         for (int i = 0; i < args.length(); i++) {
             char current = args.charAt(i);
-            if (current == '"') {
-                isInsideQuotedValue = !isInsideQuotedValue;
-            } else if (!isInsideQuotedValue && Character.isWhitespace(current)) {
+            if (isInsideQuotedValue) {
+                if (current == '"') {
+                    isInsideQuotedValue = false;
+                }
+            } else if (i == quotedNameStart) {
+                isInsideQuotedValue = true;
+            } else if (Character.isWhitespace(current)) {
                 tokenStart = i + 1;
                 hasSlashInToken = false;
-            } else if (!isInsideQuotedValue && current == '/' && i > tokenStart && !hasSlashInToken) {
+            } else if (current == '/' && i > tokenStart && !hasSlashInToken) {
                 hasSlashInToken = true;
                 String prefix = args.substring(tokenStart, i + 1);
                 Prefix recognizedPrefix = getRecognizedPrefix(prefix);
@@ -192,9 +197,24 @@ public class AddCommandParser implements Parser<AddCommand> {
                 }
                 currentField = recognizedPrefix;
                 currentFieldValueStart = i + 1;
+                quotedNameStart = findQuotedNameStart(args, currentField, currentFieldValueStart);
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Returns the opening quote's position only when it is the first non-whitespace character of a name value.
+     */
+    private static int findQuotedNameStart(String args, Prefix field, int valueStart) {
+        if (field != PREFIX_NAME) {
+            return -1;
+        }
+        int nameStart = valueStart;
+        while (nameStart < args.length() && Character.isWhitespace(args.charAt(nameStart))) {
+            nameStart++;
+        }
+        return nameStart < args.length() && args.charAt(nameStart) == '"' ? nameStart : -1;
     }
 
     private static String formatUnknownParameterError(String prefix, Prefix currentField, String currentFieldValue) {

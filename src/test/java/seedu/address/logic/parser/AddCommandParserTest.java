@@ -71,6 +71,44 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_phoneWithQuotes_doesNotInterfereWithQuotedName() {
+        for (String phone : List.of("123\"", "\"123", "\"HP\" 123")) {
+            Person expected = new PersonBuilder().withName("Ravi s/o Kumar").withPhone(phone).withoutEmail().build();
+            assertParseSuccess(parser, " r/student p/" + phone + " n/\"Ravi s/o Kumar\"", new AddCommand(expected));
+            assertParseSuccess(parser, " r/student n/\"Ravi s/o Kumar\" p/" + phone, new AddCommand(expected));
+        }
+    }
+
+    @Test
+    public void parse_phoneWithQuotes_doesNotHideUnknownOrRepeatedParameters() {
+        for (String phone : List.of("123\"", "\"123", "\"HP\" 123")) {
+            String fields = " r/student n/Alex p/" + phone;
+            assertParseFailure(parser, fields + " a/15", String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "a/"));
+            assertParseFailure(parser, fields + " p/456", String.format(
+                    AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "p/"));
+        }
+    }
+
+    @Test
+    public void parse_quoteInsideOtherFields_doesNotHideUnknownParameters() {
+        for (String field : List.of("r/stu\"dent", "n/Al\"ex", "e/al\"ex@example.com", "lv/Sec\"3", "sub/Ma\"th")) {
+            String error = String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "a/");
+            if (field.startsWith("n/")) {
+                error += AddCommand.MESSAGE_NAME_SLASH_HINT;
+            }
+            assertParseFailure(parser, " " + field + " a/15", error);
+        }
+    }
+
+    @Test
+    public void parse_quotedNameAfterPhoneQuote_keepsPrefixLikeTextInName() {
+        Person expected = new PersonBuilder().withName("Ravi p/e ratio lv/Sec 3 sub/Math")
+                .withPhone("123\"").withoutEmail().build();
+        assertParseSuccess(parser, " r/student p/123\" n/\"Ravi p/e ratio lv/Sec 3 sub/Math\"",
+                new AddCommand(expected));
+    }
+
+    @Test
     public void parse_studentDetailsWithoutLettersOrDigits_reportsSpecificError() {
         assertParseFailure(parser, " sub/(+) lv/--- n/Alex r/student",
                 "Level must contain at least one letter or digit.");
