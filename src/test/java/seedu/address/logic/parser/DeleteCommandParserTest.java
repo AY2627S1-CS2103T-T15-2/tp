@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.model.person.Name;
 
 /**
  * As we are only doing white-box testing, our test cases do not cover path variations
@@ -21,6 +22,29 @@ import seedu.address.logic.commands.DeleteCommand;
 public class DeleteCommandParserTest {
 
     private DeleteCommandParser parser = new DeleteCommandParser();
+
+    @Test
+    public void parse_name_returnsNameDeleteCommand() {
+        assertParseSuccess(parser, "n/Alice Tan", new DeleteCommand(new Name("Alice Tan")));
+        assertParseSuccess(parser, "  n/Alice Tan  ", new DeleteCommand(new Name("Alice Tan")));
+        assertParseFailure(parser, "1 n/Alice Tan", DeleteCommand.MESSAGE_INVALID_TARGET);
+        assertParseFailure(parser, "n/Alice n/Bob", DeleteCommand.MESSAGE_INVALID_TARGET);
+        assertParseFailure(parser, "n/", "Name cannot be blank.");
+    }
+
+    @Test
+    public void parseCommand_nameThroughApplicationParser_returnsNameDeleteCommand() throws Exception {
+        assertParseSuccess(new AddressBookParser()::parseCommand, "delete n/Alice Tan",
+                new DeleteCommand(new Name("Alice Tan")));
+    }
+
+    @Test
+    public void parse_quotedNameContainingPrefix_preservesName() {
+        assertParseSuccess(parser, "n/\"Ravi n/o Kumar\"",
+                new DeleteCommand(new Name("Ravi n/o Kumar")));
+        assertParseFailure(parser, "n/\"Ravi n/o Kumar\" n/Alice", DeleteCommand.MESSAGE_INVALID_TARGET);
+        assertParseFailure(parser, "n/\"Ravi n/o Kumar", ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
+    }
 
     @Test
     public void parse_validArgs_returnsDeleteCommand() {

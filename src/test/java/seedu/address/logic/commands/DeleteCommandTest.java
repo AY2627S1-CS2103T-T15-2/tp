@@ -20,6 +20,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.PersonBuilder;
@@ -31,6 +32,57 @@ import seedu.address.testutil.PersonBuilder;
 public class DeleteCommandTest {
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void equals_nameTargets_comparesNamesAndTargetTypes() {
+        DeleteCommand command = new DeleteCommand(new Name("Alice Tan"));
+        assertTrue(command.equals(new DeleteCommand(new Name("Alice Tan"))));
+        assertFalse(command.equals(new DeleteCommand(new Name("Bob Tan"))));
+        assertFalse(command.equals(new DeleteCommand(INDEX_FIRST_PERSON)));
+        assertFalse(new DeleteCommand(INDEX_FIRST_PERSON).equals(command));
+    }
+
+    @Test
+    public void toString_nameTarget_includesName() {
+        Name name = new Name("Alice Tan");
+        assertEquals(DeleteCommand.class.getCanonicalName() + "{targetName=" + name + "}",
+                new DeleteCommand(name).toString());
+    }
+
+    @Test
+    public void execute_uniqueName_reusesIndexDeletion() throws Exception {
+        Person target = model.getFilteredPersonList().getFirst();
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        CommandResult expected = new DeleteCommand(INDEX_FIRST_PERSON).execute(expectedModel);
+
+        CommandResult actual = new DeleteCommand(new Name(target.getName().fullName.toUpperCase()))
+                .execute(model);
+
+        assertEquals(expected, actual);
+        assertEquals(expectedModel.getAddressBook(), model.getAddressBook());
+    }
+
+    @Test
+    public void execute_duplicateName_reportsDisplayedIndexesWithoutDeleting() {
+        Model duplicateModel = new ModelManager();
+        duplicateModel.addPerson(new PersonBuilder().withName("Alice Tan").build());
+        duplicateModel.addPerson(new PersonBuilder().withName("ALICE TAN").withRole("guardian").build());
+        DeleteCommand command = new DeleteCommand(new Name("Alice Tan"));
+        String choices = "1 [" + duplicateModel.getFilteredPersonList().get(0).getRole() + "]\n2 ["
+                + duplicateModel.getFilteredPersonList().get(1).getRole() + "]";
+
+        assertCommandFailure(command, duplicateModel, String.format(DeleteCommand.MESSAGE_AMBIGUOUS_NAME,
+                "Alice Tan", choices));
+        assertEquals(2, duplicateModel.getAddressBook().getPersonList().size());
+    }
+
+    @Test
+    public void execute_hiddenName_reportsNoMatchWithoutDeleting() {
+        Person target = model.getFilteredPersonList().getFirst();
+        model.updateFilteredPersonList(person -> !person.getId().equals(target.getId()));
+        assertCommandFailure(new DeleteCommand(target.getName()), model,
+                String.format(DeleteCommand.MESSAGE_NAME_NOT_FOUND, target.getName()));
+    }
 
     @Test
     public void constructor_emptyIndexes_throwsIllegalArgumentException() {
