@@ -23,8 +23,6 @@ public class Level {
                     + "periods, plus signs and parentheses.";
     public static final String MESSAGE_MISSING_ALPHANUMERIC = "Level must contain at least one letter or digit.";
 
-    private static final String ALLOWED_CHARACTERS_REGEX = "[\\p{L}\\p{N} .+()-]*";
-
     public final String value;
 
     /**
@@ -50,20 +48,13 @@ public class Level {
      * Returns the failed constraint for {@code test}, or {@code null} for a valid, trimmed value.
      */
     public static String getValidationErrorMessage(String test) {
-        requireNonNull(test);
-        if (test.codePointCount(0, test.length()) > MAX_LENGTH) {
-            return MESSAGE_TOO_LONG;
-        }
-        if (!test.matches(ALLOWED_CHARACTERS_REGEX)) {
-            return MESSAGE_INVALID_CHARACTERS;
-        }
-        if (!test.matches(".*[\\p{L}\\p{N}].*")) {
-            return MESSAGE_MISSING_ALPHANUMERIC;
-        }
-        if (!test.equals(test.trim())) {
-            return "Level cannot start or end with spaces.";
-        }
-        return null;
+        return switch (StudentDetailValidator.validate(test, MAX_LENGTH)) {
+            case TOO_LONG -> MESSAGE_TOO_LONG;
+            case INVALID_CHARACTERS -> MESSAGE_INVALID_CHARACTERS;
+            case MISSING_ALPHANUMERIC -> MESSAGE_MISSING_ALPHANUMERIC;
+            case SURROUNDING_SPACES -> "Level cannot start or end with spaces.";
+            case VALID -> null;
+        };
     }
 
     /**

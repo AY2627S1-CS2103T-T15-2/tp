@@ -117,37 +117,18 @@ public class AddCommand extends Command {
      */
     private String createSuccessFeedback(Model model) {
         String feedback = String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getRole());
-        if (hasContactWithSimilarPhone(model)) {
+        DuplicateWarning warning = DuplicateWarning.classify(toAdd, model.getAddressBook().getPersonList());
+        if (warning == DuplicateWarning.PHONE) {
             logger.info("ADD possible-duplicate warning selected: phone matches ignoring spaces and hyphens.");
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_PHONE;
-        } else if (hasContactWithSameEmail(model)) {
+        } else if (warning == DuplicateWarning.EMAIL) {
             logger.info("ADD possible-duplicate warning selected: email matches ignoring case.");
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_EMAIL;
-        } else if (hasContactWithSharedEmptyField(model)) {
+        } else if (warning == DuplicateWarning.GENERAL) {
             logger.info("ADD possible-duplicate warning selected: a contact method is absent from both contacts.");
             feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE;
         }
         return feedback;
-    }
-
-    private boolean hasContactWithSimilarPhone(Model model) {
-        return model.getAddressBook().getPersonList().stream()
-                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSamePhoneIgnoringFormatting(person));
-    }
-
-    private boolean hasContactWithSameEmail(Model model) {
-        return model.getAddressBook().getPersonList().stream()
-                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSameEmailAddress(person));
-    }
-
-    private boolean hasContactWithSharedEmptyField(Model model) {
-        return model.getAddressBook().getPersonList().stream()
-                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && hasSharedEmptyContactField(person));
-    }
-
-    private boolean hasSharedEmptyContactField(Person otherPerson) {
-        return toAdd.getPhone().isEmpty() && otherPerson.getPhone().isEmpty()
-                || toAdd.getEmail().isEmpty() && otherPerson.getEmail().isEmpty();
     }
 
     @Override
