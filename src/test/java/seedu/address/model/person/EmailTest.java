@@ -12,6 +12,26 @@ import org.junit.jupiter.api.Test;
 public class EmailTest {
 
     @Test
+    public void getValidationErrorMessage_distinguishesCharactersFromPunctuation() {
+        for (String local : List.of("alex!tan", "alex'", "aléx", "alex..tan!")) {
+            assertEquals(Email.MESSAGE_LOCAL_CHARACTERS,
+                    Email.getValidationErrorMessage(local + "@example.com"));
+        }
+        for (String local : List.of(".alex", "alex-", "alex..tan", "alex+_tan", "alex%+tan")) {
+            assertEquals("Email local-part punctuation (., _, %, +, -) must appear singly between letters or digits.",
+                    Email.getValidationErrorMessage(local + "@example.com"));
+        }
+        for (String domain : List.of("exam_ple.com", "example.c_m", "exämple.com", "exam--ple!.com")) {
+            assertEquals(Email.MESSAGE_DOMAIN_CHARACTERS, Email.getValidationErrorMessage("alex@" + domain));
+        }
+        for (String domain : List.of("-example.com", "example-.com", "exam--ple.com", "example.-com",
+                "example.com-", "example.co--m")) {
+            assertEquals("Email domain hyphens must appear singly between letters or digits.",
+                    Email.getValidationErrorMessage("alex@" + domain));
+        }
+    }
+
+    @Test
     public void constructor_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Email(null));
     }

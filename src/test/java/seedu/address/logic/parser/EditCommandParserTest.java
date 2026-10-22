@@ -18,13 +18,17 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Subject;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 
 public class EditCommandParserTest {
@@ -279,5 +283,49 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 n/\"Randy p/e ratio", ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
         assertParseFailure(parser, "1 n/Randy\"", ParserUtil.MESSAGE_INVALID_NAME_QUOTES);
         assertParseFailure(parser, "1 n/\"Ran\"dy\"", ParserUtil.MESSAGE_INVALID_NAME_QUOTES);
+    }
+
+    @Test
+    public void parse_levelAndSubject_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withLevel("Sec 4")
+                .withSubject("A-Math").build();
+        assertParseSuccess(parser, "1 lv/ Sec  4 sub/A-Math",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_levelAndSubjectNone_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutLevel().withoutSubject()
+                .build();
+        assertParseSuccess(parser, "1 lv/NONE sub/none", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseSuccess(parser, "1 lv/ None  sub/nOnE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_invalidLevelOrSubject_failure() {
+        assertParseFailure(parser, "1 lv/Sec #3", Level.MESSAGE_INVALID_CHARACTERS);
+        assertParseFailure(parser, "1 sub/Math & Science", Subject.MESSAGE_INVALID_CHARACTERS);
+    }
+
+    @Test
+    public void parse_emptyLevel_reportsEmptyParameter() {
+        for (String value : List.of("", "   ", "\t\r\n")) {
+            assertParseFailure(parser, "1 lv/" + value,
+                    "Empty level parameter: Level cannot be empty when lv/ is specified.");
+        }
+    }
+
+    @Test
+    public void parse_emptySubject_reportsEmptyParameter() {
+        for (String value : List.of("", "   ", "\t\r\n")) {
+            assertParseFailure(parser, "1 sub/" + value,
+                    "Empty subject parameter: Subject cannot be empty when sub/ is specified.");
+        }
+    }
+
+    @Test
+    public void parse_repeatedLevelOrSubject_failure() {
+        assertParseFailure(parser, "1 lv/Sec 3 lv/Sec 4", EditCommand.MESSAGE_REPEATED_PARAMETER);
+        assertParseFailure(parser, "1 sub/Math sub/Physics", EditCommand.MESSAGE_REPEATED_PARAMETER);
     }
 }

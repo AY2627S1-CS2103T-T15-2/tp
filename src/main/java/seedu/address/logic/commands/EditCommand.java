@@ -2,8 +2,10 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_CONTACTS;
 import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 
@@ -17,10 +19,12 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Role;
+import seedu.address.model.person.Subject;
 
 /**
  * Edits the details of an existing person in the address book.
@@ -38,25 +42,32 @@ public class EditCommand extends Command {
             + "Parameters: INDEX (must be a positive integer) "
             + "[" + PREFIX_NAME + "NAME] "
             + "[" + PREFIX_PHONE + "PHONE] "
-            + "[" + PREFIX_EMAIL + "EMAIL]\n"
-            + "Use " + PREFIX_PHONE + REMOVE_FIELD_VALUE + " or " + PREFIX_EMAIL + REMOVE_FIELD_VALUE
-            + " to remove the phone or email.\n"
+            + "[" + PREFIX_EMAIL + "EMAIL] "
+            + "[" + PREFIX_LEVEL + "LEVEL] "
+            + "[" + PREFIX_SUBJECT + "SUBJECT]\n"
+            + "Use " + REMOVE_FIELD_VALUE + " as the value, such as " + PREFIX_PHONE + REMOVE_FIELD_VALUE
+            + ", to remove a phone, email, level or subject. Only students can have a level and subject.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
-            + PREFIX_EMAIL + "johndoe@example.com";
+            + PREFIX_EMAIL + "johndoe@example.com "
+            + PREFIX_LEVEL + "Sec 4";
 
     public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX [" + PREFIX_NAME + "NAME] ["
-            + PREFIX_PHONE + "PHONE] [" + PREFIX_EMAIL + "EMAIL]";
+            + PREFIX_PHONE + "PHONE] [" + PREFIX_EMAIL + "EMAIL] [" + PREFIX_LEVEL + "LEVEL] ["
+            + PREFIX_SUBJECT + "SUBJECT]";
     public static final String MESSAGE_INVALID_COMMAND = "Invalid edit command. Use: " + COMMAND_FORMAT;
     public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter. Use: " + COMMAND_FORMAT;
     public static final String MESSAGE_REPEATED_PARAMETER = "Each of " + PREFIX_NAME + ", " + PREFIX_PHONE
-            + ", and " + PREFIX_EMAIL + " may appear only once.";
+            + ", " + PREFIX_EMAIL + ", " + PREFIX_LEVEL + ", and " + PREFIX_SUBJECT
+            + " may appear only once.";
     public static final String MESSAGE_INVALID_INDEX =
             "The contact index must be a positive integer shown in the list.";
     public static final String MESSAGE_CONTACT_NOT_FOUND = "No contact exists at index %1$d.";
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Updated contact: %1$s [%2$s].";
     public static final String MESSAGE_NOT_EDITED = "At least one of " + PREFIX_NAME + ", " + PREFIX_PHONE
-            + ", or " + PREFIX_EMAIL + " must be provided.";
+            + ", " + PREFIX_EMAIL + ", " + PREFIX_LEVEL + ", or " + PREFIX_SUBJECT + " must be provided.";
+    public static final String MESSAGE_GUARDIAN_STUDENT_DETAILS =
+            "Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.";
     public static final String MESSAGE_DUPLICATE_PERSON = "This edit would create a duplicate contact.";
     public static final String MESSAGE_POSSIBLE_DUPLICATE = "Warning: Another contact with the same role and name "
             + "exists. This contact may be a duplicate, but it was updated.";
@@ -96,6 +107,9 @@ public class EditCommand extends Command {
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
+        if (personToEdit.getRole() != Role.STUDENT && editPersonDescriptor.isStudentDetailEdited()) {
+            throw new CommandException(MESSAGE_GUARDIAN_STUDENT_DETAILS);
+        }
         if (personToEdit.getRole() == Role.GUARDIAN
                 && getUpdatedPhone(personToEdit, editPersonDescriptor).isEmpty()
                 && getUpdatedEmail(personToEdit, editPersonDescriptor).isEmpty()) {
@@ -128,24 +142,12 @@ public class EditCommand extends Command {
      * which is reported before a phone number or email address that both contacts lack.
      */
     private static Optional<String> getPossibleDuplicateWarning(Person editedPerson, List<Person> otherPersons) {
-        List<Person> sameNameAndRole = otherPersons.stream()
-                .filter(editedPerson::hasSameNameAndRole)
-                .toList();
-        if (sameNameAndRole.stream().anyMatch(editedPerson::hasSamePhoneIgnoringFormatting)) {
-            return Optional.of(MESSAGE_POSSIBLE_DUPLICATE_PHONE);
-        }
-        if (sameNameAndRole.stream().anyMatch(editedPerson::hasSameEmailAddress)) {
-            return Optional.of(MESSAGE_POSSIBLE_DUPLICATE_EMAIL);
-        }
-        if (sameNameAndRole.stream().anyMatch(person -> hasSharedEmptyContactField(editedPerson, person))) {
-            return Optional.of(MESSAGE_POSSIBLE_DUPLICATE);
-        }
-        return Optional.empty();
-    }
-
-    private static boolean hasSharedEmptyContactField(Person person, Person otherPerson) {
-        return person.getPhone().isEmpty() && otherPerson.getPhone().isEmpty()
-                || person.getEmail().isEmpty() && otherPerson.getEmail().isEmpty();
+        return switch (DuplicateWarning.classify(editedPerson, otherPersons)) {
+            case PHONE -> Optional.of(MESSAGE_POSSIBLE_DUPLICATE_PHONE);
+            case EMAIL -> Optional.of(MESSAGE_POSSIBLE_DUPLICATE_EMAIL);
+            case GENERAL -> Optional.of(MESSAGE_POSSIBLE_DUPLICATE);
+            case NONE -> Optional.empty();
+        };
     }
 
     /**
@@ -159,10 +161,15 @@ public class EditCommand extends Command {
         Optional<Phone> updatedPhone = getUpdatedPhone(personToEdit, editPersonDescriptor);
         Optional<Email> updatedEmail = getUpdatedEmail(personToEdit, editPersonDescriptor);
         Role role = personToEdit.getRole();
+        Optional<Level> updatedLevel = editPersonDescriptor.isLevelRemoved()
+                ? Optional.empty()
+                : editPersonDescriptor.getLevel().or(personToEdit::getLevel);
+        Optional<Subject> updatedSubject = editPersonDescriptor.isSubjectRemoved()
+                ? Optional.empty()
+                : editPersonDescriptor.getSubject().or(personToEdit::getSubject);
 
-        return new Person(personToEdit.getId(), updatedName, updatedPhone,
-                updatedEmail, role, personToEdit.getGuardianId(), personToEdit.getStatus(),
-                personToEdit.getLevel(), personToEdit.getSubject());
+        return new Person(personToEdit.getId(), updatedName, updatedPhone, updatedEmail, role,
+                personToEdit.getGuardianId(), personToEdit.getStatus(), updatedLevel, updatedSubject);
     }
 
     private static Optional<Phone> getUpdatedPhone(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {
@@ -210,6 +217,10 @@ public class EditCommand extends Command {
         private Email email;
         private boolean isPhoneRemoved;
         private boolean isEmailRemoved;
+        private Level level;
+        private Subject subject;
+        private boolean isLevelRemoved;
+        private boolean isSubjectRemoved;
 
         public EditPersonDescriptor() {}
 
@@ -222,13 +233,25 @@ public class EditCommand extends Command {
             setEmail(toCopy.email);
             isPhoneRemoved = toCopy.isPhoneRemoved;
             isEmailRemoved = toCopy.isEmailRemoved;
+            setLevel(toCopy.level);
+            setSubject(toCopy.subject);
+            isLevelRemoved = toCopy.isLevelRemoved;
+            isSubjectRemoved = toCopy.isSubjectRemoved;
         }
 
         /**
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email) || isPhoneRemoved || isEmailRemoved;
+            return CollectionUtil.isAnyNonNull(name, phone, email) || isPhoneRemoved || isEmailRemoved
+                    || isStudentDetailEdited();
+        }
+
+        /**
+         * Returns true if the level or subject is set or removed.
+         */
+        public boolean isStudentDetailEdited() {
+            return CollectionUtil.isAnyNonNull(level, subject) || isLevelRemoved || isSubjectRemoved;
         }
 
         public void setName(Name name) {
@@ -281,6 +304,48 @@ public class EditCommand extends Command {
             return Optional.ofNullable(email);
         }
 
+        public void setLevel(Level level) {
+            this.level = level;
+            isLevelRemoved = false;
+        }
+
+        /**
+         * Marks the level to be removed from the edited person.
+         */
+        public void removeLevel() {
+            level = null;
+            isLevelRemoved = true;
+        }
+
+        public boolean isLevelRemoved() {
+            return isLevelRemoved;
+        }
+
+        public Optional<Level> getLevel() {
+            return Optional.ofNullable(level);
+        }
+
+        public void setSubject(Subject subject) {
+            this.subject = subject;
+            isSubjectRemoved = false;
+        }
+
+        /**
+         * Marks the subject to be removed from the edited person.
+         */
+        public void removeSubject() {
+            subject = null;
+            isSubjectRemoved = true;
+        }
+
+        public boolean isSubjectRemoved() {
+            return isSubjectRemoved;
+        }
+
+        public Optional<Subject> getSubject() {
+            return Optional.ofNullable(subject);
+        }
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
@@ -296,7 +361,11 @@ public class EditCommand extends Command {
                     && Objects.equals(phone, otherEditPersonDescriptor.phone)
                     && Objects.equals(email, otherEditPersonDescriptor.email)
                     && isPhoneRemoved == otherEditPersonDescriptor.isPhoneRemoved
-                    && isEmailRemoved == otherEditPersonDescriptor.isEmailRemoved;
+                    && isEmailRemoved == otherEditPersonDescriptor.isEmailRemoved
+                    && Objects.equals(level, otherEditPersonDescriptor.level)
+                    && Objects.equals(subject, otherEditPersonDescriptor.subject)
+                    && isLevelRemoved == otherEditPersonDescriptor.isLevelRemoved
+                    && isSubjectRemoved == otherEditPersonDescriptor.isSubjectRemoved;
         }
 
         @Override
@@ -307,6 +376,10 @@ public class EditCommand extends Command {
                     .add("email", email)
                     .add("isPhoneRemoved", isPhoneRemoved)
                     .add("isEmailRemoved", isEmailRemoved)
+                    .add("level", level)
+                    .add("subject", subject)
+                    .add("isLevelRemoved", isLevelRemoved)
+                    .add("isSubjectRemoved", isSubjectRemoved)
                     .toString();
         }
     }

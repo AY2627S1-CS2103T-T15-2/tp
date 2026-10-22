@@ -17,7 +17,11 @@ public class Level {
             + " characters, including at least one letter or digit. It may contain letters, digits, spaces, "
             + "hyphens, periods, plus signs and parentheses.";
 
-    private static final String VALIDATION_REGEX = "[\\p{L}\\p{N} .+()-]*[\\p{L}\\p{N}][\\p{L}\\p{N} .+()-]*";
+    public static final String MESSAGE_TOO_LONG = "Level cannot exceed " + MAX_LENGTH + " characters.";
+    public static final String MESSAGE_INVALID_CHARACTERS =
+            "Level contains unsupported characters. Use letters, digits, spaces, hyphens, "
+                    + "periods, plus signs and parentheses.";
+    public static final String MESSAGE_MISSING_ALPHANUMERIC = "Level must contain at least one letter or digit.";
 
     public final String value;
 
@@ -37,9 +41,20 @@ public class Level {
      */
     public static boolean isValidLevel(String test) {
         requireNonNull(test);
-        return test.equals(test.trim())
-                && test.codePointCount(0, test.length()) <= MAX_LENGTH
-                && test.matches(VALIDATION_REGEX);
+        return getValidationErrorMessage(test) == null;
+    }
+
+    /**
+     * Returns the failed constraint for {@code test}, or {@code null} for a valid, trimmed value.
+     */
+    public static String getValidationErrorMessage(String test) {
+        return switch (StudentDetailValidator.validate(test, MAX_LENGTH)) {
+            case TOO_LONG -> MESSAGE_TOO_LONG;
+            case INVALID_CHARACTERS -> MESSAGE_INVALID_CHARACTERS;
+            case MISSING_ALPHANUMERIC -> MESSAGE_MISSING_ALPHANUMERIC;
+            case SURROUNDING_SPACES -> "Level cannot start or end with spaces.";
+            case VALID -> null;
+        };
     }
 
     /**

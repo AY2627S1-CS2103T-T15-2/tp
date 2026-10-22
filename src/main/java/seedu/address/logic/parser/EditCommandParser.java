@@ -2,8 +2,10 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -20,7 +22,8 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class EditCommandParser implements Parser<EditCommand> {
 
     private static final Pattern PARAMETER_PREFIX = Pattern.compile("(?<!\\S)([^\\s/]+/)");
-    private static final List<Prefix> EDIT_PREFIXES = List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL);
+    private static final List<Prefix> EDIT_PREFIXES =
+            List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL, PREFIX_SUBJECT);
 
     /**
      * Parses the given {@code String} of arguments in the context of the EditCommand
@@ -30,7 +33,8 @@ public class EditCommandParser implements Parser<EditCommand> {
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL);
+                ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
+                        PREFIX_LEVEL, PREFIX_SUBJECT);
 
         verifyNoUnknownPrefixes(argMultimap);
         verifyNoRepeatedPrefixes(argMultimap);
@@ -58,11 +62,32 @@ public class EditCommandParser implements Parser<EditCommand> {
             }
         }
 
+        if (argMultimap.getValue(PREFIX_LEVEL).isPresent()) {
+            String level = argMultimap.getValue(PREFIX_LEVEL).get();
+            if (isRemoveValue(level)) {
+                editPersonDescriptor.removeLevel();
+            } else {
+                editPersonDescriptor.setLevel(ParserUtil.parseLevel(level));
+            }
+        }
+        if (argMultimap.getValue(PREFIX_SUBJECT).isPresent()) {
+            String subject = argMultimap.getValue(PREFIX_SUBJECT).get();
+            if (isRemoveValue(subject)) {
+                editPersonDescriptor.removeSubject();
+            } else {
+                editPersonDescriptor.setSubject(ParserUtil.parseSubject(subject));
+            }
+        }
+
         if (!editPersonDescriptor.isAnyFieldEdited()) {
             throw new ParseException(EditCommand.MESSAGE_NOT_EDITED);
         }
 
         return new EditCommand(index, editPersonDescriptor);
+    }
+
+    private static boolean isRemoveValue(String value) {
+        return value.trim().equalsIgnoreCase(EditCommand.REMOVE_FIELD_VALUE);
     }
 
     /**

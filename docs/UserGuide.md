@@ -6,7 +6,9 @@
 
 # TutorRoster User Guide
 
-TutorRoster is a **desktop application for managing student and guardian contacts through typed commands**, with a graphical contact list and a panel for the selected contact's details.
+TutorRoster is a **desktop contact-management application for independent private tutors** managing a small group of
+secondary school or junior college students and their guardians. Typed commands help tutors keep contact details
+up to date and retrieve them quickly, with a graphical contact list and a panel for the selected contact's details.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -34,6 +36,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
    * `add r/student n/John Doe p/98765432 e/johnd@example.com` : Adds a student named `John Doe`.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
+   * `delete 1 3 5` : Deletes the 1st, 3rd and 5th contacts in one operation.
 
    * `clear` : Deletes all contacts.
 
@@ -56,7 +59,7 @@ TutorRoster is a **desktop application for managing student and guardian contact
   For example, `edit INDEX [n/NAME] [p/PHONE]` can be used as `edit 1 n/John Doe` or as `edit 1 p/91234567`.
 
 * Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
+  For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -91,127 +94,119 @@ Format: `help`
 
 Adds a student or guardian contact.
 
-Format: `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
+Format: `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
-`r/ROLE` and `n/NAME` are required. `ROLE` is `student` or `guardian`, ignoring letter case. The parameters may
-appear in any order, but each may appear only once. If multiple supplied values are invalid, errors are checked in the
-fixed parameter order `r/ROLE`, `n/NAME`, `p/PHONE`, `e/EMAIL`, `lv/LEVEL`, then `sub/SUBJECT`, regardless of the order entered.
-An empty `r/` is rejected with `Empty role parameter: Role cannot be empty when r/ is specified. Use student or guardian.`
-An unsupported role is rejected with `Invalid role. Role must be student or guardian.`
-If `r/` is omitted, the error starts with `Missing required field: r/ROLE.` If `n/` is omitted, it starts with
-`Missing required field: n/NAME.` In either case, that line is followed by the same usage text:
-
-    add: Adds a student or guardian contact.
-    Parameters: r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]
-    Students may omit phone and email; guardians must provide at least one.
-    Only students can have a level and subject.
-    Example: add r/student n/John Doe p/98765432 e/johnd@example.com lv/Sec 3 sub/Math
-
-Repeating any parameter is rejected with `Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.`
-Phone and email are optional fields, subject to the guardian requirement below.
-
-Phone is optional. Omit `p/` to save a contact without a phone number; the contact displays `Not provided`.
-Supplying `p/` with an empty or whitespace-only value is rejected with:
-`Empty phone parameter: Phone cannot be empty when p/ is specified.`
-
-A guardian must have at least one contact method. Adding a guardian with neither `p/` nor `e/` is rejected with:
-`A guardian must have at least one contact method: phone or email.`
-For students, phone and email are independently optional. A student can have both, either one, or neither.
-
-The phone field accepts contact details with at least 3 digits from `0-9` and a maximum of 100 characters.
-Other numeral characters may appear as text, but do not count towards the minimum. You can include multiple
-numbers, labels, spaces and punctuation, for example `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` character
-has no position restriction. The `@` character is reserved for email addresses, and `/` is reserved for command
-prefixes. Control characters such as tabs and line breaks are not accepted; surrounding whitespace is trimmed. Invalid
-phone values report the relevant reason: `Phone number must contain at least 3 digits (0-9).`,
-`Phone details cannot exceed 100 characters.`, or
-`Phone number cannot contain control characters, '@', or '/'.`
-
-A student can optionally have one level, such as `lv/Sec 3`, and one subject, such as `sub/A-Math`. Each is free
-text of 1 to 30 characters containing at least one letter or digit. Letters, digits, spaces, hyphens (`-`), periods
-(`.`), plus signs (`+`) and parentheses are allowed. Surrounding spaces are trimmed, repeated spaces are reduced to one,
-and capitalization is kept as typed. `NONE` cannot be used as a level or subject, because `edit` uses it to remove one.
-Supplying `lv/` or `sub/` with an empty or whitespace-only value is rejected with
-`Empty level parameter: Level cannot be empty when lv/ is specified.` or
-`Empty subject parameter: Subject cannot be empty when sub/ is specified.`, respectively.
-Adding a guardian with `lv/` or `sub/` is rejected with
-`Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
-For example, `add r/student n/Alex Tan lv/Sec 3 sub/Math` adds a Secondary 3 student taking Math.
-
-For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first even though `p/` appears first in the command.
-
-Email is optional. Omit `e/` to save a contact without an email; the contact displays `Not provided`.
-Supplying `e/` with an empty or whitespace-only value is rejected with:
-`Empty email parameter: Email cannot be empty when e/ is specified.`
-
-An email must have exactly one `@`, a non-empty local part, and at least two non-empty domain labels
-separated by periods. The final domain label must contain at least two characters. Surrounding whitespace is
-trimmed; internal whitespace is rejected.
-The email address may contain at most 254 characters after trimming surrounding whitespace. Longer values report
-`Email address cannot exceed 254 characters.`
-The local part (before `@`) is limited to 64 characters, and each domain label (between periods) to 63.
-Exceeding these limits reports `Email local part cannot exceed 64 characters.` or
-`Email domain labels cannot exceed 63 characters.`, respectively.
-The local part allows ASCII letters, digits, periods, underscores, percentage signs, plus signs and hyphens.
-Domain labels allow ASCII letters, digits and hyphens. Capitalization is preserved for display.
-Invalid input reports the specific reason, such as `Email address cannot contain whitespace.` or
-`Email domain labels cannot be empty.`
-
-| Accepted email | Rejected email | Reason for rejection |
-| --- | --- | --- |
-| `alex.tan@example.com` | `alex@example` | Fewer than two domain labels |
-| `alex+tuition@example.com` | `alex@example.c` | Final domain label has fewer than two characters |
-| `Alex_Tan%25@Example.COM` | `.alex@example.com` | Local part starts with a special character |
-| `alex%school@example.com` | `alex..tan@example.com` | Consecutive special characters in the local part |
-| `alex-tan@example.com` | `alex-@example.com` | Local part ends with a special character |
-| `alex@example.com` | `alex@-example.com` | Domain label starts with a hyphen |
-
-The local part accepts `%` in addition to the original `+`, `_`, `.`, and `-` characters, while special
-characters cannot start or end the local part or appear consecutively. Domain labels retain the original
-alphanumeric and hyphen placement restrictions, and the final label must contain at least two characters.
-Validation checks the address format; it does not verify that a mailbox exists.
-
-Contacts are exact duplicates when their role, name, phone and email all match. Name and email comparisons ignore
-capitalization; phone details are compared after trimming surrounding whitespace, while internal spaces and hyphens
-remain significant. Two omitted values match. Exact duplicates with at least one contact method are rejected with
-`This contact already exists.` A student with neither a phone number nor an email address is not rejected as an exact
-duplicate based on role and name alone.
-
-When a contact has the same role and name as an existing contact, Add may display a possible-duplicate warning and
-still add the contact. A matching phone after spaces and hyphens are removed produces a phone warning. A matching
-email produces an email warning. If either contact method is missing from both contacts, and neither of those more
-specific warnings applies, a general warning is shown. A contact with the same role and name but different phone and
-email values receives no warning when neither value matches under these rules. Contacts with different roles or names
-do not trigger these warnings. The normal success message is displayed together with any warning.
+**Role and name are required.** Students may have phone, email, both, or neither. Guardians must have at least
+one contact method. Level and subject are optional and available **only for students**.
 
 Examples:
 
-* `add r/student n/Alex Tan p/91234567 e/alex@example.com` followed by `add r/student n/alex tan p/91234567 e/ALEX@example.com`
-  is rejected as an exact duplicate because name and email capitalization are ignored.
-* `add r/student n/Alex Tan p/9123 4567` followed by `add r/student n/Alex Tan p/91234567` is added with a phone
-  warning. The phone values are similar after spaces are removed, but internal spaces are significant for exact duplicates.
-* Two contacts with the same role and name and the same phone after spaces and hyphens are removed receive the phone
-  warning if they are not exact duplicates.
-* Two contacts with the same role and name and the same email but different phone values receive the email warning.
-* Two students with the same role and name and no phone or email receive a general warning; both are added.
+| To add... | Enter |
+| --- | --- |
+| A student with phone and email | `add r/student n/Alex Tan p/91234567 e/alex@example.com` |
+| A student with level and subject | `add r/student n/Alex Tan lv/Sec 3 sub/Math` |
+| A student without contact details | `add r/student n/Ben Lim` |
+| A guardian with email only | `add r/guardian n/Mei Tan e/mei@example.com` |
+| A student whose name contains `/` | `add r/student n/"Ravi s/o Kumar" p/98765432` |
 
-An unknown parameter such as `a/15` is rejected with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
-e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unquoted slash occurs in the name, the message also says to enclose the entire name in double
-quotes. For example, use `add r/student n/"AC/DC"` or `add r/student n/"Ravi s/o Kumar"`. For Add, every slash in a
-name must be quoted, including an embedded slash such as the one in `AC/DC`. Edit has its own parsing behavior and
-continues to accept unquoted embedded slashes.
+Use lowercase `add` and prefixes (`r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`). Parameters may appear in any order,
+once each. Omit an optional field's prefix if unused; an empty prefix such as `p/` is rejected.
+Whitespace before a prefix, including pasted tabs or line breaks, separates parameters just like a space.
+Whitespace inside a value follows that field's rules; for example, a tab inside a phone number is rejected.
+Omitted phone and email values display as `Not provided`.
 
-After a contact is added, TutorRoster shows all guardians and active students, even if the list was filtered by an
-earlier command. Former students are hidden. The new contact is selected so that its details appear in the detail
-panel.
+On success, the contact is saved and selected, and its details appear in the detail panel. Guardians and active
+students are shown, clearing any search or list filter. Former students remain hidden. The command box clears and
+stays focused. The first example reports `Added contact: Alex Tan [Student].`
 
-Examples:
-* `add r/student n/John Doe p/98765432 e/johnd@example.com`
-* `add r/student n/Alex Tan p/91234567` saves a contact without an email.
-* `add r/student n/Alex Tan p/91234567 e/alex+tuition@example.com` saves a contact with an email.
-* `add r/guardian n/Mei Tan e/mei@example.com` saves a guardian without a phone number.
-* `add r/student n/Ben Lim` saves a student without a phone number or email.
-* `add r/guardian n/Betsy Crowe e/betsycrowe@example.com p/1234567`
+#### Field rules
+
+Surrounding whitespace is removed from field values. Capitalization is preserved for names, emails, levels and subjects.
+
+**Role (`r/`)**: `student` or `guardian`, ignoring letter case.
+
+**Name (`n/`)**: A non-blank name of **1 to 70 characters**, allowing letters and numbers (including non-English
+scripts), spaces, apostrophes (`'` or `’`), hyphens, periods, and slashes. Consecutive spaces become one space
+before the length check. Enclose the **entire name** in double quotes if it contains `/`, even for `n/"AC/DC"`.
+The enclosing quotes are not saved; surrounding whitespace inside them is also removed.
+Use straight double quotes (`"`), with no extra text outside them. Prefix-like text inside a quoted name stays
+part of the name: `n/"Ravi p/e ratio"` does not supply a phone number. Quotes protect names only, not other fields.
+
+**Phone (`p/`)**: At least **3 digits from `0-9`**, with a maximum of **100 characters**. Other numerals are allowed
+as text but do not count. Labels, multiple numbers, spaces, and punctuation are accepted, for example
+`p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` may appear anywhere. Do not include `@`, `/`, or control
+characters such as tabs and line breaks.
+
+**Email (`e/`)**: At most **254 characters**. TutorRoster checks the format, not whether the mailbox exists:
+
+* Exactly one `@`, a non-empty part on each side, and no internal whitespace.
+* Before `@`: English letters (`A-Z`, `a-z`), digits (`0-9`), and `.`, `_`, `%`, `+`, or `-`.
+  The local part is limited to **64 characters**. Punctuation must appear singly between letters or digits,
+  as in `alex+tuition@example.com`.
+* After `@`: at least two non-empty labels separated by periods, as in `example.com`. Labels allow English
+  letters, digits, and single hyphens between letters or digits. Each label is limited to **63 characters**.
+  The final label needs at least two characters.
+
+Common email mistakes:
+
+| Invalid input | Reason |
+| --- | --- |
+| `alex @example.com` | Internal whitespace. |
+| `@example.com` | Missing part before `@`. |
+| `alex@.com` or `alex@example..com` | Empty domain label. |
+| `alex@example` or `alex@example.c` | Missing second label or final label too short. |
+| `.alex@example.com` or `alex..tan@example.com` | Invalid punctuation placement. |
+
+**Level (`lv/`) and subject (`sub/`)**: One value each, for students only. Each must contain **1 to 30 characters**,
+including at least one letter or digit. Letters and digits (including non-English scripts), spaces, hyphens,
+periods, plus signs, and parentheses are allowed. Repeated spaces become one space before checking length.
+Examples: `lv/Sec 3`, `sub/A-Math`. The value `NONE`, ignoring case, is reserved for removing fields with `edit`.
+
+#### Duplicate contacts and warnings
+
+Checks include **all saved contacts**, including former students and contacts hidden by a filter. These rules
+apply to contacts with the **same role and name**, ignoring name capitalization. Level and subject do not affect
+these checks.
+
+| Condition, checked in this order | Result |
+| --- | --- |
+| Phone and email both match, with at least one contact method present | Rejected: `This contact already exists.` |
+| Phone matches after spaces and hyphens are removed | Added with a phone warning. |
+| Email matches, ignoring capitalization | Added with an email warning. |
+| Phone is missing from both contacts, or email is missing from both | Added with a general warning. |
+| None of the above | Added without a warning. |
+
+Exact duplicates ignore email capitalization and treat two omitted values as matching. **Internal phone spaces and
+hyphens remain significant for rejection**: `p/9123 4567` and `p/91234567` produce a warning instead.
+
+Two students named `Ben Lim` with no phone or email are both saved, with a general warning for the second.
+Different roles or names trigger no duplicate checks. Only the highest-priority warning is shown, after the success
+message; **a warning does not prevent saving**.
+
+#### Correcting an unsuccessful add
+
+Missing required fields, empty values, repeated parameters, and unknown prefixes such as `a/15` are rejected.
+A missing role or name error identifies the field and shows the command format. Unknown-parameter errors identify
+the invalid prefix and list valid ones; repeated-parameter errors name the repeated prefix. A slash in an unquoted
+name also prompts you to quote the entire name.
+
+After parameter syntax checks, field values are checked in the order `r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`.
+For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first.
+For guardians, the contact-method requirement is checked after phone and email; any `lv/` or `sub/` is then rejected.
+
+Other errors explain the reason, for example:
+
+* `add r/guardian n/Mei Tan` reports `A guardian must have at least one contact method: phone or email.`
+* `add r/guardian n/Mei Tan p/91234567 lv/Sec 3` reports
+  `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
+* `add r/student n/Alex Tan p/` reports `Empty phone parameter: Phone cannot be empty when p/ is specified.`
+* `add r/student n/Alex Tan sub/---` reports `Subject must contain at least one letter or digit.`
+
+Level and subject errors distinguish excessive length, unsupported characters and values without any letters or
+digits. Email errors distinguish unsupported characters from punctuation placement, such as consecutive periods.
+
+Correct the indicated problem and try again. On failure, contacts, selection, and saved data stay unchanged;
+the command remains for correction. For saving errors, see [Saving the data](#saving-the-data).
 
 ### Listing contacts: `list`
 
@@ -304,7 +299,7 @@ Examples:
 
 Edits an existing contact.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
 * Edits the contact at the specified `INDEX`. The index refers to the index number shown in the displayed contact list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -321,13 +316,19 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
 * A guardian must keep at least one contact method. An edit that would leave a guardian with neither a phone number
   nor an email is rejected with `A guardian must have at least one contact method: phone or email.`
   A student can have both removed.
+* `lv/LEVEL` and `sub/SUBJECT` set a student's level and subject, using the same rules as `add`. `lv/NONE` and
+  `sub/NONE` remove them, ignoring letter case. Omitting either keeps the existing value. Editing the level or subject
+  of a guardian is rejected with
+  `Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.`
 * A name containing a word that ends in `/`, such as `s/o`, must be wrapped in double quotes. Anything inside the
   quotes is treated as part of the name, so `edit 1 n/"Randy p/e ratio"` sets the name to `Randy p/e ratio` without
   reading `p/` as a phone. Unquoted, `edit 1 n/Ravi s/o Kumar` is rejected because `s/` is read as a parameter.
-* Each of `n/`, `p/` and `e/` may appear only once. Any other parameter, such as `r/` or `a/`, is rejected with
-  `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`. The role of a contact cannot be edited.
+  Unlike `add`, `edit` accepts embedded slashes without quotes, for example `edit 1 n/AC/DC`.
+* Each of `n/`, `p/`, `e/`, `lv/` and `sub/` may appear only once. Any other parameter, such as `r/` or `a/`, is
+  rejected with `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`.
+  The role of a contact cannot be edited.
 * A missing index, or extra text before the first parameter, is rejected with
-  `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`.
+  `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`.
 * An index that is not a positive whole number is rejected with
   `The contact index must be a positive integer shown in the list.` Leading zeroes are accepted, so `02` means 2.
   An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
@@ -344,6 +345,7 @@ Examples:
 *  `edit 2 n/Betsy Crower` Edits the name of the 2nd contact to be `Betsy Crower`.
 *  `edit 2 e/NONE` Removes the email of the 2nd contact.
 *  `edit 2 p/NONE` Removes the phone number of the 2nd contact.
+*  `edit 3 lv/Sec 4 sub/NONE` Changes the level of the 3rd contact, a student, to `Sec 4` and removes their subject.
 *  `edit 3 n/"Ravi s/o Kumar"` Edits the name of the 3rd contact to be `Ravi s/o Kumar`.
 
 ### Locating contacts by name: `find`
@@ -435,17 +437,36 @@ Failed link commands leave the contacts, relationships, selected contact, detail
 
 ![A linked student selected with the guardian's contact details displayed](images/StudentGuardianLink.png)
 
-### Deleting a contact: `delete`
+### Deleting contacts: `delete`
 
-Deletes the specified contact from TutorRoster.
+Deletes one or more specified contacts from TutorRoster.
 
-Format: `delete INDEX`
+Format: `delete INDEX [INDEX...]`
 
-* Deletes the contact at the specified `INDEX`.
-* The index refers to the index number shown in the displayed contact list.
-* The index **must be a positive integer** 1, 2, 3, ...
+Alternatively, delete one contact by full name: `delete n/NAME`.
+
+* Name matching ignores letter case and repeated or surrounding spaces. Accents, punctuation and word order
+  must match. Partial names do not match.
+* Only the currently displayed contacts are searched. Use `list`, `find NAME` or `list st/former` first to
+  display the intended contact.
+* Exactly one displayed contact must match. If none match, the error is
+  `No displayed contact matches name: NAME.`
+* If multiple contacts match, no contact is deleted. The error lists their displayed indexes and roles;
+  use `delete INDEX` to choose the intended contact.
+* An empty name is rejected. Supply one `n/NAME` parameter and do not combine it with index targets.
+  Digits after `n/` are part of the name, for example `delete n/Alex 2` searches for the full name `Alex 2`.
+* Deletion by name uses the same relationship cleanup and automatic saving as deletion by index.
+  Failed commands or failed saves leave the contacts and saved data unchanged.
+
+* Deletes the contacts at the specified indexes.
+* Each index refers to the index number shown in the displayed contact list.
+* Each index **must be a unique positive integer** 1, 2, 3, ...
+* The indexes can be supplied in any order. They always refer to the original displayed list, so deleting one contact
+  does not change which other contacts the command deletes.
+* The command is atomic. If any index is invalid, repeated or outside the displayed list, no contacts are deleted.
 * A value that is not a positive integer is rejected with
   `The contact index must be a positive integer shown in the list.`
+* A repeated index is rejected with `Each contact index may appear only once.`
 * An index outside the displayed list is rejected with `No contact exists at index INDEX.`
 
 Deleting an unlinked contact does not remove any student-guardian relationships. Deleting a linked student removes
@@ -458,12 +479,35 @@ The success message reports how many relationships were removed, when applicable
 * Deleting a linked student: `Deleted contact: Alex Tan [Student]. Removed 1 student-guardian relationship.`
 * Deleting a guardian linked to one student: `Deleted contact: Mei Tan [Guardian]. Removed 1 student-guardian relationship.`
 * Deleting a guardian linked to two students: `Deleted contact: Mei Tan [Guardian]. Removed 2 student-guardian relationships.`
+* Deleting several contacts lists each deleted contact. If both a student and that student's guardian are deleted,
+  their relationship is counted once.
 
 Students without a guardian show `Guardian: None` in the detail panel.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd contact in the displayed contact list.
+* `list` followed by `delete 1 3 5` deletes the 1st, 3rd and 5th displayed contacts.
+* `list` followed by `delete n/Alice Tan` deletes Alice Tan if exactly one displayed contact matches.
+* `delete n/  alice   tan` also matches `Alice Tan`.
 * `find Betsy` followed by `delete 1` deletes the 1st contact in the results of the `find` command.
+* `list st/former` followed by `delete 1` deletes the 1st former student in the displayed list. If that student
+  is linked to a guardian, the student-guardian relationship is also removed, but the guardian contact is kept.
+
+### Undoing the latest deletion: `undo`
+
+Format: `undo`
+
+* Restores the latest successful deletion by index, multiple indexes or name, including original contact IDs,
+  details and student-guardian links. Bulk deletion is restored as one operation.
+* Restores the filter used before deletion and selects a restored contact visible in that view.
+* Read-only commands such as `list`, `find` and `view` preserve undo availability.
+* Another successful deletion replaces the undo opportunity. Any other successful data-changing command clears it.
+* Failed commands and failed saves preserve the undo opportunity. If saving an undo fails, no data changes are
+  applied and you can retry `undo`.
+* History lasts only for the current session. Successful undo consumes it; there is no redo.
+* If nothing can be undone, the message is `No deletion is available to undo.` Extra arguments are rejected.
+
+Example: `delete 1 3`, followed by `undo`, restores both deleted contacts and their original relationships.
 
 ### Clearing all entries: `clear`
 
@@ -518,10 +562,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add r/ROLE n/NAME [p/PHONE_NUMBER] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
+**Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
 **Clear**  | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
 **List**   | `list [r/ROLE] [st/former]`<br> e.g., `list r/student`, `list st/former`

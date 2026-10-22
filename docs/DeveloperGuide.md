@@ -13,7 +13,17 @@
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* TutorRoster is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the
+  [SE-EDU initiative](https://se-education.org/). Its code, documentation structure and UML diagrams have been reused
+  and adapted for student and guardian contact management. This includes the proposed undo/redo design below.
+* [JavaFX](https://openjfx.io/) provides the graphical interface, and
+  [Jackson](https://github.com/FasterXML/jackson) handles JSON serialization.
+* [JUnit 5](https://junit.org/junit5/) provides the automated testing framework.
+* [MarkBind](https://markbind.org/) builds the documentation website, with
+  [PlantUML](https://plantuml.com/) rendering the UML diagrams.
+* Build and quality tools include [Gradle](https://gradle.org/),
+  [Shadow](https://github.com/GradleUp/shadow), [Checkstyle](https://checkstyle.org/) and
+  [JaCoCo](https://www.jacoco.org/jacoco/).
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -35,7 +45,7 @@ The following provides a quick overview of the main components and their interac
 
 **Main components of the architecture**
 
-**`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
 * At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
@@ -67,13 +77,13 @@ The sections below give more details of each component.
 
 ### UI component
 
-The **API** of this component is specified in [`Ui.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/Ui.java)
+The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
 
@@ -84,11 +94,14 @@ The `UI` component,
 
 ### Logic component
 
-**API** : [`Logic.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/logic/Logic.java)
+**API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
 
 Here's a (partial) class diagram of the `Logic` component:
 
-<puml src="diagrams/LogicClassDiagram.puml" width="550"/>
+<puml src="diagrams/LogicClassDiagram.puml" width="550" alt="Partial Logic class diagram showing the shared student status command hierarchy"/>
+
+`XYZCommand` represents the concrete commands listed in the diagram. `ArchiveCommand` and `UnarchiveCommand`
+instead extend the abstract `StudentStatusCommand`, which shares their student-status validation and update logic.
 
 The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
 
@@ -117,7 +130,7 @@ How the parsing works:
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
-**API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
+**API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
 <puml src="diagrams/ModelClassDiagram.puml" width="450" />
 
@@ -132,7 +145,7 @@ The `Model` component,
 
 ### Storage component
 
-**API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
+**API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
 <puml src="diagrams/StorageClassDiagram.puml" width="550" />
 
@@ -238,11 +251,10 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
   * Cons: We must ensure that the implementation of each individual command is correct.
 
-_{more aspects and alternatives to be added}_
-
 ### Editing contacts
 
-`edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]` changes the name, phone number or email address of a displayed contact.
+`edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` changes the name, phone number, email address,
+level or subject of a displayed contact. Only a student can have a level or subject.
 The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
 first displayed contact `p`. Because edit changes data, `LogicManager` runs it on a candidate copy `c` of the live
 model `m`, saves `c` through `Storage`, and only then copies `c`'s data into `m`. If the save fails, `m` is never
@@ -253,23 +265,24 @@ touched.
 **Parsing.** `EditCommandParser` tokenizes the arguments with `ArgumentTokenizer#tokenizeWithQuotedValue`, so a
 quoted name such as `n/"Randy p/e ratio"` keeps any prefix-like text inside the quotes. It then checks, in order:
 
-1. No unknown parameter. Any word ending in `/` outside a quoted name, other than `n/`, `p/` or `e/`, is rejected
+1. No unknown parameter. Any word ending in `/` outside a quoted name, other than `n/`, `p/`, `e/`, `lv/` or `sub/`, is rejected
    with `Unknown parameter`. This is why an unquoted name such as `Ravi s/o Kumar` must be quoted.
-2. No repeated parameter. Each of `n/`, `p/` and `e/` may appear once.
+2. No repeated parameter. Each of `n/`, `p/`, `e/`, `lv/` and `sub/` may appear once.
 3. A valid index. A missing index, or extra text before the first parameter, gives `Invalid edit command`. A value
    that is not a positive integer gives `The contact index must be a positive integer shown in the list.`
 
 Each supplied value is stored in an `EditPersonDescriptor`. `NONE` in any letter case is stored as a removal
-(`removePhone()` or `removeEmail()`) rather than a value. Setting a value after a removal clears the removal flag.
-An empty descriptor is rejected with `At least one of n/, p/, or e/ must be provided.`
+(such as `removePhone()` or `removeLevel()`) rather than a value. Setting a value after a removal clears the removal flag.
+An empty descriptor is rejected with `At least one of n/, p/, e/, lv/, or sub/ must be provided.`
 
 **Execution.** `EditCommand#execute` resolves the index against the filtered, sorted display list, so the index the
 user sees is the one edited. An index beyond the list gives `No contact exists at index INDEX.` The edited contact is
 built by `createEditedPerson`: each field takes the descriptor's value, is emptied if marked for removal, or keeps the
-current value otherwise. The contact's ID, role and guardian link are always copied, so relationships survive an
+current value otherwise. The contact's ID, role, status and guardian link are always copied, so relationships survive an
 edit.
 
-The edit is then rejected if it would leave a guardian with no phone number and no email, or if the edited contact
+The edit is rejected if it sets or removes the level or subject of a guardian. It is then rejected if it would leave
+a guardian with no phone number and no email, or if the edited contact
 would duplicate another contact. The duplicate check is skipped when the edited contact still matches its original
 duplicate identity, so changing only the capitalization of a name is allowed.
 
@@ -312,27 +325,51 @@ the second contact's updated record would lose the first ID and save the second 
 `AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE`, `e/EMAIL`, `lv/LEVEL` and `sub/SUBJECT` as optional
 fields. It validates supplied values in the fixed order role, name, phone, email, level, then subject, regardless of
 the order in which parameters appear.
-Missing required fields and invalid roles are also reported in that order. A student may omit both contact methods. The
+The shared tokenizer recognizes prefixes at the start of the arguments or after `Character.isWhitespace`
+characters, including tabs and line breaks, while preserving internal value whitespace and quoted names.
+Command dispatch accepts the same separators and preserves multiline arguments for field validation.
+Unknown prefixes, repeated prefixes and unclosed quotes are syntax errors reported before field-value validation.
+The parser checks for a missing role, validates the role, then checks for a missing name and unexpected preamble
+before validating the name. A student may omit both contact methods. The
 parser rejects a guardian if both are absent to provide a user-facing command error, and `EditCommand` applies the same
 rule to the resulting contact before updating the model. `Person` stores
 phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
 method. This model invariant applies regardless of which code path creates a `Person`.
 
-The Add parser rejects unknown parameters with `Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE,
-e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If the unknown parameter occurs while parsing a name, the message also instructs the user to quote the full
-name. For Add, every name containing `/` must be enclosed in double quotes, including an embedded slash such as
+`parse` delegates syntax handling to `tokenizeArguments` and field parsing to `parsePerson`. Field-specific helpers
+keep the validation sequence visible without mixing it with extraction details. `AddCommand#execute` similarly
+separates rejection checks, feedback preparation and model updates. Feedback is prepared before insertion so the
+new contact cannot match itself when checking for possible duplicates.
+
+Both the Add scanner and tokenizer enter quoted mode only when the first non-whitespace character after `n/` is
+a straight double quote. Quotes in phone text remain literal characters and cannot hide later parameters.
+`ParserUtil#parseName` trims surrounding whitespace before and after removing enclosing quotes, including Java
+whitespace such as em spaces, tabs and line breaks. Internal tabs and other unsupported whitespace still fail name
+validation; only repeated ordinary spaces are collapsed. Keeping these rules consistent lets quotation marks protect
+prefix-like name text without changing whitespace validation.
+
+The Add parser identifies the unknown prefix, for example `Invalid parameter: a/. Valid parameters are r/ROLE,
+n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unknown parameter follows an unquoted name, it also suggests
+quoting the full name. After a quoted name, it reports only the invalid parameter. For Add, every name containing
+`/` must be enclosed in double quotes, including an embedded slash such as
 `AC/DC`. Edit retains its separate behavior, which accepts unquoted embedded slashes. Missing `r/ROLE` or `n/NAME`
 errors identify the missing field and append the add command usage. Repeated parameters return
-`Each of r/, n/, p/, e/, lv/, and sub/ may appear only once.` Empty roles receive a separate error from unsupported roles; an
-unsupported role reports `Invalid role. Role must be student or guardian.` When multiple supplied values are invalid,
-the parser reports the first error in the fixed order role, name, phone, email, level, then subject.
+`Repeated parameter: lv/. Each parameter may appear only once.`, substituting the repeated prefix. If several
+prefixes repeat, it reports the first in the fixed field order. Empty roles receive a separate error from unsupported roles; an
+unsupported role reports `Invalid role. Role must be student or guardian.`
 
 `Person` also stores an optional `Level` and `Subject` for students. Both are free-text value classes that allow 1 to
-30 letters, digits, spaces, hyphens, periods, plus signs and parentheses. `ParserUtil` trims the value, reduces repeated
+30 Unicode code points, allowing letters, digits, spaces, hyphens, periods, plus signs and parentheses, with at least
+one letter or digit. `ParserUtil` trims the value, reduces repeated
 spaces to one and rejects `NONE`, which `edit` reserves for removing the field. The `Level` and `Subject` constructors
 reject blank values with their constraints messages. For command input, `ParserUtil` instead reports the specific
-empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. The `Person` constructor rejects a
-guardian with a level or subject, and the Add parser reports this before it parses either value. `isSameValue` compares
+empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. For other invalid values, it uses
+`getValidationErrorMessage` to distinguish excessive length, unsupported characters, and the absence of a letter or
+digit, in that order. `Level` and `Subject` delegate these common checks to `StudentDetailValidator` and map its
+validation result to their own field-specific messages. This keeps their rules aligned while preserving distinct
+value types and error messages. The `Person` constructor rejects a
+guardian with a level or subject. After validating phone and email, the Add parser checks the guardian contact-method
+requirement, then rejects student-only prefixes before parsing either value. `isSameValue` compares
 two values ignoring letter case and spaces, so that filters can treat `Sec 3` and `sec3` as the same level.
 
 `AddCommand` rejects an exact duplicate using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Duplicate
@@ -347,9 +384,17 @@ address that matches case-insensitively; then a contact method that is absent fr
 first matching warning, appends it after the normal success message, and still adds the contact. Contacts with
 different roles or names do not receive these warnings.
 
-After adding the contact, `AddCommand` resets the filter with `PREDICATE_SHOW_ALL_PERSONS`, so that the new contact is
-displayed even if an earlier `find` filtered the list. The command result carries the new contact's ID so the UI can
-select it, in the same way as `EditCommand` and `LinkCommand`.
+`DuplicateWarning#classify` owns the warning priority shared by Add and Edit and returns `PHONE`, `EMAIL`, `GENERAL`
+or `NONE`. Each command supplies its own wording; Add also logs the selected warning. Edit excludes the contact
+being edited by ID before calling the classifier. Sharing classification prevents the commands' warning rules from
+drifting apart without coupling their success messages or exact-duplicate rejection.
+
+Duplicate and warning checks use the complete saved contact list, including former students, regardless of the
+current filter. Level, subject, IDs and guardian links do not contribute to duplicate identity.
+
+After adding the contact, `AddCommand` resets the filter with `PREDICATE_SHOW_ACTIVE_CONTACTS`, showing guardians
+and active students while hiding former students. The new contact starts active. The command result carries its ID
+so the UI can select it after a successful save, even if an earlier search or list filter hid similar contacts.
 
 ### Saving contacts and relationships
 
@@ -367,8 +412,15 @@ automatically. `JsonAdaptedPerson` rejects a guardian record that has neither a 
 while converting it to a model object. The `Person` constructor enforces the same invariant, so saved data cannot
 bypass the guardian contact-method requirement.
 
+Level and subject are optional JSON strings. Legacy records without these properties, and explicit null values,
+load with the corresponding fields absent. Present values must satisfy their value-class constraints; blank or
+invalid strings and guardian records containing either field are rejected during loading.
+
 Email validation uses iterative character scans for the local part and domain labels, avoiding recursive regex
 matching on long inputs. `Email.isValidEmail` and the parser share the same validation rules and specific errors.
+For each component, unsupported characters are reported separately from punctuation-placement errors. Only ASCII
+letters and digits are accepted; allowed punctuation must appear singly between letters or digits. The domain
+permits hyphens only, while the local part also permits periods, underscores, percent signs and plus signs.
 An email is limited to 254 characters, with at most 64 in the local part and 63 in each domain label.
 The parser trims surrounding whitespace before checking these limits and reports
 `Email address cannot exceed 254 characters.` for longer values. The same limits apply to saved email values;
@@ -379,10 +431,9 @@ file is preserved; correct the invalid values and restart to re-enable data-chan
 report the exceeded limit in CLI parsing. Email accepts ASCII characters only, so character and byte counts agree.
 
 
-Duplicate identity is Role + Name + Phone + Email. `Name.isSameName` and `Email.isSameEmail` ignore capitalization;
-two absent values for optional fields match when each contact has at least one contact method. A contactless student
-is not considered an exact duplicate of another student based on role and name alone. Full object equality remains
-case-sensitive so capitalization-only edits remain observable. Existing same-role records differing only in
+Loading applies the duplicate identity rules described under Contact details and Add validation, including the
+exception for contactless students. Full object equality remains case-sensitive so capitalization-only edits remain
+observable. Existing same-role records differing only in
 capitalization may therefore fail duplicate validation on loading. IDs and guardian links remain independent of
 duplicate identity.
 
@@ -390,8 +441,9 @@ Each command declares whether it changes data through `Command.isDataChanging()`
 
 If loading fails, storage records that failure for the session. The UI displays the startup error, and all data-changing commands are disabled until the user fixes the file and restarts the application. The invalid file is never overwritten during that session. A missing data file starts with an empty list and is created by the first successful data-changing command.
 
-Relevant tests cover Add parsing and validation, repeated parameters, fixed validation-error ordering, quoted names
-containing slashes, the phone length limit, optional student contact methods, guardians with either one contact method, guardian contact-method
+Relevant tests cover Add parsing and validation, repeated parameters, fixed validation-error ordering, whitespace
+separators, literal prefixes inside quoted names, level and subject length boundaries, the phone length limit,
+optional student contact methods, guardians with either one contact method, guardian contact-method
 requirements, exact duplicates and possible-duplicate warning priority, displayed indexes, role validation, first links, replacements, shared guardians, ID preservation,
 relationship persistence, deletion cleanup, invalid references, failed saves and UI selection/details. JavaFX UI tests
 run on Windows desktop environments; the remaining tests run on all supported platforms.
@@ -401,10 +453,59 @@ run on Windows desktop environments; the remaining tests run on all supported pl
 `list` and `find` change which contacts the list panel shows by updating the predicate of the model's filtered list.
 Neither command changes any contact data.
 
-**Listing.** `AddressBookParser` passes any text after `list` to `ListCommandParser`, which rejects non-blank text
-with `Invalid list command. Use: list`. `ListCommand` resets the filter to `PREDICATE_SHOW_ALL_PERSONS` and reports
-the number of contacts, for example `Listed 6 contacts`. `Messages#formatContactCount` uses the singular `contact`
-when there is exactly one contact. If there are no contacts, `ListCommand` reports `No contacts found.` instead.
+**Listing.** `list [r/ROLE] [st/former]` shows the contacts that match a `ContactFilter`, as shown in the class
+diagram below.
+
+<puml src="diagrams/ContactFilterClassDiagram.puml" alt="Classes involved in filtering the contact list" />
+
+A `ContactFilter` is a `Predicate<Person>` that holds an optional `Role` and a `StudentStatus`. A contact matches when
+it has that status and, if a role is given, that role. Guardians are always `ACTIVE`, so they never match a filter for
+former contacts. `ContactFilter.ACTIVE_CONTACTS` (guardians and active students) is the default, and
+`ContactFilter.FORMER_STUDENTS` shows only former students. `Model#PREDICATE_SHOW_ACTIVE_CONTACTS` and
+`Model#PREDICATE_SHOW_FORMER_STUDENTS` refer to these two filters, so the rules for which contacts are active live in
+one class.
+
+`ListCommandParser` checks the input as shown in the activity diagram below, and stops at the first problem it finds.
+
+<puml src="diagrams/ListParserActivityDiagram.puml" width="400" alt="Checks made by ListCommandParser" />
+
+* **Format error:** any prefix other than `r/` or `st/` (such as `n/` in `n/Alex`), or any text before the first
+  prefix (such as `extra` in `list extra r/student`), gives `Invalid list command. Use: list [r/ROLE] [st/former]`.
+* **Repeated parameter:** a repeated `r/` or `st/` gives `Each of r/ and st/ may appear only once.`
+* **Role or status error:** `r/ROLE` is parsed with `ParserUtil#parseRole`, the same method `add` uses, so role values
+  and errors match `add`. `st/` accepts only `former`, ignoring letter case; any other value gives the invalid-format
+  message above. Without `st/`, the status is `ACTIVE`. The role is checked before the status, whatever order the user
+  types them in.
+* **Guardians cannot be former:** `r/guardian st/former` gives
+  `Guardians cannot be former. Remove r/guardian or st/former.`, because that filter could never match a contact.
+
+`ListCommand#execute` passes its filter to `Model#updateFilteredPersonList`. It then reports the number of contacts
+shown, for example `Listed 6 contacts` or `Listed 2 former students`, using `Messages#formatContactCount` and
+`Messages#formatFormerStudentCount`. When nothing matches, the message explains why, so the tutor knows whether the
+contact list is empty or the filter hid everyone:
+
+* `list` with no saved contacts gives `No contacts found.` If every saved contact is a former student, it gives
+  `No active contacts found. Use list st/former to see former students.`
+* `list st/former` gives `No former students found.`
+* `list r/guardian` gives `No guardians found.` `list r/student` gives `No students found.`, or
+  `No active students found. Use list r/student st/former to see former students.` if every student is former.
+
+`list` changes no contact data, so `LogicManager` runs it directly on the live model, and it still works when data
+changes are disabled after a failed load.
+
+The sequence diagram below shows how `list r/student` is executed.
+
+<puml src="diagrams/ListSequenceDiagram.puml" alt="Interactions for the `list r/student` command" />
+
+**\[Proposed\] More filters.** Two extensions are planned for `list`, both built on `ContactFilter`:
+
+* `st/active` and `st/all`. `st/active` would name the default status explicitly, so `list st/active` would be the
+  same as `list`. `st/all` would show contacts of every status, so the status in `ContactFilter` would become
+  optional, with an empty status meaning "any status". `list r/student st/all` would then show all students, active
+  and former.
+* `lv/LEVEL` and `sub/SUBJECT`. These would add an optional `Level` and `Subject` to `ContactFilter`. A
+  student would match when `Level#isSameValue` and `Subject#isSameValue` hold, so `list lv/sec3` would match
+  `Sec 3`, ignoring letter case and spaces.
 
 **Finding.** `FindCommandParser` treats all the text after `find` as a single search term. It removes leading and
 trailing whitespace, reduces each run of internal whitespace to one space, and rejects a term that is then empty with
@@ -427,6 +528,43 @@ vowels may match slightly more names.
 The sequence diagram below shows how `find ale` is executed.
 
 <puml src="diagrams/FindSequenceDiagram.puml" alt="Interactions for the `find ale` command" />
+
+#### Design considerations:
+
+**Aspect: Where filtering by role and status happens**
+
+* **Alternative 1 (current choice):** Add optional filters to `list`, and keep `find` for names only.
+  * Pros: `list r/student` reads as "list the students". `find NAME` stays a simple name search. The default `list`
+    already hides former students, so `list r/student` shows only current students without an extra parameter.
+  * Cons: Searching by name and role together needs two steps, `find` and then reading the roles shown on the cards.
+* **Alternative 2:** Add the filters to `find`, so that the name becomes optional.
+  * Pros: One command could combine a name with a role or status.
+  * Cons: `find r/student` with no name reads oddly. `find` includes former students, so `find r/student` would
+    show former students too, which defeats the purpose of hiding them.
+
+**Aspect: How the status is given**
+
+* **Alternative 1 (current choice):** A separate `st/` prefix, independent of `r/`.
+  * Pros: Role and status are separate attributes in the model, as in `Role: Student [Former]`. `r/` accepts the same
+    values in `add` and `list`. This follows common command-line tools, such as `gh issue list --label bug
+    --state closed`, where each attribute has its own option.
+  * Cons: Users must learn a second prefix, and `st/` is close to `link`'s `s/`. The invalid-format message names the
+    valid prefixes to help with this.
+* **Alternative 2:** Treat `former` as a role value, as in `list r/former`.
+  * Pros: Only one prefix to learn.
+  * Cons: `r/former` would be accepted by `list` but not by `add` or `edit`. It could not express "all students,
+    active and former" without another special value.
+
+**Aspect: How `ListCommand` stores what to show**
+
+* **Alternative 1 (current choice):** A single `ContactFilter` object holding the optional role and the status.
+  * Pros: New filters, such as level and subject, are added as fields of one class, without changing how
+    `ListCommand` applies the filter. The filter has `equals`, so parser tests can compare commands directly.
+  * Cons: One more class than a plain lambda.
+* **Alternative 2:** One `boolean` or lambda per option in `ListCommand`.
+  * Pros: Less code for a single option.
+  * Cons: Each new option adds another constructor argument and branch, and `new ListCommand(true)` does not say what
+    `true` means.
 
 ### Ordering and displaying contacts
 
@@ -770,11 +908,11 @@ testers are expected to do more *exploratory* testing.
    1. Relaunch the app by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
 
-1. _{ more test cases … }_
-
 ### Adding a contact
 
-1. Start with an empty contact list or use names and details not already in TutorRoster.
+Use a disposable application folder with an empty contact list. Run the following cases in order.
+For each failed Add command, verify that contacts, selection, details and saved data remain unchanged.
+The failed command should remain in the command box, which keeps focus.
 
 1. Test case: `add r/student n/Ben Lim`<br>
    Expected: The student is added with no phone number or email address.
@@ -807,28 +945,66 @@ testers are expected to do more *exploratory* testing.
 1. Test case: `add r/student n/Alex Tan p/`.<br>
    Expected: The result says `Empty phone parameter: Phone cannot be empty when p/ is specified.`
 
-1. Test case: `add r/student n/Alex Tan p/<101-character value>`.<br>
+1. Test case: `add r/student n/Alex Tan p/` followed immediately by 101 ASCII digits.<br>
    Expected: The result says `Phone details cannot exceed 100 characters.`
 
 1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
    Expected: Both report the role error first, following the fixed parameter order regardless of command order.
 
-### Deleting a contact
+1. Syntax errors to try, each leaving the existing contacts unchanged:
+   * `add` reports `Missing required field: r/ROLE.` followed by the command usage.
+   * `add r/student` reports `Missing required field: n/NAME.` followed by the command usage.
+   * `add r/student n/"Alex Tan" a/15` identifies `Invalid parameter: a/.` and lists valid parameters.
+   * `add r/student n/Alex Tan r/guardian` reports
+     `Repeated parameter: r/. Each parameter may appear only once.`
 
-1. Deleting a contact while all contacts are being shown
+1. Test case: `add r/student n/Casey Lee lv/Sec 3 sub/A-Math`.<br>
+   Expected: The student is added with both student details and no contact methods. The same name as an earlier
+   student does not cause rejection because the contact methods differ. A general warning is shown because both
+   students have no email. Restart and verify that the level and subject remain saved.
 
-   1. Prerequisites: List all contacts using the `list` command, with multiple contacts in the list.
+1. Test case: `add r/student n/Ravi lv/ sub/` and `add sub/ lv/ n/Ravi r/student`.<br>
+   Expected: Both report `Empty level parameter: Level cannot be empty when lv/ is specified.`
+   With `lv/Sec 3` instead, both report the empty-subject message. No contact is added.
+
+1. Test case: `add r/guardian n/Mei Tan p/91234567 lv/Sec 3`.<br>
+   Expected: `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
+   Without the phone prefix, the guardian contact-method error takes precedence.
+
+1. Test case: `add r/student n/"Ravi lv/Sec sub/Math"`.<br>
+   Expected: The entire quoted text is saved as the name, with no level or subject set. Repeat with pasted tabs
+   between parameters instead of spaces; the result is unchanged. A tab inside the quoted name is rejected.
+
+### Deleting contacts
+
+1. Deleting contacts while all contacts are being shown
+
+   1. Prerequisites: Prepare a dataset with at least three active contacts visible after running `list`.
+      Back up `data/addressbook.json` with the app closed. Before each successful deletion test below, close
+      the app, restore that same backup, restart the app and run `list`. This ensures `delete 1 3` and
+      `delete 3 1` start from the same contacts and indexes. Restarting alone does not restore deleted contacts.
 
    1. Test case: `delete 1`<br>
       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+
+   1. Test case: `delete 1 3`<br>
+      Expected: The contacts originally shown at indexes 1 and 3 are deleted. The status message lists both contacts.
+
+   1. Test case: `delete 3 1`<br>
+      Expected: The same two contacts are deleted, listed in the order supplied.
+
+   1. Test case: `delete 1 1`<br>
+      Expected: No contact is deleted. The status message says each index may appear only once.
+
+   1. Test case: `delete 1 INDEX`, where `INDEX` is larger than the list size.<br>
+      Expected: No contact is deleted, including the valid contact at index 1. The status message identifies the
+      out-of-range index.
 
    1. Test case: `delete 0`<br>
       Expected: No contact is deleted. The status message shows error details.
 
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
-
-1. _{ more test cases … }_
 
 ### Editing a contact
 
@@ -859,12 +1035,12 @@ testers are expected to do more *exploratory* testing.
    name, and the same email address exists, and that the contact may be a duplicate but was updated.
 
 1. Incorrect commands to try, each leaving the contacts unchanged:
-   * `edit 1` gives `At least one of n/, p/, or e/ must be provided.`
-   * `edit n/Alex` gives `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
+   * `edit 1` gives `At least one of n/, p/, e/, lv/, or sub/ must be provided.`
+   * `edit n/Alex` gives `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
    * `edit 0 n/Alex` gives `The contact index must be a positive integer shown in the list.`
    * `edit 999 n/Alex` gives `No contact exists at index 999.`
-   * `edit 1 r/guardian` gives `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL]`
-   * `edit 1 n/A n/B` gives `Each of n/, p/, and e/ may appear only once.`
+   * `edit 1 r/guardian` gives `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
+   * `edit 1 n/A n/B` gives `Each of n/, p/, e/, lv/, and sub/ may appear only once.`
    * Editing a contact so that it matches another contact's role, name, phone and email gives
      `This edit would create a duplicate contact.`
 
@@ -882,7 +1058,48 @@ testers are expected to do more *exploratory* testing.
    Expected: Both contacts are shown. The status message shows `Listed 2 contacts`.
 
 1. Test case: `list 3`<br>
-   Expected: The shown contacts are unchanged. The status message shows `Invalid list command. Use: list`
+   Expected: The shown contacts are unchanged. The status message shows
+   `Invalid list command. Use: list [r/ROLE] [st/former]`
+
+### Filtering the contact list
+
+1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add four contacts:
+   `add r/guardian n/Mei Tan p/98765432`, `add r/student n/Alex Tan p/91234567`, `add r/student n/Bea Lim` and
+   `add r/student n/Chloe Ng`. Mark Chloe Ng as former with `find Chloe`, then `archive 1`.
+
+1. Test case: `list r/student`<br>
+   Expected: Alex Tan and Bea Lim are shown. The status message shows `Listed 2 contacts`.
+
+1. Test case: `list r/GUARDIAN`<br>
+   Expected: Mei Tan is shown. The status message shows `Listed 1 contact`.
+
+1. Test case: `list r/student st/former`<br>
+   Expected: Chloe Ng is shown. The status message shows `Listed 1 former student`.
+
+1. Test case: `list r/guardian st/former`<br>
+   Expected: The shown contacts are unchanged. The status message shows
+   `Guardians cannot be former. Remove r/guardian or st/former.`
+
+1. Test case: `list r/teacher`<br>
+   Expected: The shown contacts are unchanged. The status message shows
+   `Invalid role. Role must be student or guardian.`
+
+1. Test case: `list r/student r/guardian`<br>
+   Expected: The shown contacts are unchanged. The status message shows `Each of r/ and st/ may appear only once.`
+
+1. Test case: `list st/former st/former`<br>
+   Expected: The shown contacts are unchanged. The status message shows `Each of r/ and st/ may appear only once.`
+
+1. Test case: `list st/active`<br>
+   Expected: The shown contacts are unchanged. The status message shows
+   `Invalid list command. Use: list [r/ROLE] [st/former]`. Only `st/former` is currently supported.
+
+1. Test case: `list n/Alex`<br>
+   Expected: The shown contacts are unchanged. The status message shows
+   `Invalid list command. Use: list [r/ROLE] [st/former]`
+
+1. Test case: `find Mei`, then `delete 1`, then `list r/guardian`<br>
+   Expected: No contacts are shown. The status message shows `No guardians found.`
 
 ### Finding contacts
 

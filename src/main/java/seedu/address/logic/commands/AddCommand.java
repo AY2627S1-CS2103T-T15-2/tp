@@ -9,6 +9,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_CONTACTS;
 
+import java.util.logging.Logger;
+
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
@@ -52,8 +55,15 @@ public class AddCommand extends Command {
     public static final String MESSAGE_INVALID_PARAMETER =
             "Invalid parameter. Valid parameters are r/ROLE, n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, "
                     + "and sub/SUBJECT.";
+    public static final String MESSAGE_UNKNOWN_PARAMETER =
+            "Invalid parameter: %s. Valid parameters are r/ROLE, n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, "
+                    + "and sub/SUBJECT.";
+    public static final String MESSAGE_NAME_SLASH_HINT =
+            " If '/' is part of the name, enclose the entire name in double quotes.";
     public static final String MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH = MESSAGE_INVALID_PARAMETER
-            + " If '/' is part of the name, enclose the entire name in double quotes.";
+            + MESSAGE_NAME_SLASH_HINT;
+
+    private static final Logger logger = LogsCenter.getLogger(AddCommand.class);
 
     private final Person toAdd;
 
@@ -73,38 +83,50 @@ public class AddCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
+        verifyContactCanBeAdded(model);
+        String feedback = createSuccessFeedback(model);
+        addContactToModel(model);
+        logger.info("Prepared ADD for contact " + toAdd.getId() + ", pending save.");
+        return new CommandResult(feedback, toAdd.getId());
+    }
 
+    private void verifyContactCanBeAdded(Model model) throws CommandException {
         if (toAdd.isGuardianWithoutContactMethod()) {
+            logger.info("Rejected ADD: guardian has no contact method.");
             throw new CommandException(MESSAGE_CONTACT_METHOD_REQUIRED);
         }
 
         if (model.hasPerson(toAdd)) {
+            logger.info("Rejected ADD: an exact duplicate contact exists.");
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
-
-        boolean hasSimilarPhone = model.getAddressBook().getPersonList().stream()
-                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSamePhoneIgnoringFormatting(person));
-        boolean hasSameEmail = model.getAddressBook().getPersonList().stream()
-                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && toAdd.hasSameEmailAddress(person));
-        boolean hasSharedEmptyContactField = model.getAddressBook().getPersonList().stream()
-                .anyMatch(person -> toAdd.hasSameNameAndRole(person) && hasSharedEmptyContactField(person));
-
-        model.addPerson(toAdd);
-        model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_CONTACTS);
-        String feedback = String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getRole());
-        if (hasSimilarPhone) {
-            feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_PHONE;
-        } else if (hasSameEmail) {
-            feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_EMAIL;
-        } else if (hasSharedEmptyContactField) {
-            feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE;
-        }
-        return new CommandResult(feedback, toAdd.getId());
     }
 
-    private boolean hasSharedEmptyContactField(Person otherPerson) {
-        return toAdd.getPhone().isEmpty() && otherPerson.getPhone().isEmpty()
-                || toAdd.getEmail().isEmpty() && otherPerson.getEmail().isEmpty();
+    private void addContactToModel(Model model) {
+        model.addPerson(toAdd);
+        assert model.getAddressBook().getPersonList().stream()
+                .anyMatch(person -> person.getId().equals(toAdd.getId()))
+                : "Model must contain the added contact ID after addPerson returns.";
+        model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_CONTACTS);
+    }
+
+    /**
+     * Builds feedback using existing contacts, before the new contact can match itself.
+     */
+    private String createSuccessFeedback(Model model) {
+        String feedback = String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getRole());
+        DuplicateWarning warning = DuplicateWarning.classify(toAdd, model.getAddressBook().getPersonList());
+        if (warning == DuplicateWarning.PHONE) {
+            logger.info("ADD possible-duplicate warning selected: phone matches ignoring spaces and hyphens.");
+            feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_PHONE;
+        } else if (warning == DuplicateWarning.EMAIL) {
+            logger.info("ADD possible-duplicate warning selected: email matches ignoring case.");
+            feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE_EMAIL;
+        } else if (warning == DuplicateWarning.GENERAL) {
+            logger.info("ADD possible-duplicate warning selected: a contact method is absent from both contacts.");
+            feedback += "\n" + MESSAGE_POSSIBLE_DUPLICATE;
+        }
+        return feedback;
     }
 
     @Override
