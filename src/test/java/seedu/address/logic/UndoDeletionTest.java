@@ -74,7 +74,7 @@ public class UndoDeletionTest {
     }
 
     @Test
-    public void execute_bulkDeletion_thenUndo_restoresWholeBatch() throws Exception {
+    public void execute_undoBulkDeletion_restoresWholeBatch() throws Exception {
         Model model = createModel();
         Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
         logic.execute("delete 2 1");
@@ -85,7 +85,7 @@ public class UndoDeletionTest {
     }
 
     @Test
-    public void execute_failedCommands_preserveHistory_successfulEditInvalidatesIt() throws Exception {
+    public void execute_interveningCommands_preservesOrInvalidatesHistory() throws Exception {
         Model model = createModel();
         Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
         logic.execute("delete 1");
