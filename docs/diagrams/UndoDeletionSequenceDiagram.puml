@@ -47,7 +47,6 @@ note over Undo, Candidate
 end note
 
 Logic -> Storage : saveAddressBook(c.getAddressBook())
-activate Storage
 alt save succeeds
   Storage --> Logic : saved
   Logic -> Live : setAddressBook(c.getAddressBook())
@@ -62,6 +61,5 @@ else save throws IOException
   end note
   [<-- Logic : save-failure error
 end
-deactivate Storage
 deactivate Logic
 @enduml
