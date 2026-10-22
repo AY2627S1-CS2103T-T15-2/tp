@@ -440,11 +440,11 @@ one class.
 
 `ListCommandParser` checks the input as shown in the activity diagram below, and stops at the first problem it finds.
 
-<puml src="diagrams/ListParserActivityDiagram.puml" width="380" alt="Checks made by ListCommandParser" />
+<puml src="diagrams/ListParserActivityDiagram.puml" width="400" alt="Checks made by ListCommandParser" />
 
 * **Format error:** any prefix other than `r/` or `st/` (such as `n/` in `n/Alex`), or any text before the first
-  prefix, gives `Invalid list command. Use: list [r/ROLE] [st/former]`. A repeated prefix gives
-  `Each of r/ and st/ may appear only once.`
+  prefix (such as `extra` in `list extra r/student`), gives `Invalid list command. Use: list [r/ROLE] [st/former]`.
+* **Repeated parameter:** a repeated `r/` or `st/` gives `Each of r/ and st/ may appear only once.`
 * **Role or status error:** `r/ROLE` is parsed with `ParserUtil#parseRole`, the same method `add` uses, so role values
   and errors match `add`. `st/` accepts only `former`, ignoring letter case; any other value gives the invalid-format
   message above. Without `st/`, the status is `ACTIVE`. The role is checked before the status, whatever order the user
@@ -1054,6 +1054,13 @@ testers are expected to do more *exploratory* testing.
 
 1. Test case: `list r/student r/guardian`<br>
    Expected: The shown contacts are unchanged. The status message shows `Each of r/ and st/ may appear only once.`
+
+1. Test case: `list st/former st/former`<br>
+   Expected: The shown contacts are unchanged. The status message shows `Each of r/ and st/ may appear only once.`
+
+1. Test case: `list st/active`<br>
+   Expected: The shown contacts are unchanged. The status message shows
+   `Invalid list command. Use: list [r/ROLE] [st/former]`. Only `st/former` is currently supported.
 
 1. Test case: `list n/Alex`<br>
    Expected: The shown contacts are unchanged. The status message shows

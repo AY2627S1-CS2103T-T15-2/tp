@@ -6,9 +6,15 @@ skinparam ArrowFontSize 12
 start
 :Read the text after ""list"";
 
-if () then ([only r/ and st/, each at most once])
+if () then ([only r/ and st/ prefixes, no other text])
 else ([otherwise])
     :Show format error;
+    stop
+endif
+
+if () then ([each prefix at most once])
+else ([otherwise])
+    :Show repeated-parameter error;
     stop
 endif
 
