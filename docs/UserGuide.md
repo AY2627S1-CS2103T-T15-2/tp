@@ -491,6 +491,22 @@ Examples:
 * `list st/former` followed by `delete 1` deletes the 1st former student in the displayed list. If that student
   is linked to a guardian, the student-guardian relationship is also removed, but the guardian contact is kept.
 
+### Undoing the latest deletion: `undo`
+
+Format: `undo`
+
+* Restores the latest successful deletion by index, multiple indexes or name, including original contact IDs,
+  details and student-guardian links. Bulk deletion is restored as one operation.
+* Restores the filter used before deletion and selects a restored contact visible in that view.
+* Read-only commands such as `list`, `find` and `view` preserve undo availability.
+* Another successful deletion replaces the undo opportunity. Any other successful data-changing command clears it.
+* Failed commands and failed saves preserve the undo opportunity. If saving an undo fails, no data changes are
+  applied and you can retry `undo`.
+* History lasts only for the current session. Successful undo consumes it; there is no redo.
+* If nothing can be undone, the message is `No deletion is available to undo.` Extra arguments are rejected.
+
+Example: `delete 1 3`, followed by `undo`, restores both deleted contacts and their original relationships.
+
 ### Clearing all entries: `clear`
 
 Clears all contacts from TutorRoster.
