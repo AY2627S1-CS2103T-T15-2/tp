@@ -1,0 +1,35 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+
+start
+:Read the text after ""list"";
+
+if () then ([only r/ and st/ prefixes, no other text])
+else ([otherwise])
+    :Show format error;
+    stop
+endif
+
+if () then ([each prefix at most once])
+else ([otherwise])
+    :Show repeated-parameter error;
+    stop
+endif
+
+if () then ([valid role and status values])
+else ([otherwise])
+    :Show role or status error;
+    stop
+endif
+
+if () then ([not r/guardian with st/former])
+else ([otherwise])
+    :Show guardians-cannot-be-former error;
+    stop
+endif
+
+:Create ""ContactFilter"" and ""ListCommand"";
+stop
+@enduml
