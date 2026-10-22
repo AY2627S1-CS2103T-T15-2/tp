@@ -569,5 +569,6 @@ Action     | Format, Examples
 **List**   | `list [r/ROLE] [st/former]`<br> e.g., `list r/student`, `list st/former`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
+**Undo deletion** | `undo`<br> Restores the latest successful deletion in the current session.
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`

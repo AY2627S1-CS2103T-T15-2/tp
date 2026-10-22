@@ -920,6 +920,33 @@ The failed command should remain in the command box, which keeps focus.
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
 
+### Undoing a deletion
+
+1. Prerequisites: prepare an active student linked to a guardian and a former student linked to the same guardian.
+   Close the application and back up `data/addressbook.json`. Restore this same backup with the application closed
+   before each independent case below; restarting alone does not restore deleted contacts.
+
+1. Test case: `list`, delete the guardian by its displayed index, then `undo`.<br>
+   Expected: The guardian returns with its original ID and details. Both students regain their guardian link,
+   including the hidden former student. The active view is restored and the guardian is selected.
+
+1. Test case: `list st/former`, `delete 1`, `list`, then `undo`.<br>
+   Expected: The former student returns with its original status, details and guardian. The former-student view
+   returns and selects the restored student.
+
+1. Test case: `list`, `delete 1 2`, then `undo`.<br>
+   Expected: Both original contacts return together, including any relationship between them. A second `undo`
+   reports `No deletion is available to undo.`
+
+1. Test case: delete a contact, successfully edit a remaining contact, then `undo`.<br>
+   Expected: Undo is unavailable and the edit is retained. Repeat with an invalid edit instead; undo remains available.
+
+1. Test case: delete a contact, close and reopen the application, then `undo`.<br>
+   Expected: The deletion remains saved and undo is unavailable because history is session-only.
+
+Save failures are verified by `UndoDeletionTest` with simulated storage errors. The tests check both failure to undo
+and failed intervening changes, ensuring that live data, saved data and the previous undo opportunity are preserved.
+
 ### Editing a contact
 
 1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add three contacts:
