@@ -24,6 +24,11 @@ else (yes)
 endif
 :Write candidate JSON to a temporary file;
 if (Temporary-file write succeeds?) then (no)
+  :Attempt temporary-file cleanup;
+  note right
+    Delete the temporary file if it still exists.
+    Log cleanup failure without changing the save result.
+  end note
   :Report save failure without replacing destination;
   :Keep live contacts, relationships and filter;
   stop
@@ -31,11 +36,21 @@ else (yes)
 endif
 :Atomically replace destination file;
 if (Atomic replacement succeeds?) then (no)
+  :Attempt temporary-file cleanup;
+  note right
+    Delete the temporary file if it still exists.
+    Log cleanup failure without changing the save result.
+  end note
   :Report save failure;
   :Keep live contacts, relationships and filter;
   stop
 else (yes)
 endif
+:Attempt temporary-file cleanup;
+note right
+  Delete the temporary file if it still exists.
+  Log cleanup failure without changing the save result.
+end note
 :Replace live data and apply candidate filter;
 :Return command result;
 stop
