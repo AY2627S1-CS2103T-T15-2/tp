@@ -119,7 +119,7 @@ public class RelationshipLifecyclePersistenceTest {
 
         assertEquals(Optional.of(formerStudent.getId()), result.getSelectedContactId());
         assertSame(originalFilter, model.getPersonFilter());
-        Person expected = formerStudent.withGuardianId(Optional.of(replacement.getId()));
+        Person expected = new PersonBuilder(formerStudent).withGuardianId(replacement.getId()).build();
         assertEquals(expected, PersonLookup.findById(model.getAddressBook().getPersonList(), formerStudent.getId())
                 .orElseThrow());
         Model reloaded = reload(file);
