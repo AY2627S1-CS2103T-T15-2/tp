@@ -70,6 +70,7 @@
         "launch-and-shutdown": "Launch and shutdown",
         "adding-a-contact": "Adding a contact",
         "deleting-contacts": "Deleting contacts",
+        "undoing-a-deletion": "Undoing a deletion",
         "editing-a-contact": "Editing a contact",
         "listing-contacts": "Listing contacts",
         "filtering-the-contact-list": "Filtering the contact list",
