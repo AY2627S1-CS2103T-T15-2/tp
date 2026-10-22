@@ -341,6 +341,11 @@ model, so a failed save leaves the contact unchanged.
 
 ### Student-guardian linking
 
+The diagram below shows how relationship identity is represented independently of names, display indexes and
+student status. Both `id` and `guardianId` use `ContactId`; they are distinct fields with different multiplicities.
+
+<puml src="diagrams/LinkRelationshipClassDiagram.puml" alt="Contact identity and student-guardian references" />
+
 `LinkCommandParser` accepts `link s/STUDENT_INDEX g/GUARDIAN_INDEX` in either parameter order. It rejects missing, repeated and unknown prefixes, extra text and invalid integer indexes. `LinkCommand` resolves both indexes against the filtered, sorted display list, validates their roles, rejects duplicate links and replaces an existing guardian when requested.
 
 Every `Person` has an immutable `ContactId`, represented by a UUID. A student has an optional `guardianId` referencing a guardian's ID. This gives each student at most one guardian while allowing several students to refer to the same guardian. References use IDs because names can change and display indexes change after sorting or filtering. Contact-field duplicate detection continues to use `isSamePerson`, including the exception for students without either contact method described below. `Person.equals` includes the guardian relationship as contact data.
@@ -351,6 +356,16 @@ or deleting the second displayed student must therefore use its ID. Otherwise re
 the second contact's updated record would lose the first ID and save the second ID twice, making the file invalid.
 
 `EditCommand` preserves both IDs when constructing the edited person. `AddressBook.removePerson` clears references to a removed guardian. The detail panel resolves the guardian against the complete contact list, including contacts outside the current search results, and refreshes when either contact changes. The command result carries the student's ID so the UI can select that contact after a successful save.
+
+**Interaction with student status and deletion.** Archiving changes a student's status while retaining the student's
+ID and guardian reference. A former student can be linked after a command such as `find` makes both targets visible.
+The target is still resolved by its displayed index and then updated by ID, so an active student with the same name
+remains a separate record. Relinking preserves the student's status, level and subject.
+
+Deleting a guardian clears references from all its students, including former students hidden by the current filter.
+Bulk deletion resolves every target before removing any contact, so index shifts cannot retarget later deletions.
+Its relationship count counts each affected student once, even when both that student and its guardian are deleted.
+These changes run on the candidate model described below; a failed save must not clear live relationships.
 
 ### Contact details and Add validation
 
@@ -470,6 +485,11 @@ capitalization may therefore fail duplicate validation on loading. IDs and guard
 duplicate identity.
 
 Each command declares whether it changes data through `Command.isDataChanging()`. `LogicManager` executes data-changing commands on a candidate model carrying the original filter. It saves that candidate before replacing the live model. An unsuccessful command or save therefore cannot change the live contacts, relationships or displayed list. `JsonAddressBookStorage` writes a temporary file in the destination directory and atomically replaces the data file; it fails safely if atomic replacement is unavailable. Read-only commands do not save data.
+
+The activity diagram below separates command validation, persistence and publication to the live model. Temporary
+file cleanup is attempted after every save attempt; cleanup failures are logged without replacing the save outcome.
+
+<puml src="diagrams/SafeSaveActivityDiagram.puml" width="520" alt="Candidate execution and safe-save decision flow" />
 
 If loading fails, storage records that failure for the session. The UI displays the startup error, and all data-changing commands are disabled until the user fixes the file and restarts the application. The invalid file is never overwritten during that session. A missing data file starts with an empty list and is created by the first successful data-changing command.
 
