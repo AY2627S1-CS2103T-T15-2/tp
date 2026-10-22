@@ -1,0 +1,65 @@
+@startuml
+!include style.puml
+hide footbox
+skinparam ArrowFontStyle plain
+skinparam sequenceMessageAlign center
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as Logic LOGIC_COLOR
+participant "u:UndoCommand" as Undo LOGIC_COLOR
+participant ":DeletionHistory" as History LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "c:ModelManager" as Candidate MODEL_COLOR
+participant "m:Model" as Live MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+note over Logic, History
+  Preconditions: a successful deletion is available to undo;
+  data-changing commands are enabled.
+  Parsing and command construction are omitted.
+end note
+
+[-> Logic : execute("undo")
+activate Logic
+create Candidate
+Logic -> Candidate : copy live data, preferences and filter
+Logic -> Undo : execute(c)
+activate Undo
+Undo -> History : getLatest()
+History --> Undo : snapshot
+Undo -> Candidate : setAddressBook(snapshot.copyAddressBook())
+Undo -> Candidate : updateFilteredPersonList(snapshot.getFilter())
+Undo -> Candidate : getFilteredPersonList()
+Candidate --> Undo : restored contacts visible in the saved view
+Undo --> Logic : result with restoration count and selected ID
+deactivate Undo
+
+note over Undo, Candidate
+  The snapshot restores original IDs, contact details
+  and guardian links, including those of hidden students.
+  A visible restored contact is selected when available.
+end note
+
+Logic -> Storage : saveAddressBook(c.getAddressBook())
+alt save succeeds
+  Storage --> Logic : saved
+  Logic -> Live : setAddressBook(c.getAddressBook())
+  Logic -> Live : updateFilteredPersonList(c.getPersonFilter())
+  Logic -> History : clear()
+  [<-- Logic : command result
+else save throws IOException
+  Storage --> Logic : IOException
+  note over Logic, History
+    Live contacts, relationships and filter stay unchanged.
+    History remains available so undo can be retried.
+  end note
+  [<-- Logic : save-failure error
+end
+deactivate Logic
+@enduml
