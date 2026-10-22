@@ -38,7 +38,7 @@
               <Button fx:id="copyButton" mnemonicParsing="false" onAction="#copyUrl" text="Copy URL" />
             </HBox>
             <Label text="Command reference" styleClass="help-heading" />
-            <Label text="UPPERCASE words are values you supply. [Square brackets] mark optional fields."
+            <Label text="UPPERCASE words are values you supply. [Square brackets] mark optional fields. ... means more values."
                    wrapText="true" maxWidth="Infinity" styleClass="help-note" />
             <GridPane fx:id="commandReference" hgap="16.0" vgap="18.0">
               <columnConstraints>

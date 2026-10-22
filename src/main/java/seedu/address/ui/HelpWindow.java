@@ -25,6 +25,7 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.LinkCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.UnarchiveCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.ViewCommand;
 
 /**
@@ -42,7 +43,8 @@ public class HelpWindow extends UiPart<Stage> {
     private static final List<CommandHelp> COMMAND_HELP = List.of(
             new CommandHelp("Add contact", AddCommand.COMMAND_FORMAT),
             new CommandHelp("Edit contact", EditCommand.COMMAND_FORMAT),
-            new CommandHelp("Delete contact", DeleteCommand.COMMAND_FORMAT),
+            new CommandHelp("Delete contacts", DeleteCommand.COMMAND_FORMAT),
+            new CommandHelp("Undo latest deletion", UndoCommand.COMMAND_WORD),
             new CommandHelp("View contact", ViewCommand.COMMAND_FORMAT),
             new CommandHelp("Find by name", FindCommand.COMMAND_FORMAT),
             new CommandHelp("Link guardian", LinkCommand.MESSAGE_USAGE),
