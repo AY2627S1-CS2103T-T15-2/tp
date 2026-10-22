@@ -1,14 +1,32 @@
 package seedu.address.ui;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.GridPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.ArchiveCommand;
+import seedu.address.logic.commands.ClearCommand;
+import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.ExitCommand;
+import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.HelpCommand;
+import seedu.address.logic.commands.LinkCommand;
+import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.UnarchiveCommand;
+import seedu.address.logic.commands.UndoCommand;
+import seedu.address.logic.commands.ViewCommand;
 
 /**
  * Controller for a help page
@@ -16,16 +34,38 @@ import seedu.address.commons.core.LogsCenter;
 public class HelpWindow extends UiPart<Stage> {
 
     public static final String USERGUIDE_URL = "https://ay2627s1-cs2103t-t15-2.github.io/tp/UserGuide.html";
-    public static final String HELP_MESSAGE = "Refer to the user guide: " + USERGUIDE_URL;
+    public static final String HELP_MESSAGE = "For full instructions, examples and field rules, "
+            + "copy the User Guide URL and open it in your browser.";
 
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";
+
+    private static final List<CommandHelp> COMMAND_HELP = List.of(
+            new CommandHelp("Add contact", AddCommand.COMMAND_FORMAT),
+            new CommandHelp("Edit contact", EditCommand.COMMAND_FORMAT),
+            new CommandHelp("Delete contacts", DeleteCommand.COMMAND_FORMAT),
+            new CommandHelp("Undo latest deletion", UndoCommand.COMMAND_WORD),
+            new CommandHelp("View contact", ViewCommand.COMMAND_FORMAT),
+            new CommandHelp("Find by name", FindCommand.COMMAND_FORMAT),
+            new CommandHelp("Link guardian", LinkCommand.MESSAGE_USAGE),
+            new CommandHelp("List contacts", ListCommand.COMMAND_FORMAT),
+            new CommandHelp("Archive student", ArchiveCommand.COMMAND_FORMAT),
+            new CommandHelp("Unarchive student", UnarchiveCommand.COMMAND_FORMAT),
+            new CommandHelp("Clear contacts", ClearCommand.COMMAND_WORD),
+            new CommandHelp("Show help", HelpCommand.COMMAND_WORD),
+            new CommandHelp("Exit app", ExitCommand.COMMAND_WORD));
 
     @FXML
     private Button copyButton;
 
     @FXML
     private Label helpMessage;
+
+    @FXML
+    private TextField userGuideUrl;
+
+    @FXML
+    private GridPane commandReference;
 
     /**
      * Creates a new HelpWindow.
@@ -35,6 +75,8 @@ public class HelpWindow extends UiPart<Stage> {
     public HelpWindow(Stage root) {
         super(FXML, root);
         helpMessage.setText(HELP_MESSAGE);
+        userGuideUrl.setText(USERGUIDE_URL);
+        populateCommandReference();
     }
 
     /**
@@ -42,6 +84,33 @@ public class HelpWindow extends UiPart<Stage> {
      */
     public HelpWindow() {
         this(new Stage());
+    }
+
+    /**
+     * Returns the command formats displayed in the Help window, in display order.
+     */
+    static List<String> getCommandFormats() {
+        return COMMAND_HELP.stream().map(CommandHelp::format).toList();
+    }
+
+    private void populateCommandReference() {
+        for (int row = 0; row < COMMAND_HELP.size(); row++) {
+            CommandHelp command = COMMAND_HELP.get(row);
+            Label description = createWrappingLabel(command.description());
+            Label format = createWrappingLabel(command.format());
+            format.getStyleClass().add("command-format");
+            commandReference.addRow(row, description, format);
+        }
+    }
+
+    private Label createWrappingLabel(String text) {
+        Label label = new Label(text);
+        label.setWrapText(true);
+        label.setMaxWidth(Double.MAX_VALUE);
+        return label;
+    }
+
+    private record CommandHelp(String description, String format) {
     }
 
     /**
@@ -65,6 +134,9 @@ public class HelpWindow extends UiPart<Stage> {
     public void show() {
         logger.fine("Showing help page about the application.");
         getRoot().show();
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+        getRoot().setWidth(Math.min(getRoot().getWidth(), screenBounds.getWidth()));
+        getRoot().setHeight(Math.min(getRoot().getHeight(), screenBounds.getHeight()));
         getRoot().centerOnScreen();
     }
 

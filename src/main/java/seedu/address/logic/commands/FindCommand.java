@@ -15,7 +15,8 @@ public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
-    public static final String MESSAGE_INVALID_FORMAT = "Invalid find command. Use: " + COMMAND_WORD + " NAME";
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " NAME";
+    public static final String MESSAGE_INVALID_FORMAT = "Invalid find command. Use: " + COMMAND_FORMAT;
     public static final String MESSAGE_SUCCESS = "Found %1$s matching: %2$s.";
     public static final String MESSAGE_NO_MATCHES = "No contacts found matching: %1$s";
 

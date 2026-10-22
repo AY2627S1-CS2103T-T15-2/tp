@@ -82,7 +82,9 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
+Opens a command reference listing the available commands and their formats. For full instructions, examples and
+field rules, use **Copy URL** to copy the User Guide link and open it in your browser.
+The Help window can be resized and scrolled.
 
 ![help message](images/helpMessage.png)
 
@@ -563,6 +565,7 @@ Action     | Format, Examples
 **Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
 **Clear**  | `clear`
 **Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
+**Undo deletion** | `undo`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`

@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,6 +24,8 @@ import seedu.address.model.person.PersonLookup;
 public class DeleteCommand extends Command {
 
     public static final String COMMAND_WORD = "delete";
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX [INDEX...] or "
+            + COMMAND_WORD + " " + PREFIX_NAME + "NAME";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Deletes the contacts identified by the index numbers used in the displayed contact list.\n"
