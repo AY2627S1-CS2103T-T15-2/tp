@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -23,6 +24,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.StudentStatus;
 import seedu.address.storage.JsonAddressBookStorage;
@@ -137,5 +139,103 @@ public class UndoDeletionTest {
                 .map(Person::getId).toList());
         assertTrue(model.getAddressBook().getPersonList().stream()
                 .noneMatch(person -> person.getId().equals(student.getId())));
+    }
+
+    @Test
+    public void execute_otherSuccessfulChanges_invalidateUndoHistory() throws Exception {
+        for (String command : List.of("add r/student n/New Student", "edit 1 n/Renamed Student", "clear",
+                "archive 1", "unarchive 4", "link s/1 g/3")) {
+            Model model = createModel();
+            model.addPerson(new PersonBuilder().withName("Sarah Tan").withRole("guardian").build());
+            model.addPerson(new PersonBuilder().withName("Temporary Contact").build());
+            Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
+            logic.execute("delete n/Temporary Contact");
+            logic.execute("find Tan");
+
+            logic.execute(command);
+
+            assertThrows(CommandException.class, UndoCommand.MESSAGE_UNAVAILABLE, () -> logic.execute("undo"));
+        }
+    }
+
+    @Test
+    public void execute_failedInterveningSaves_preserveOriginalUndoAndSavedFile() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        boolean[] failSave = {false};
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook book) throws IOException {
+                if (failSave[0]) {
+                    throw new IOException("Simulated disk failure");
+                }
+                super.saveAddressBook(book);
+            }
+        };
+        Model model = createModel();
+        Logic logic = createLogic(model, storage);
+        logic.execute("delete n/Alex Tan");
+        List<Person> originalContacts = List.copyOf(model.getAddressBook().getPersonList());
+        String originalFile = Files.readString(file);
+        failSave[0] = true;
+        for (String command : List.of("delete n/Mei Tan", "edit 1 n/Changed Name", "clear")) {
+            assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () -> logic.execute(command));
+            assertEquals(originalContacts, List.copyOf(model.getAddressBook().getPersonList()));
+            assertEquals(originalFile, Files.readString(file));
+        }
+        failSave[0] = false;
+
+        logic.execute("undo");
+
+        assertEquals(List.of(guardian.getId(), student.getId(), former.getId()),
+                model.getAddressBook().getPersonList().stream().map(Person::getId).toList());
+        assertEquals(List.of(guardian, student, former), List.copyOf(model.getAddressBook().getPersonList()));
+    }
+
+    @Test
+    public void execute_formerStudentAfterReadOnlyCommands_restoresFilterAndSelection() throws Exception {
+        Model model = createModel();
+        Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
+        logic.execute("list st/former");
+        logic.execute("delete 1");
+        logic.execute("list");
+        logic.execute("view 1");
+        logic.execute("help");
+        logic.execute("find Tan");
+
+        CommandResult result = logic.execute("undo");
+
+        assertEquals(Optional.of(former.getId()), result.getSelectedContactId());
+        assertEquals(List.of(former), List.copyOf(model.getFilteredPersonList()));
+        assertEquals(List.of(former.getId()), model.getFilteredPersonList().stream().map(Person::getId).toList());
+        assertEquals(former.getGuardianId(), model.getFilteredPersonList().getFirst().getGuardianId());
+    }
+
+    @Test
+    public void execute_sameNameContactlessStudents_restoresBothOriginalIdentities() throws Exception {
+        Model model = new ModelManager();
+        Person first = new PersonBuilder().withName("Alex Tan").withoutPhone().withoutEmail().build();
+        Person second = new PersonBuilder(first).withId(ContactId.generate()).build();
+        model.addPerson(first);
+        model.addPerson(second);
+        Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
+        logic.execute("delete 2");
+
+        logic.execute("undo");
+
+        assertEquals(List.of(first.getId(), second.getId()), model.getAddressBook().getPersonList().stream()
+                .map(Person::getId).toList());
+    }
+
+    @Test
+    public void execute_invalidDataFile_blocksUndoAndPreservesFile() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        Files.writeString(file, "{invalid json}");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        Logic logic = createLogic(new ModelManager(), storage);
+
+        assertThrows(CommandException.class, LogicManager.MESSAGE_DATA_LOAD_FAILURE, () -> logic.execute("undo"));
+
+        assertEquals("{invalid json}", Files.readString(file));
     }
 }
