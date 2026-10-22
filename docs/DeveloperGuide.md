@@ -251,6 +251,23 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
   * Cons: We must ensure that the implementation of each individual command is correct.
 
+### Undoing the latest deletion
+
+The `undo` command restores one successful deletion, including index, bulk and name-based deletion.
+`DeletionSnapshot` holds a separate copy of the pre-deletion contact data, the display filter and the deleted IDs.
+Restoring the complete data also restores links cleared on surviving students when their guardian was deleted.
+
+The sequence below shows successful restoration and the save-failure path. Parsing and snapshot accessor calls are
+simplified to keep the focus on restoring a candidate before saving and publishing it to the live model.
+
+<puml src="diagrams/UndoDeletionSequenceDiagram.puml" alt="Undo deletion restores a candidate and saves before updating live data and clearing history" />
+
+`LogicManager` records history only after deletion saves successfully. Read-only commands and failed operations
+retain that history; a later successful deletion replaces it, and another successful data-changing command clears it.
+Undo consumes history only after the restored candidate saves successfully. A failed save therefore preserves both
+the current live state and the opportunity to retry. History is limited to the current session and does not provide redo.
+This deletion-specific implementation is separate from the proposed general undo/redo design above.
+
 ### Editing contacts
 
 `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` changes the name, phone number, email address,
