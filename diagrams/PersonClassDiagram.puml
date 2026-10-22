@@ -1,0 +1,36 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor MODEL_COLOR
+skinparam classBackgroundColor MODEL_COLOR
+skinparam ArrowFontStyle plain
+skinparam nodesep 90
+skinparam ranksep 90
+
+package Model <<Rectangle>> {
+class Person
+class ContactId
+class Name
+class Phone
+class Email
+class Level
+class Subject
+class "<<enumeration>>\nRole" as Role
+class "<<enumeration>>\nStudentStatus" as StudentStatus
+}
+
+Person -left-> "1" ContactId : id
+Person -left-> "0..1" ContactId : guardianId
+Person -up-> "1" Name
+Person -up-> "0..1" Phone
+Person -up-> "0..1" Email
+Person -right-> "0..1" Level
+Person -right-> "0..1" Subject
+Person -down-> "1" Role
+Person -down-> "1" StudentStatus
+
+Name -[hidden]right-> Phone
+Phone -[hidden]right-> Email
+Level -[hidden]down-> Subject
+Role -[hidden]right-> StudentStatus
+@enduml
