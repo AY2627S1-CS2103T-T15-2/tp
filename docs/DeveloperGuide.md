@@ -132,8 +132,10 @@ How the parsing works:
 ### Model component
 **API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<puml src="diagrams/ModelClassDiagram.puml" width="450" />
+The overview below shows how the Model stores all contacts and exposes a filtered, sorted view for display.
+The contact's fields are expanded in the following Person class diagram.
 
+<puml src="diagrams/ModelClassDiagram.puml" alt="Model component: contact storage, preferences and displayed view" />
 
 The `Model` component,
 
@@ -142,6 +144,19 @@ The `Model` component,
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
+The following diagram expands `Person`. The multiplicity `1` means a value is required; `0..1` means it is optional.
+Associations represent the stored values, including the values wrapped in `Optional` fields in Java.
+
+<puml src="diagrams/PersonClassDiagram.puml" alt="Person fields: required identity, name, role and status; optional guardian ID, phone, email, level and subject" />
+
+Each contact has a stable `ContactId`, a `Name`, a `Role` (`STUDENT` or `GUARDIAN`) and a `StudentStatus`
+(`ACTIVE` or `FORMER`). Phone and email are individually optional, although a guardian must have at least one.
+Only students can have a level, subject or guardian reference, and only students can be former.
+
+The `id` association identifies the contact itself. The optional `guardianId` stores another contact's ID,
+which must resolve to an existing guardian. Each student can reference at most one guardian, and several students
+can reference the same guardian. The Person diagram uses ordinary associations because replacement contacts can
+share immutable field values.
 
 ### Storage component
 
