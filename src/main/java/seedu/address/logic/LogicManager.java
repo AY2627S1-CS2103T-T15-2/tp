@@ -13,6 +13,7 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -75,7 +76,18 @@ public class LogicManager implements Logic {
         model.updateFilteredPersonList(candidate.getPersonFilter());
         if (deletionSnapshot != null) {
             deletionHistory.record(deletionSnapshot);
+            logger.info("Recorded undo snapshot after saving deletion of "
+                    + deletionSnapshot.getDeletedIds().size() + " contact(s).");
         } else {
+            deletionHistory.getLatest().ifPresent(snapshot -> {
+                if (command instanceof UndoCommand) {
+                    logger.info("Undo saved successfully: restored " + snapshot.getDeletedIds().size()
+                            + " contact(s). Deletion history consumed.");
+                } else {
+                    logger.info("Deletion undo history invalidated after successful "
+                            + command.getClass().getSimpleName() + ".");
+                }
+            });
             deletionHistory.clear();
         }
         return commandResult;
