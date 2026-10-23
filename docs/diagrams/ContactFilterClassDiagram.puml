@@ -20,7 +20,7 @@ ListCommandParser ..> ContactFilter : creates
 ListCommand --> "1" ContactFilter
 ContactFilter .up.|> Predicate
 ContactFilter --> "0..1" Role
-ContactFilter --> "1" StudentStatus
+ContactFilter --> "0..1" StudentStatus
 
 note right of ContactFilter
   Planned: optional Level and
