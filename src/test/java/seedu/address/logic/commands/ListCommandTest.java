@@ -80,7 +80,8 @@ public class ListCommandTest {
         Person former = BENSON.withStatus(StudentStatus.FORMER);
         model.setPerson(BENSON, former);
         expectedModel.setPerson(BENSON, former);
-        String expectedMessage = "Listed " + (getTypicalPersons().size() - 1) + " contacts";
+        String expectedMessage = "Listed " + (getTypicalPersons().size() - 1) + " contacts. "
+                + "1 former student hidden. Add st/all to include them.";
         assertCommandSuccess(new ListCommand(), model, expectedMessage, expectedModel);
         assertFalse(model.getFilteredPersonList().contains(former));
     }
@@ -129,20 +130,19 @@ public class ListCommandTest {
     }
 
     @Test
-    public void execute_roleStudent_showsActiveStudentsOnly() {
+    public void execute_roleStudent_showsActiveStudentsAndHiddenHint() {
         Model mixedModel = createMixedModel();
-        CommandResult result = new ListCommand(
-                new ContactFilter(Optional.of(Role.STUDENT), StudentStatus.ACTIVE)).execute(mixedModel);
+        CommandResult result = new ListCommand(filterOf(Role.STUDENT, StudentStatus.ACTIVE)).execute(mixedModel);
 
-        assertEquals("Listed 1 contact", result.getFeedbackToUser());
+        assertEquals("Listed 1 contact. 1 former student hidden. Add st/all to include them.",
+                result.getFeedbackToUser());
         assertEquals(List.of(ACTIVE_STUDENT), List.copyOf(mixedModel.getFilteredPersonList()));
     }
 
     @Test
-    public void execute_roleGuardian_showsGuardiansOnly() {
+    public void execute_roleGuardian_showsGuardiansOnlyWithoutHint() {
         Model mixedModel = createMixedModel();
-        CommandResult result = new ListCommand(
-                new ContactFilter(Optional.of(Role.GUARDIAN), StudentStatus.ACTIVE)).execute(mixedModel);
+        CommandResult result = new ListCommand(filterOf(Role.GUARDIAN, StudentStatus.ACTIVE)).execute(mixedModel);
 
         assertEquals("Listed 1 contact", result.getFeedbackToUser());
         assertEquals(List.of(GUARDIAN), List.copyOf(mixedModel.getFilteredPersonList()));
@@ -151,8 +151,7 @@ public class ListCommandTest {
     @Test
     public void execute_roleStudentAndFormer_showsFormerStudentsOnly() {
         Model mixedModel = createMixedModel();
-        CommandResult result = new ListCommand(
-                new ContactFilter(Optional.of(Role.STUDENT), StudentStatus.FORMER)).execute(mixedModel);
+        CommandResult result = new ListCommand(filterOf(Role.STUDENT, StudentStatus.FORMER)).execute(mixedModel);
 
         assertEquals("Listed 1 former student", result.getFeedbackToUser());
         assertEquals(List.of(FORMER_STUDENT), List.copyOf(mixedModel.getFilteredPersonList()));
@@ -161,7 +160,7 @@ public class ListCommandTest {
     @Test
     public void execute_guardianRoleWithNoGuardians_noGuardiansMessage() {
         Model expectedStudentsOnlyModel = new ModelManager(model.getAddressBook(), new UserPrefs());
-        ContactFilter guardiansOnly = new ContactFilter(Optional.of(Role.GUARDIAN), StudentStatus.ACTIVE);
+        ContactFilter guardiansOnly = filterOf(Role.GUARDIAN, StudentStatus.ACTIVE);
         expectedStudentsOnlyModel.updateFilteredPersonList(guardiansOnly);
 
         assertCommandSuccess(new ListCommand(guardiansOnly), model, ListCommand.MESSAGE_NO_GUARDIANS,
@@ -174,8 +173,8 @@ public class ListCommandTest {
         addressBook.setPersons(List.of(FORMER_STUDENT, GUARDIAN));
         Model formerStudentsModel = new ModelManager(addressBook, new UserPrefs());
 
-        CommandResult result = new ListCommand(
-                new ContactFilter(Optional.of(Role.STUDENT), StudentStatus.ACTIVE)).execute(formerStudentsModel);
+        CommandResult result = new ListCommand(filterOf(Role.STUDENT, StudentStatus.ACTIVE))
+                .execute(formerStudentsModel);
 
         assertEquals("No active students found. Use list r/student st/former to see former students.",
                 result.getFeedbackToUser());
@@ -187,10 +186,59 @@ public class ListCommandTest {
         addressBook.setPersons(List.of(GUARDIAN));
         Model guardiansOnlyModel = new ModelManager(addressBook, new UserPrefs());
 
-        CommandResult result = new ListCommand(
-                new ContactFilter(Optional.of(Role.STUDENT), StudentStatus.ACTIVE)).execute(guardiansOnlyModel);
+        CommandResult result = new ListCommand(filterOf(Role.STUDENT, StudentStatus.ACTIVE))
+                .execute(guardiansOnlyModel);
 
         assertEquals(ListCommand.MESSAGE_NO_STUDENTS, result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_defaultWithFormerStudent_showsHiddenHint() {
+        Model mixedModel = createMixedModel();
+        CommandResult result = new ListCommand().execute(mixedModel);
+
+        assertEquals("Listed 2 contacts. 1 former student hidden. Add st/all to include them.",
+                result.getFeedbackToUser());
+        assertEquals(List.of(ACTIVE_STUDENT, GUARDIAN), List.copyOf(mixedModel.getFilteredPersonList()));
+    }
+
+    @Test
+    public void execute_activeStatusWithSeveralFormerStudents_pluralHint() {
+        AddressBook addressBook = new AddressBook();
+        Person otherFormerStudent = new PersonBuilder().withName("Cara Tan").withStatus(StudentStatus.FORMER).build();
+        addressBook.setPersons(List.of(ACTIVE_STUDENT, FORMER_STUDENT, otherFormerStudent));
+        Model severalFormerModel = new ModelManager(addressBook, new UserPrefs());
+
+        CommandResult result = new ListCommand(filterOf(null, StudentStatus.ACTIVE)).execute(severalFormerModel);
+
+        assertEquals("Listed 1 contact. 2 former students hidden. Add st/all to include them.",
+                result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_allStatuses_showsEveryContactWithoutHint() {
+        Model mixedModel = createMixedModel();
+        CommandResult result = new ListCommand(ContactFilter.ALL_CONTACTS).execute(mixedModel);
+
+        assertEquals("Listed 3 contacts", result.getFeedbackToUser());
+        assertEquals(List.of(ACTIVE_STUDENT, FORMER_STUDENT, GUARDIAN),
+                List.copyOf(mixedModel.getFilteredPersonList()));
+    }
+
+    @Test
+    public void execute_studentRoleAllStatuses_showsActiveAndFormerStudents() {
+        Model mixedModel = createMixedModel();
+        CommandResult result = new ListCommand(filterOf(Role.STUDENT, null)).execute(mixedModel);
+
+        assertEquals("Listed 2 contacts", result.getFeedbackToUser());
+        assertEquals(List.of(ACTIVE_STUDENT, FORMER_STUDENT), List.copyOf(mixedModel.getFilteredPersonList()));
+    }
+
+    @Test
+    public void execute_allStatusesWithNoContacts_noContactsFoundMessage() {
+        CommandResult result = new ListCommand(ContactFilter.ALL_CONTACTS).execute(new ModelManager());
+
+        assertEquals(ListCommand.MESSAGE_NO_CONTACTS, result.getFeedbackToUser());
     }
 
     @Test
@@ -202,10 +250,17 @@ public class ListCommandTest {
         assertTrue(listCommand.equals(new ListCommand(ContactFilter.ACTIVE_CONTACTS)));
         assertTrue(listFormerCommand.equals(new ListCommand(ContactFilter.FORMER_STUDENTS)));
         assertFalse(listCommand.equals(listFormerCommand));
-        assertFalse(listCommand.equals(new ListCommand(
-                new ContactFilter(Optional.of(Role.STUDENT), StudentStatus.ACTIVE))));
+        assertFalse(listCommand.equals(new ListCommand(filterOf(Role.STUDENT, StudentStatus.ACTIVE))));
+        assertFalse(listCommand.equals(new ListCommand(ContactFilter.ALL_CONTACTS)));
         assertFalse(listCommand.equals(1));
         assertFalse(listCommand.equals(null));
+    }
+
+    /**
+     * Returns a filter for {@code role} and {@code status}, where {@code null} matches any value.
+     */
+    private static ContactFilter filterOf(Role role, StudentStatus status) {
+        return new ContactFilter(Optional.ofNullable(role), Optional.ofNullable(status));
     }
 
     /**
