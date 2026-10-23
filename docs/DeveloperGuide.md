@@ -339,6 +339,60 @@ model, so a failed save leaves the contact unchanged.
 * **Rejecting unknown parameters:** silently keeping `a/15` as part of a name would save data the user did not intend.
   The cost is that names containing a word ending in `/` must be quoted.
 
+### Marking students as former and active
+
+`archive INDEX` marks a student as `FORMER`; `unarchive INDEX` marks a former student as `ACTIVE` again.
+Both commands retain the contact and its guardian relationship. They do not archive or export the data file.
+
+**Parsing and validation.** `ArchiveCommandParser` and `UnarchiveCommandParser` use `ParserUtil#parseIndex` to
+accept one positive integer. Invalid input, including a missing index or extra arguments, gives
+`The contact index must be a positive integer shown in the list.` Both concrete commands inherit
+`StudentStatusCommand#execute`, supplying a target status and command-specific messages. This shared method
+resolves the index against `Model#getFilteredPersonList`, which is sorted in displayed order. It rejects an index
+beyond that list, a guardian target, or a student who already has the requested status before changing any data.
+
+**Updating the student.** `Person#withStatus` creates a replacement contact with the new status and the original
+ID, name, phone, email, role, guardian ID, level and subject. `Model#setPerson` replaces the target by ID, so even
+same-name students remain separate records. The result reports the student's name and new status.
+
+The sequence below shows a successful `archive 1` when the first displayed contact is an active student.
+Parsing, UI updates and deletion-history maintenance are omitted to focus on command execution and saving.
+The Model and Storage components are shown through their public operations.
+
+<puml src="diagrams/ArchiveSequenceDiagram.puml" alt="Archiving a student on a candidate model, saving it, and then updating the live model" />
+
+`unarchive` follows the same sequence through the inherited `execute` method, using `StudentStatus.ACTIVE`
+and the messages supplied by `UnarchiveCommand` instead.
+
+**Keeping the current view.** The status commands retain the current filter. Replacing the contact causes the
+filtered list to re-evaluate whether the student still matches:
+
+| Current view | After `archive` | After `unarchive` |
+| --- | --- | --- |
+| Default `list` (guardians and active students) | The student disappears; the guardian remains. | Former students must first be made visible in another view. |
+| `list st/former` | An already-former student is rejected. | The student disappears from the former-student list. |
+| `find NAME` | A matching student remains visible, labelled `[Former]`. | The student remains visible without `[Former]`. |
+
+If the student was selected, the UI clears the selection and detail panel when the student leaves the view.
+When the student remains in search results, the existing selection is retained and its details are refreshed.
+
+**Saving and failure handling.** Both commands declare themselves data-changing. `LogicManager` creates a
+candidate model containing the live data, preferences and current filter, then executes the command on that copy.
+It saves the candidate through `Storage#saveAddressBook` before publishing its data and filter to the live model.
+A validation failure or failed save leaves the live contacts, relationships and filter unchanged. A save failure
+reports `Changes could not be saved. No changes were made.`; see
+[Saving contacts and relationships](#saving-contacts-and-relationships) for the storage mechanism.
+Successful status changes clear the previous deletion's undo history, following the rule described under
+[Undoing the latest deletion](#undoing-the-latest-deletion).
+
+**Design considerations.**
+
+* Sharing `StudentStatusCommand` keeps index, role and status checks consistent between the two commands.
+* Only students can be former: guardians remain contactable even when their linked students stop taking lessons.
+  Keeping the student's ID and guardian reference allows the tutor to reactivate the same record later.
+* Retaining the filter preserves the tutor's current task. `find` matches names independently of status, providing
+  a way to retrieve former students without silently changing the meaning of a name search.
+
 ### Student-guardian linking
 
 The diagram below shows how relationship identity is represented independently of names, display indexes and
@@ -1122,6 +1176,60 @@ and failed intervening changes, ensuring that live data, saved data and the prev
    * `edit 1 n/A n/B` gives `Each of n/, p/, e/, lv/, and sub/ may appear only once.`
    * Editing a contact so that it matches another contact's role, name, phone and email gives
      `This edit would create a duplicate contact.`
+
+### Marking students as former and active
+
+Use a separate, disposable application folder with an empty contact list. Run these cases in order so the
+displayed indexes are predictable. Launch with Java 25 using `java -jar "tutorroster.jar"`; use the same folder
+for each restart. This setup is independent of the data used in the other manual-testing sections.
+
+1. Prepare a linked student and guardian:
+   1. `add r/student n/Ava Tan p/98765432 e/ava@example.com lv/Sec 3 sub/Math`
+   1. `add r/guardian n/Mei Tan p/91234567`
+   1. `list`, then `link s/1 g/2`.<br>
+      Expected: Ava Tan is student `1`, Mei Tan is guardian `2`, and Ava is linked to Mei.
+   1. `view 1`.<br>
+      Expected: Ava's details show her phone, email, level, subject and guardian Mei Tan.
+
+1. Archive, restart and reactivate:
+   1. `archive 1`.<br>
+      Expected: `Marked Ava Tan as a former student.` Ava disappears from the default list; Mei remains.
+      Because Ava was selected, the selection clears and the detail panel says `Select a contact to view details.`
+   1. `list st/former`, then `view 1`.<br>
+      Expected: Ava is the only displayed contact, labelled `[Former]`. Her contact details, level, subject
+      and link to Mei are unchanged, even though Mei is outside this view.
+   1. `exit`, then relaunch the same JAR from the same folder. Run `list st/former`, then `view 1`.<br>
+      Expected: Ava is still former, with the same details and guardian. The saved status and relationship survive restart.
+   1. `unarchive 1`.<br>
+      Expected: `Marked Ava Tan as an active student.` The former-student list becomes empty, and the selection
+      and details clear. Run `list` to see Ava at `1` and Mei at `2` again.
+   1. `exit`, then relaunch again. Run `list`, then `view 1`.<br>
+      Expected: Ava is active, and her details and guardian link are still present.
+
+1. Change status while searching:
+   1. `find Ava`, then `view 1`.
+   1. `archive 1`.<br>
+      Expected: Ava stays at index `1` in the search results, gains `[Former]`, and remains selected.
+      Her detail panel still shows guardian Mei Tan.
+   1. `unarchive 1`.<br>
+      Expected: Ava stays selected in the same search results; `[Former]` disappears and her other details stay unchanged.
+
+1. Reject invalid targets and repeated status changes:
+   1. Run `find Tan` to show active student Ava at `1` and guardian Mei at `2`.
+   1. Try each command below. For every rejection, verify that the displayed contacts, their status, the selected
+      contact, guardian link and saved data remain unchanged.
+
+      | Command | Expected error |
+      | --- | --- |
+      | `unarchive 1` | `Ava Tan is already an active student.` |
+      | `archive 2` | `Only students can be archived.` |
+      | `unarchive 2` | `Only students can be unarchived.` |
+      | `archive 3` and `unarchive 3`, separately | `No contact exists at index 3.` |
+      | `archive 0` and `unarchive abc`, separately | `The contact index must be a positive integer shown in the list.` |
+
+   1. Run `archive 1`, then repeat `archive 1`.<br>
+      Expected: The first command succeeds and Ava remains visible because `find Tan` is still applied.
+      The second reports `Ava Tan is already a former student.` and leaves the data unchanged.
 
 ### Listing contacts
 
