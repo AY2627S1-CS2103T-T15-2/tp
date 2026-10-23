@@ -212,7 +212,7 @@ the command remains for correction. For saving errors, see [Saving the data](#sa
 
 Shows guardians and active students, or only the contacts you choose.
 
-Format: `list [r/ROLE] [st/former]`
+Format: `list [r/ROLE] [st/STATUS]`
 
 Command | Shows
 --------|------
@@ -220,21 +220,31 @@ Command | Shows
 `list r/student` | Active students only
 `list r/guardian` | Guardians only
 `list st/former` | Former students only
-`list r/student st/former` | Former students only (the same as `list st/former`)
+`list st/all` | Every contact, including former students
+`list r/student st/all` | All students, active and former
 
 * `list` shows all guardians and active students. Former students are hidden; see
   [Marking a student as former](#marking-a-student-as-former-archive).
 * `r/ROLE` shows only contacts with that role. `ROLE` must be `student` or `guardian`, and ignores letter case.
-* `st/former` shows only former students. `former` ignores letter case.
+* `st/STATUS` chooses which contacts to show by status. `STATUS` must be `active`, `former` or `all`, and ignores
+  letter case:
+  * `st/active` shows guardians and active students. This is the default, so `list st/active` is the same as `list`.
+  * `st/former` shows only former students.
+  * `st/all` shows every contact, whatever its status.
 * `r/` and `st/` can be given in either order, and each can appear only once. A contact must match both.
 * Guardians are never former, so `list r/guardian st/former` is rejected with
   `Guardians cannot be former. Remove r/guardian or st/former.`
 * TutorRoster also starts with guardians and active students shown.
 * Any other text after `list` is rejected; for example, `list 3` shows
-  `Invalid list command. Use: list [r/ROLE] [st/former]`.
-* An invalid role is rejected with `Invalid role. Role must be student or guardian.`, and repeating `r/` or `st/`
-  is rejected with `Each of r/ and st/ may appear only once.`
+  `Invalid list command. Use: list [r/ROLE] [st/STATUS]`. If you type a role or status without its prefix, the
+  message suggests the right command; for example, `list former` shows
+  `Invalid list command. Did you mean: list st/former?`
+* An invalid role is rejected with `Invalid role. Role must be student or guardian.`, an invalid status with
+  `Invalid status. Status must be active, former, or all.`, and repeating `r/` or `st/` with
+  `Each of r/ and st/ may appear only once.`
 * The result shows the number of contacts listed; for example, `Listed 6 contacts` or `Listed 2 former students`.
+  When the list hides former students that would otherwise be shown, the result also says how many; for example,
+  `Listed 6 contacts. 2 former students hidden. Add st/all to include them.`
 * If there are no saved contacts, `No contacts found.` is shown. If every saved contact is a former student,
   `No active contacts found. Use list st/former to see former students.` is shown. If there are no former students,
   `list st/former` shows `No former students found.`
@@ -400,8 +410,9 @@ Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 
 * Run `list` or `find NAME` first and use the indexes in the **currently displayed list**.
 * Both contacts must be visible. If a search hides either contact, run `list` before linking an active student.
-  To link a former student without reactivating them, use `find NAME` with a search term that shows both contacts;
-  for example, `find Tan` can show former student Alex Tan and guardian Mei Tan together.
+  To link a former student without reactivating them, use `list st/all` to show both contacts, or `find NAME` with a
+  search term that shows both; for example, `find Tan` can show former student Alex Tan and guardian Mei Tan
+  together.
 * `s/` must identify a student and `g/` must identify a guardian.
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
 * Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
@@ -568,7 +579,7 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
-**List**   | `list [r/ROLE] [st/former]`<br> e.g., `list r/student`, `list st/former`
+**List**   | `list [r/ROLE] [st/STATUS]`<br> e.g., `list r/student`, `list st/former`, `list st/all`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
 **Undo deletion** | `undo`<br> Restores the latest successful deletion in the current session.
