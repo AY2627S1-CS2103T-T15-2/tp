@@ -32,7 +32,7 @@ AddressBookParser -> ListCommandParser : parse(" r/student")
 activate ListCommandParser
 
 create ContactFilter
-ListCommandParser -> ContactFilter : Optional.of(STUDENT), ACTIVE
+ListCommandParser -> ContactFilter : Optional.of(STUDENT), Optional.of(ACTIVE)
 activate ContactFilter
 
 ContactFilter --> ListCommandParser : f

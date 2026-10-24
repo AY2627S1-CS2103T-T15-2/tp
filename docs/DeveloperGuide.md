@@ -505,36 +505,48 @@ run on Windows desktop environments; the remaining tests run on all supported pl
 `list` and `find` change which contacts the list panel shows by updating the predicate of the model's filtered list.
 Neither command changes any contact data.
 
-**Listing.** `list [r/ROLE] [st/former]` shows the contacts that match a `ContactFilter`, as shown in the class
+**Listing.** `list [r/ROLE] [st/STATUS]` shows the contacts that match a `ContactFilter`, as shown in the class
 diagram below.
 
 <puml src="diagrams/ContactFilterClassDiagram.puml" alt="Classes involved in filtering the contact list" />
 
-A `ContactFilter` is a `Predicate<Person>` that holds an optional `Role` and a `StudentStatus`. A contact matches when
-it has that status and, if a role is given, that role. Guardians are always `ACTIVE`, so they never match a filter for
-former contacts. `ContactFilter.ACTIVE_CONTACTS` (guardians and active students) is the default, and
-`ContactFilter.FORMER_STUDENTS` shows only former students. `Model#PREDICATE_SHOW_ACTIVE_CONTACTS` and
-`Model#PREDICATE_SHOW_FORMER_STUDENTS` refer to these two filters, so the rules for which contacts are active live in
-one class.
+A `ContactFilter` is a `Predicate<Person>` that holds an optional `Role` and an optional `StudentStatus`. A contact
+matches when it has the chosen role and status; an empty role or status matches any value. Guardians are always
+`ACTIVE`, so they never match a filter for former contacts. `ContactFilter.ACTIVE_CONTACTS` (guardians and active
+students) is the default, `ContactFilter.FORMER_STUDENTS` shows only former students, and
+`ContactFilter.ALL_CONTACTS` shows everyone. `Model#PREDICATE_SHOW_ACTIVE_CONTACTS` and
+`Model#PREDICATE_SHOW_FORMER_STUDENTS` refer to the first two filters, so the rules for which contacts are active live
+in one class.
 
 `ListCommandParser` checks the input as shown in the activity diagram below, and stops at the first problem it finds.
 
 <puml src="diagrams/ListParserActivityDiagram.puml" width="400" alt="Checks made by ListCommandParser" />
 
 * **Format error:** any prefix other than `r/` or `st/` (such as `n/` in `n/Alex`), or any text before the first
-  prefix (such as `extra` in `list extra r/student`), gives `Invalid list command. Use: list [r/ROLE] [st/former]`.
+  prefix (such as `extra` in `list extra r/student`), gives `Invalid list command. Use: list [r/ROLE] [st/STATUS]`.
+  If the whole input is a single role or status without its prefix, such as `list former`, the message suggests the
+  intended command instead: `Invalid list command. Did you mean: list st/former?`
 * **Repeated parameter:** a repeated `r/` or `st/` gives `Each of r/ and st/ may appear only once.`
 * **Role or status error:** `r/ROLE` is parsed with `ParserUtil#parseRole`, the same method `add` uses, so role values
-  and errors match `add`. `st/` accepts only `former`, ignoring letter case; any other value gives the invalid-format
-  message above. Without `st/`, the status is `ACTIVE`. The role is checked before the status, whatever order the user
-  types them in.
+  and errors match `add`. `st/` accepts `active`, `former` or `all`, ignoring letter case; `all` becomes an empty
+  status, which matches any status. Any other value, or an empty `st/`, gives
+  `Invalid status. Status must be active, former, or all.` Without `st/`, the status is `ACTIVE`. The role is checked
+  before the status, whatever order the user types them in.
 * **Guardians cannot be former:** `r/guardian st/former` gives
   `Guardians cannot be former. Remove r/guardian or st/former.`, because that filter could never match a contact.
 
 `ListCommand#execute` passes its filter to `Model#updateFilteredPersonList`. It then reports the number of contacts
 shown, for example `Listed 6 contacts` or `Listed 2 former students`, using `Messages#formatContactCount` and
-`Messages#formatFormerStudentCount`. When nothing matches, the message explains why, so the tutor knows whether the
-contact list is empty or the filter hid everyone:
+`Messages#formatFormerStudentCount`.
+
+When the filter shows active contacts only (`ContactFilter#hidesFormerStudents`), former students are hidden without
+the tutor asking for it. To make this visible, `ListCommand` counts the former students that
+`ContactFilter#withAnyStatus` (the same filter with any status) would also have shown, and adds the count to the
+message, for example `Listed 6 contacts. 2 former students hidden. Add st/all to include them.` For
+`list r/guardian`, this count is always 0, so no note is added.
+
+When nothing matches, the message explains why, so the tutor knows whether the contact list is empty or the filter hid
+everyone:
 
 * `list` with no saved contacts gives `No contacts found.` If every saved contact is a former student, it gives
   `No active contacts found. Use list st/former to see former students.`
@@ -549,15 +561,10 @@ The sequence diagram below shows how `list r/student` is executed.
 
 <puml src="diagrams/ListSequenceDiagram.puml" alt="Interactions for the `list r/student` command" />
 
-**\[Proposed\] More filters.** Two extensions are planned for `list`, both built on `ContactFilter`:
-
-* `st/active` and `st/all`. `st/active` would name the default status explicitly, so `list st/active` would be the
-  same as `list`. `st/all` would show contacts of every status, so the status in `ContactFilter` would become
-  optional, with an empty status meaning "any status". `list r/student st/all` would then show all students, active
-  and former.
-* `lv/LEVEL` and `sub/SUBJECT`. These would add an optional `Level` and `Subject` to `ContactFilter`. A
-  student would match when `Level#isSameValue` and `Subject#isSameValue` hold, so `list lv/sec3` would match
-  `Sec 3`, ignoring letter case and spaces.
+**\[Proposed\] Filtering by level and subject.** `lv/LEVEL` and `sub/SUBJECT` are planned for `list`. They would add
+an optional `Level` and `Subject` to `ContactFilter`, in the same way as the role and status. A student would match
+when `Level#isSameValue` and `Subject#isSameValue` hold, so `list lv/sec3` would match `Sec 3`, ignoring letter case
+and spaces.
 
 **Finding.** `FindCommandParser` treats all the text after `find` as a single search term. It removes leading and
 trailing whitespace, reduces each run of internal whitespace to one space, and rejects a term that is then empty with
@@ -1138,7 +1145,7 @@ and failed intervening changes, ensuring that live data, saved data and the prev
 
 1. Test case: `list 3`<br>
    Expected: The shown contacts are unchanged. The status message shows
-   `Invalid list command. Use: list [r/ROLE] [st/former]`
+   `Invalid list command. Use: list [r/ROLE] [st/STATUS]`
 
 ### Filtering the contact list
 
@@ -1146,14 +1153,25 @@ and failed intervening changes, ensuring that live data, saved data and the prev
    `add r/guardian n/Mei Tan p/98765432`, `add r/student n/Alex Tan p/91234567`, `add r/student n/Bea Lim` and
    `add r/student n/Chloe Ng`. Mark Chloe Ng as former with `find Chloe`, then `archive 1`.
 
+1. Test case: `list`<br>
+   Expected: Alex Tan, Bea Lim and Mei Tan are shown. The status message shows
+   `Listed 3 contacts. 1 former student hidden. Add st/all to include them.`
+
 1. Test case: `list r/student`<br>
-   Expected: Alex Tan and Bea Lim are shown. The status message shows `Listed 2 contacts`.
+   Expected: Alex Tan and Bea Lim are shown. The status message shows
+   `Listed 2 contacts. 1 former student hidden. Add st/all to include them.`
 
 1. Test case: `list r/GUARDIAN`<br>
    Expected: Mei Tan is shown. The status message shows `Listed 1 contact`.
 
 1. Test case: `list r/student st/former`<br>
    Expected: Chloe Ng is shown. The status message shows `Listed 1 former student`.
+
+1. Test case: `list st/all`<br>
+   Expected: All four contacts are shown. The status message shows `Listed 4 contacts`.
+
+1. Test case: `list r/student st/ALL`<br>
+   Expected: Alex Tan, Bea Lim and Chloe Ng are shown. The status message shows `Listed 3 contacts`.
 
 1. Test case: `list r/guardian st/former`<br>
    Expected: The shown contacts are unchanged. The status message shows
@@ -1170,12 +1188,19 @@ and failed intervening changes, ensuring that live data, saved data and the prev
    Expected: The shown contacts are unchanged. The status message shows `Each of r/ and st/ may appear only once.`
 
 1. Test case: `list st/active`<br>
+   Expected: The same contacts and message as `list`.
+
+1. Test case: `list st/archived`<br>
    Expected: The shown contacts are unchanged. The status message shows
-   `Invalid list command. Use: list [r/ROLE] [st/former]`. Only `st/former` is currently supported.
+   `Invalid status. Status must be active, former, or all.`
+
+1. Test case: `list former`<br>
+   Expected: The shown contacts are unchanged. The status message shows
+   `Invalid list command. Did you mean: list st/former?`
 
 1. Test case: `list n/Alex`<br>
    Expected: The shown contacts are unchanged. The status message shows
-   `Invalid list command. Use: list [r/ROLE] [st/former]`
+   `Invalid list command. Use: list [r/ROLE] [st/STATUS]`
 
 1. Test case: `find Mei`, then `delete 1`, then `list r/guardian`<br>
    Expected: No contacts are shown. The status message shows `No guardians found.`

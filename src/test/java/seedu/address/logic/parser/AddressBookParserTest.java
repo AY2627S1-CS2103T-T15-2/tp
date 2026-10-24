@@ -138,8 +138,10 @@ public class AddressBookParserTest {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
         assertEquals(new ListCommand(ContactFilter.FORMER_STUDENTS),
                 parser.parseCommand(ListCommand.COMMAND_WORD + " st/former"));
-        assertEquals(new ListCommand(new ContactFilter(Optional.of(Role.GUARDIAN), StudentStatus.ACTIVE)),
-                parser.parseCommand(ListCommand.COMMAND_WORD + " r/guardian"));
+        ContactFilter guardiansOnly = new ContactFilter(Optional.of(Role.GUARDIAN), Optional.of(StudentStatus.ACTIVE));
+        assertEquals(new ListCommand(guardiansOnly), parser.parseCommand(ListCommand.COMMAND_WORD + " r/guardian"));
+        assertEquals(new ListCommand(ContactFilter.ALL_CONTACTS),
+                parser.parseCommand(ListCommand.COMMAND_WORD + " st/all"));
         assertThrows(ParseException.class, ListCommand.MESSAGE_INVALID_FORMAT, ()
             -> parser.parseCommand(ListCommand.COMMAND_WORD + " 3"));
     }

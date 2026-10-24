@@ -23,16 +23,19 @@ public class ListCommandParserTest {
     }
 
     @Test
-    public void parse_former_returnsListFormerCommand() {
+    public void parse_status_returnsListCommandWithStatus() {
+        assertParseSuccess(parser, " st/active", new ListCommand(ContactFilter.ACTIVE_CONTACTS));
+        assertParseSuccess(parser, " st/ACTIVE", new ListCommand(ContactFilter.ACTIVE_CONTACTS));
         assertParseSuccess(parser, " st/former", new ListCommand(ContactFilter.FORMER_STUDENTS));
         assertParseSuccess(parser, "  st/FORMER  ", new ListCommand(ContactFilter.FORMER_STUDENTS));
+        assertParseSuccess(parser, " st/all", new ListCommand(ContactFilter.ALL_CONTACTS));
+        assertParseSuccess(parser, " st/ All ", new ListCommand(ContactFilter.ALL_CONTACTS));
     }
 
     @Test
     public void parse_role_returnsListCommandWithRole() {
-        ListCommand listStudents = new ListCommand(new ContactFilter(Optional.of(Role.STUDENT), StudentStatus.ACTIVE));
-        ListCommand listGuardians = new ListCommand(
-                new ContactFilter(Optional.of(Role.GUARDIAN), StudentStatus.ACTIVE));
+        ListCommand listStudents = new ListCommand(filterOf(Role.STUDENT, StudentStatus.ACTIVE));
+        ListCommand listGuardians = new ListCommand(filterOf(Role.GUARDIAN, StudentStatus.ACTIVE));
 
         assertParseSuccess(parser, " r/student", listStudents);
         assertParseSuccess(parser, " r/  STUDENT  ", listStudents);
@@ -41,12 +44,15 @@ public class ListCommandParserTest {
     }
 
     @Test
-    public void parse_roleAndFormer_returnsListCommandWithBoth() {
-        ListCommand listFormerStudents = new ListCommand(
-                new ContactFilter(Optional.of(Role.STUDENT), StudentStatus.FORMER));
+    public void parse_roleAndStatus_returnsListCommandWithBoth() {
+        ListCommand listFormerStudents = new ListCommand(filterOf(Role.STUDENT, StudentStatus.FORMER));
 
         assertParseSuccess(parser, " r/student st/former", listFormerStudents);
         assertParseSuccess(parser, " st/former r/student", listFormerStudents);
+        assertParseSuccess(parser, " r/student st/all", new ListCommand(filterOf(Role.STUDENT, null)));
+        assertParseSuccess(parser, " r/guardian st/all", new ListCommand(filterOf(Role.GUARDIAN, null)));
+        assertParseSuccess(parser, " r/guardian st/active",
+                new ListCommand(filterOf(Role.GUARDIAN, StudentStatus.ACTIVE)));
     }
 
     @Test
@@ -55,6 +61,15 @@ public class ListCommandParserTest {
         assertParseFailure(parser, " r/student guardian", Role.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " r/", AddCommandParser.MESSAGE_EMPTY_ROLE);
         assertParseFailure(parser, " r/   ", AddCommandParser.MESSAGE_EMPTY_ROLE);
+    }
+
+    @Test
+    public void parse_invalidStatus_throwsParseException() {
+        assertParseFailure(parser, " st/formers", ListCommand.MESSAGE_INVALID_STATUS);
+        assertParseFailure(parser, " st/archived", ListCommand.MESSAGE_INVALID_STATUS);
+        assertParseFailure(parser, " st/former 1", ListCommand.MESSAGE_INVALID_STATUS);
+        assertParseFailure(parser, " st/", ListCommand.MESSAGE_INVALID_STATUS);
+        assertParseFailure(parser, " st/   ", ListCommand.MESSAGE_INVALID_STATUS);
     }
 
     @Test
@@ -83,14 +98,27 @@ public class ListCommandParserTest {
     }
 
     @Test
+    public void parse_roleOrStatusWithoutPrefix_suggestsPrefix() {
+        assertParseFailure(parser, " former", "Invalid list command. Did you mean: list st/former?");
+        assertParseFailure(parser, " ALL", "Invalid list command. Did you mean: list st/all?");
+        assertParseFailure(parser, " active", "Invalid list command. Did you mean: list st/active?");
+        assertParseFailure(parser, " student", "Invalid list command. Did you mean: list r/student?");
+        assertParseFailure(parser, " Guardian", "Invalid list command. Did you mean: list r/guardian?");
+    }
+
+    @Test
     public void parse_extraText_throwsParseException() {
         assertParseFailure(parser, " 3", ListCommand.MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " all", ListCommand.MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " former", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " formers", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " former students", ListCommand.MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " 3 r/student", ListCommand.MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " st/former 1", ListCommand.MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " st/formers", ListCommand.MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " st/", ListCommand.MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " st/active", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " former r/student", ListCommand.MESSAGE_INVALID_FORMAT);
+    }
+
+    /**
+     * Returns a filter for {@code role} and {@code status}, where {@code null} matches any value.
+     */
+    private static ContactFilter filterOf(Role role, StudentStatus status) {
+        return new ContactFilter(Optional.ofNullable(role), Optional.ofNullable(status));
     }
 }
