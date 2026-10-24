@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.ContactFilter;
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonLookup;
@@ -77,6 +79,26 @@ public class StudentStatusPersistenceTest {
     }
 
     @Test
+    public void execute_archiveAndUnarchiveInAllStatusView_keepsStudentShownAndLinked() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        Model model = createModel(StudentStatus.ACTIVE);
+        storage.saveAddressBook(model.getAddressBook());
+        Logic logic = createLogic(model, storage);
+        logic.execute("list st/all");
+
+        logic.execute("archive " + getDisplayedIndex(model, student.getId()));
+
+        assertStudentState(model, StudentStatus.FORMER);
+        assertAllContactsShown(model);
+
+        logic.execute("unarchive " + getDisplayedIndex(model, student.getId()));
+
+        assertStudentState(model, StudentStatus.ACTIVE);
+        assertAllContactsShown(model);
+    }
+
+    @Test
     public void execute_archiveSaveFailure_preservesContactsFilterAndSavedFile() throws Exception {
         assertSaveFailurePreservesState("archive 1", StudentStatus.ACTIVE);
     }
@@ -99,6 +121,23 @@ public class StudentStatusPersistenceTest {
 
     private Person findContact(Model model, ContactId id) {
         return PersonLookup.findById(model.getAddressBook().getPersonList(), id).orElseThrow();
+    }
+
+    private int getDisplayedIndex(Model model, ContactId id) {
+        List<Person> shownContacts = model.getFilteredPersonList();
+        for (int i = 0; i < shownContacts.size(); i++) {
+            if (shownContacts.get(i).getId().equals(id)) {
+                return i + 1;
+            }
+        }
+        throw new AssertionError("Contact is not shown: " + id);
+    }
+
+    private void assertAllContactsShown(Model model) {
+        assertEquals(ContactFilter.ALL_CONTACTS, model.getPersonFilter());
+        assertEquals(3, model.getFilteredPersonList().size());
+        assertTrue(model.getFilteredPersonList().stream()
+                .anyMatch(person -> person.getId().equals(student.getId())));
     }
 
     private void assertStudentState(Model model, StudentStatus expectedStatus) {
