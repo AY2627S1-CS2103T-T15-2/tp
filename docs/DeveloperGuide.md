@@ -369,12 +369,14 @@ filtered list to re-evaluate whether the student still matches:
 
 | Current view | After `archive` | After `unarchive` |
 | --- | --- | --- |
-| Default `list` (guardians and active students) | The student disappears; the guardian remains. | Former students must first be made visible in another view. |
+| `list` or `list st/active` (guardians and active students) | The student disappears; the guardian remains. | Former students are hidden; use `list st/former` or `list st/all` first. |
 | `list st/former` | An already-former student is rejected. | The student disappears from the former-student list. |
-| `find NAME` | A matching student remains visible, labelled `[Former]`. | The student remains visible without `[Former]`. |
+| `list st/all` | The student remains visible with the `Former` badge. | The student remains visible without the badge. |
+| `find NAME` | A matching student remains visible with the `Former` badge. | The student remains visible without the badge. |
 
 If the student was selected, the UI clears the selection and detail panel when the student leaves the view.
-When the student remains in search results, the existing selection is retained and its details are refreshed.
+When the student remains in the view, as with `find` or `list st/all`, the existing selection is retained
+and its details are refreshed. The details panel shows the status as `Role: Student [Former]`.
 
 **Saving and failure handling.** Both commands declare themselves data-changing. `LogicManager` creates a
 candidate model containing the live data, preferences and current filter, then executes the command on that copy.
@@ -390,8 +392,9 @@ Successful status changes clear the previous deletion's undo history, following 
 * Sharing `StudentStatusCommand` keeps index, role and status checks consistent between the two commands.
 * Only students can be former: guardians remain contactable even when their linked students stop taking lessons.
   Keeping the student's ID and guardian reference allows the tutor to reactivate the same record later.
-* Retaining the filter preserves the tutor's current task. `find` matches names independently of status, providing
-  a way to retrieve former students without silently changing the meaning of a name search.
+* Retaining the filter preserves the tutor's current task. Former students stay retrievable through
+  `list st/former` and `list st/all`, and `find` matches names independently of status, so a name search
+  does not silently change meaning when a student becomes former.
 
 ### Student-guardian linking
 
@@ -1177,7 +1180,7 @@ and failed intervening changes, ensuring that live data, saved data and the prev
    * Editing a contact so that it matches another contact's role, name, phone and email gives
      `This edit would create a duplicate contact.`
 
-### Marking students as former and active
+### Archiving and unarchiving students
 
 Use a separate, disposable application folder with an empty contact list. Run these cases in order so the
 displayed indexes are predictable. Launch with Java 25 using `java -jar "tutorroster.jar"`; use the same folder
@@ -1196,10 +1199,11 @@ for each restart. This setup is independent of the data used in the other manual
       Expected: `Marked Ava Tan as a former student.` Ava disappears from the default list; Mei remains.
       Because Ava was selected, the selection clears and the detail panel says `Select a contact to view details.`
    1. `list st/former`, then `view 1`.<br>
-      Expected: Ava is the only displayed contact, labelled `[Former]`. Her contact details, level, subject
-      and link to Mei are unchanged, even though Mei is outside this view.
+      Expected: Ava is the only displayed contact, with the `Former` badge. Her contact details, level,
+      subject and link to Mei are unchanged, even though Mei is outside this view.
    1. `exit`, then relaunch the same JAR from the same folder. Run `list st/former`, then `view 1`.<br>
-      Expected: Ava is still former, with the same details and guardian. The saved status and relationship survive restart.
+      Expected: Ava is still former, with the same details and guardian. The saved status and relationship
+      survive restart.
    1. `unarchive 1`.<br>
       Expected: `Marked Ava Tan as an active student.` The former-student list becomes empty, and the selection
       and details clear. Run `list` to see Ava at `1` and Mei at `2` again.
@@ -1209,10 +1213,11 @@ for each restart. This setup is independent of the data used in the other manual
 1. Change status while searching:
    1. `find Ava`, then `view 1`.
    1. `archive 1`.<br>
-      Expected: Ava stays at index `1` in the search results, gains `[Former]`, and remains selected.
+      Expected: Ava stays at index `1` in the search results, gains the `Former` badge, and remains selected.
       Her detail panel still shows guardian Mei Tan.
    1. `unarchive 1`.<br>
-      Expected: Ava stays selected in the same search results; `[Former]` disappears and her other details stay unchanged.
+      Expected: Ava stays selected in the same search results. The `Former` badge disappears and her other
+      details stay unchanged.
 
 1. Reject invalid targets and repeated status changes:
    1. Run `find Tan` to show active student Ava at `1` and guardian Mei at `2`.
