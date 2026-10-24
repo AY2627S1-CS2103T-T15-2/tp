@@ -5,14 +5,17 @@ import static seedu.address.ui.ContactDisplayFormatter.formatRoleWithStatus;
 import static seedu.address.ui.ContactDisplayFormatter.formatStudentDetail;
 
 import java.util.Optional;
+import java.util.logging.Logger;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonLookup;
 import seedu.address.model.person.Role;
@@ -23,12 +26,19 @@ import seedu.address.model.person.Role;
 public class PersonDetailsPanel extends UiPart<Region> {
 
     private static final String FXML = "PersonDetailsPanel.fxml";
+    private static final Logger logger = LogsCenter.getLogger(PersonDetailsPanel.class);
 
     private final ObservableList<Person> persons;
     private final ReadOnlyObjectProperty<Person> selectedPerson;
 
     @FXML
     private Label name;
+    @FXML
+    private Label roleBadge;
+    @FXML
+    private Label formerBadge;
+    @FXML
+    private VBox contactDetails;
     @FXML
     private Label role;
     @FXML
@@ -66,33 +76,47 @@ public class PersonDetailsPanel extends UiPart<Region> {
         Person contact = Optional.ofNullable(selectedPerson.get())
                 .flatMap(person -> PersonLookup.findById(persons, person.getId())).orElse(null);
         if (contact == null) {
+            logger.fine("No contact selected, so the details panel shows no details.");
             name.setText("Select a contact to view details.");
+            RoleBadges.hide(roleBadge, formerBadge);
             role.setText("");
             phone.setText("");
             email.setText("");
-            studentDetails.setVisible(false);
-            studentDetails.setManaged(false);
-            guardianDetails.setVisible(false);
-            guardianDetails.setManaged(false);
+            setShown(contactDetails, false);
+            setShown(studentDetails, false);
+            setShown(guardianDetails, false);
             return;
         }
 
         name.setText(contact.getName().fullName);
+        RoleBadges.show(roleBadge, formerBadge, contact);
+        setShown(contactDetails, true);
         role.setText("Role: " + formatRoleWithStatus(contact));
         phone.setText("Phone: " + formatContactMethod(contact.getPhone()));
         email.setText("Email: " + formatContactMethod(contact.getEmail()));
         boolean isStudent = contact.getRole() == Role.STUDENT;
-        studentDetails.setVisible(isStudent);
-        studentDetails.setManaged(isStudent);
+        setShown(studentDetails, isStudent);
         level.setText("Level: " + formatStudentDetail(contact.getLevel()));
         subject.setText("Subject: " + formatStudentDetail(contact.getSubject()));
-        guardianDetails.setVisible(isStudent);
-        guardianDetails.setManaged(isStudent);
+        setShown(guardianDetails, isStudent);
         Person guardian = contact.getGuardianId().flatMap(id -> PersonLookup.findById(persons, id)).orElse(null);
+        assert isStudent || guardian == null : "Only a student can have a linked guardian.";
         guardianName.setText(guardian == null ? "Guardian: None" : "Guardian: " + guardian.getName());
         guardianPhone.setText(guardian == null ? ""
                 : "Guardian phone: " + formatContactMethod(guardian.getPhone()));
         guardianEmail.setText(guardian == null ? ""
                 : "Guardian email: " + formatContactMethod(guardian.getEmail()));
+        setShown(guardianPhone, guardian != null);
+        setShown(guardianEmail, guardian != null);
+        logger.fine("Showing details of contact " + contact.getId()
+                + (guardian == null ? " without a guardian" : " with guardian " + guardian.getId()));
+    }
+
+    /**
+     * Shows {@code node} and gives it space in the layout if {@code isShown} is true, and hides it otherwise.
+     */
+    private static void setShown(Node node, boolean isShown) {
+        node.setVisible(isShown);
+        node.setManaged(isShown);
     }
 }

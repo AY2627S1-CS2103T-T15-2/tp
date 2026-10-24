@@ -18,6 +18,30 @@
     -fx-font-size: 20px;
 }
 
+.person-details-content .person-details-caption {
+    -fx-text-fill: #9aa4b2;
+    -fx-font-size: 10pt;
+    -fx-opacity: 1;
+}
+
+.person-details-content .person-details-heading {
+    -fx-text-fill: #9aa4b2;
+    -fx-font-size: 9pt;
+    -fx-opacity: 1;
+}
+
+.person-details-section {
+    -fx-background-color: #2b3139;
+    -fx-background-radius: 5;
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 0 3;
+    -fx-padding: 10 12 10 12;
+}
+
+.person-details-guardian {
+    -fx-border-color: #b9842f;
+}
+
 .label {
     -fx-font-size: 11pt;
     -fx-font-family: "System";
@@ -136,24 +160,24 @@
     -fx-text-fill: #c7ced8;
 }
 
-.list-cell .badge {
+.list-cell .badge, .person-details-content .badge {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-padding: 1 7 1 7;
     -fx-background-radius: 9;
 }
 
-.list-cell .badge-student {
+.list-cell .badge-student, .person-details-content .badge-student {
     -fx-background-color: rgba(61, 127, 217, 0.25);
     -fx-text-fill: #8cbcff;
 }
 
-.list-cell .badge-guardian {
+.list-cell .badge-guardian, .person-details-content .badge-guardian {
     -fx-background-color: rgba(185, 132, 47, 0.25);
     -fx-text-fill: #f0c27a;
 }
 
-.list-cell .badge-former {
+.list-cell .badge-former, .person-details-content .badge-former {
     -fx-background-color: rgba(154, 164, 178, 0.2);
     -fx-text-fill: #c3cad4;
 }
