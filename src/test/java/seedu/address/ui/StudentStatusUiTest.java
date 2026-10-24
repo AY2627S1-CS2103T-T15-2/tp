@@ -74,8 +74,8 @@ public class StudentStatusUiTest {
                 assertEquals("", label(details, "role").getText());
                 assertEquals("", label(details, "phone").getText());
                 assertFalse(details.lookup("#guardianDetails").isVisible());
-                assertFalse(hasLabelWithText(root, "Alex Tan [Student] [Former]"));
-                assertTrue(hasLabelWithText(root, "Mei Tan [Guardian]"));
+                assertFalse(hasCard(root, "Alex Tan", "Student", true));
+                assertTrue(hasCard(root, "Mei Tan", "Guardian", false));
             } finally {
                 stage.close();
             }
@@ -101,8 +101,8 @@ public class StudentStatusUiTest {
                 assertEquals("", label(details, "role").getText());
                 assertEquals("", label(details, "email").getText());
                 assertFalse(details.lookup("#guardianDetails").isVisible());
-                assertFalse(hasLabelWithText(root, "Alex Tan [Student]"));
-                assertFalse(hasLabelWithText(root, "Alex Tan [Student] [Former]"));
+                assertFalse(hasCard(root, "Alex Tan", "Student", false));
+                assertFalse(hasCard(root, "Alex Tan", "Student", true));
             } finally {
                 stage.close();
             }
@@ -119,7 +119,7 @@ public class StudentStatusUiTest {
                 Region details = (Region) root.lookup("#personDetailsPanelPlaceholder");
                 executeCommand(root, "find Alex");
                 window.getPersonListPanel().selectPerson(student.getId());
-                assertTrue(hasLabelWithText(root, "Alex Tan [Student]"));
+                assertTrue(hasCard(root, "Alex Tan", "Student", false));
 
                 executeCommand(root, "archive 1");
 
@@ -127,17 +127,17 @@ public class StudentStatusUiTest {
                 assertTrue(window.getPersonListPanel().getSelectedPerson().isFormerStudent());
                 assertEquals("Role: Student [Former]", label(details, "role").getText());
                 assertEquals("Guardian: Mei Tan", label(details, "guardianName").getText());
-                assertTrue(hasLabelWithText(root, "Alex Tan [Student] [Former]"));
-                assertFalse(hasLabelWithText(root, "Mei Tan [Guardian]"));
+                assertTrue(hasCard(root, "Alex Tan", "Student", true));
+                assertFalse(hasCard(root, "Mei Tan", "Guardian", false));
 
                 executeCommand(root, "unarchive 1");
 
                 assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
                 assertFalse(window.getPersonListPanel().getSelectedPerson().isFormerStudent());
                 assertEquals("Role: Student", label(details, "role").getText());
-                assertTrue(hasLabelWithText(root, "Alex Tan [Student]"));
-                assertFalse(hasLabelWithText(root, "Alex Tan [Student] [Former]"));
-                assertFalse(hasLabelWithText(root, "Mei Tan [Guardian]"));
+                assertTrue(hasCard(root, "Alex Tan", "Student", false));
+                assertFalse(hasCard(root, "Alex Tan", "Student", true));
+                assertFalse(hasCard(root, "Mei Tan", "Guardian", false));
             } finally {
                 stage.close();
             }
@@ -173,9 +173,16 @@ public class StudentStatusUiTest {
         return (Label) root.lookup("#" + id);
     }
 
-    private static boolean hasLabelWithText(Region root, String text) {
-        return root.lookupAll(".label").stream()
-                .anyMatch(node -> node instanceof Label textLabel && text.equals(textLabel.getText()));
+    /**
+     * Returns true if the contact list shows a card for {@code name} with a {@code role} badge,
+     * and shows the former badge on that card only if {@code isFormer} is true.
+     */
+    private static boolean hasCard(Region root, String name, String role, boolean isFormer) {
+        Region contactList = (Region) root.lookup("#personListPanelPlaceholder");
+        return contactList.lookupAll("#cardPane").stream()
+                .anyMatch(card -> name.equals(((Label) card.lookup("#name")).getText())
+                        && role.equals(((Label) card.lookup("#roleBadge")).getText())
+                        && card.lookup("#formerBadge").isVisible() == isFormer);
     }
 
     private void runOnJavaFxThread(Runnable action) throws Exception {

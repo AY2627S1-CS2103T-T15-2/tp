@@ -102,8 +102,9 @@ public class LinkUiTest {
             PersonCard card = new PersonCard(person, 1, Optional.empty());
             new Scene(card.getRoot());
             assertNull(card.getRoot().lookup("#address"));
-            assertEquals(person.getName() + " [" + person.getRole() + "]",
-                    label(card.getRoot(), "name").getText());
+            assertEquals(person.getName().fullName, label(card.getRoot(), "name").getText());
+            assertEquals(person.getRole().toString(), label(card.getRoot(), "roleBadge").getText());
+            assertFalse(label(card.getRoot(), "formerBadge").isVisible());
             assertEquals("Phone: " + person.getPhone().get(), label(card.getRoot(), "phone").getText());
             assertEquals("Email: Not provided", label(card.getRoot(), "email").getText());
             assertNull(card.getRoot().lookup("#role"));

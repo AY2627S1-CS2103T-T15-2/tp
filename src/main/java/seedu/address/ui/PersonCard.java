@@ -1,9 +1,9 @@
 package seedu.address.ui;
 
+import static seedu.address.ui.ContactDisplayFormatter.FORMER_LABEL;
 import static seedu.address.ui.ContactDisplayFormatter.formatContactMethod;
 import static seedu.address.ui.ContactDisplayFormatter.formatGuardianName;
 import static seedu.address.ui.ContactDisplayFormatter.formatLevelAndSubject;
-import static seedu.address.ui.ContactDisplayFormatter.formatNameWithRole;
 
 import java.util.Optional;
 
@@ -20,6 +20,8 @@ import seedu.address.model.person.Role;
 public class PersonCard extends UiPart<Region> {
 
     private static final String FXML = "PersonListCard.fxml";
+    private static final String STUDENT_BADGE_STYLE_CLASS = "badge-student";
+    private static final String GUARDIAN_BADGE_STYLE_CLASS = "badge-guardian";
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -38,6 +40,10 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label id;
     @FXML
+    private Label roleBadge;
+    @FXML
+    private Label formerBadge;
+    @FXML
     private Label phone;
     @FXML
     private Label email;
@@ -48,6 +54,7 @@ public class PersonCard extends UiPart<Region> {
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
+     * The person's role, and whether a student is a former student, are shown as badges after the name.
      * If the person is a student, the card also shows the name of {@code linkedGuardian},
      * or "None" if the student has no linked guardian, and the student's level and subject if either is set.
      */
@@ -55,11 +62,16 @@ public class PersonCard extends UiPart<Region> {
         super(FXML);
         this.person = person;
         id.setText(displayedIndex + ". ");
-        name.setText(formatNameWithRole(person));
+        name.setText(person.getName().fullName);
+        boolean isStudent = person.getRole() == Role.STUDENT;
+        roleBadge.setText(person.getRole().toString());
+        roleBadge.getStyleClass().add(isStudent ? STUDENT_BADGE_STYLE_CLASS : GUARDIAN_BADGE_STYLE_CLASS);
+        formerBadge.setText(FORMER_LABEL);
+        formerBadge.setVisible(person.isFormerStudent());
+        formerBadge.setManaged(person.isFormerStudent());
         phone.setText("Phone: " + formatContactMethod(person.getPhone()));
         email.setText("Email: " + formatContactMethod(person.getEmail()));
 
-        boolean isStudent = person.getRole() == Role.STUDENT;
         guardian.setVisible(isStudent);
         guardian.setManaged(isStudent);
         guardian.setText(isStudent ? "Guardian: " + formatGuardianName(linkedGuardian) : "");
