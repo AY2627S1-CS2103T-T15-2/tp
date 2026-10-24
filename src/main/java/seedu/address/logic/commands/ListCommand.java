@@ -17,17 +17,24 @@ import seedu.address.model.person.Role;
 public class ListCommand extends Command {
 
     public static final String COMMAND_WORD = "list";
+    public static final String ACTIVE_STATUS = "active";
     public static final String FORMER_STATUS = "former";
+    public static final String ALL_STATUS = "all";
     public static final String LIST_FORMER_COMMAND = COMMAND_WORD + " " + PREFIX_STATUS + FORMER_STATUS;
 
-    public static final String COMMAND_FORMAT = COMMAND_WORD + " [" + PREFIX_ROLE + "ROLE] ["
-            + PREFIX_STATUS + FORMER_STATUS + "]";
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " [" + PREFIX_ROLE + "ROLE] [" + PREFIX_STATUS
+            + "STATUS]";
 
     public static final String MESSAGE_INVALID_FORMAT = "Invalid list command. Use: " + COMMAND_FORMAT;
+    public static final String MESSAGE_SUGGESTION = "Invalid list command. Did you mean: %1$s?";
+    public static final String MESSAGE_INVALID_STATUS = "Invalid status. Status must be " + ACTIVE_STATUS + ", "
+            + FORMER_STATUS + ", or " + ALL_STATUS + ".";
     public static final String MESSAGE_REPEATED_PARAMETER = "Each of r/ and st/ may appear only once.";
     public static final String MESSAGE_GUARDIAN_NOT_FORMER =
             "Guardians cannot be former. Remove r/guardian or st/former.";
     public static final String MESSAGE_SUCCESS = "Listed %1$s";
+    public static final String MESSAGE_FORMER_STUDENTS_HIDDEN = "%1$s hidden. Add " + PREFIX_STATUS + ALL_STATUS
+            + " to include them.";
     public static final String MESSAGE_NO_CONTACTS = "No contacts found.";
     public static final String MESSAGE_ONLY_FORMER_STUDENTS = "No active contacts found. Use "
             + LIST_FORMER_COMMAND + " to see former students.";
@@ -69,12 +76,33 @@ public class ListCommand extends Command {
             return new CommandResult(getNoMatchingRoleMessage(model, filter.getRole().get()));
         }
         if (contactCount == 0) {
-            // The active view hides only former students, so any saved contact here must be one.
+            // Without a role, a filter hides at most the former students, so any saved contact here must be one.
             assert model.getAddressBook().getPersonList().stream().allMatch(Person::isFormerStudent);
             boolean hasFormerStudents = !model.getAddressBook().getPersonList().isEmpty();
             return new CommandResult(hasFormerStudents ? MESSAGE_ONLY_FORMER_STUDENTS : MESSAGE_NO_CONTACTS);
         }
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.formatContactCount(contactCount)));
+        String feedback = String.format(MESSAGE_SUCCESS, Messages.formatContactCount(contactCount));
+        int hiddenFormerStudentCount = countHiddenFormerStudents(model);
+        if (hiddenFormerStudentCount > 0) {
+            feedback += ". " + String.format(MESSAGE_FORMER_STUDENTS_HIDDEN,
+                    Messages.formatFormerStudentCount(hiddenFormerStudentCount));
+        }
+        return new CommandResult(feedback);
+    }
+
+    /**
+     * Returns the number of former students that this command's filter hides but that would otherwise match it,
+     * or 0 if the filter does not hide former students.
+     */
+    private int countHiddenFormerStudents(Model model) {
+        if (!filter.hidesFormerStudents()) {
+            return 0;
+        }
+        ContactFilter anyStatusFilter = filter.withAnyStatus();
+        return Math.toIntExact(model.getAddressBook().getPersonList().stream()
+                .filter(anyStatusFilter)
+                .filter(Person::isFormerStudent)
+                .count());
     }
 
     /**
