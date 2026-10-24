@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +15,14 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
+import seedu.address.MainApp;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.StudentStatus;
 import seedu.address.testutil.PersonBuilder;
@@ -24,6 +32,9 @@ import seedu.address.testutil.PersonBuilder;
  */
 @EnabledOnOs(OS.WINDOWS)
 public class PersonCardTest {
+
+    /** Minimum width of the contact list in {@code MainWindow.fxml}. */
+    private static final int NARROWEST_LIST_WIDTH = 240;
 
     @BeforeAll
     public static void startJavaFx() {
@@ -67,6 +78,36 @@ public class PersonCardTest {
             assertTrue(label(card, "roleBadge").getStyleClass().contains("badge-guardian"));
             assertFalse(label(card, "roleBadge").getStyleClass().contains("badge-student"));
             assertFalse(label(card, "formerBadge").isVisible());
+        });
+    }
+
+    @Test
+    public void personListPanel_formerStudentWithLongNameInNarrowList_nameAndBadgesShownInFull() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person student = new PersonBuilder().withName("Aloysius Bartholomew Cornelius Tan Wei Ming")
+                    .withStatus(StudentStatus.FORMER).build();
+            ObservableList<Person> contacts = FXCollections.observableArrayList(student);
+            PersonListPanel panel = new PersonListPanel(contacts, contacts);
+            Scene scene = new Scene(panel.getRoot(), NARROWEST_LIST_WIDTH, 400);
+            scene.getStylesheets().add(MainApp.class.getResource("/view/DarkTheme.css").toExternalForm());
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            stage.show();
+            try {
+                panel.getRoot().applyCss();
+                panel.getRoot().layout();
+                Region card = (Region) panel.getRoot().lookup("#cardPane");
+                double cardRightEdge = card.localToScene(card.getBoundsInLocal()).getMaxX();
+                for (String id : List.of("name", "roleBadge", "formerBadge")) {
+                    Label shownLabel = (Label) card.lookup("#" + id);
+                    Text shownText = (Text) shownLabel.lookup(".text");
+                    assertTrue(shownLabel.isVisible());
+                    assertEquals(shownLabel.getText(), shownText.getText());
+                    assertTrue(shownLabel.localToScene(shownLabel.getBoundsInLocal()).getMaxX() <= cardRightEdge);
+                }
+            } finally {
+                stage.close();
+            }
         });
     }
 
