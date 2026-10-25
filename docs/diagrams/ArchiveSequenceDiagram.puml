@@ -1,0 +1,86 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as Logic LOGIC_COLOR
+participant "a:ArchiveCommand" as Archive LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "c:ModelManager" as Candidate MODEL_COLOR
+participant "m:Model" as Live MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+note over Logic, Archive
+  Successful path: the first displayed contact is an active student.
+  Parsing, UI updates and deletion-history maintenance are omitted.
+end note
+
+[-> Logic : execute("archive 1")
+activate Logic
+
+create Candidate
+Logic -> Candidate : ModelManager(m's data, preferences)
+activate Candidate
+Candidate --> Logic
+deactivate Candidate
+
+Logic -> Candidate : updateFilteredPersonList(m's filter)
+activate Candidate
+Candidate --> Logic
+deactivate Candidate
+
+Logic -> Archive : execute(c)
+activate Archive
+note left of Archive
+  Inherited from
+  StudentStatusCommand.
+end note
+
+Archive -> Candidate : getFilteredPersonList()
+activate Candidate
+Candidate --> Archive : displayed contacts
+deactivate Candidate
+
+note over Archive, Candidate
+  Validate index, student role and current status.
+  updated = target.withStatus(FORMER) preserves
+  the ID, contact details and guardian reference.
+end note
+
+Archive -> Candidate : setPerson(target, updated)
+activate Candidate
+Candidate --> Archive
+deactivate Candidate
+
+Archive --> Logic : command result
+deactivate Archive
+
+Logic -> Storage : saveAddressBook(c.getAddressBook())
+activate Storage
+Storage --> Logic : saved
+deactivate Storage
+
+note over Logic, Storage
+  If saving fails, live data and the filter stay unchanged;
+  LogicManager reports the save error instead of success.
+end note
+
+Logic -> Live : setAddressBook(c.getAddressBook())
+activate Live
+Live --> Logic
+deactivate Live
+
+Logic -> Live : updateFilteredPersonList(c.getPersonFilter())
+activate Live
+Live --> Logic
+deactivate Live
+
+[<-- Logic : command result
+deactivate Logic
+@enduml
