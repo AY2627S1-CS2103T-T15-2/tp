@@ -62,14 +62,6 @@ public class ContactFilter implements Predicate<Person> {
         return status;
     }
 
-    public Optional<Level> getLevel() {
-        return level;
-    }
-
-    public Optional<Subject> getSubject() {
-        return subject;
-    }
-
     /**
      * Returns true if this filter chooses a level or subject.
      */
