@@ -246,8 +246,8 @@ Command | Shows
   `Guardians have no level or subject. Remove r/guardian, or remove lv/ and sub/.`
 * TutorRoster also starts with guardians and active students shown.
 * Any other text after `list` is rejected; for example, `list 3` shows
-  `Invalid list command. Use: list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`. If you type a role or status without its prefix, the
-  message suggests the right command; for example, `list former` shows
+  `Invalid list command. Use: list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`. If you type a role or status
+  without its prefix, the message suggests the right command; for example, `list former` shows
   `Invalid list command. Did you mean: list st/former?`
 * An invalid role is rejected with `Invalid role. Role must be student or guardian.`, an invalid status with
   `Invalid status. Status must be active, former, or all.`, and repeating a parameter with

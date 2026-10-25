@@ -505,8 +505,8 @@ run on Windows desktop environments; the remaining tests run on all supported pl
 `list` and `find` change which contacts the list panel shows by updating the predicate of the model's filtered list.
 Neither command changes any contact data.
 
-**Listing.** `list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]` shows the contacts that match a `ContactFilter`, as shown in the class
-diagram below.
+**Listing.** `list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]` shows the contacts that match a `ContactFilter`, as
+shown in the class diagram below.
 
 <puml src="diagrams/ContactFilterClassDiagram.puml" alt="Classes involved in filtering the contact list" />
 
@@ -514,9 +514,9 @@ A `ContactFilter` is a `Predicate<Person>` that holds an optional `Role`, `Stude
 contact matches when it has every chosen value; an empty value matches any contact. Levels and subjects match when
 `Level#isSameValue` and `Subject#isSameValue` hold, so `list lv/sec3` matches `Sec 3`, ignoring letter case and spaces.
 A whole value must match, so `sub/Math` does not match `A-Math`. Guardians are always `ACTIVE` and have no level or
-subject, so they never match a filter for former contacts or for a level or subject. `ContactFilter.ACTIVE_CONTACTS` (guardians and active
-students) is the default, `ContactFilter.FORMER_STUDENTS` shows only former students, and
-`ContactFilter.ALL_CONTACTS` shows everyone. `Model#PREDICATE_SHOW_ACTIVE_CONTACTS` and
+subject, so they never match a filter for former contacts or for a level or subject.
+`ContactFilter.ACTIVE_CONTACTS` (guardians and active students) is the default, `ContactFilter.FORMER_STUDENTS` shows
+only former students, and `ContactFilter.ALL_CONTACTS` shows everyone. `Model#PREDICATE_SHOW_ACTIVE_CONTACTS` and
 `Model#PREDICATE_SHOW_FORMER_STUDENTS` refer to the first two filters, so the rules for which contacts are active live
 in one class.
 
