@@ -305,6 +305,18 @@ public class ListCommandTest {
     }
 
     @Test
+    public void execute_formerAndLevelWithNoMatches_noContactsFoundMessage() {
+        // A former student exists, but at another level, so "No former students found." would be misleading
+        Model studentDetailModel = createStudentDetailModel();
+        ContactFilter filter = new ContactFilter(Optional.empty(), Optional.of(StudentStatus.FORMER),
+                Optional.of(new Level("Sec 4")), Optional.empty());
+        CommandResult result = new ListCommand(filter).execute(studentDetailModel);
+
+        assertEquals(ListCommand.MESSAGE_NO_CONTACTS, result.getFeedbackToUser());
+        assertTrue(studentDetailModel.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
     public void execute_levelWithNoMatches_noContactsFoundMessage() {
         Model studentDetailModel = createStudentDetailModel();
         CommandResult result = new ListCommand(detailFilterOf("JC1", null)).execute(studentDetailModel);

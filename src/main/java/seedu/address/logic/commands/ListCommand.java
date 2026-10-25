@@ -82,15 +82,17 @@ public class ListCommand extends Command {
         logger.fine("Listing contacts with " + filter + ": " + contactCount + " shown, "
                 + hiddenFormerStudentCount + " former students hidden");
 
-        if (filter.isFormerOnly()) {
-            return new CommandResult(contactCount == 0
-                    ? MESSAGE_NO_FORMER_STUDENTS
-                    : String.format(MESSAGE_SUCCESS, Messages.formatFormerStudentCount(contactCount)));
-        }
+        // Checked before the status, so that an empty st/former lv/LEVEL result does not suggest that
+        // there are no former students at all.
         if (contactCount == 0 && filter.hasStudentDetail()) {
             return new CommandResult(hiddenFormerStudentCount == 0
                     ? MESSAGE_NO_CONTACTS
                     : MESSAGE_NO_CONTACTS + " " + formatHiddenFormerStudents(hiddenFormerStudentCount));
+        }
+        if (filter.isFormerOnly()) {
+            return new CommandResult(contactCount == 0
+                    ? MESSAGE_NO_FORMER_STUDENTS
+                    : String.format(MESSAGE_SUCCESS, Messages.formatFormerStudentCount(contactCount)));
         }
         if (contactCount == 0 && filter.getRole().isPresent()) {
             return new CommandResult(getNoMatchingRoleMessage(model, filter.getRole().get()));

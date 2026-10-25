@@ -561,8 +561,9 @@ everyone:
 * `list r/guardian` gives `No guardians found.` `list r/student` gives `No students found.`, or
   `No active students found. Use list r/student st/former to see former students.` if every student is former.
 * A filter with a level or subject gives `No contacts found.`, followed by the hidden-former-students note if
-  former students would match. This check comes before the role messages, because a missing level or subject, not
-  the role, is then the reason nothing is shown.
+  former students would match. This check comes before the status and role messages, because a missing level or
+  subject is then the reason nothing is shown. For example, `list st/former lv/Sec 4` gives `No contacts found.`
+  rather than `No former students found.`, which would suggest there are no former students at all.
 
 `ListCommand#execute` also logs the filter and both counts at the `FINE` level, to help trace unexpected results.
 
@@ -1224,6 +1225,10 @@ and failed intervening changes, ensuring that live data, saved data and the prev
 
 1. Test case: `list lv/Sec 3 st/all`<br>
    Expected: Alex Tan and Chloe Ng are shown. The status message shows `Listed 2 contacts`.
+
+1. Test case: `list st/former lv/Sec 4`<br>
+   Expected: No contacts are shown, because the only former student, Chloe Ng, is at Sec 3. The status message shows
+   `No contacts found.`
 
 1. Test case: `list sub/Math`<br>
    Expected: No contacts are shown, because `Math` and `A-Math` are different subjects. The status message shows
