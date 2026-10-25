@@ -23,9 +23,11 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ContactFilter;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Role;
 import seedu.address.model.person.StudentStatus;
+import seedu.address.model.person.Subject;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -37,6 +39,14 @@ public class ListCommandTest {
     private static final Person FORMER_STUDENT = new PersonBuilder().withName("Bea Tan")
             .withStatus(StudentStatus.FORMER).build();
     private static final Person GUARDIAN = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+    private static final Person SEC3_MATH_STUDENT = new PersonBuilder().withName("Cal Lim")
+            .withLevel("Sec 3").withSubject("Math").build();
+    private static final Person SEC3_PHYSICS_STUDENT = new PersonBuilder().withName("Dan Lim")
+            .withLevel("Sec 3").withSubject("Physics").build();
+    private static final Person FORMER_SEC3_MATH_STUDENT = new PersonBuilder().withName("Eve Lim")
+            .withLevel("Sec 3").withSubject("Math").withStatus(StudentStatus.FORMER).build();
+    private static final Person SEC4_MATH_STUDENT = new PersonBuilder().withName("Fay Lim")
+            .withLevel("Sec 4").withSubject("Math").build();
 
     private Model model;
     private Model expectedModel;
@@ -242,6 +252,89 @@ public class ListCommandTest {
     }
 
     @Test
+    public void execute_level_showsMatchingStudentsAndHiddenHint() {
+        Model studentDetailModel = createStudentDetailModel();
+        CommandResult result = new ListCommand(detailFilterOf("Sec 3", null)).execute(studentDetailModel);
+
+        assertEquals("Listed 2 contacts. 1 former student hidden. Add st/all to include them.",
+                result.getFeedbackToUser());
+        assertEquals(List.of(SEC3_MATH_STUDENT, SEC3_PHYSICS_STUDENT),
+                List.copyOf(studentDetailModel.getFilteredPersonList()));
+    }
+
+    @Test
+    public void execute_subject_showsMatchingStudents() {
+        Model studentDetailModel = createStudentDetailModel();
+        CommandResult result = new ListCommand(detailFilterOf(null, "Physics")).execute(studentDetailModel);
+
+        assertEquals("Listed 1 contact", result.getFeedbackToUser());
+        assertEquals(List.of(SEC3_PHYSICS_STUDENT), List.copyOf(studentDetailModel.getFilteredPersonList()));
+    }
+
+    @Test
+    public void execute_levelAndSubject_showsStudentsMatchingBoth() {
+        Model studentDetailModel = createStudentDetailModel();
+        CommandResult result = new ListCommand(detailFilterOf("Sec 3", "Math")).execute(studentDetailModel);
+
+        assertEquals("Listed 1 contact. 1 former student hidden. Add st/all to include them.",
+                result.getFeedbackToUser());
+        assertEquals(List.of(SEC3_MATH_STUDENT), List.copyOf(studentDetailModel.getFilteredPersonList()));
+    }
+
+    @Test
+    public void execute_levelAndAllStatuses_showsActiveAndFormerStudents() {
+        Model studentDetailModel = createStudentDetailModel();
+        ContactFilter filter = new ContactFilter(Optional.empty(), Optional.empty(),
+                Optional.of(new Level("Sec 3")), Optional.of(new Subject("Math")));
+        CommandResult result = new ListCommand(filter).execute(studentDetailModel);
+
+        assertEquals("Listed 2 contacts", result.getFeedbackToUser());
+        assertEquals(List.of(SEC3_MATH_STUDENT, FORMER_SEC3_MATH_STUDENT),
+                List.copyOf(studentDetailModel.getFilteredPersonList()));
+    }
+
+    @Test
+    public void execute_levelAndFormer_showsFormerStudentsOnly() {
+        Model studentDetailModel = createStudentDetailModel();
+        ContactFilter filter = new ContactFilter(Optional.empty(), Optional.of(StudentStatus.FORMER),
+                Optional.of(new Level("Sec 3")), Optional.empty());
+        CommandResult result = new ListCommand(filter).execute(studentDetailModel);
+
+        assertEquals("Listed 1 former student", result.getFeedbackToUser());
+        assertEquals(List.of(FORMER_SEC3_MATH_STUDENT), List.copyOf(studentDetailModel.getFilteredPersonList()));
+    }
+
+    @Test
+    public void execute_levelWithNoMatches_noContactsFoundMessage() {
+        Model studentDetailModel = createStudentDetailModel();
+        CommandResult result = new ListCommand(detailFilterOf("JC1", null)).execute(studentDetailModel);
+
+        assertEquals(ListCommand.MESSAGE_NO_CONTACTS, result.getFeedbackToUser());
+        assertTrue(studentDetailModel.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_levelWithOnlyFormerMatches_noContactsFoundWithHiddenHint() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(FORMER_SEC3_MATH_STUDENT, GUARDIAN));
+        Model formerOnlyModel = new ModelManager(addressBook, new UserPrefs());
+        CommandResult result = new ListCommand(detailFilterOf("Sec 3", null)).execute(formerOnlyModel);
+
+        assertEquals("No contacts found. 1 former student hidden. Add st/all to include them.",
+                result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_studentRoleAndLevelWithNoMatches_noContactsFoundMessage() {
+        Model studentDetailModel = createStudentDetailModel();
+        ContactFilter filter = new ContactFilter(Optional.of(Role.STUDENT), Optional.of(StudentStatus.ACTIVE),
+                Optional.of(new Level("JC1")), Optional.empty());
+        CommandResult result = new ListCommand(filter).execute(studentDetailModel);
+
+        assertEquals(ListCommand.MESSAGE_NO_CONTACTS, result.getFeedbackToUser());
+    }
+
+    @Test
     public void equals() {
         ListCommand listCommand = new ListCommand();
         ListCommand listFormerCommand = new ListCommand(ContactFilter.FORMER_STUDENTS);
@@ -252,6 +345,9 @@ public class ListCommandTest {
         assertFalse(listCommand.equals(listFormerCommand));
         assertFalse(listCommand.equals(new ListCommand(filterOf(Role.STUDENT, StudentStatus.ACTIVE))));
         assertFalse(listCommand.equals(new ListCommand(ContactFilter.ALL_CONTACTS)));
+        assertFalse(listCommand.equals(new ListCommand(detailFilterOf("Sec 3", null))));
+        ListCommand listSec3 = new ListCommand(detailFilterOf("Sec 3", null));
+        assertFalse(listSec3.equals(new ListCommand(detailFilterOf("Sec 3", "Math"))));
         assertFalse(listCommand.equals(1));
         assertFalse(listCommand.equals(null));
     }
@@ -261,6 +357,25 @@ public class ListCommandTest {
      */
     private static ContactFilter filterOf(Role role, StudentStatus status) {
         return new ContactFilter(Optional.ofNullable(role), Optional.ofNullable(status));
+    }
+
+    /**
+     * Returns a filter for active contacts with {@code level} and {@code subject},
+     * where {@code null} matches any value.
+     */
+    private static ContactFilter detailFilterOf(String level, String subject) {
+        return new ContactFilter(Optional.empty(), Optional.of(StudentStatus.ACTIVE),
+                Optional.ofNullable(level).map(Level::new), Optional.ofNullable(subject).map(Subject::new));
+    }
+
+    /**
+     * Returns a model with students of different levels and subjects, one of them former, and a guardian.
+     */
+    private static Model createStudentDetailModel() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.setPersons(List.of(SEC3_MATH_STUDENT, SEC3_PHYSICS_STUDENT, FORMER_SEC3_MATH_STUDENT,
+                SEC4_MATH_STUDENT, GUARDIAN));
+        return new ModelManager(addressBook, new UserPrefs());
     }
 
     /**
