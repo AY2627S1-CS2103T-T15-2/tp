@@ -2,26 +2,52 @@
 
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <ScrollPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
             fitToWidth="true" styleClass="person-details-scroll">
   <content>
     <VBox spacing="12" styleClass="person-details-content">
-      <Label text="Selected contact" styleClass="label-bright"/>
-      <Label fx:id="name" wrapText="true" maxWidth="Infinity"
-             styleClass="person-details-name"/>
-      <Label fx:id="role" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
-      <Label fx:id="phone" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
-      <Label fx:id="email" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
-      <VBox fx:id="studentDetails" spacing="12">
-        <Label fx:id="level" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
-        <Label fx:id="subject" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+      <VBox spacing="4">
+        <Label text="Selected contact" styleClass="person-details-caption"/>
+        <HBox spacing="8" alignment="CENTER_LEFT" fillHeight="false">
+          <Label fx:id="name" wrapText="true" styleClass="person-details-name"/>
+          <Label fx:id="roleBadge" styleClass="badge">
+            <minWidth>
+              <Region fx:constant="USE_PREF_SIZE"/>
+            </minWidth>
+          </Label>
+          <Label fx:id="formerBadge" styleClass="badge, badge-former">
+            <minWidth>
+              <Region fx:constant="USE_PREF_SIZE"/>
+            </minWidth>
+          </Label>
+        </HBox>
       </VBox>
-      <VBox fx:id="guardianDetails" spacing="8">
-        <Label fx:id="guardianName" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
-        <Label fx:id="guardianPhone" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
-        <Label fx:id="guardianEmail" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+      <VBox fx:id="contactDetails" spacing="6">
+        <Label text="Details" styleClass="person-details-heading"/>
+        <VBox spacing="8" styleClass="person-details-section">
+          <Label fx:id="role" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+          <Label fx:id="phone" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+          <Label fx:id="email" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+        </VBox>
+      </VBox>
+      <VBox fx:id="studentDetails" spacing="6">
+        <Label text="Tuition" styleClass="person-details-heading"/>
+        <VBox spacing="8" styleClass="person-details-section">
+          <Label fx:id="level" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+          <Label fx:id="subject" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+        </VBox>
+      </VBox>
+      <VBox fx:id="guardianDetails" spacing="6">
+        <Label text="Guardian" styleClass="person-details-heading"/>
+        <VBox spacing="8" styleClass="person-details-section, person-details-guardian">
+          <Label fx:id="guardianName" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+          <Label fx:id="guardianPhone" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+          <Label fx:id="guardianEmail" wrapText="true" maxWidth="Infinity" styleClass="label-bright"/>
+        </VBox>
       </VBox>
     </VBox>
   </content>

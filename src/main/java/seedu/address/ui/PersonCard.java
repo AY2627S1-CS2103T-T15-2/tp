@@ -1,6 +1,5 @@
 package seedu.address.ui;
 
-import static seedu.address.ui.ContactDisplayFormatter.FORMER_LABEL;
 import static seedu.address.ui.ContactDisplayFormatter.formatContactMethod;
 import static seedu.address.ui.ContactDisplayFormatter.formatGuardianName;
 import static seedu.address.ui.ContactDisplayFormatter.formatLevelAndSubject;
@@ -20,8 +19,6 @@ import seedu.address.model.person.Role;
 public class PersonCard extends UiPart<Region> {
 
     private static final String FXML = "PersonListCard.fxml";
-    private static final String STUDENT_BADGE_STYLE_CLASS = "badge-student";
-    private static final String GUARDIAN_BADGE_STYLE_CLASS = "badge-guardian";
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -63,22 +60,16 @@ public class PersonCard extends UiPart<Region> {
         this.person = person;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
-        boolean isStudent = person.getRole() == Role.STUDENT;
-        roleBadge.setText(person.getRole().toString());
-        roleBadge.getStyleClass().add(isStudent ? STUDENT_BADGE_STYLE_CLASS : GUARDIAN_BADGE_STYLE_CLASS);
-        formerBadge.setText(FORMER_LABEL);
-        formerBadge.setVisible(person.isFormerStudent());
-        formerBadge.setManaged(person.isFormerStudent());
+        RoleBadges.show(roleBadge, formerBadge, person);
         phone.setText("Phone: " + formatContactMethod(person.getPhone()));
         email.setText("Email: " + formatContactMethod(person.getEmail()));
 
-        guardian.setVisible(isStudent);
-        guardian.setManaged(isStudent);
+        boolean isStudent = person.getRole() == Role.STUDENT;
+        UiUtil.setShown(guardian, isStudent);
         guardian.setText(isStudent ? "Guardian: " + formatGuardianName(linkedGuardian) : "");
 
         Optional<String> levelAndSubject = formatLevelAndSubject(person);
-        studentDetails.setVisible(levelAndSubject.isPresent());
-        studentDetails.setManaged(levelAndSubject.isPresent());
+        UiUtil.setShown(studentDetails, levelAndSubject.isPresent());
         studentDetails.setText(levelAndSubject.orElse(""));
     }
 }

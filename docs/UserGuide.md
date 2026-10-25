@@ -393,9 +393,13 @@ Format: `view INDEX`
 * A value that is not a positive integer is rejected with
   `The contact index must be a positive integer shown in the list.`
 * An index outside the displayed list is rejected with `No contact exists at index INDEX.`
-* The details panel shows the contact's name, role, phone number and email address. For a student, it also shows the
-  linked guardian's name, phone number and email address, or `Guardian: None` if no guardian is linked.
-* `view` also works on the results of `list st/former` and `find`. A former student's role is shown as
+* The details panel shows the contact's name with a `Student` or `Guardian` badge, and a `Former` badge for a former
+  student. Below the name, the details panel groups the contact's details into sections:
+  * **Details**: the contact's role, phone number and email address.
+  * **Tuition** (students only): the student's level and subject.
+  * **Guardian** (students only): the linked guardian's name, phone number and email address, or `Guardian: None` if
+    no guardian is linked.
+* `view` also works on the results of `list st/former`, `list st/all` and `find`. A former student's role is shown as
   `Role: Student [Former]`.
 * The displayed list does not change, so you can keep using the same indexes afterwards.
 * The result names the contact; for example, `Viewing contact: Alex Tan [Student].`
