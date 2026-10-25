@@ -101,6 +101,10 @@ public class ContactFilter implements Predicate<Person> {
         return hasChosenRole && hasChosenStatus && hasChosenLevel && hasChosenSubject;
     }
 
+    /**
+     * Returns true if {@code other} is a filter with exactly the same values. Levels and subjects are compared
+     * with {@code equals}, so filters for "sec3" and "Sec 3" are not equal, even though they match the same contacts.
+     */
     @Override
     public boolean equals(Object other) {
         if (other == this) {
