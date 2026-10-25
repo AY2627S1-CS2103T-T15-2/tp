@@ -30,16 +30,13 @@ public final class RoleBadges {
         requireNonNull(person);
 
         boolean isStudent = person.getRole() == Role.STUDENT;
-        assert isStudent || !person.isFormerStudent() : "Only a student can be a former student.";
         roleBadge.setText(person.getRole().toString());
         roleBadge.getStyleClass().removeAll(STUDENT_STYLE_CLASS, GUARDIAN_STYLE_CLASS);
         roleBadge.getStyleClass().add(isStudent ? STUDENT_STYLE_CLASS : GUARDIAN_STYLE_CLASS);
-        roleBadge.setVisible(true);
-        roleBadge.setManaged(true);
+        UiUtil.setShown(roleBadge, true);
 
         formerBadge.setText(FORMER_LABEL);
-        formerBadge.setVisible(person.isFormerStudent());
-        formerBadge.setManaged(person.isFormerStudent());
+        UiUtil.setShown(formerBadge, person.isFormerStudent());
     }
 
     /**
@@ -49,9 +46,7 @@ public final class RoleBadges {
         requireNonNull(roleBadge);
         requireNonNull(formerBadge);
 
-        roleBadge.setVisible(false);
-        roleBadge.setManaged(false);
-        formerBadge.setVisible(false);
-        formerBadge.setManaged(false);
+        UiUtil.setShown(roleBadge, false);
+        UiUtil.setShown(formerBadge, false);
     }
 }

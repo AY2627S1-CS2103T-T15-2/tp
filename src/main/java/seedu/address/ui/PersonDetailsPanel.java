@@ -11,7 +11,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -82,41 +81,32 @@ public class PersonDetailsPanel extends UiPart<Region> {
             role.setText("");
             phone.setText("");
             email.setText("");
-            setShown(contactDetails, false);
-            setShown(studentDetails, false);
-            setShown(guardianDetails, false);
+            UiUtil.setShown(contactDetails, false);
+            UiUtil.setShown(studentDetails, false);
+            UiUtil.setShown(guardianDetails, false);
             return;
         }
 
         name.setText(contact.getName().fullName);
         RoleBadges.show(roleBadge, formerBadge, contact);
-        setShown(contactDetails, true);
+        UiUtil.setShown(contactDetails, true);
         role.setText("Role: " + formatRoleWithStatus(contact));
         phone.setText("Phone: " + formatContactMethod(contact.getPhone()));
         email.setText("Email: " + formatContactMethod(contact.getEmail()));
         boolean isStudent = contact.getRole() == Role.STUDENT;
-        setShown(studentDetails, isStudent);
+        UiUtil.setShown(studentDetails, isStudent);
         level.setText("Level: " + formatStudentDetail(contact.getLevel()));
         subject.setText("Subject: " + formatStudentDetail(contact.getSubject()));
-        setShown(guardianDetails, isStudent);
+        UiUtil.setShown(guardianDetails, isStudent);
         Person guardian = contact.getGuardianId().flatMap(id -> PersonLookup.findById(persons, id)).orElse(null);
-        assert isStudent || guardian == null : "Only a student can have a linked guardian.";
         guardianName.setText(guardian == null ? "Guardian: None" : "Guardian: " + guardian.getName());
         guardianPhone.setText(guardian == null ? ""
                 : "Guardian phone: " + formatContactMethod(guardian.getPhone()));
         guardianEmail.setText(guardian == null ? ""
                 : "Guardian email: " + formatContactMethod(guardian.getEmail()));
-        setShown(guardianPhone, guardian != null);
-        setShown(guardianEmail, guardian != null);
+        UiUtil.setShown(guardianPhone, guardian != null);
+        UiUtil.setShown(guardianEmail, guardian != null);
         logger.fine("Showing details of contact " + contact.getId()
                 + (guardian == null ? " without a guardian" : " with guardian " + guardian.getId()));
-    }
-
-    /**
-     * Shows {@code node} and gives it space in the layout if {@code isShown} is true, and hides it otherwise.
-     */
-    private static void setShown(Node node, boolean isShown) {
-        node.setVisible(isShown);
-        node.setManaged(isShown);
     }
 }

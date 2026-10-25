@@ -65,13 +65,11 @@ public class PersonCard extends UiPart<Region> {
         email.setText("Email: " + formatContactMethod(person.getEmail()));
 
         boolean isStudent = person.getRole() == Role.STUDENT;
-        guardian.setVisible(isStudent);
-        guardian.setManaged(isStudent);
+        UiUtil.setShown(guardian, isStudent);
         guardian.setText(isStudent ? "Guardian: " + formatGuardianName(linkedGuardian) : "");
 
         Optional<String> levelAndSubject = formatLevelAndSubject(person);
-        studentDetails.setVisible(levelAndSubject.isPresent());
-        studentDetails.setManaged(levelAndSubject.isPresent());
+        UiUtil.setShown(studentDetails, levelAndSubject.isPresent());
         studentDetails.setText(levelAndSubject.orElse(""));
     }
 }
