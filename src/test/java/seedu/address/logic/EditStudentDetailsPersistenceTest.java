@@ -41,6 +41,31 @@ public class EditStudentDetailsPersistenceTest {
     private final Person unrelatedStudent = new PersonBuilder().withName("Zoe Lim").build();
 
     @Test
+    public void execute_addAndEditCombiningMarks_preservesTextAfterReload() throws Exception {
+        String tamil = "\u0ba4\u0bae\u0bbf\u0bb4\u0bcd";
+        String accented = "Franc\u0327ais";
+        Path file = temporaryFolder.resolve("unicode-details.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        Model model = new ModelManager();
+        Logic logic = createLogic(model, storage);
+
+        logic.execute("add r/student n/Alex lv/" + tamil + " sub/" + accented);
+
+        Person added = model.getAddressBook().getPersonList().getFirst();
+        assertEquals(tamil, added.getLevel().orElseThrow().value);
+        assertEquals(accented, added.getSubject().orElseThrow().value);
+        assertContactsEqual(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+
+        logic.execute("edit 1 lv/" + accented + " sub/" + tamil);
+
+        Person edited = model.getAddressBook().getPersonList().getFirst();
+        assertEquals(added.getId(), edited.getId());
+        assertEquals(accented, edited.getLevel().orElseThrow().value);
+        assertEquals(tamil, edited.getSubject().orElseThrow().value);
+        assertContactsEqual(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void execute_setDetailsAndReload_preservesContactIdentityStatusAndGuardian() throws Exception {
         Person expected = new PersonBuilder(student).withLevel("Sec 4").withSubject("Physics").build();
         assertEditPersists("edit 1 lv/Sec 4 sub/Physics", expected);

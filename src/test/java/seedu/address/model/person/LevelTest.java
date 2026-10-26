@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class LevelTest {
@@ -29,6 +31,16 @@ public class LevelTest {
         assertTrue(Level.isValidLevel("Math+"));
         assertTrue(Level.isValidLevel("中三")); // non-English letters
         assertTrue(Level.isValidLevel("a".repeat(Level.MAX_LENGTH))); // maximum length
+    }
+
+    @Test
+    public void constructor_combiningMarks_preservesTextAndValidationLimits() {
+        for (String value : List.of("\u0ba4\u0bae\u0bbf\u0bb4\u0bcd", "\u0939\u093f\u0928\u094d\u0926\u0940",
+                "Franc\u0327ais", "e\u0301".repeat(15))) {
+            assertEquals(value, new Level(value).value);
+        }
+        assertEquals(Level.MESSAGE_MISSING_ALPHANUMERIC, Level.getValidationErrorMessage("\u0301\u0327"));
+        assertEquals(Level.MESSAGE_TOO_LONG, Level.getValidationErrorMessage("e\u0301".repeat(15) + "a"));
     }
 
     @Test
