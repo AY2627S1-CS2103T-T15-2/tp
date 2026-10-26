@@ -39,6 +39,11 @@ public class MainAppTest {
     }
 
     @Test
+    public void getApplicationDirectory_unpackedApplication_usesWorkingDirectory() throws Exception {
+        assertEquals(Path.of("").toAbsolutePath(), new MainApp().getApplicationDirectory());
+    }
+
+    @Test
     public void resolveApplicationDirectory_unpackedClasses_usesWorkingDirectory() throws Exception {
         Path classesDirectory = Files.createDirectories(temporaryFolder.resolve("classes"));
 
