@@ -12,7 +12,9 @@ import static seedu.address.model.Model.PREDICATE_SHOW_FORMER_STUDENTS;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.CollectionUtil;
 import seedu.address.commons.util.ToStringBuilder;
@@ -75,6 +77,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_POSSIBLE_DUPLICATE_EMAIL = "Warning: Another contact with the same role and "
             + "name, and the same email address exists. This contact may be a duplicate, but it was updated.";
 
+    private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
+
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
 
@@ -98,13 +102,32 @@ public class EditCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<Person> lastShownList = model.getFilteredPersonList();
+        Person personToEdit = getPersonToEdit(model);
+        verifyEditableFields(personToEdit);
+        Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+        verifyNoDuplicate(model, personToEdit, editedPerson);
+        CommandResult result = createSuccessResult(model, editedPerson);
 
+        model.setPerson(personToEdit, editedPerson);
+        // Show the list that the edited contact belongs to, so that it stays visible.
+        model.updateFilteredPersonList(editedPerson.isFormerStudent()
+                ? PREDICATE_SHOW_FORMER_STUDENTS
+                : PREDICATE_SHOW_ACTIVE_CONTACTS);
+        logger.fine("Prepared edit of contact " + editedPerson.getId() + ", pending save.");
+        return result;
+    }
+
+    /** Returns the contact at the displayed index before validating any requested changes. */
+    private Person getPersonToEdit(Model model) throws CommandException {
+        List<Person> lastShownList = model.getFilteredPersonList();
         if (index.getZeroBased() >= lastShownList.size()) {
             throw new CommandException(String.format(Messages.MESSAGE_CONTACT_NOT_FOUND, index.getOneBased()));
         }
+        return lastShownList.get(index.getZeroBased());
+    }
 
-        Person personToEdit = lastShownList.get(index.getZeroBased());
+    /** Checks role restrictions before constructing a replacement contact. */
+    private void verifyEditableFields(Person personToEdit) throws CommandException {
         if (personToEdit.getRole() != Role.STUDENT && editPersonDescriptor.isStudentDetailEdited()) {
             throw new CommandException(MESSAGE_GUARDIAN_STUDENT_DETAILS);
         }
@@ -113,22 +136,23 @@ public class EditCommand extends Command {
                 && getUpdatedEmail(personToEdit, editPersonDescriptor).isEmpty()) {
             throw new CommandException(Person.MESSAGE_GUARDIAN_WITHOUT_CONTACT_METHOD);
         }
-        Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+    }
 
+    /** Allows changes that keep the contact's identity, including capitalization-only edits. */
+    private static void verifyNoDuplicate(Model model, Person personToEdit, Person editedPerson)
+            throws CommandException {
         if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
+    }
 
+    /** Prepares feedback from the original contacts before publishing any changes to the candidate model. */
+    private static CommandResult createSuccessResult(Model model, Person editedPerson) {
         List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
                 .filter(person -> !person.getId().equals(editedPerson.getId()))
                 .toList();
         Optional<String> warning = getPossibleDuplicateWarning(editedPerson, otherPersons);
 
-        model.setPerson(personToEdit, editedPerson);
-        // Show the list that the edited contact belongs to, so that it stays visible.
-        model.updateFilteredPersonList(editedPerson.isFormerStudent()
-                ? PREDICATE_SHOW_FORMER_STUDENTS
-                : PREDICATE_SHOW_ACTIVE_CONTACTS);
         String feedback = String.format(MESSAGE_EDIT_PERSON_SUCCESS, editedPerson.getName(), editedPerson.getRole());
         return new CommandResult(warning.map(message -> feedback + "\n" + message).orElse(feedback),
                 editedPerson.getId());
@@ -166,8 +190,13 @@ public class EditCommand extends Command {
                 ? Optional.empty()
                 : editPersonDescriptor.getSubject().or(personToEdit::getSubject);
 
-        return new Person(personToEdit.getId(), updatedName, updatedPhone, updatedEmail, role,
+        Person editedPerson = new Person(personToEdit.getId(), updatedName, updatedPhone, updatedEmail, role,
                 personToEdit.getGuardianId(), personToEdit.getStatus(), updatedLevel, updatedSubject);
+        assert editedPerson.getId().equals(personToEdit.getId()) : "Editing must preserve contact identity";
+        assert editedPerson.getGuardianId().equals(personToEdit.getGuardianId())
+                : "Editing details must preserve the guardian link";
+        assert editedPerson.getStatus() == personToEdit.getStatus() : "Editing details must preserve student status";
+        return editedPerson;
     }
 
     private static Optional<Phone> getUpdatedPhone(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {

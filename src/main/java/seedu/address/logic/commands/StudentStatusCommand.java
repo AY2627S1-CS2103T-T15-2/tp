@@ -52,6 +52,21 @@ public abstract class StudentStatusCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
+        Person target = getStudentToUpdate(model);
+        Person updated = target.withStatus(targetStatus);
+        assert updated.getId().equals(target.getId()) : "Status changes must preserve contact identity";
+        assert updated.getGuardianId().equals(target.getGuardianId())
+                : "Status changes must preserve the guardian link";
+        assert updated.getStatus() == targetStatus;
+        model.setPerson(target, updated);
+        // LogicManager saves the change afterwards, and discards it if saving fails.
+        logger.info(String.format("Prepared status change of contact %s to %s, pending save",
+                target.getId(), targetStatus));
+        return new CommandResult(String.format(getSuccessMessage(), target.getName()));
+    }
+
+    /** Resolves the displayed index, then rejects guardians and repeated status changes in that order. */
+    private Person getStudentToUpdate(Model model) throws CommandException {
         List<Person> lastShownList = model.getFilteredPersonList();
 
         if (targetIndex.getZeroBased() >= lastShownList.size()) {
@@ -60,19 +75,14 @@ public abstract class StudentStatusCommand extends Command {
 
         Person target = lastShownList.get(targetIndex.getZeroBased());
         if (target.getRole() != Role.STUDENT) {
+            logger.fine("Rejected student status change: target is not a student.");
             throw new CommandException(getNotStudentMessage());
         }
         if (target.getStatus() == targetStatus) {
+            logger.fine("Rejected student status change: target already has status " + targetStatus);
             throw new CommandException(String.format(getAlreadyInStatusMessage(), target.getName()));
         }
-
-        Person updated = target.withStatus(targetStatus);
-        model.setPerson(target, updated);
-        assert updated.getStatus() == targetStatus;
-        // LogicManager saves the change afterwards, and discards it if saving fails.
-        logger.info(String.format("Prepared status change of contact %s to %s, pending save",
-                target.getId(), targetStatus));
-        return new CommandResult(String.format(getSuccessMessage(), target.getName()));
+        return target;
     }
 
     @Override
