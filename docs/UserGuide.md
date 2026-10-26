@@ -601,7 +601,19 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorRoster home folder.
+**A**: Transfer your saved contact-data file as follows:
+
+1. Close TutorRoster on both computers before copying any files.
+2. Back up `data/addressbook.json` from your existing TutorRoster home folder. If the destination computer already
+   has TutorRoster data, back up its `data/addressbook.json` too, because copying will replace those contacts.
+3. Download the JAR to your chosen TutorRoster home folder on the destination computer. Create a `data` subfolder
+   there if it does not exist. A fresh installation does not create `addressbook.json` until a successful
+   data-changing command, so you do not need to add a dummy contact first.
+4. Copy the source `addressbook.json` into that destination `data` subfolder, keeping its filename. Copy the whole
+   file without changing contact IDs or guardian IDs, so that guardian relationships are retained.
+5. Open a terminal in the destination TutorRoster home folder and run `java -jar "tutorroster.jar"`. Launching from
+   this folder ensures the relative data path refers to the file you copied. Check the contacts and guardian links;
+   use `list st/former` to check former students as well.
 
 --------------------------------------------------------------------------------------------------------------------
 
