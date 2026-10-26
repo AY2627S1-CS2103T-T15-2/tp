@@ -272,10 +272,11 @@ public class ParserUtilTest {
     @Test
     public void parseEmail_validExamples_preservesTrimmedValue() throws Exception {
         for (String value : List.of("alex.tan@example.com", "alex+tuition@example.com",
-                "Alex_Tan%25@Example.COM", "alex%school@example.com")) {
+                "Alex_Tan%25@Example.COM", "alex%school@example.com", "alex++__tan@example.com",
+                "_alex-@example.com")) {
             assertEquals(value, ParserUtil.parseEmail(" \t" + value + " \r\n").value);
         }
-        for (String value : List.of(".alex@example.com", "alex..tan@example.com", "alex-@example.com",
+        for (String value : List.of(".alex@example.com", "alex..tan@example.com", "alex.@example.com",
                 "alex@-example.com", "alex@example-.com", "a@b.c")) {
             assertThrows(ParseException.class, () -> ParserUtil.parseEmail(value));
         }

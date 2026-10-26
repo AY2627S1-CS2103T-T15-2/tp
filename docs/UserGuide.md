@@ -141,8 +141,9 @@ characters such as tabs and line breaks.
 
 * Exactly one `@`, a non-empty part on each side, and no internal whitespace.
 * Before `@`: English letters (`A-Z`, `a-z`), digits (`0-9`), and `.`, `_`, `%`, `+`, or `-`.
-  The local part is limited to **64 characters**. Punctuation must appear singly between letters or digits,
-  as in `alex+tuition@example.com`.
+  The local part is limited to **64 characters**. Periods cannot appear at the beginning or end, or consecutively.
+  Other allowed punctuation can appear consecutively and at either end, as in `mei__tan@example.com`,
+  `mei+_tan@example.com`, or `_mei@example.com`.
 * After `@`: at least two non-empty labels separated by periods, as in `example.com`. Labels allow English
   letters, digits, and single hyphens between letters or digits. Each label is limited to **63 characters**.
   The final label needs at least two characters.

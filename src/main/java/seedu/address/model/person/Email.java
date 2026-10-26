@@ -30,7 +30,7 @@ public class Email {
             "Email local part contains unsupported characters. Use ASCII letters (A-Z, a-z), digits (0-9), "
                     + "and '.', '_', '%', '+', or '-'.";
     public static final String MESSAGE_LOCAL_PUNCTUATION =
-            "Email local-part punctuation (., _, %, +, -) must appear singly between letters or digits.";
+            "Email local part cannot start or end with a period, or contain consecutive periods.";
     public static final String MESSAGE_DOMAIN_CHARACTERS =
             "Email domain labels contain unsupported characters. Use ASCII letters (A-Z, a-z), digits (0-9), "
                     + "and hyphens only.";
@@ -86,7 +86,7 @@ public class Email {
         if (hasUnsupportedCharacters(localPart, "._%+-")) {
             return MESSAGE_LOCAL_CHARACTERS;
         }
-        if (!isValidPart(localPart, "._%+-")) {
+        if (!isValidLocalPart(localPart)) {
             return MESSAGE_LOCAL_PUNCTUATION;
         }
 
@@ -116,6 +116,14 @@ public class Email {
             return "Email's final domain label must contain at least two characters.";
         }
         return getDomainLabelError(finalLabel);
+    }
+
+    /**
+     * Checks period placement after the local part's characters have been validated.
+     * Other supported punctuation can appear consecutively and at either end.
+     */
+    private static boolean isValidLocalPart(String localPart) {
+        return !localPart.startsWith(".") && !localPart.endsWith(".") && !localPart.contains("..");
     }
 
     private static String getDomainLabelError(String label) {
