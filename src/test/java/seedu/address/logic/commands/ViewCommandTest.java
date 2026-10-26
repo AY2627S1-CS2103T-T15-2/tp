@@ -72,7 +72,20 @@ public class ViewCommandTest {
     }
 
     @Test
+    public void execute_lastIndexUnfilteredList_selectsContact() {
+        // Boundary: the last displayed index
+        Index lastIndex = Index.fromOneBased(model.getFilteredPersonList().size());
+        Person personToView = model.getFilteredPersonList().get(lastIndex.getZeroBased());
+        CommandResult expectedResult = new CommandResult(String.format(ViewCommand.MESSAGE_SUCCESS,
+                personToView.getName(), personToView.getRole()), personToView.getId());
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+
+        assertCommandSuccess(new ViewCommand(lastIndex), model, expectedResult, expectedModel);
+    }
+
+    @Test
     public void execute_invalidIndexUnfilteredList_throwsCommandException() {
+        // Boundary: the first index past the displayed list
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
 
         assertCommandFailure(new ViewCommand(outOfBoundIndex), model,

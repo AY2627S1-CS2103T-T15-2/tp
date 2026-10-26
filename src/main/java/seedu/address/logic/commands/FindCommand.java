@@ -22,7 +22,11 @@ public class FindCommand extends Command {
 
     private final NameContainsSubstringPredicate predicate;
 
+    /**
+     * Creates a FindCommand that shows the contacts whose names match {@code predicate}.
+     */
     public FindCommand(NameContainsSubstringPredicate predicate) {
+        requireNonNull(predicate);
         this.predicate = predicate;
     }
 

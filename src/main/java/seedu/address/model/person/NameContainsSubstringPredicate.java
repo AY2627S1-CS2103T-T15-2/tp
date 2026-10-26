@@ -56,6 +56,11 @@ public class NameContainsSubstringPredicate implements Predicate<Person> {
     }
 
     @Override
+    public int hashCode() {
+        return searchTerm.hashCode();
+    }
+
+    @Override
     public String toString() {
         return new ToStringBuilder(this).add("searchTerm", searchTerm).toString();
     }

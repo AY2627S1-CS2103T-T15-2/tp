@@ -27,6 +27,7 @@ public class NameContainsSubstringPredicateTest {
         // same values -> returns true
         NameContainsSubstringPredicate firstPredicateCopy = new NameContainsSubstringPredicate("first");
         assertTrue(firstPredicate.equals(firstPredicateCopy));
+        assertEquals(firstPredicate.hashCode(), firstPredicateCopy.hashCode());
 
         // different types -> returns false
         assertFalse(firstPredicate.equals(1));
@@ -59,6 +60,18 @@ public class NameContainsSubstringPredicateTest {
         // consecutive spaces in name
         predicate = new NameContainsSubstringPredicate("alice tan");
         assertTrue(predicate.test(new PersonBuilder().withName("Alice   Tan").build()));
+    }
+
+    @Test
+    public void test_searchTermLength_matchesUpToWholeName() {
+        // Boundary: the shortest search term, a single letter
+        assertTrue(new NameContainsSubstringPredicate("a").test(new PersonBuilder().withName("Alice Tan").build()));
+        // Boundary: the search term is the whole name
+        assertTrue(new NameContainsSubstringPredicate("Alice Tan")
+                .test(new PersonBuilder().withName("Alice Tan").build()));
+        // Boundary: one character longer than the whole name
+        assertFalse(new NameContainsSubstringPredicate("Alice Tann")
+                .test(new PersonBuilder().withName("Alice Tan").build()));
     }
 
     @Test
