@@ -1058,6 +1058,30 @@ The failed command should remain in the command box, which keeps focus.
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
 
+### Reviewing contact data
+
+1. Prerequisites: start with an empty list, then run `add r/student n/Alex Tan p/91234567 lv/Sec 3 sub/Math`
+   and `add r/guardian n/Mei Tan p/98765432`. Run `list` before using the displayed indexes below.
+
+1. Test case: `check guardians`.<br>
+   Expected: `Guardian links (1)` identifies `1: Alex Tan [Student]: no guardian linked.` Suggestions are advisory;
+   contacts and the displayed list remain unchanged.
+
+1. Test case: `link s/1 g/2`, `archive 1`, `list st/former`, then `check guardians`.<br>
+   Expected: One displayed contact is checked and `Guardian links (0)` reports `No suggestions.` The former
+   student's link remains recognized even though the guardian is hidden from the displayed view.
+
+1. Test case: on that former-student view, `edit 1 lv/NONE sub/NONE`, then `check details`.<br>
+   Expected: `1: Alex Tan [Student] [Former]: consider adding level, subject.` Restore with
+   `edit 1 lv/Sec 3 sub/Math`, then run `check details` again. Expected: `Contact and student details (0)` and
+   `No suggestions.` The contact ID, former status and guardian link are preserved.
+
+1. Test case: `check unknown` or `check guardians details`.<br>
+   Expected: `Use check [guardians|details|duplicates].` No contacts or saved data change.
+
+1. Test case: `list`, then `find Nobody`, then `check`.<br>
+   Expected: `No displayed contacts to check. Use list or find to display contacts first.`
+
 ### Undoing a deletion
 
 1. Prerequisites: prepare an active student linked to a guardian and a former student linked to the same guardian.

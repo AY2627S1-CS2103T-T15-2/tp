@@ -63,6 +63,42 @@ public class CheckReportIntegrationTest {
     }
 
     @Test
+    public void execute_editStudentDetails_reportTracksRemovalAndRestoration() throws Exception {
+        Model model = new ModelManager();
+        Person student = new PersonBuilder().withName("Alex Tan").withLevel("Sec 3").withSubject("Math").build();
+        model.addPerson(student);
+        Logic logic = createLogic(model, temporaryFolder.resolve("contacts.json"));
+
+        logic.execute("edit 1 lv/NONE sub/NONE");
+        String afterRemoval = logic.execute("check details").getFeedbackToUser();
+        assertTrue(afterRemoval.contains("1: Alex Tan [Student]: consider adding level, subject."));
+
+        logic.execute("edit 1 lv/Sec 3 sub/Math");
+        String afterRestoration = logic.execute("check details").getFeedbackToUser();
+        assertTrue(afterRestoration.contains("Contact and student details (0):\nNo suggestions."));
+        assertEquals(student.getId(), model.getFilteredPersonList().getFirst().getId());
+    }
+
+    @Test
+    public void execute_archiveLinkedStudent_reportRecognizesHiddenGuardian() throws Exception {
+        Model model = new ModelManager();
+        Person student = new PersonBuilder().withName("Alex Tan").build();
+        Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+        model.addPerson(student);
+        model.addPerson(guardian);
+        Logic logic = createLogic(model, temporaryFolder.resolve("contacts.json"));
+        logic.execute("link s/1 g/2");
+        logic.execute("archive 1");
+        logic.execute("list st/former");
+
+        String result = logic.execute("check guardians").getFeedbackToUser();
+
+        assertTrue(result.contains("Guardian links (0):\nNo suggestions."));
+        assertEquals(List.of(student.getId()), model.getFilteredPersonList().stream().map(Person::getId).toList());
+        assertEquals(guardian.getId(), model.getFilteredPersonList().getFirst().getGuardianId().orElseThrow());
+    }
+
+    @Test
     public void execute_invalidDataFile_allowsReadOnlyCheckWithoutOverwritingFile() throws Exception {
         Path file = temporaryFolder.resolve("contacts.json");
         Files.writeString(file, "{invalid json}");
