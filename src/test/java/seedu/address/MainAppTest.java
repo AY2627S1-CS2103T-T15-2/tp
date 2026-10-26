@@ -13,6 +13,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
@@ -28,6 +29,68 @@ public class MainAppTest {
 
     @TempDir
     public Path temporaryFolder;
+
+    @Test
+    public void resolveApplicationDirectory_jarInFolderWithSpacesAndUnicode_returnsJarDirectory() throws Exception {
+        Path jarDirectory = Files.createDirectories(temporaryFolder.resolve("Tutor Roster \u5b66\u751f"));
+        Path jar = Files.createFile(jarDirectory.resolve("tutorroster.jar"));
+
+        assertEquals(jarDirectory, MainApp.resolveApplicationDirectory(jar.toUri()));
+    }
+
+    @Test
+    public void resolveApplicationDirectory_unpackedClasses_usesWorkingDirectory() throws Exception {
+        Path classesDirectory = Files.createDirectories(temporaryFolder.resolve("classes"));
+
+        assertEquals(Path.of("").toAbsolutePath(), MainApp.resolveApplicationDirectory(classesDirectory.toUri()));
+    }
+
+    @Test
+    public void init_jarDirectory_savesAndReloadsContactsAndPreferences() throws Exception {
+        Path jarDirectory = Files.createDirectories(temporaryFolder.resolve("Tutor Roster \u5b66\u751f"));
+        Path jar = Files.createFile(jarDirectory.resolve("tutorroster.jar"));
+        MainApp app = createAppAt(jar);
+        app.init();
+        Path contactsFile = jarDirectory.resolve("data").resolve("addressbook.json");
+        Path preferencesFile = jarDirectory.resolve("preferences.json");
+        assertEquals(contactsFile, app.storage.getAddressBookFilePath());
+        assertTrue(Files.exists(preferencesFile));
+        assertFalse(Files.exists(contactsFile));
+
+        app.logic.execute("add r/student n/Alex Tan");
+        GuiSettings guiSettings = new GuiSettings(800, 600, 10, 20);
+        app.logic.setGuiSettings(guiSettings);
+        app.stop();
+
+        MainApp reloaded = createAppAt(jar);
+        reloaded.init();
+        assertEquals(app.model.getAddressBook(), reloaded.model.getAddressBook());
+        assertEquals(guiSettings, reloaded.logic.getGuiSettings());
+    }
+
+    private MainApp createAppAt(Path jar) {
+        return new MainApp() {
+            @Override
+            Path getApplicationDirectory() {
+                return resolveApplicationDirectory(jar.toUri());
+            }
+        };
+    }
+
+    @Test
+    public void init_jarDataDirectoryBlocked_failedSaveLeavesContactsUnchanged() throws Exception {
+        Path jar = Files.createFile(temporaryFolder.resolve("tutorroster.jar"));
+        MainApp app = createAppAt(jar);
+        app.init();
+        Path blockedDirectory = temporaryFolder.resolve("data");
+        Files.writeString(blockedDirectory, "Existing file");
+
+        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () -> app.logic.execute(
+                "add r/student n/Alex Tan"));
+
+        assertTrue(app.model.getAddressBook().getPersonList().isEmpty());
+        assertEquals("Existing file", Files.readString(blockedDirectory));
+    }
 
     private StorageManager createStorage(Path contactsFile) {
         return new StorageManager(new JsonAddressBookStorage(contactsFile),
