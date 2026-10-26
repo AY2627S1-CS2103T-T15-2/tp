@@ -23,8 +23,10 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-T15-2/tp/releases).
 
 1. Copy the file to the folder you want to use as the _home folder_ for your TutorRoster.
+   Use a folder where you have permission to create and update files. Avoid write-protected folders.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tutorroster.jar`.<br>
+1. Open a terminal, run `java -version` to check the Java version, then `cd` to the folder containing the JAR file
+   and run `java -jar "tutorroster.jar"`. Double-clicking the JAR might not work on some systems.<br>
    The application opens with your saved contacts, or an empty list if there is no data file yet.<br>
    ![Ui](images/Ui.png)
 
@@ -266,10 +268,11 @@ Command | Shows
 * If no contact has the chosen role, `list r/guardian` shows `No guardians found.` and `list r/student` shows
   `No students found.` If every student is former, `list r/student` shows
   `No active students found. Use list r/student st/former to see former students.`
-* Each contact is shown with its index, name and role, phone number, and email address. Students also show
-  their linked guardian. For example:
+* Each contact is shown with its index, name, a `Student` or `Guardian` badge, phone number, and email address.
+  Students also show their linked guardian. For example, Alex Tan has a `Student` badge beside his name and
+  the following contact details:
   ```
-  1. Alex Tan [Student]
+  1. Alex Tan
   Phone: 91234567
   Email: alex@example.com
   Guardian: Mei Tan
@@ -281,8 +284,8 @@ Command | Shows
   `Level: Sec 3 | Subject: Not set`. The line is hidden when both fields are missing.
 * Selecting a student shows separate `Level:` and `Subject:` lines in the details panel. Each missing value is shown
   as `Not set`. Guardians do not show level or subject details.
-* A former student is labelled `[Former]` after their role, for example `Alex Tan [Student] [Former]`, and the
-  details panel shows `Role: Student [Former]`.
+* A former student has a `Former` badge beside the role badge. For example, Alex Tan's card shows `Student`
+  and `Former` badges beside his name. The details panel also shows `Role: Student [Former]`.
 
 ### Marking a student as former: `archive`
 
@@ -292,15 +295,15 @@ Format: `archive INDEX`
 
 * `INDEX` is the index shown in the displayed contact list, and must be a positive integer 1, 2, 3, ...
 * The student keeps their details and guardian link. Their guardian stays in `list`.
-* The displayed list is kept and refreshed. After `list`, the student disappears straight away; after `find`, they
-  stay in the results, labelled `[Former]`. The result names the student; for example,
-  `Marked Alex Tan as a former student.`
+* The current search or list filter is kept and refreshed. In an active-only view, such as `list` or
+  `list r/student`, the student disappears straight away. After `list st/all` or `find NAME`, they remain visible
+  with a `Former` badge. The result names the student; for example, `Marked Alex Tan as a former student.`
 * Only students can be archived. Archiving a guardian is rejected with `Only students can be archived.`
 * Archiving a student who is already former is rejected with `Alex Tan is already a former student.`
 * An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
 
 Examples:
-* `list` followed by `archive 2` marks the 2nd contact in the list as a former student.
+* `list` followed by `archive 2` marks the 2nd contact in the list as a former student, provided it is a student.
 * `find Alex` followed by `archive 1` marks the 1st search result as a former student.
 
 ### Marking a former student as active: `unarchive`
@@ -309,9 +312,10 @@ Marks a former student as active again, for example when they return for lessons
 
 Format: `unarchive INDEX`
 
-* Run `list st/former` or `find NAME` first, since former students are hidden from `list`.
-* The displayed list is kept and refreshed. After `list st/former`, the student disappears straight away; after
-  `find`, they stay in the results without the `[Former]` label. The result names the student; for example,
+* Run `list st/former`, `list st/all` or `find NAME` first, since former students are hidden from `list`.
+* The current search or list filter is kept and refreshed. In a former-only view, such as `list st/former`,
+  the student disappears straight away. After `list st/all` or `find NAME`, they remain visible without the
+  `Former` badge. Any level or subject filter also continues to apply. The result names the student; for example,
   `Marked Alex Tan as an active student.`
 * Only students can be unarchived. Unarchiving a guardian is rejected with `Only students can be unarchived.`
 * Unarchiving a student who is already active is rejected with `Alex Tan is already an active student.`
@@ -386,7 +390,7 @@ Format: `find NAME`
 * Curly and straight apostrophes are treated as the same; for example, `o'brien` matches `O’Brien`.
 * Accents are ignored; for example, `elise` matches `Élise`, `élise` matches `Elise`, and `soren` matches `Søren`.
 * The search considers only names.
-* Former students are included in the results, labelled `[Former]`.
+* Former students are included in the results with a `Former` badge.
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.
 * The result shows the number of matches; for example, `Found 2 contacts matching: li.`
 * If no contact matches, `No contacts found matching: NAME` is shown.
@@ -592,10 +596,6 @@ If the data file is invalid, TutorRoster starts with an empty list and disables 
 Contacts have permanent `id` values, and a student's optional `guardianId` must refer to an existing guardian's `id`. Keep IDs unique and preserve them when editing contact details. Invalid IDs, repeated JSON fields, duplicate contacts and invalid guardian references make the file invalid. Older valid files without IDs are accepted; IDs are assigned on loading and included in the next successful save.
 </box>
 
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## FAQ
@@ -609,6 +609,12 @@ _Details coming soon ..._
 
 1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
+1. **Mac fullscreen dialogs:** Using fullscreen mode for secondary windows, such as the Help window, may cause
+   unexpected behavior. Leave fullscreen mode before opening the Help window.
+
+1. **Linux with Wayland:** If launch fails with a `Gdk-CRITICAL` error, try running
+   `GDK_BACKEND=x11 java -jar "tutorroster.jar"` from the folder containing the JAR file.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Command summary
@@ -617,7 +623,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
 **Clear**  | `clear`
-**Check data** | `check [guardians|details|duplicates]`<br> e.g., `check`, `check duplicates`
+**Check data** | `check [guardians\|details\|duplicates]`<br> e.g., `check`, `check duplicates`
 **Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
