@@ -6,7 +6,7 @@ skinparam ArrowFontSize 12
 start
 :Read the text after ""list"";
 
-if () then ([only r/ and st/ prefixes, no other text])
+if () then ([only r/, st/, lv/ and sub/ prefixes,\nno other text])
 else ([otherwise])
     :Show format error;
     stop
@@ -18,15 +18,21 @@ else ([otherwise])
     stop
 endif
 
-if () then ([valid role and status values])
+if () then ([valid role, status, level\nand subject values])
 else ([otherwise])
-    :Show role or status error;
+    :Show role, status, level or subject error;
     stop
 endif
 
 if () then ([not r/guardian with st/former])
 else ([otherwise])
     :Show guardians-cannot-be-former error;
+    stop
+endif
+
+if () then ([not r/guardian with lv/ or sub/])
+else ([otherwise])
+    :Show guardians-have-no-level-or-subject error;
     stop
 endif
 
