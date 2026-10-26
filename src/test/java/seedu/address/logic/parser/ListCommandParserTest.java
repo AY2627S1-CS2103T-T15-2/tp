@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.model.person.ContactFilter;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Role;
 import seedu.address.model.person.StudentStatus;
+import seedu.address.model.person.Subject;
 
 public class ListCommandParserTest {
 
@@ -56,6 +58,80 @@ public class ListCommandParserTest {
     }
 
     @Test
+    public void parse_levelAndSubject_returnsListCommandWithBoth() {
+        ListCommand listSec3 = new ListCommand(filterOf(null, StudentStatus.ACTIVE, "Sec 3", null));
+        ListCommand listMath = new ListCommand(filterOf(null, StudentStatus.ACTIVE, null, "A-Math"));
+        ListCommand listSec3Math = new ListCommand(filterOf(null, StudentStatus.ACTIVE, "Sec 3", "A-Math"));
+
+        assertParseSuccess(parser, " lv/Sec 3", listSec3);
+        // EP: surrounding and repeated spaces are removed, as in add and edit
+        assertParseSuccess(parser, " lv/  Sec   3  ", listSec3);
+        assertParseSuccess(parser, " sub/A-Math", listMath);
+        assertParseSuccess(parser, " lv/Sec 3 sub/A-Math", listSec3Math);
+        assertParseSuccess(parser, " sub/A-Math lv/Sec 3", listSec3Math);
+    }
+
+    @Test
+    public void parse_allParameters_returnsListCommandWithAll() {
+        // EP: all four parameters together, in any order
+        assertParseSuccess(parser, " r/student st/former lv/JC1 sub/Physics",
+                new ListCommand(filterOf(Role.STUDENT, StudentStatus.FORMER, "JC1", "Physics")));
+        assertParseSuccess(parser, " sub/Physics st/all lv/JC1 r/student",
+                new ListCommand(filterOf(Role.STUDENT, null, "JC1", "Physics")));
+    }
+
+    @Test
+    public void parse_levelLength_acceptsUpToMaxLength() {
+        String longestLevel = "A".repeat(Level.MAX_LENGTH);
+        // Boundary: shortest level
+        assertParseSuccess(parser, " lv/A", new ListCommand(filterOf(null, StudentStatus.ACTIVE, "A", null)));
+        // Boundary: longest level
+        assertParseSuccess(parser, " lv/" + longestLevel,
+                new ListCommand(filterOf(null, StudentStatus.ACTIVE, longestLevel, null)));
+        // Boundary: one character too long
+        assertParseFailure(parser, " lv/" + longestLevel + "A", Level.MESSAGE_TOO_LONG);
+    }
+
+    @Test
+    public void parse_subjectLength_acceptsUpToMaxLength() {
+        String longestSubject = "A".repeat(Subject.MAX_LENGTH);
+        // Boundary: shortest subject
+        assertParseSuccess(parser, " sub/A", new ListCommand(filterOf(null, StudentStatus.ACTIVE, null, "A")));
+        // Boundary: longest subject
+        assertParseSuccess(parser, " sub/" + longestSubject,
+                new ListCommand(filterOf(null, StudentStatus.ACTIVE, null, longestSubject)));
+        // Boundary: one character too long
+        assertParseFailure(parser, " sub/" + longestSubject + "A", Subject.MESSAGE_TOO_LONG);
+    }
+
+    @Test
+    public void parse_invalidLevel_throwsParseException() {
+        // EP: empty value
+        assertParseFailure(parser, " lv/", Level.MESSAGE_EMPTY);
+        assertParseFailure(parser, " lv/   ", Level.MESSAGE_EMPTY);
+        // EP: unsupported characters
+        assertParseFailure(parser, " lv/Sec@3", Level.MESSAGE_INVALID_CHARACTERS);
+        // EP: no letter or digit
+        assertParseFailure(parser, " lv/--", Level.MESSAGE_MISSING_ALPHANUMERIC);
+        // EP: value reserved for removing a field in edit
+        assertParseFailure(parser, " lv/none", ParserUtil.MESSAGE_RESERVED_REMOVE_VALUE);
+        // Heuristic: one invalid input per test case, so the other values are valid
+        assertParseFailure(parser, " r/student st/all lv/Sec@3 sub/Math", Level.MESSAGE_INVALID_CHARACTERS);
+    }
+
+    @Test
+    public void parse_invalidSubject_throwsParseException() {
+        // EP: empty value
+        assertParseFailure(parser, " sub/", Subject.MESSAGE_EMPTY);
+        // EP: unsupported characters
+        assertParseFailure(parser, " sub/Math!", Subject.MESSAGE_INVALID_CHARACTERS);
+        // EP: value reserved for removing a field in edit
+        assertParseFailure(parser, " sub/NONE", ParserUtil.MESSAGE_RESERVED_REMOVE_VALUE);
+        // Heuristic: one invalid input per test case, so the other values are valid
+        assertParseFailure(parser, " r/student lv/Sec 3 sub/Math!", Subject.MESSAGE_INVALID_CHARACTERS);
+    }
+
+    @Test
     public void parse_invalidRole_throwsParseException() {
         assertParseFailure(parser, " r/teacher", Role.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " r/student guardian", Role.MESSAGE_CONSTRAINTS);
@@ -78,6 +154,24 @@ public class ListCommandParserTest {
     }
 
     @Test
+    public void parse_invalidStatusAndLevel_reportsStatusFirst() {
+        // Two invalid inputs on purpose: this checks which error is reported first
+        assertParseFailure(parser, " lv/Sec@3 st/formers", ListCommand.MESSAGE_INVALID_STATUS);
+    }
+
+    @Test
+    public void parse_invalidLevelAndSubject_reportsLevelFirst() {
+        // Two invalid inputs on purpose: this checks which error is reported first
+        assertParseFailure(parser, " sub/Math! lv/Sec@3", Level.MESSAGE_INVALID_CHARACTERS);
+    }
+
+    @Test
+    public void parse_guardianWithLevelOrSubject_throwsParseException() {
+        assertParseFailure(parser, " r/guardian lv/Sec 3", ListCommand.MESSAGE_GUARDIAN_NO_STUDENT_DETAIL);
+        assertParseFailure(parser, " sub/Math r/Guardian", ListCommand.MESSAGE_GUARDIAN_NO_STUDENT_DETAIL);
+    }
+
+    @Test
     public void parse_guardianAndFormer_throwsParseException() {
         assertParseFailure(parser, " r/guardian st/former", ListCommand.MESSAGE_GUARDIAN_NOT_FORMER);
         assertParseFailure(parser, " st/FORMER r/GUARDIAN", ListCommand.MESSAGE_GUARDIAN_NOT_FORMER);
@@ -87,6 +181,8 @@ public class ListCommandParserTest {
     public void parse_repeatedParameter_throwsParseException() {
         assertParseFailure(parser, " r/student r/guardian", ListCommand.MESSAGE_REPEATED_PARAMETER);
         assertParseFailure(parser, " st/former st/former", ListCommand.MESSAGE_REPEATED_PARAMETER);
+        assertParseFailure(parser, " lv/Sec 3 lv/Sec 4", ListCommand.MESSAGE_REPEATED_PARAMETER);
+        assertParseFailure(parser, " sub/Math sub/Math", ListCommand.MESSAGE_REPEATED_PARAMETER);
     }
 
     @Test
@@ -113,6 +209,8 @@ public class ListCommandParserTest {
         assertParseFailure(parser, " former students", ListCommand.MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " 3 r/student", ListCommand.MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " former r/student", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " former lv/Sec 3", ListCommand.MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " Sec 3", ListCommand.MESSAGE_INVALID_FORMAT);
     }
 
     /**
@@ -120,5 +218,14 @@ public class ListCommandParserTest {
      */
     private static ContactFilter filterOf(Role role, StudentStatus status) {
         return new ContactFilter(Optional.ofNullable(role), Optional.ofNullable(status));
+    }
+
+    /**
+     * Returns a filter for {@code role}, {@code status}, {@code level} and {@code subject},
+     * where {@code null} matches any value.
+     */
+    private static ContactFilter filterOf(Role role, StudentStatus status, String level, String subject) {
+        return new ContactFilter(Optional.ofNullable(role), Optional.ofNullable(status),
+                Optional.ofNullable(level).map(Level::new), Optional.ofNullable(subject).map(Subject::new));
     }
 }

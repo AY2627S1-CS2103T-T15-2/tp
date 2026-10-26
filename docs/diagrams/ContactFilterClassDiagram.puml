@@ -14,6 +14,8 @@ class "<<interface>>\nPredicate<Person>" as Predicate
 class ContactFilter
 enum Role <<enumeration>>
 enum StudentStatus <<enumeration>>
+class Level
+class Subject
 }
 
 ListCommandParser ..> ContactFilter : creates
@@ -21,9 +23,6 @@ ListCommand --> "1" ContactFilter
 ContactFilter .up.|> Predicate
 ContactFilter --> "0..1" Role
 ContactFilter --> "0..1" StudentStatus
-
-note right of ContactFilter
-  Planned: optional Level and
-  Subject fields for lv/ and sub/
-end note
+ContactFilter --> "0..1" Level
+ContactFilter --> "0..1" Subject
 @enduml

@@ -9,9 +9,10 @@ import java.util.function.Predicate;
 import seedu.address.commons.util.ToStringBuilder;
 
 /**
- * Tests whether a {@code Person} matches the role and status chosen for the contact list.
- * A contact matches when it has the chosen role and status. An empty role or status matches any value.
- * Guardians are always active, so they never match a filter for former contacts.
+ * Tests whether a {@code Person} matches the role, status, level and subject chosen for the contact list.
+ * A contact matches when it has every chosen value. An empty value matches any contact.
+ * Guardians are always active and have no level or subject, so they never match a filter for former contacts
+ * or for a level or subject.
  */
 public class ContactFilter implements Predicate<Person> {
 
@@ -28,15 +29,29 @@ public class ContactFilter implements Predicate<Person> {
 
     private final Optional<Role> role;
     private final Optional<StudentStatus> status;
+    private final Optional<Level> level;
+    private final Optional<Subject> subject;
 
     /**
-     * Creates a filter that matches contacts with {@code role} and {@code status}.
+     * Creates a filter that matches contacts with {@code role} and {@code status}, whatever their level and subject.
      * An empty {@code role} or {@code status} matches any value.
      */
     public ContactFilter(Optional<Role> role, Optional<StudentStatus> status) {
-        requireAllNonNull(role, status);
+        this(role, status, Optional.empty(), Optional.empty());
+    }
+
+    /**
+     * Creates a filter that matches contacts with {@code role}, {@code status}, {@code level} and {@code subject}.
+     * An empty value matches any contact. Levels and subjects match when {@link Level#isSameValue(Level)} and
+     * {@link Subject#isSameValue(Subject)} hold, so letter case and spaces are ignored.
+     */
+    public ContactFilter(Optional<Role> role, Optional<StudentStatus> status, Optional<Level> level,
+            Optional<Subject> subject) {
+        requireAllNonNull(role, status, level, subject);
         this.role = role;
         this.status = status;
+        this.level = level;
+        this.subject = subject;
     }
 
     public Optional<Role> getRole() {
@@ -45,6 +60,13 @@ public class ContactFilter implements Predicate<Person> {
 
     public Optional<StudentStatus> getStatus() {
         return status;
+    }
+
+    /**
+     * Returns true if this filter chooses a level or subject.
+     */
+    public boolean hasStudentDetail() {
+        return level.isPresent() || subject.isPresent();
     }
 
     /**
@@ -62,19 +84,27 @@ public class ContactFilter implements Predicate<Person> {
     }
 
     /**
-     * Returns a filter with the same role as this filter that matches contacts of any status.
+     * Returns a filter with the same role, level and subject as this filter that matches contacts of any status.
      */
     public ContactFilter withAnyStatus() {
-        return new ContactFilter(role, Optional.empty());
+        return new ContactFilter(role, Optional.empty(), level, subject);
     }
 
     @Override
     public boolean test(Person person) {
         boolean hasChosenRole = role.map(chosenRole -> person.getRole() == chosenRole).orElse(true);
         boolean hasChosenStatus = status.map(chosenStatus -> person.getStatus() == chosenStatus).orElse(true);
-        return hasChosenRole && hasChosenStatus;
+        boolean hasChosenLevel = level.map(chosenLevel -> person.getLevel()
+                .map(chosenLevel::isSameValue).orElse(false)).orElse(true);
+        boolean hasChosenSubject = subject.map(chosenSubject -> person.getSubject()
+                .map(chosenSubject::isSameValue).orElse(false)).orElse(true);
+        return hasChosenRole && hasChosenStatus && hasChosenLevel && hasChosenSubject;
     }
 
+    /**
+     * Returns true if {@code other} is a filter with exactly the same values. Levels and subjects are compared
+     * with {@code equals}, so filters for "sec3" and "Sec 3" are not equal, even though they match the same contacts.
+     */
     @Override
     public boolean equals(Object other) {
         if (other == this) {
@@ -86,12 +116,13 @@ public class ContactFilter implements Predicate<Person> {
             return false;
         }
 
-        return role.equals(otherContactFilter.role) && status.equals(otherContactFilter.status);
+        return role.equals(otherContactFilter.role) && status.equals(otherContactFilter.status)
+                && level.equals(otherContactFilter.level) && subject.equals(otherContactFilter.subject);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(role, status);
+        return Objects.hash(role, status, level, subject);
     }
 
     @Override
@@ -99,6 +130,8 @@ public class ContactFilter implements Predicate<Person> {
         return new ToStringBuilder(this)
                 .add("role", role)
                 .add("status", status)
+                .add("level", level)
+                .add("subject", subject)
                 .toString();
     }
 }

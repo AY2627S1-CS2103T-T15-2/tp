@@ -24,9 +24,12 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.ContactFilter;
 import seedu.address.model.person.ContactId;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.StudentStatus;
+import seedu.address.model.person.Subject;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -208,6 +211,32 @@ public class UndoDeletionTest {
         assertEquals(List.of(former), List.copyOf(model.getFilteredPersonList()));
         assertEquals(List.of(former.getId()), model.getFilteredPersonList().stream().map(Person::getId).toList());
         assertEquals(former.getGuardianId(), model.getFilteredPersonList().getFirst().getGuardianId());
+    }
+
+    @Test
+    public void execute_undoInLevelAndSubjectView_restoresBothCriteria() throws Exception {
+        Person sec3Math = new PersonBuilder().withName("Cal Lim").withLevel("Sec 3").withSubject("Math").build();
+        Person otherSec3Math = new PersonBuilder().withName("Dan Lim").withLevel("Sec 3").withSubject("Math").build();
+        Person sec3Physics = new PersonBuilder().withName("Eve Lim").withLevel("Sec 3").withSubject("Physics")
+                .build();
+        Person sec4Math = new PersonBuilder().withName("Fay Lim").withLevel("Sec 4").withSubject("Math").build();
+        AddressBook book = new AddressBook();
+        book.setPersons(List.of(sec3Math, otherSec3Math, sec3Physics, sec4Math, guardian));
+        Model model = new ModelManager(book, new UserPrefs());
+        Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
+        ContactFilter sec3MathFilter = new ContactFilter(Optional.empty(), Optional.of(StudentStatus.ACTIVE),
+                Optional.of(new Level("Sec 3")), Optional.of(new Subject("Math")));
+        logic.execute("list lv/Sec 3 sub/Math");
+        logic.execute("delete 1");
+        // Show every contact, so that the filter after undo can only come from the deletion
+        logic.execute("list st/all");
+
+        CommandResult result = logic.execute("undo");
+
+        assertEquals(sec3MathFilter, model.getPersonFilter());
+        assertEquals(List.of(sec3Math, otherSec3Math), List.copyOf(model.getFilteredPersonList()));
+        assertEquals(Optional.of(sec3Math.getId()), result.getSelectedContactId());
+        assertEquals(5, model.getAddressBook().getPersonList().size());
     }
 
     @Test
