@@ -7,7 +7,7 @@ import static java.util.Objects.requireNonNull;
  */
 final class StudentDetailValidator {
 
-    private static final String ALLOWED_CHARACTERS_REGEX = "[\\p{L}\\p{N} .+()-]*";
+    private static final String ALLOWED_CHARACTERS_REGEX = "[\\p{L}\\p{M}\\p{N} .+()-]*";
 
     private StudentDetailValidator() {
     }
