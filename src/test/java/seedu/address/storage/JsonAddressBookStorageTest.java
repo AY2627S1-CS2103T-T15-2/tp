@@ -76,6 +76,35 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void read_trailingContent_rejectsAndPreservesFile() throws Exception {
+        Path filePath = testFolder.resolve("contacts.json");
+        String validData = JsonUtil.toJsonString(new JsonSerializableAddressBook(getTypicalAddressBook()));
+        for (String suffix : new String[]{" CORRUPTED CONTENT", " {}", " []", " null", " 42", " true", " \"extra\""}) {
+            String invalidData = validData + suffix;
+            Files.writeString(filePath, invalidData);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertTrue(storage.isDataFileLoadFailed());
+            assertThrows(IOException.class, () -> storage.saveAddressBook(new AddressBook()));
+            assertEquals(invalidData, Files.readString(filePath));
+        }
+    }
+
+    @Test
+    public void read_trailingWhitespace_loadsContacts() throws Exception {
+        Path filePath = testFolder.resolve("contacts.json");
+        AddressBook original = getTypicalAddressBook();
+        String validData = JsonUtil.toJsonString(new JsonSerializableAddressBook(original)) + " \n\t\r\n";
+        Files.writeString(filePath, validData);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        assertEquals(original, new AddressBook(storage.readAddressBook().orElseThrow()));
+        assertFalse(storage.isDataFileLoadFailed());
+        assertEquals(validData, Files.readString(filePath));
+    }
+
+    @Test
     public void read_nullRootOrPerson_rejectsInvalidData() throws Exception {
         Path filePath = testFolder.resolve("contacts.json");
         for (String invalidData : new String[]{"null", "{\"persons\":[null]}"}) {
