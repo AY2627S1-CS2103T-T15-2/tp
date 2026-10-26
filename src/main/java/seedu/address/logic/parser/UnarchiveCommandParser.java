@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.UnarchiveCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -20,7 +21,7 @@ public class UnarchiveCommandParser implements Parser<UnarchiveCommand> {
             Index index = ParserUtil.parseIndex(args);
             return new UnarchiveCommand(index);
         } catch (ParseException pe) {
-            throw new ParseException(UnarchiveCommand.MESSAGE_INVALID_INDEX, pe);
+            throw new ParseException(Messages.MESSAGE_INVALID_CONTACT_INDEX, pe);
         }
     }
 

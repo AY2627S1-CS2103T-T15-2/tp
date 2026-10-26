@@ -84,7 +84,7 @@ public class DeleteFormerStudentPersistenceTest {
         AddressBook originalContacts = new AddressBook(model.getAddressBook());
         String originalFile = Files.readString(file);
 
-        assertThrows(CommandException.class, String.format(DeleteCommand.MESSAGE_CONTACT_NOT_FOUND, 2), () ->
+        assertThrows(CommandException.class, String.format(Messages.MESSAGE_CONTACT_NOT_FOUND, 2), () ->
                 logic.execute("delete 2"));
 
         assertEquals(originalContacts, model.getAddressBook());

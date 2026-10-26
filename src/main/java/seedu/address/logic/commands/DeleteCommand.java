@@ -11,6 +11,7 @@ import java.util.stream.IntStream;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.ContactId;
@@ -35,14 +36,11 @@ public class DeleteCommand extends Command {
     public static final String MESSAGE_CONTACT_SUMMARY = "%1$s [%2$s]";
     public static final String MESSAGE_DELETE_CONTACT_SUCCESS = "Deleted contact: " + MESSAGE_CONTACT_SUMMARY + ".";
     public static final String MESSAGE_DELETE_CONTACTS_SUCCESS = "Deleted %1$d contacts:\n%2$s.";
-    public static final String MESSAGE_INVALID_INDEX =
-            "The contact index must be a positive integer shown in the list.";
     public static final String MESSAGE_DUPLICATE_INDEX = "Each contact index may appear only once.";
     public static final String MESSAGE_INVALID_TARGET = "Use delete INDEX [INDEX...] or delete n/NAME.";
     public static final String MESSAGE_NAME_NOT_FOUND = "No displayed contact matches name: %s.";
     public static final String MESSAGE_AMBIGUOUS_NAME =
             "Multiple displayed contacts match name: %s. Use delete INDEX to choose a contact:\n%s";
-    public static final String MESSAGE_CONTACT_NOT_FOUND = "No contact exists at index %1$d.";
     public static final String MESSAGE_REMOVED_RELATIONSHIP = " Removed 1 student-guardian relationship.";
     public static final String MESSAGE_REMOVED_RELATIONSHIPS = " Removed %d student-guardian relationships.";
 
@@ -87,7 +85,8 @@ public class DeleteCommand extends Command {
 
         for (Index targetIndex : targetIndexes) {
             if (targetIndex.getZeroBased() >= lastShownList.size()) {
-                throw new CommandException(String.format(MESSAGE_CONTACT_NOT_FOUND, targetIndex.getOneBased()));
+                throw new CommandException(String.format(Messages.MESSAGE_CONTACT_NOT_FOUND,
+                        targetIndex.getOneBased()));
             }
         }
 

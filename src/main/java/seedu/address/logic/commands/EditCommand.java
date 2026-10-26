@@ -16,6 +16,7 @@ import java.util.Optional;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.CollectionUtil;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Email;
@@ -60,9 +61,6 @@ public class EditCommand extends Command {
     public static final String MESSAGE_REPEATED_PARAMETER = "Each of " + PREFIX_NAME + ", " + PREFIX_PHONE
             + ", " + PREFIX_EMAIL + ", " + PREFIX_LEVEL + ", and " + PREFIX_SUBJECT
             + " may appear only once.";
-    public static final String MESSAGE_INVALID_INDEX =
-            "The contact index must be a positive integer shown in the list.";
-    public static final String MESSAGE_CONTACT_NOT_FOUND = "No contact exists at index %1$d.";
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Updated contact: %1$s [%2$s].";
     public static final String MESSAGE_NOT_EDITED = "At least one of " + PREFIX_NAME + ", " + PREFIX_PHONE
             + ", " + PREFIX_EMAIL + ", " + PREFIX_LEVEL + ", or " + PREFIX_SUBJECT + " must be provided.";
@@ -103,7 +101,7 @@ public class EditCommand extends Command {
         List<Person> lastShownList = model.getFilteredPersonList();
 
         if (index.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(String.format(MESSAGE_CONTACT_NOT_FOUND, index.getOneBased()));
+            throw new CommandException(String.format(Messages.MESSAGE_CONTACT_NOT_FOUND, index.getOneBased()));
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());

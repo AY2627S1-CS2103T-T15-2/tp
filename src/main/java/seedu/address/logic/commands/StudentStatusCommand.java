@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
@@ -18,10 +19,6 @@ import seedu.address.model.person.StudentStatus;
  * Changes the status of the student identified by its displayed index.
  */
 public abstract class StudentStatusCommand extends Command {
-
-    public static final String MESSAGE_INVALID_INDEX =
-            "The contact index must be a positive integer shown in the list.";
-    public static final String MESSAGE_CONTACT_NOT_FOUND = "No contact exists at index %1$d.";
 
     private static final Logger logger = LogsCenter.getLogger(StudentStatusCommand.class);
 
@@ -58,7 +55,7 @@ public abstract class StudentStatusCommand extends Command {
         List<Person> lastShownList = model.getFilteredPersonList();
 
         if (targetIndex.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(String.format(MESSAGE_CONTACT_NOT_FOUND, targetIndex.getOneBased()));
+            throw new CommandException(String.format(Messages.MESSAGE_CONTACT_NOT_FOUND, targetIndex.getOneBased()));
         }
 
         Person target = lastShownList.get(targetIndex.getZeroBased());

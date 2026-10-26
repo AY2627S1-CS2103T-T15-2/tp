@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.model.person.Name;
 
@@ -55,14 +56,14 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_invalidIndex_throwsParseException() {
-        assertParseFailure(parser, "a", DeleteCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "1 a", DeleteCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "1 0", DeleteCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "0", DeleteCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "-1", DeleteCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "1.5", DeleteCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "99999999999", DeleteCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "", DeleteCommand.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "a", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "1 a", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "1 0", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "0", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "-1", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "1.5", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "99999999999", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "", Messages.MESSAGE_INVALID_CONTACT_INDEX);
     }
 
     @Test
