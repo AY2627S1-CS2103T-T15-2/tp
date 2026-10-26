@@ -48,6 +48,9 @@ public class PersonDisplayOrderComparator implements Comparator<Person> {
      * Returns the rank of the role of {@code person}, where a guardian ranks before a student.
      */
     private static int toRoleRank(Person person) {
-        return person.getRole() == Role.GUARDIAN ? 0 : 1;
+        return switch (person.getRole()) {
+            case GUARDIAN -> 0;
+            case STUDENT -> 1;
+        };
     }
 }
