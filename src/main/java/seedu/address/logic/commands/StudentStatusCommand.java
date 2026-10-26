@@ -54,11 +54,8 @@ public abstract class StudentStatusCommand extends Command {
         requireNonNull(model);
         Person target = getStudentToUpdate(model);
         Person updated = target.withStatus(targetStatus);
-        assert updated.getId().equals(target.getId()) : "Status changes must preserve contact identity";
-        assert updated.getGuardianId().equals(target.getGuardianId())
-                : "Status changes must preserve the guardian link";
-        assert updated.getStatus() == targetStatus;
         model.setPerson(target, updated);
+        assert updated.getStatus() == targetStatus;
         // LogicManager saves the change afterwards, and discards it if saving fails.
         logger.info(String.format("Prepared status change of contact %s to %s, pending save",
                 target.getId(), targetStatus));

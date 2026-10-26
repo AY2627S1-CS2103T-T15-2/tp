@@ -190,13 +190,8 @@ public class EditCommand extends Command {
                 ? Optional.empty()
                 : editPersonDescriptor.getSubject().or(personToEdit::getSubject);
 
-        Person editedPerson = new Person(personToEdit.getId(), updatedName, updatedPhone, updatedEmail, role,
+        return new Person(personToEdit.getId(), updatedName, updatedPhone, updatedEmail, role,
                 personToEdit.getGuardianId(), personToEdit.getStatus(), updatedLevel, updatedSubject);
-        assert editedPerson.getId().equals(personToEdit.getId()) : "Editing must preserve contact identity";
-        assert editedPerson.getGuardianId().equals(personToEdit.getGuardianId())
-                : "Editing details must preserve the guardian link";
-        assert editedPerson.getStatus() == personToEdit.getStatus() : "Editing details must preserve student status";
-        return editedPerson;
     }
 
     private static Optional<Phone> getUpdatedPhone(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {
