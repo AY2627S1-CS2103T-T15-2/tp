@@ -72,6 +72,34 @@ public class ListCommandParserTest {
     }
 
     @Test
+    public void parse_validCombinations_coversEveryPairOfValues() {
+        // Heuristic: all-pairs. The values are r/ (none, student, guardian), st/ (none, active, former, all),
+        // lv/ (none, given) and sub/ (none, given). These cases cover every valid pair of values at least once,
+        // without testing all 3 x 4 x 2 x 2 combinations.
+        assertParseSuccess(parser, "", new ListCommand(filterOf(null, StudentStatus.ACTIVE, null, null)));
+        assertParseSuccess(parser, " st/active lv/Sec 3",
+                new ListCommand(filterOf(null, StudentStatus.ACTIVE, "Sec 3", null)));
+        assertParseSuccess(parser, " st/former sub/Math",
+                new ListCommand(filterOf(null, StudentStatus.FORMER, null, "Math")));
+        assertParseSuccess(parser, " st/all lv/Sec 3 sub/Math",
+                new ListCommand(filterOf(null, null, "Sec 3", "Math")));
+        assertParseSuccess(parser, " r/student lv/Sec 3 sub/Math",
+                new ListCommand(filterOf(Role.STUDENT, StudentStatus.ACTIVE, "Sec 3", "Math")));
+        assertParseSuccess(parser, " r/student st/active sub/Math",
+                new ListCommand(filterOf(Role.STUDENT, StudentStatus.ACTIVE, null, "Math")));
+        assertParseSuccess(parser, " r/student st/former lv/Sec 3",
+                new ListCommand(filterOf(Role.STUDENT, StudentStatus.FORMER, "Sec 3", null)));
+        assertParseSuccess(parser, " r/student st/all",
+                new ListCommand(filterOf(Role.STUDENT, null, null, null)));
+        assertParseSuccess(parser, " r/guardian",
+                new ListCommand(filterOf(Role.GUARDIAN, StudentStatus.ACTIVE, null, null)));
+        assertParseSuccess(parser, " r/guardian st/active",
+                new ListCommand(filterOf(Role.GUARDIAN, StudentStatus.ACTIVE, null, null)));
+        assertParseSuccess(parser, " r/guardian st/all",
+                new ListCommand(filterOf(Role.GUARDIAN, null, null, null)));
+    }
+
+    @Test
     public void parse_allParameters_returnsListCommandWithAll() {
         // EP: all four parameters together, in any order
         assertParseSuccess(parser, " r/student st/former lv/JC1 sub/Physics",
