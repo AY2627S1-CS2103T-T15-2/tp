@@ -393,12 +393,22 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_guardianWithLocalEmailPunctuation_success() {
+        for (String email : List.of("mei__tan@example.com", "mei+_tan@example.com", "mei++__tan@example.com",
+                "_mei-@example.com")) {
+            Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian")
+                    .withoutPhone().withEmail(email).build();
+            assertParseSuccess(parser, " r/guardian n/Mei Tan e/" + email, new AddCommand(guardian));
+        }
+    }
+
+    @Test
     public void parse_emailInvalidValues_reportsSpecificErrors() {
         String[][] invalidEmailCases = {
             {"@example.com", "Email local part cannot be empty."},
             {"alex@", "Email domain cannot be empty."},
             {"alex @example.com", "Email address cannot contain whitespace."},
-            {"alex-@example.com", Email.MESSAGE_LOCAL_PUNCTUATION},
+            {"alex.@example.com", Email.MESSAGE_LOCAL_PUNCTUATION},
             {"alex@example", "Email domain must contain at least two labels separated by a period."},
             {"alex@.com", "Email domain labels cannot be empty."},
             {"alex@example..com", "Email domain labels cannot be empty."},

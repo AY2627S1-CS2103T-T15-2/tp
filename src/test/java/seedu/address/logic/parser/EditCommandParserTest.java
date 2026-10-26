@@ -37,6 +37,15 @@ public class EditCommandParserTest {
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
+    public void parse_localEmailPunctuation_success() {
+        for (String email : List.of("mei__tan@example.com", "mei+_tan@example.com", "mei++__tan@example.com",
+                "_mei-@example.com")) {
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withEmail(email).build();
+            assertParseSuccess(parser, "1 e/" + email, new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+    }
+
+    @Test
     public void parse_emailExceedingMaximumLength_reportsLengthError() {
         String email = "a".repeat(64) + "@" + "b".repeat(63)
                 + "." + "c".repeat(63) + "." + "d".repeat(62);

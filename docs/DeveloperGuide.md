@@ -523,8 +523,9 @@ invalid strings and guardian records containing either field are rejected during
 Email validation uses iterative character scans for the local part and domain labels, avoiding recursive regex
 matching on long inputs. `Email.isValidEmail` and the parser share the same validation rules and specific errors.
 For each component, unsupported characters are reported separately from punctuation-placement errors. Only ASCII
-letters and digits are accepted; allowed punctuation must appear singly between letters or digits. The domain
-permits hyphens only, while the local part also permits periods, underscores, percent signs and plus signs.
+letters and digits are accepted. The domain permits hyphens only, appearing singly between letters or digits.
+The local part also permits periods, underscores, percent signs and plus signs. Local-part periods cannot appear
+at either end or consecutively; the other supported punctuation can appear consecutively and at either end.
 An email is limited to 254 characters, with at most 64 in the local part and 63 in each domain label.
 The parser trims surrounding whitespace before checking these limits and reports
 `Email address cannot exceed 254 characters.` for longer values. The same limits apply to saved email values;

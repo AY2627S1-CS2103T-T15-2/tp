@@ -32,6 +32,25 @@ public class JsonAddressBookStorageTest {
     public Path testFolder;
 
     @Test
+    public void saveAndReadAddressBook_localEmailPunctuation_preservesValues() throws Exception {
+        Path filePath = testFolder.resolve("email-punctuation.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        for (String email : java.util.List.of("Mei__Tan@Example.COM", "mei+_tan@example.com",
+                "mei++__tan@example.com", "_mei-@example.com", "mei.tan@example.com")) {
+            AddressBook original = new AddressBook();
+            Person guardian = new PersonBuilder().withRole("guardian").withoutPhone().withEmail(email).build();
+            original.addPerson(guardian);
+
+            storage.saveAddressBook(original);
+            ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+
+            assertEquals(original, new AddressBook(loaded));
+            assertEquals(email, loaded.getPersonList().getFirst().getEmail().orElseThrow().value);
+            assertEquals(guardian.getId(), loaded.getPersonList().getFirst().getId());
+        }
+    }
+
+    @Test
     public void readAddressBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> readAddressBook(null));
     }

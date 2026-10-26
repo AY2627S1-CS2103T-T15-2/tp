@@ -17,8 +17,8 @@ public class EmailTest {
             assertEquals(Email.MESSAGE_LOCAL_CHARACTERS,
                     Email.getValidationErrorMessage(local + "@example.com"));
         }
-        for (String local : List.of(".alex", "alex-", "alex..tan", "alex+_tan", "alex%+tan")) {
-            assertEquals("Email local-part punctuation (., _, %, +, -) must appear singly between letters or digits.",
+        for (String local : List.of(".alex", "alex.", "alex..tan", ".", "..", "_..+")) {
+            assertEquals("Email local part cannot start or end with a period, or contain consecutive periods.",
                     Email.getValidationErrorMessage(local + "@example.com"));
         }
         for (String domain : List.of("exam_ple.com", "example.c_m", "exämple.com", "exam--ple!.com")) {
@@ -28,6 +28,16 @@ public class EmailTest {
                 "example.com-", "example.co--m")) {
             assertEquals("Email domain hyphens must appear singly between letters or digits.",
                     Email.getValidationErrorMessage("alex@" + domain));
+        }
+    }
+
+    @Test
+    public void constructor_supportedLocalPunctuation_preservesEmail() {
+        for (String local : List.of("mei__tan", "mei+_tan", "mei++__tan", "mei%+tan", "_mei", "mei_",
+                "+mei", "mei+", "%mei", "mei%", "-mei", "mei-", "++__", "_._", "mei._tan", "mei_.tan")) {
+            String email = local + "@example.com";
+            assertTrue(Email.isValidEmail(email), email);
+            assertEquals(email, new Email(email).value);
         }
     }
 
@@ -71,8 +81,8 @@ public class EmailTest {
         assertFalse(Email.isValidEmail("peterjack@example.com ")); // trailing space
         assertFalse(Email.isValidEmail("peterjack@@example.com")); // double '@' symbol
         assertFalse(Email.isValidEmail("peter@jack@example.com")); // '@' symbol in local part
-        assertFalse(Email.isValidEmail("-peterjack@example.com")); // local part starts with a special character
-        assertFalse(Email.isValidEmail("peterjack-@example.com")); // local part ends with a special character
+        assertTrue(Email.isValidEmail("-peterjack@example.com")); // local part starts with a hyphen
+        assertTrue(Email.isValidEmail("peterjack-@example.com")); // local part ends with a hyphen
         assertFalse(Email.isValidEmail("peter..jack@example.com")); // consecutive special characters
         assertFalse(Email.isValidEmail("peterjack@example@com")); // '@' symbol in domain name
         assertFalse(Email.isValidEmail("peterjack@.example.com")); // domain name starts with a period
