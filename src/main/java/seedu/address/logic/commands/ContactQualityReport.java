@@ -76,10 +76,10 @@ final class ContactQualityReport {
             for (int second = first + 1; second < contacts.size(); second++) {
                 Person candidate = contacts.get(first);
                 Person other = contacts.get(second);
-                DuplicateWarning warning = DuplicateWarning.classify(candidate, List.of(other));
-                if (warning != DuplicateWarning.NONE) {
+                String reason = duplicateReason(DuplicateWarning.classify(candidate, List.of(other)));
+                if (reason != null) {
                     suggestions.add(describe(first) + " and " + describe(second) + ": "
-                            + duplicateReason(warning) + ".");
+                            + reason + ".");
                 }
             }
         }
@@ -91,7 +91,7 @@ final class ContactQualityReport {
             case PHONE -> "same role and name; phone matches ignoring spaces and hyphens";
             case EMAIL -> "same role and name; email matches ignoring letter case";
             case GENERAL -> "same role and name; both lack a phone number or both lack an email address";
-            case NONE -> throw new IllegalArgumentException("A duplicate reason requires a warning");
+            case NONE -> null;
         };
     }
 

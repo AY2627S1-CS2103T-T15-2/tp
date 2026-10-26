@@ -129,8 +129,45 @@ public class CheckCommandTest {
     @Test
     public void equals_sameSection_comparesCommandConfiguration() {
         CheckCommand command = new CheckCommand(CheckCommand.Section.ALL);
+        assertTrue(command.equals(command));
         assertEquals(command, new CheckCommand(CheckCommand.Section.ALL));
         assertFalse(command.equals(new CheckCommand(CheckCommand.Section.DETAILS)));
+        assertFalse(command.equals("check"));
         assertFalse(command.equals(null));
+    }
+
+    @Test
+    public void execute_detailsOnly_reportsMissingFieldsIndependently() {
+        Model model = new ModelManager();
+        Person missingLevel = new PersonBuilder().withName("Alex Tan").withoutPhone()
+                .withSubject("Math").build();
+        Person missingSubject = new PersonBuilder().withName("Bea Lim").withoutEmail()
+                .withLevel("Sec 3").build();
+        Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+        model.addPerson(missingLevel);
+        model.addPerson(missingSubject);
+        model.addPerson(guardian);
+
+        String result = report(model, CheckCommand.Section.DETAILS);
+
+        assertTrue(result.contains("1: Alex Tan [Student]: consider adding level."));
+        assertTrue(result.contains("2: Bea Lim [Student]: consider adding subject."));
+        assertFalse(result.contains("phone or email"));
+        assertFalse(result.contains("Mei Tan"));
+        assertFalse(result.contains("Guardian links"));
+        assertFalse(result.contains("Possible duplicates"));
+    }
+
+    @Test
+    public void execute_guardiansOnly_skipsOtherChecks() {
+        Model model = new ModelManager();
+        model.addPerson(new PersonBuilder().withName("Alex Tan").build());
+        model.addPerson(new PersonBuilder().withName("Mei Tan").withRole("guardian").build());
+
+        String result = report(model, CheckCommand.Section.GUARDIANS);
+
+        assertTrue(result.contains("Guardian links (1)"));
+        assertFalse(result.contains("Contact and student details"));
+        assertFalse(result.contains("Possible duplicates"));
     }
 }
