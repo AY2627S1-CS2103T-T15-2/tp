@@ -23,6 +23,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.model.person.Email;
@@ -57,17 +58,17 @@ public class EditCommandParserTest {
     @Test
     public void parse_invalidIndex_failure() {
         // negative index
-        assertParseFailure(parser, "-5" + NAME_DESC_AMY, EditCommand.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "-5" + NAME_DESC_AMY, Messages.MESSAGE_INVALID_CONTACT_INDEX);
 
         // zero index
-        assertParseFailure(parser, "0" + NAME_DESC_AMY, EditCommand.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "0" + NAME_DESC_AMY, Messages.MESSAGE_INVALID_CONTACT_INDEX);
 
         // words and decimals
-        assertParseFailure(parser, "abc" + NAME_DESC_AMY, EditCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "1.5" + NAME_DESC_AMY, EditCommand.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "abc" + NAME_DESC_AMY, Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "1.5" + NAME_DESC_AMY, Messages.MESSAGE_INVALID_CONTACT_INDEX);
 
         // index too large for an int
-        assertParseFailure(parser, "99999999999" + NAME_DESC_AMY, EditCommand.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "99999999999" + NAME_DESC_AMY, Messages.MESSAGE_INVALID_CONTACT_INDEX);
     }
 
     @Test

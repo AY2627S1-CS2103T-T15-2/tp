@@ -16,6 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -99,7 +100,7 @@ public class ArchiveCommandTest {
         Index outOfBounds = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
 
         assertCommandFailure(new ArchiveCommand(outOfBounds), model,
-                String.format(ArchiveCommand.MESSAGE_CONTACT_NOT_FOUND, outOfBounds.getOneBased()));
+                String.format(Messages.MESSAGE_CONTACT_NOT_FOUND, outOfBounds.getOneBased()));
     }
 
     @Test

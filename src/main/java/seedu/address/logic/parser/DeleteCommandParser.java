@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -31,7 +32,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             return new DeleteCommand(ParserUtil.parseName(arguments.getValue(CliSyntax.PREFIX_NAME).get()));
         }
         if (trimmedArgs.isEmpty()) {
-            throw new ParseException(DeleteCommand.MESSAGE_INVALID_INDEX);
+            throw new ParseException(Messages.MESSAGE_INVALID_CONTACT_INDEX);
         }
 
         List<Index> indexes = new ArrayList<>();
@@ -41,7 +42,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             try {
                 index = ParserUtil.parseIndex(indexText);
             } catch (ParseException pe) {
-                throw new ParseException(DeleteCommand.MESSAGE_INVALID_INDEX, pe);
+                throw new ParseException(Messages.MESSAGE_INVALID_CONTACT_INDEX, pe);
             }
             if (!seenIndexes.add(index.getZeroBased())) {
                 throw new ParseException(DeleteCommand.MESSAGE_DUPLICATE_INDEX);

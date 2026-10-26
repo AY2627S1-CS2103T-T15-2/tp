@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -138,7 +139,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         try {
             return ParserUtil.parseIndex(preamble);
         } catch (ParseException pe) {
-            throw new ParseException(EditCommand.MESSAGE_INVALID_INDEX, pe);
+            throw new ParseException(Messages.MESSAGE_INVALID_CONTACT_INDEX, pe);
         }
     }
 }

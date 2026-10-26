@@ -139,7 +139,7 @@ public class RelationshipLifecyclePersistenceTest {
         List<Person> originalContacts = List.copyOf(model.getAddressBook().getPersonList());
         String originalFile = Files.readString(file);
 
-        assertThrows(CommandException.class, String.format(DeleteCommand.MESSAGE_CONTACT_NOT_FOUND, 99), () ->
+        assertThrows(CommandException.class, String.format(Messages.MESSAGE_CONTACT_NOT_FOUND, 99), () ->
                 createLogic(model, storage).execute("delete 2 99"));
 
         assertEquals(originalContacts, List.copyOf(model.getAddressBook().getPersonList()));

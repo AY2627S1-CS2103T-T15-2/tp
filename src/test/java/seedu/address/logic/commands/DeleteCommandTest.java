@@ -16,6 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -205,7 +206,7 @@ public class DeleteCommandTest {
         DeleteCommand command = new DeleteCommand(List.of(INDEX_FIRST_PERSON, outOfRange));
 
         assertCommandFailure(command, model,
-                String.format(DeleteCommand.MESSAGE_CONTACT_NOT_FOUND, outOfRange.getOneBased()));
+                String.format(Messages.MESSAGE_CONTACT_NOT_FOUND, outOfRange.getOneBased()));
         assertEquals(originalPersons, List.copyOf(model.getAddressBook().getPersonList()));
     }
 
@@ -251,7 +252,7 @@ public class DeleteCommandTest {
         DeleteCommand deleteCommand = new DeleteCommand(outOfBoundIndex);
 
         assertCommandFailure(deleteCommand, model,
-                String.format(DeleteCommand.MESSAGE_CONTACT_NOT_FOUND, outOfBoundIndex.getOneBased()));
+                String.format(Messages.MESSAGE_CONTACT_NOT_FOUND, outOfBoundIndex.getOneBased()));
     }
 
     @Test
@@ -282,7 +283,7 @@ public class DeleteCommandTest {
         DeleteCommand deleteCommand = new DeleteCommand(outOfBoundIndex);
 
         assertCommandFailure(deleteCommand, model,
-                String.format(DeleteCommand.MESSAGE_CONTACT_NOT_FOUND, outOfBoundIndex.getOneBased()));
+                String.format(Messages.MESSAGE_CONTACT_NOT_FOUND, outOfBoundIndex.getOneBased()));
     }
 
     @Test

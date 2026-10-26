@@ -6,6 +6,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.ArchiveCommand;
 
 public class ArchiveCommandParserTest {
@@ -20,11 +21,11 @@ public class ArchiveCommandParserTest {
 
     @Test
     public void parse_invalidArgs_throwsParseException() {
-        assertParseFailure(parser, "", ArchiveCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "a", ArchiveCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "0", ArchiveCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "-1", ArchiveCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "1 2", ArchiveCommand.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, "1 r/student", ArchiveCommand.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "a", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "0", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "-1", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "1 2", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "1 r/student", Messages.MESSAGE_INVALID_CONTACT_INDEX);
     }
 }
