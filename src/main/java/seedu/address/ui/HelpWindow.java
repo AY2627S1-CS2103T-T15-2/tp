@@ -16,6 +16,7 @@ import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.ArchiveCommand;
+import seedu.address.logic.commands.CheckCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
@@ -45,6 +46,7 @@ public class HelpWindow extends UiPart<Stage> {
             new CommandHelp("Edit contact", EditCommand.COMMAND_FORMAT),
             new CommandHelp("Delete contacts", DeleteCommand.COMMAND_FORMAT),
             new CommandHelp("Undo latest deletion", UndoCommand.COMMAND_WORD),
+            new CommandHelp("Check contact data", CheckCommand.COMMAND_FORMAT),
             new CommandHelp("View contact", ViewCommand.COMMAND_FORMAT),
             new CommandHelp("Find by name", FindCommand.COMMAND_FORMAT),
             new CommandHelp("Link guardian", LinkCommand.MESSAGE_USAGE),

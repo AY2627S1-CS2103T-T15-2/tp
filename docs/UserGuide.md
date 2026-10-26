@@ -539,6 +539,29 @@ Format: `undo`
 
 Example: `delete 1 3`, followed by `undo`, restores both deleted contacts and their original relationships.
 
+### Reviewing contact data: `check`
+
+Format: `check [guardians|details|duplicates]`
+
+Checks the currently displayed contacts and reports suggestions without changing data, saving a file or resetting
+the view. Running this command does not invalidate deletion undo. Run `list`, `find NAME` or `list st/former`
+first to choose the contacts to inspect.
+
+* `check` includes all three sections; `check guardians` reports students without linked guardians.
+* `check details` reports missing level or subject for students and missing contact methods when both phone and
+  email are absent. Guardians are not expected to have student details.
+* `check duplicates` reports pairs using the same warning rules as `add` and `edit`: the same name and role plus
+  matching phone numbers, matching emails, or a shared absent phone/email field. Phone comparison ignores spaces
+  and hyphens; email comparison ignores letter case. Different roles are not treated as duplicates.
+* Duplicate comparison considers only the displayed contacts. A guardian hidden by a filter is still recognized
+  through the student's saved link and is not reported as missing.
+* Results use the current displayed indexes and label former students. Missing optional values and duplicate
+  warnings are suggestions, not proof of incorrect data. Inspect contacts before deciding to edit, link or delete.
+* Section names ignore case. Unknown sections or multiple sections are rejected with
+  `Use check [guardians|details|duplicates].` An empty view reports that no displayed contacts can be checked.
+
+Example: run `find Tan`, then `check duplicates` to review matching displayed pairs.
+
 ### Clearing all entries: `clear`
 
 Clears all contacts from TutorRoster.
@@ -594,6 +617,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
 **Clear**  | `clear`
+**Check data** | `check [guardians|details|duplicates]`<br> e.g., `check`, `check duplicates`
 **Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
