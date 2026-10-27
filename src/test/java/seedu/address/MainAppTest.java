@@ -5,10 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -71,6 +77,81 @@ public class MainAppTest {
         reloaded.init();
         assertEquals(app.model.getAddressBook(), reloaded.model.getAddressBook());
         assertEquals(guiSettings, reloaded.logic.getGuiSettings());
+    }
+
+    @Test
+    public void init_packagedJarFromDifferentWorkingDirectories_reusesContactsAndPreferences() throws Exception {
+        Path jarDirectory = Files.createDirectories(temporaryFolder.resolve("Tutor Roster \u5b66\u751f"));
+        Path jar = Files.copy(Path.of(System.getProperty("tutorroster.test.jar")),
+                jarDirectory.resolve("tutorroster.jar"));
+        Path launcher = createPackagedLauncher(jar);
+        Path firstWorkingDirectory = Files.createDirectory(temporaryFolder.resolve("first launch"));
+        Path secondWorkingDirectory = Files.createDirectory(temporaryFolder.resolve("second launch"));
+        Path contactsFile = jarDirectory.resolve("data").resolve("addressbook.json");
+        JsonAddressBookStorage contactsStorage = new JsonAddressBookStorage(contactsFile);
+        JsonUserPrefsStorage preferencesStorage = new JsonUserPrefsStorage(jarDirectory.resolve("preferences.json"));
+
+        runPackagedApp(launcher, firstWorkingDirectory, "create");
+
+        Person originalContact = contactsStorage.readAddressBook().orElseThrow().getPersonList().getFirst();
+        assertEquals("Alex Tan", originalContact.getName().fullName);
+        assertEquals(new GuiSettings(800, 600, 10, 20),
+                preferencesStorage.readUserPrefs().orElseThrow().getGuiSettings());
+        assertNoApplicationData(firstWorkingDirectory);
+
+        runPackagedApp(launcher, secondWorkingDirectory, "reload");
+
+        List<Person> reloadedContacts = contactsStorage.readAddressBook().orElseThrow().getPersonList();
+        assertEquals(List.of("Alex Tan", "Ben Lim"),
+                reloadedContacts.stream().map(person -> person.getName().fullName).toList());
+        assertEquals(originalContact.getId(), reloadedContacts.getFirst().getId());
+        assertEquals(new GuiSettings(900, 650, 30, 40),
+                preferencesStorage.readUserPrefs().orElseThrow().getGuiSettings());
+        assertNoApplicationData(firstWorkingDirectory);
+        assertNoApplicationData(secondWorkingDirectory);
+    }
+
+    /** Keeps the application JAR's Unicode path out of Windows' native command-line encoding. */
+    private Path createPackagedLauncher(Path applicationJar) throws Exception {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, MainAppJarTestLauncher.class.getName());
+        manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, applicationJar.toUri().toASCIIString());
+        String launcherClass = MainAppJarTestLauncher.class.getName().replace('.', '/') + ".class";
+        Path launcher = temporaryFolder.resolve("launcher.jar");
+        try (JarOutputStream jar = new JarOutputStream(Files.newOutputStream(launcher), manifest);
+                InputStream classFile = MainAppJarTestLauncher.class.getResourceAsStream("/" + launcherClass)) {
+            jar.putNextEntry(new JarEntry(launcherClass));
+            classFile.transferTo(jar);
+        }
+        return launcher;
+    }
+
+    /** Loads production classes only from the JAR, using a test-only launcher without opening a GUI. */
+    private void runPackagedApp(Path launcher, Path workingDirectory, String operation) throws Exception {
+        String javaExecutable = System.getProperty("os.name").startsWith("Windows") ? "java.exe" : "java";
+        Path java = Path.of(System.getProperty("java.home"), "bin", javaExecutable);
+        Path outputFile = workingDirectory.resolve("packaged-app.log");
+        Process process = new ProcessBuilder(java.toString(), "-ea", "-jar",
+                workingDirectory.relativize(launcher).toString(), operation)
+                .directory(workingDirectory.toFile())
+                .redirectErrorStream(true)
+                .redirectOutput(outputFile.toFile())
+                .start();
+        try {
+            assertTrue(process.waitFor(30, TimeUnit.SECONDS), "Packaged application did not finish: " + outputFile);
+            assertEquals(0, process.exitValue(), Files.readString(outputFile));
+        } finally {
+            if (process.isAlive()) {
+                process.destroyForcibly();
+                process.waitFor(5, TimeUnit.SECONDS);
+            }
+        }
+    }
+
+    private void assertNoApplicationData(Path workingDirectory) {
+        assertFalse(Files.exists(workingDirectory.resolve("data")));
+        assertFalse(Files.exists(workingDirectory.resolve("preferences.json")));
     }
 
     private MainApp createAppAt(Path jar) {
