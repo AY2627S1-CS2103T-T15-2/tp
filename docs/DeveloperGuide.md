@@ -1028,6 +1028,40 @@ testers are expected to do more *exploratory* testing.
    1. Relaunch the app by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
 
+### Viewing help
+
+Prerequisites: launch TutorRoster with the main window visible and the Help window closed. On macOS, leave
+fullscreen mode before testing secondary windows. These tests do not require any saved contacts.
+
+1. Test case: enter `help` in the command box and press Enter.<br>
+   Expected: One Help window opens with the command reference, User Guide URL and **Copy URL** button.
+   The main window reports `Opened help window.`
+
+1. Test case: close the Help window, focus the main window's command box and press F1. Close the Help window
+   again, then select **Help > Help** in the main window's menu.<br>
+   Expected: Each action opens the Help window. Closing it leaves the main window open and usable.
+
+1. Test case: scroll through the command reference and compare its entries with the
+   [UG command summary](UserGuide.md#command-summary).<br>
+   Expected: Each supported command appears once. In particular, `check` is present and the `list` format includes
+   role, status, level and subject parameters.
+
+1. Test case: resize the Help window to its minimum size, then scroll to the bottom and back to the top.<br>
+   Expected: The reference remains readable, long command formats wrap, and the final **Exit app** entry is
+   reachable. The User Guide URL and **Copy URL** button remain accessible at the top.
+
+1. Test case: click **Copy URL**, then paste into a plain-text editor.<br>
+   Expected: The pasted text is exactly `https://ay2627s1-cs2103t-t15-2.github.io/tp/UserGuide.html`.
+   The button copies the URL without opening a browser.
+
+1. Test case: with the Help window still open and not minimized, return to the main window and run `help` again.<br>
+   Expected: The existing Help window receives focus; no additional Help window is created. Close it and run
+   `help` once more to verify that it can be reopened. For minimized-window behavior, see the
+   [UG known issues](UserGuide.md#known-issues).
+
+1. Test case: leave the Help window open, return to the main window and run `exit`.<br>
+   Expected: Both windows close. Relaunch TutorRoster before continuing with the next section.
+
 ### Adding a contact
 
 Use a disposable application folder with an empty contact list. Run the following cases in order.
