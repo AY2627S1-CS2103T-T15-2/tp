@@ -169,6 +169,10 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+`MainApp` resolves `data/addressbook.json` and `preferences.json` relative to the running JAR's directory,
+using its code-source URI. This keeps both files independent of the terminal's working directory and handles
+paths containing spaces or non-English characters. Unpackaged IDE and Gradle runs use the working directory.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.

@@ -590,6 +590,13 @@ If saving fails, the command reports `Changes could not be saved. No changes wer
 
 TutorRoster data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
+Preferences are stored in `[JAR file location]/preferences.json`. Both locations are relative to the JAR's folder,
+regardless of the terminal's working directory.
+
+If an older version saved your files in a different working directory, close TutorRoster and back up those files.
+Copy the existing `data/addressbook.json` into the `data` subfolder beside the JAR, and copy `preferences.json`
+beside the JAR, before restarting. Check for existing files at the destination before replacing them.
+
 <box type="warning" seamless>
 
 **Caution:**

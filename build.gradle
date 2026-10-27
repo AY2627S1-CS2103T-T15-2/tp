@@ -29,6 +29,11 @@ run {
 }
 
 test {
+    dependsOn shadowJar
+    inputs.file(tasks.shadowJar.archiveFile)
+    doFirst {
+        systemProperty 'tutorroster.test.jar', tasks.shadowJar.archiveFile.get().asFile.absolutePath
+    }
     useJUnitPlatform()
     finalizedBy jacocoTestReport
 }
