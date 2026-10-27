@@ -198,8 +198,8 @@ public class RelationshipManagementTest {
         var filter = model.getPersonFilter();
         shouldFail[0] = true;
 
-        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE,
-                () -> logic.execute("unlink s/" + indexOf(model, student)));
+        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () ->
+                logic.execute("unlink s/" + indexOf(model, student)));
 
         assertEquals(saved, Files.readString(file));
         assertEquals(student, current(model, student));
@@ -215,16 +215,16 @@ public class RelationshipManagementTest {
         Model model = createModel();
         var filter = model.getPersonFilter();
         List<Person> contacts = List.copyOf(model.getAddressBook().getPersonList());
-        assertThrows(CommandException.class, ChildrenCommand.MESSAGE_INVALID_ROLE,
-                () -> new ChildrenCommand(Index.fromOneBased(indexOf(model, student))).execute(model));
-        assertThrows(CommandException.class, UnlinkCommand.MESSAGE_INVALID_ROLE,
-                () -> new UnlinkCommand(Index.fromOneBased(indexOf(model, guardian))).execute(model));
-        assertThrows(CommandException.class, String.format(ChildrenCommand.MESSAGE_NOT_FOUND, 99),
-                () -> new ChildrenCommand(Index.fromOneBased(99)).execute(model));
-        assertThrows(CommandException.class, String.format(UnlinkCommand.MESSAGE_NOT_FOUND, 99),
-                () -> new UnlinkCommand(Index.fromOneBased(99)).execute(model));
-        assertThrows(CommandException.class, String.format(UnlinkCommand.MESSAGE_NO_LINK, unrelated.getName()),
-                () -> new UnlinkCommand(Index.fromOneBased(indexOf(model, unrelated))).execute(model));
+        assertThrows(CommandException.class, ChildrenCommand.MESSAGE_INVALID_ROLE, () ->
+                new ChildrenCommand(Index.fromOneBased(indexOf(model, student))).execute(model));
+        assertThrows(CommandException.class, UnlinkCommand.MESSAGE_INVALID_ROLE, () ->
+                new UnlinkCommand(Index.fromOneBased(indexOf(model, guardian))).execute(model));
+        assertThrows(CommandException.class, String.format(ChildrenCommand.MESSAGE_NOT_FOUND, 99), () ->
+                new ChildrenCommand(Index.fromOneBased(99)).execute(model));
+        assertThrows(CommandException.class, String.format(UnlinkCommand.MESSAGE_NOT_FOUND, 99), () ->
+                new UnlinkCommand(Index.fromOneBased(99)).execute(model));
+        assertThrows(CommandException.class, String.format(UnlinkCommand.MESSAGE_NO_LINK, unrelated.getName()), () ->
+                new UnlinkCommand(Index.fromOneBased(indexOf(model, unrelated))).execute(model));
         assertEquals(contacts, List.copyOf(model.getAddressBook().getPersonList()));
         assertSame(filter, model.getPersonFilter());
     }

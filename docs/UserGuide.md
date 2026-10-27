@@ -88,8 +88,6 @@ Opens a command reference listing the available commands and their formats. For 
 field rules, use **Copy URL** to copy the User Guide link and open it in your browser.
 The Help window can be resized and scrolled.
 
-![help message](images/helpMessage.png)
-
 Format: `help`
 
 ### Adding a contact: `add`

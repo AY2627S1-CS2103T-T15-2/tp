@@ -987,6 +987,39 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 
   Use case ends.
 
+#### UC04: Remove a student's guardian association
+
+**Preconditions:** The student contact already exists.
+
+**MSS**
+
+1. Tutor requests to display the relevant student contacts.
+2. TutorRoster displays the matching contacts.
+3. Tutor requests to remove one student's guardian association.
+4. TutorRoster saves the removal and displays confirmation, retaining both contacts.
+
+   Use case ends.
+
+**Extensions**
+
+* **3a. The requested target is invalid, absent from the displayed contacts or not a student.**
+
+  3a1. TutorRoster displays an error and leaves data unchanged.
+
+  Use case resumes at step 3.
+
+* **3b. The student has no guardian association.**
+
+  3b1. TutorRoster explains that there is no association to remove and makes no changes.
+
+  Use case ends.
+
+* **4a. TutorRoster cannot save the removal.**
+
+  4a1. TutorRoster displays an error, preserving existing contacts, relationships and saved data.
+
+  Use case ends.
+
 ### Non-Functional Requirements
 
 **Environment and portability**
