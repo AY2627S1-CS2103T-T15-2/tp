@@ -426,79 +426,103 @@ These changes run on the candidate model described below; a failed save must not
 
 ### Contact details and Add validation
 
-`AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE`, `e/EMAIL`, `lv/LEVEL` and `sub/SUBJECT` as optional
-fields. It validates supplied values in the fixed order role, name, phone, email, level, then subject, regardless of
-the order in which parameters appear.
-The shared tokenizer recognizes prefixes at the start of the arguments or after `Character.isWhitespace`
-characters, including tabs and line breaks, while preserving internal value whitespace and quoted names.
-Command dispatch accepts the same separators and preserves multiline arguments for field validation.
-Unknown prefixes, repeated prefixes and unclosed quotes are syntax errors reported before field-value validation.
-The parser checks for a missing role, validates the role, then checks for a missing name and unexpected preamble
-before validating the name. A student may omit both contact methods. The
-parser rejects a guardian if both are absent to provide a user-facing command error, and `EditCommand` applies the same
-rule to the resulting contact before updating the model. `Person` stores
-phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
-method. This model invariant applies regardless of which code path creates a `Person`.
+Adding a contact involves three responsibilities: the parser validates command input, the model enforces contact
+invariants, and `LogicManager` saves a candidate model before publishing the change. `AddCommand` checks duplicate
+identity and prepares any warning before inserting the new contact. The following subsections explain these
+responsibilities and the design choices behind them.
 
-`parse` delegates syntax handling to `tokenizeArguments` and field parsing to `parsePerson`. Field-specific helpers
-keep the validation sequence visible without mixing it with extraction details. `AddCommand#execute` similarly
-separates rejection checks, feedback preparation and model updates. Feedback is prepared before insertion so the
-new contact cannot match itself when checking for possible duplicates.
+#### Parsing and validation
 
-Both the Add scanner and tokenizer enter quoted mode only when the first non-whitespace character after `n/` is
-a straight double quote. Quotes in phone text remain literal characters and cannot hide later parameters.
+`AddCommandParser` requires `r/ROLE` and `n/NAME`; phone, email, level and subject are optional. Its `parse` method
+delegates syntax handling to `tokenizeArguments` and field parsing to `parsePerson`. Syntax errors are reported
+before field-value errors. Fields are checked in the fixed order role, name, phone, email, level, then subject,
+regardless of parameter order. Missing role and name checks precede their respective value checks; unexpected
+preamble is rejected before name validation.
+
+`AddCommandParser` and the quote-aware path in `ArgumentTokenizer` use `ArgumentTokenScanner` to share quote and
+token-boundary recognition. Prefixes begin at the start of the arguments or after `Character.isWhitespace`
+characters, including tabs and line breaks. Internal value whitespace is preserved for field validation.
+For Add, the scanner skips a quoted name only when the first non-whitespace character after `n/` is a straight
+double quote. Quotes in phone text remain literal and cannot hide later parameters. Centralizing these rules keeps
+unknown-parameter detection consistent with tokenization. `AddCommandParser` still formats Add-specific errors and
+name-quoting hints. Callers inspect each position before advancing, so an unknown parameter before an unclosed
+quoted name is reported first.
+
 `ParserUtil#parseName` trims surrounding whitespace before and after removing enclosing quotes, including Java
-whitespace such as em spaces, tabs and line breaks. Internal tabs and other unsupported whitespace still fail name
-validation; only repeated ordinary spaces are collapsed. Keeping these rules consistent lets quotation marks protect
-prefix-like name text without changing whitespace validation.
+whitespace such as em spaces, tabs and line breaks. Only repeated ordinary spaces inside the name are collapsed;
+internal tabs and other unsupported whitespace fail validation. Add requires quotes around every name containing
+`/`, including `AC/DC`; Edit accepts unquoted embedded slashes. If an unknown parameter follows an unquoted name,
+the Add error includes a name-quoting hint. Repeated prefixes are rejected in the fixed field order above.
+See the [UG field rules and error examples](UserGuide.md#adding-a-contact-add) for the user-facing constraints.
 
-The Add parser identifies the unknown prefix, for example `Invalid parameter: a/. Valid parameters are r/ROLE,
-n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unknown parameter follows an unquoted name, it also suggests
-quoting the full name. After a quoted name, it reports only the invalid parameter. For Add, every name containing
-`/` must be enclosed in double quotes, including an embedded slash such as
-`AC/DC`. Edit retains its separate behavior, which accepts unquoted embedded slashes. Missing `r/ROLE` or `n/NAME`
-errors identify the missing field and append the add command usage. Repeated parameters return
-`Repeated parameter: lv/. Each parameter may appear only once.`, substituting the repeated prefix. If several
-prefixes repeat, it reports the first in the fixed field order. Empty roles receive a separate error from unsupported roles; an
-unsupported role reports `Invalid role. Role must be student or guardian.`
+#### Model invariants
 
-`Person` also stores an optional `Level` and `Subject` for students. Both are free-text value classes that allow 1 to
-30 Unicode code points, allowing letters, digits, spaces, hyphens, periods, plus signs and parentheses, with at least
-one letter or digit. `ParserUtil` trims the value, reduces repeated
-spaces to one and rejects `NONE`, which `edit` reserves for removing the field. The `Level` and `Subject` constructors
-reject blank values with their constraints messages. For command input, `ParserUtil` instead reports the specific
-empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. For other invalid values, it uses
-`getValidationErrorMessage` to distinguish excessive length, unsupported characters, and the absence of a letter or
-digit, in that order. `Level` and `Subject` delegate these common checks to `StudentDetailValidator` and map its
-validation result to their own field-specific messages. This keeps their rules aligned while preserving distinct
-value types and error messages. The `Person` constructor rejects a
-guardian with a level or subject. After validating phone and email, the Add parser checks the guardian contact-method
-requirement, then rejects student-only prefixes before parsing either value. `isSameValue` compares
-two values ignoring letter case and spaces, so that filters can treat `Sec 3` and `sec3` as the same level.
+`Person` stores phone and email as non-null `Optional` values. A student may omit both, while a guardian must have
+at least one contact method. The parser checks the guardian requirement after validating supplied phone and email
+values, then rejects student-only prefixes before parsing their values. The `Person` constructor enforces these
+role constraints independently of parsing, so other creation paths cannot bypass them. `EditCommand` checks the
+resulting contact against the same contact-method requirement.
 
-`AddCommand` rejects an exact duplicate using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Duplicate
-identity consists of role, name, phone and email. Name and email comparisons ignore capitalization; phone numbers are
-compared after trimming leading and trailing whitespace, while internal spaces and hyphens remain significant. Two
-absent values for an optional field match, provided both contacts have at least one contact method. Exact duplicates
-are rejected with `This contact already exists.` This gives students with neither a phone number nor an email address
-a specific exception: matching role and name alone does not make them exact duplicates. They may both be added, with a
-general possible-duplicate warning. For other contacts, matching role and name with different details is allowed. Add
-checks possible duplicates in this order: a phone number that matches after spaces and hyphens are ignored; an email
-address that matches case-insensitively; then a contact method that is absent from both contacts. It displays only the
-first matching warning, appends it after the normal success message, and still adds the contact. Contacts with
-different roles or names do not receive these warnings.
+`Level` and `Subject` are optional student-only value types. Both allow 1 to 30 Unicode code points, with at least
+one letter or digit. `ParserUtil` trims their values, collapses repeated ordinary spaces and rejects `NONE`, which
+Edit reserves for removing a field. Empty command values receive field-specific empty-parameter messages.
+`StudentDetailValidator` checks length, supported characters, alphanumeric content and surrounding spaces; each
+value class maps the result to its own error message. The constructors reject invalid values, including blank
+strings. `isSameValue` ignores letter case and spaces, allowing a filter for `sec3` to match `Sec 3`.
 
-`DuplicateWarning#classify` owns the warning priority shared by Add and Edit and returns `PHONE`, `EMAIL`, `GENERAL`
-or `NONE`. Each command supplies its own wording; Add also logs the selected warning. Edit excludes the contact
-being edited by ID before calling the classifier. Sharing classification prevents the commands' warning rules from
-drifting apart without coupling their success messages or exact-duplicate rejection.
+#### Duplicate detection
 
-Duplicate and warning checks use the complete saved contact list, including former students, regardless of the
-current filter. Level, subject, IDs and guardian links do not contribute to duplicate identity.
+`AddCommand` rejects exact duplicates using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Identity
+consists of role, name, phone and email. Name and email comparisons ignore capitalization; phone comparisons trim
+surrounding whitespace but retain internal spaces and hyphens. Two absent optional values match only when both
+contacts have at least one contact method. Consequently, two contactless students with the same name and role
+are allowed, with a general warning for the second. Exact duplicates are rejected with
+`This contact already exists.` Level, subject, IDs and guardian links do not contribute to duplicate identity.
 
-After adding the contact, `AddCommand` resets the filter with `PREDICATE_SHOW_ACTIVE_CONTACTS`, showing guardians
-and active students while hiding former students. The new contact starts active. The command result carries its ID
-so the UI can select it after a successful save, even if an earlier search or list filter hid similar contacts.
+For contacts with the same role and name that are not exact duplicates, `DuplicateWarning#classify` returns the
+highest-priority match across all saved contacts, including former students and contacts hidden by filters:
+
+1. `PHONE`: phone numbers match after spaces and hyphens are removed.
+1. `EMAIL`: email addresses match ignoring capitalization.
+1. `GENERAL`: both contacts lack a phone number, or both lack an email address.
+1. `NONE`: no warning condition matches.
+
+Add and Edit share this classification but supply their own feedback. Edit excludes the contact being edited by
+ID. Add logs the chosen warning and prepares feedback before insertion, so the new contact cannot match itself.
+A possible-duplicate warning accompanies a successful addition; it does not reject the contact.
+
+#### Execution and persistence
+
+The activity diagram follows an Add command from input validation to publication of a saved change. It assumes
+the data file loaded successfully; otherwise, `LogicManager` rejects data-changing commands before creating a
+candidate. Parsing or command-validation errors terminate the operation before saving.
+
+<puml src="diagrams/AddContactActivityDiagram.puml" width="620" alt="Add flow showing validation, duplicate classification, candidate update and saving before publication" />
+
+`LogicManager` executes `AddCommand` on a candidate model copied from the live data and current filter.
+`AddCommand#execute` separates rejection checks, feedback preparation and candidate updates. After insertion,
+it asserts that the candidate contains the new contact ID and resets the filter with
+`PREDICATE_SHOW_ACTIVE_CONTACTS`, showing guardians and active students while hiding former students.
+The new contact starts active. Only after saving succeeds does `LogicManager` publish the candidate and return
+the command result, whose contact ID lets the UI select the new contact. Failed commands and saves leave the live
+contacts, relationships, filter and selection unchanged. The file-writing and replacement mechanism is described
+under [Saving contacts and relationships](#saving-contacts-and-relationships).
+
+#### Design considerations for Add
+
+* **Validation in both parser and model:** Parser checks provide specific errors and predictable error ordering.
+  Constructor checks protect invariants when contacts are created through storage or other commands. Parser-only
+  validation would reduce repeated checks but leave those other paths able to construct invalid contacts.
+* **Warn about possible duplicates:** Rejecting only exact duplicates lets tutors record different people with the
+  same name, including students without contact methods. Rejecting every matching name and role would prevent
+  legitimate records; accepting them silently would make accidental duplicates harder to notice. Warnings retain
+  that flexibility but leave the final decision to the tutor.
+* **Share classification, keep feedback in each command:** `DuplicateWarning` keeps Add and Edit warning priority
+  aligned, while separate message formatting lets each command describe its own outcome. Separate classifiers
+  would be simpler to change independently but could drift into inconsistent duplicate rules.
+* **Save before publishing:** Executing on a candidate prevents a failed save from leaving the UI ahead of the
+  stored data. Updating the live model first would avoid the copy but require reliable rollback of data, filters
+  and selection on failure. The candidate approach uses additional memory in exchange for simpler failure handling.
 
 ### Saving contacts and relationships
 
@@ -524,8 +548,8 @@ Email validation uses iterative character scans for the local part and domain la
 matching on long inputs. `Email.isValidEmail` and the parser share the same validation rules and specific errors.
 For each component, unsupported characters are reported separately from punctuation-placement errors. Only ASCII
 letters and digits are accepted. The domain permits hyphens only, appearing singly between letters or digits.
-The local part also permits periods, underscores, percent signs and plus signs. Local-part periods cannot appear
-at either end or consecutively; the other supported punctuation can appear consecutively and at either end.
+The local part also permits periods, underscores, percent signs, plus signs and hyphens. Local-part periods cannot
+appear at either end or consecutively; the other supported punctuation can appear consecutively and at either end.
 An email is limited to 254 characters, with at most 64 in the local part and 63 in each domain label.
 The parser trims surrounding whitespace before checking these limits and reports
 `Email address cannot exceed 254 characters.` for longer values. The same limits apply to saved email values;
@@ -1099,8 +1123,13 @@ The failed command should remain in the command box, which keeps focus.
 1. Test case: `add r/student n/Alex Tan p/`.<br>
    Expected: The result says `Empty phone parameter: Phone cannot be empty when p/ is specified.`
 
-1. Test case: `add r/student n/Alex Tan p/` followed immediately by 101 ASCII digits.<br>
-   Expected: The result says `Phone details cannot exceed 100 characters.`
+1. Test case: paste the following command, whose phone value contains 101 ASCII digits:
+
+   ```
+   add r/student n/Alex Tan p/11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+   ```
+
+   Expected: The result says `Phone details cannot exceed 100 characters.` No contact is added.
 
 1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
    Expected: Both report the role error first, following the fixed parameter order regardless of command order.
@@ -1127,7 +1156,9 @@ The failed command should remain in the command box, which keeps focus.
 
 1. Test case: `add r/student n/"Ravi lv/Sec sub/Math"`.<br>
    Expected: The entire quoted text is saved as the name, with no level or subject set. Repeat with pasted tabs
-   between parameters instead of spaces; the result is unchanged. A tab inside the quoted name is rejected.
+   between parameters instead of spaces. The second contact has the same name and absent student details, and is
+   added with a general possible-duplicate warning because both contacts lack phone and email values.
+   A tab inside the quoted name is rejected instead, without adding a contact.
 
 ### Deleting contacts
 

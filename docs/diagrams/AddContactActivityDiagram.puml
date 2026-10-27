@@ -1,0 +1,28 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+
+start
+:Parse Add syntax and validate fields;
+:Construct Person and AddCommand;
+note right
+  Parsing errors end the operation.
+  Person enforces model invariants.
+end note
+:LogicManager copies live data and filter\ninto a candidate model;
+:AddCommand checks contact rules\nand rejects exact duplicates;
+note right
+  Command errors end the operation
+  without saving the candidate.
+end note
+:Classify possible duplicates and\nprepare feedback before insertion;
+:Add contact to candidate and\nreset its filter to active contacts;
+:LogicManager saves the candidate;
+if () then ([save succeeded])
+  :Publish candidate data and filter\nto the live model;
+  :Return result so the UI\nselects the new contact;
+else ([else])
+  :Report save failure;\nkeep live data, filter and selection;
+endif
+stop
+@enduml
