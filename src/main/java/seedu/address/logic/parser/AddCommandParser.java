@@ -169,52 +169,24 @@ public class AddCommandParser implements Parser<AddCommand> {
      * Returns an error message for an unrecognized parameter prefix, or an empty optional if none is found.
      * A prefix is a whitespace-delimited token ending with a slash, outside a quoted name.
      */
-    private static Optional<String> getParameterError(String args) {
-        int tokenStart = 0;
-        boolean isInsideQuotedValue = false;
-        boolean hasSlashInToken = false;
+    private static Optional<String> getParameterError(String args) throws ParseException {
+        ArgumentTokenScanner scanner = new ArgumentTokenScanner(args, PREFIX_NAME);
         Prefix currentField = null;
         int currentFieldValueStart = 0;
-        int quotedNameStart = -1;
-        for (int i = 0; i < args.length(); i++) {
-            char current = args.charAt(i);
-            if (isInsideQuotedValue) {
-                if (current == '"') {
-                    isInsideQuotedValue = false;
-                }
-            } else if (i == quotedNameStart) {
-                isInsideQuotedValue = true;
-            } else if (Character.isWhitespace(current)) {
-                tokenStart = i + 1;
-                hasSlashInToken = false;
-            } else if (current == '/' && i > tokenStart && !hasSlashInToken) {
-                hasSlashInToken = true;
-                String prefix = args.substring(tokenStart, i + 1);
+        while (scanner.hasNext()) {
+            String prefix = scanner.getParameterPrefix();
+            if (prefix != null) {
                 Prefix recognizedPrefix = getRecognizedPrefix(prefix);
                 if (recognizedPrefix == null) {
-                    String currentFieldValue = args.substring(currentFieldValueStart, tokenStart);
+                    String currentFieldValue = args.substring(currentFieldValueStart, scanner.getTokenStart());
                     return Optional.of(formatUnknownParameterError(prefix, currentField, currentFieldValue));
                 }
                 currentField = recognizedPrefix;
-                currentFieldValueStart = i + 1;
-                quotedNameStart = findQuotedNameStart(args, currentField, currentFieldValueStart);
+                currentFieldValueStart = scanner.getPosition() + 1;
             }
+            scanner.advance();
         }
         return Optional.empty();
-    }
-
-    /**
-     * Returns the opening quote's position only when it is the first non-whitespace character of a name value.
-     */
-    private static int findQuotedNameStart(String args, Prefix field, int valueStart) {
-        if (field != PREFIX_NAME) {
-            return -1;
-        }
-        int nameStart = valueStart;
-        while (nameStart < args.length() && Character.isWhitespace(args.charAt(nameStart))) {
-            nameStart++;
-        }
-        return nameStart < args.length() && args.charAt(nameStart) == '"' ? nameStart : -1;
     }
 
     private static String formatUnknownParameterError(String prefix, Prefix currentField, String currentFieldValue) {

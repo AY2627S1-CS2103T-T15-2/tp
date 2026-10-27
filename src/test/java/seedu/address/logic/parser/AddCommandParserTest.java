@@ -71,6 +71,26 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_unknownParameterBeforeUnclosedName_reportsUnknownParameterFirst() {
+        assertParseFailure(parser, " r/student x/value n/\"Alex p/123",
+                String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "x/"));
+        assertParseFailure(parser, " r/student n/Alex x/value n/\"Ravi",
+                String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "x/") + AddCommand.MESSAGE_NAME_SLASH_HINT);
+    }
+
+    @Test
+    public void parse_unknownParameterInsideUnclosedName_reportsUnclosedQuote() {
+        assertParseFailure(parser, " r/student n/  \"Alex x/value",
+                ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
+    }
+
+    @Test
+    public void parse_slashLeadingUnknownParameter_preservesParameterError() {
+        assertParseFailure(parser, " r/student n/Alex /s/o Kumar",
+                String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "/s/") + AddCommand.MESSAGE_NAME_SLASH_HINT);
+    }
+
+    @Test
     public void parse_phoneWithQuotes_doesNotInterfereWithQuotedName() {
         for (String phone : List.of("123\"", "\"123", "\"HP\" 123")) {
             Person expected = new PersonBuilder().withName("Ravi s/o Kumar").withPhone(phone).withoutEmail().build();

@@ -219,6 +219,24 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
+    public void tokenizeWithQuotedValue_adjacentTextAfterClosingQuote_remainsInNameValue() throws Exception {
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenizeWithQuotedValue(
+                " n/\"Alex\"p/123 p/456", nSlash, nSlash, pSlash);
+
+        assertArgumentPresent(arguments, nSlash, "\"Alex\"p/123");
+        assertArgumentPresent(arguments, pSlash, "456");
+    }
+
+    @Test
+    public void tokenizeWithQuotedValue_unsupportedQuotedPrefix_doesNotHideSupportedPrefixes() throws Exception {
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenizeWithQuotedValue(
+                " n/\"Alex p/123", nSlash, pSlash);
+
+        assertPreamblePresent(arguments, "n/\"Alex");
+        assertArgumentPresent(arguments, pSlash, "123");
+    }
+
+    @Test
     public void equalsMethod() {
         Prefix aaa = new Prefix("aaa");
 
