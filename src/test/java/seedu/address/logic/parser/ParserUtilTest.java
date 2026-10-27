@@ -300,7 +300,7 @@ public class ParserUtilTest {
         assertThrows(ParseException.class, Level.MESSAGE_INVALID_CHARACTERS, ()
                 -> ParserUtil.parseLevel("Sec\t3"));
         assertThrows(ParseException.class, Subject.MESSAGE_INVALID_CHARACTERS, ()
-                -> ParserUtil.parseSubject("Math & Science"));
+                -> ParserUtil.parseSubject("Math # Science"));
     }
 
     @Test
@@ -330,7 +330,7 @@ public class ParserUtilTest {
     @Test
     public void parseSubject_invalidValue_throwsParseException() {
         assertThrows(ParseException.class, Subject.MESSAGE_INVALID_CHARACTERS, () ->
-                ParserUtil.parseSubject("Math & Sci"));
+                ParserUtil.parseSubject("Math # Sci"));
     }
 
     @Test

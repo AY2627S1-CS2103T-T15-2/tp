@@ -137,6 +137,29 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_invalidPhoneAndOtherOptionalFields_reportsPhoneFirst() {
+        for (String input : List.of("1 p/12 e/bad", "1 e/bad p/12",
+                "1 p/12 lv/---", "1 lv/--- p/12", "1 p/12 sub/---", "1 sub/--- p/12")) {
+            assertParseFailure(parser, input, Phone.MESSAGE_TOO_FEW_DIGITS);
+        }
+    }
+
+    @Test
+    public void parse_invalidEmailAndStudentDetails_reportsEmailFirst() {
+        for (String input : List.of("1 e/bad lv/---", "1 lv/--- e/bad",
+                "1 e/bad sub/---", "1 sub/--- e/bad")) {
+            assertParseFailure(parser, input, "Email address must contain exactly one @ symbol.");
+        }
+    }
+
+    @Test
+    public void parse_invalidLevelAndSubject_reportsLevelFirst() {
+        for (String input : List.of("1 lv/--- sub/---", "1 sub/--- lv/---")) {
+            assertParseFailure(parser, input, Level.MESSAGE_MISSING_ALPHANUMERIC);
+        }
+    }
+
+    @Test
     public void parse_allFieldsSpecified_success() {
         Index targetIndex = INDEX_SECOND_PERSON;
         String userInput = targetIndex.getOneBased() + PHONE_DESC_BOB
@@ -314,7 +337,7 @@ public class EditCommandParserTest {
     @Test
     public void parse_invalidLevelOrSubject_failure() {
         assertParseFailure(parser, "1 lv/Sec #3", Level.MESSAGE_INVALID_CHARACTERS);
-        assertParseFailure(parser, "1 sub/Math & Science", Subject.MESSAGE_INVALID_CHARACTERS);
+        assertParseFailure(parser, "1 sub/Math # Science", Subject.MESSAGE_INVALID_CHARACTERS);
     }
 
     @Test

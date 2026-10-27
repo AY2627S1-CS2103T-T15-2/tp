@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
+import java.util.List;
 import java.util.Optional;
 
 import seedu.address.logic.commands.AddCommand;
@@ -64,8 +65,8 @@ public class AddCommandParser implements Parser<AddCommand> {
             throw new ParseException(parameterError.get());
         }
 
-        return ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                PREFIX_ROLE, PREFIX_LEVEL, PREFIX_SUBJECT);
+        return ArgumentTokenizer.tokenizeWithQuotedValues(args, List.of(PREFIX_NAME, PREFIX_SUBJECT), PREFIX_NAME,
+                PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ROLE, PREFIX_LEVEL, PREFIX_SUBJECT);
     }
 
     /**
@@ -175,14 +176,14 @@ public class AddCommandParser implements Parser<AddCommand> {
         boolean hasSlashInToken = false;
         Prefix currentField = null;
         int currentFieldValueStart = 0;
-        int quotedNameStart = -1;
+        int quotedValueStart = -1;
         for (int i = 0; i < args.length(); i++) {
             char current = args.charAt(i);
             if (isInsideQuotedValue) {
                 if (current == '"') {
                     isInsideQuotedValue = false;
                 }
-            } else if (i == quotedNameStart) {
+            } else if (i == quotedValueStart) {
                 isInsideQuotedValue = true;
             } else if (Character.isWhitespace(current)) {
                 tokenStart = i + 1;
@@ -197,17 +198,17 @@ public class AddCommandParser implements Parser<AddCommand> {
                 }
                 currentField = recognizedPrefix;
                 currentFieldValueStart = i + 1;
-                quotedNameStart = findQuotedNameStart(args, currentField, currentFieldValueStart);
+                quotedValueStart = findQuotedValueStart(args, currentField, currentFieldValueStart);
             }
         }
         return Optional.empty();
     }
 
     /**
-     * Returns the opening quote's position only when it is the first non-whitespace character of a name value.
+     * Returns an opening quote only at the start of a name or subject value.
      */
-    private static int findQuotedNameStart(String args, Prefix field, int valueStart) {
-        if (field != PREFIX_NAME) {
+    private static int findQuotedValueStart(String args, Prefix field, int valueStart) {
+        if (field != PREFIX_NAME && field != PREFIX_SUBJECT) {
             return -1;
         }
         int nameStart = valueStart;

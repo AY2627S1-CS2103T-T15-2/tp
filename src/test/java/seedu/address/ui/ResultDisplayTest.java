@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -26,6 +27,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.address.logic.parser.AddCommandParser;
+import seedu.address.testutil.JavaFxTestUtil;
 
 /**
  * Checks how {@code ResultDisplay} shows successful results and errors, on platforms with a desktop JavaFX runtime.
@@ -38,11 +40,7 @@ public class ResultDisplayTest {
 
     @BeforeAll
     public static void startJavaFx() {
-        try {
-            Platform.startup(() -> Platform.setImplicitExit(false));
-        } catch (IllegalStateException exception) {
-            // Another UI test may have already initialized JavaFX.
-        }
+        JavaFxTestUtil.startJavaFx();
     }
 
     @Test
@@ -231,13 +229,6 @@ public class ResultDisplayTest {
         TextArea text() {
             return (TextArea) display.getRoot().lookup("#resultDisplay");
         }
-    }
-
-    private void runOnJavaFxThread(Runnable action) throws Exception {
-        callOnJavaFxThread(() -> {
-            action.run();
-            return null;
-        });
     }
 
     private <T> T callOnJavaFxThread(Callable<T> action) throws Exception {

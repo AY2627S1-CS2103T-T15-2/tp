@@ -8,6 +8,7 @@ import static java.util.Objects.requireNonNull;
 final class StudentDetailValidator {
 
     private static final String ALLOWED_CHARACTERS_REGEX = "[\\p{L}\\p{M}\\p{N} .+()-]*";
+    private static final String SUBJECT_CHARACTERS_REGEX = "[\\p{L}\\p{M}\\p{N} .+()&/-]*";
 
     private StudentDetailValidator() {
     }
@@ -19,11 +20,20 @@ final class StudentDetailValidator {
      * @param maximumLength Maximum number of Unicode code points allowed.
      */
     static ValidationResult validate(String value, int maximumLength) {
+        return validateValue(value, maximumLength, ALLOWED_CHARACTERS_REGEX);
+    }
+
+    /** Validates a subject, allowing slashes and ampersands in addition to the shared characters. */
+    static ValidationResult validateSubject(String value, int maximumLength) {
+        return validateValue(value, maximumLength, SUBJECT_CHARACTERS_REGEX);
+    }
+
+    private static ValidationResult validateValue(String value, int maximumLength, String allowedCharactersRegex) {
         requireNonNull(value);
         if (value.codePointCount(0, value.length()) > maximumLength) {
             return ValidationResult.TOO_LONG;
         }
-        if (!value.matches(ALLOWED_CHARACTERS_REGEX)) {
+        if (!value.matches(allowedCharactersRegex)) {
             return ValidationResult.INVALID_CHARACTERS;
         }
         if (!value.matches(".*[\\p{L}\\p{N}].*")) {

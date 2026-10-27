@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -12,8 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.imageio.ImageIO;
 
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
-import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -49,9 +47,11 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentStatus;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.JavaFxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -68,11 +68,7 @@ public class LinkUiTest {
 
     @BeforeAll
     public static void startJavaFx() {
-        try {
-            Platform.startup(() -> Platform.setImplicitExit(false));
-        } catch (IllegalStateException exception) {
-            // Another UI test may have already initialized JavaFX.
-        }
+        JavaFxTestUtil.startJavaFx();
     }
 
     @Test
@@ -304,12 +300,6 @@ public class LinkUiTest {
         return (Label) root.lookup("#" + id);
     }
 
-    private void runOnJavaFxThread(Runnable action) throws Exception {
-        FutureTask<Void> task = new FutureTask<>(action, null);
-        Platform.runLater(task);
-        task.get(20, TimeUnit.SECONDS);
-    }
-
     private void saveSnapshot(Region root) {
         WritableImage image = root.snapshot(new SnapshotParameters(), null);
         BufferedImage output = new BufferedImage((int) image.getWidth(), (int) image.getHeight(),
@@ -471,6 +461,51 @@ public class LinkUiTest {
 
                 window.getPersonListPanel().selectPerson(first.getId());
                 assertEquals("Guardian: None", label(root, "guardianName").getText());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void command_childrenAndUnlink_refreshResultsSelectionAndDetails() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+            Person student = new PersonBuilder().withName("Alex Tan").withGuardianId(guardian.getId()).build();
+            Person former = new PersonBuilder().withName("Bea Tan").withGuardianId(guardian.getId())
+                    .withStatus(StudentStatus.FORMER).build();
+            AddressBook book = new AddressBook();
+            book.setPersons(List.of(guardian, student, former));
+            ModelManager model = new ModelManager(book, new UserPrefs());
+            Path dataPath = temporaryFolder.resolve("contacts.json");
+            LogicManager logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataPath),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+            Stage stage = new Stage();
+            try {
+                MainWindow window = new MainWindow(stage, logic, dataPath);
+                window.fillInnerParts();
+                Region root = (Region) stage.getScene().getRoot();
+                root.resize(960, 640);
+                root.applyCss();
+                root.layout();
+                TextField command = (TextField) root.lookup("#commandTextField");
+                command.setText("children g/2");
+                command.fireEvent(new ActionEvent());
+                assertEquals(List.of(student, former), List.copyOf(model.getFilteredPersonList()));
+                window.getPersonListPanel().selectPerson(former.getId());
+                command.setText("unlink s/2");
+                command.fireEvent(new ActionEvent());
+                assertEquals(List.of(student), List.copyOf(model.getFilteredPersonList()));
+                assertNull(window.getPersonListPanel().getSelectedPerson());
+                assertEquals(3, model.getAddressBook().getPersonList().size());
+                command.setText("list");
+                command.fireEvent(new ActionEvent());
+                command.setText("unlink s/1");
+                command.fireEvent(new ActionEvent());
+                assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+                assertEquals("Guardian: None", label(root, "guardianName").getText());
+                assertEquals("", command.getText());
+                assertEquals(command, stage.getScene().getFocusOwner());
             } finally {
                 stage.close();
             }

@@ -1,0 +1,43 @@
+@startuml
+!include style.puml
+
+participant ":LogicManager" as Logic LOGIC_COLOR
+participant ":AddressBookParser" as Parser LOGIC_COLOR
+participant ":UnlinkCommand" as Command LOGIC_COLOR
+participant "candidate:ModelManager" as Candidate MODEL_COLOR
+participant ":Storage" as Storage STORAGE_COLOR
+
+Logic -> Parser : parseCommand(input)
+activate Parser
+Parser --> Logic : command
+deactivate Parser
+note over Logic, Candidate
+  Copy live data and the current filter
+  to a candidate model.
+end note
+Logic -> Command : execute(candidate)
+activate Command
+Command -> Candidate : getFilteredPersonList()
+Candidate --> Command : displayed contacts
+note over Command
+  Validate displayed index,
+  student role and existing link.
+end note
+Command -> Candidate : setPerson(student, student.withGuardianId(empty))
+Command --> Logic : result with student ID
+deactivate Command
+Logic -> Storage : saveAddressBook(candidate.getAddressBook())
+alt save succeeds
+  Storage --> Logic : saved
+  note over Logic
+    Publish candidate data and filter.
+    Clear deletion undo history.
+  end note
+else save fails
+  Storage --> Logic : IOException
+  note over Logic
+    Report save failure.
+    Preserve live data and undo.
+  end note
+end
+@enduml
