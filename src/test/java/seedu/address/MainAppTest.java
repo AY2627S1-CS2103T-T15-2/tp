@@ -184,6 +184,27 @@ public class MainAppTest {
     }
 
     @Test
+    public void initPrefs_nullGuiSettings_recoversDefaultsAndPreservesContacts() throws Exception {
+        Path prefsFile = temporaryFolder.resolve("preferences.json");
+        Files.writeString(prefsFile, "{\"guiSettings\":null}");
+        Path contactsFile = temporaryFolder.resolve("contacts.json");
+        StorageManager storage = createStorage(contactsFile);
+        AddressBook contacts = new AddressBook();
+        contacts.addPerson(new PersonBuilder().build());
+        storage.saveAddressBook(contacts);
+        String savedContacts = Files.readString(contactsFile);
+        JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(prefsFile);
+
+        UserPrefs recovered = new MainApp().initPrefs(prefsStorage);
+
+        assertEquals(new UserPrefs(), recovered);
+        assertEquals(recovered, prefsStorage.readUserPrefs().orElseThrow());
+        Model model = new MainApp().initModelManager(storage, recovered);
+        assertEquals(contacts, model.getAddressBook());
+        assertEquals(savedContacts, Files.readString(contactsFile));
+    }
+
+    @Test
     public void initModelManager_missingFile_startsEmptyAndSavesFirstContact() throws Exception {
         Path contactsFile = temporaryFolder.resolve("contacts.json");
         StorageManager storage = createStorage(contactsFile);
