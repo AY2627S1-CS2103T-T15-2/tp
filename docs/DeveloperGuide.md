@@ -1267,7 +1267,9 @@ and failed intervening changes, ensuring that live data, saved data and the prev
    `A guardian must have at least one contact method: phone or email.`
 
 1. Test case: `find` a name, then `edit 1 n/New Name`<br>
-   Expected: The first search result is edited, and the full contact list is shown again.
+   Expected: The first search result is edited. Editing an active student or guardian resets the view to guardians
+   and active students. Editing a former student resets it to the former-student view, so the edited record remains
+   visible. The previous name search is cleared.
 
 1. Test case: `edit 1 n/"Ravi s/o Kumar"`<br>
    Expected: The name becomes `Ravi s/o Kumar`. Without the quotes, the command is rejected with `Unknown parameter`.
