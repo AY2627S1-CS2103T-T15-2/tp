@@ -106,6 +106,30 @@ public class NameContainsSubstringPredicateTest {
     }
 
     @Test
+    public void test_sigmaSearchTerm_matchesEverySigmaFormInName() {
+        // EP: uppercase, ordinary lowercase and word-final lowercase sigma must match each other.
+        for (String name : new String[] {"\u039f\u03a3", "\u03bf\u03c3", "\u03bf\u03c2"}) {
+            Person person = new PersonBuilder().withName(name).build();
+            for (String searchTerm : new String[] {"\u03a3", "\u03c3", "\u03c2"}) {
+                assertTrue(new NameContainsSubstringPredicate(searchTerm).test(person),
+                        "Expected " + searchTerm + " to match " + name);
+            }
+        }
+    }
+
+    @Test
+    public void test_fullGreekSearchTerm_ignoresSigmaFormButRequiresOtherLettersToMatch() {
+        for (String name : new String[] {"\u039f\u03a3", "\u03bf\u03c3", "\u03bf\u03c2"}) {
+            Person person = new PersonBuilder().withName(name).build();
+            for (String searchTerm : new String[] {"\u039f\u03a3", "\u03bf\u03c3", "\u03bf\u03c2"}) {
+                assertTrue(new NameContainsSubstringPredicate(searchTerm).test(person),
+                        "Expected " + searchTerm + " to match " + name);
+            }
+            assertFalse(new NameContainsSubstringPredicate("\u03b1\u03c3").test(person));
+        }
+    }
+
+    @Test
     public void test_curlyAndStraightApostrophes_treatedAsSame() {
         // straight apostrophe in search term, curly apostrophe in name
         NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("o'brien");
