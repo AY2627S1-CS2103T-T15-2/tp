@@ -61,16 +61,28 @@ public class Email {
      */
     public static String getValidationErrorMessage(String test) {
         requireNonNull(test);
-        if (test.length() > MAX_LENGTH) {
+        String structureError = getAddressStructureError(test);
+        if (structureError != null) {
+            return structureError;
+        }
+        String[] addressParts = test.split("@", -1);
+        return getAddressPartsError(addressParts[0], addressParts[1]);
+    }
+
+    private static String getAddressStructureError(String address) {
+        if (address.length() > MAX_LENGTH) {
             return MESSAGE_TOO_LONG;
         }
-        if (test.chars().filter(character -> character == '@').count() != 1) {
+        if (address.chars().filter(character -> character == '@').count() != 1) {
             return "Email address must contain exactly one @ symbol.";
         }
+        return null;
+    }
 
-        String[] addressParts = test.split("@", -1);
-        String localPart = addressParts[0];
-        String domain = addressParts[1];
+    /**
+     * Checks presence, local-part length and whitespace before either part's character rules.
+     */
+    private static String getAddressPartsError(String localPart, String domain) {
         if (localPart.isEmpty()) {
             return "Email local part cannot be empty.";
         }
@@ -80,16 +92,27 @@ public class Email {
         if (domain.isEmpty()) {
             return "Email domain cannot be empty.";
         }
-        if (test.chars().anyMatch(Character::isWhitespace)) {
+        if (localPart.chars().anyMatch(Character::isWhitespace) || domain.chars().anyMatch(Character::isWhitespace)) {
             return "Email address cannot contain whitespace.";
         }
+        String localPartError = getLocalPartError(localPart);
+        return localPartError != null ? localPartError : getDomainError(domain);
+    }
+
+    private static String getLocalPartError(String localPart) {
         if (hasUnsupportedCharacters(localPart, "._%+-")) {
             return MESSAGE_LOCAL_CHARACTERS;
         }
         if (!isValidLocalPart(localPart)) {
             return MESSAGE_LOCAL_PUNCTUATION;
         }
+        return null;
+    }
 
+    /**
+     * Checks every label's length before validating label count and contents in order.
+     */
+    private static String getDomainError(String domain) {
         String[] domainLabels = domain.split("\\.", -1);
         for (String label : domainLabels) {
             if (label.length() > MAX_DOMAIN_LABEL_LENGTH) {
@@ -108,7 +131,10 @@ public class Email {
                 return labelError;
             }
         }
-        String finalLabel = domainLabels[domainLabels.length - 1];
+        return getFinalDomainLabelError(domainLabels[domainLabels.length - 1]);
+    }
+
+    private static String getFinalDomainLabelError(String finalLabel) {
         if (finalLabel.isEmpty()) {
             return "Email domain labels cannot be empty.";
         }
