@@ -1525,6 +1525,19 @@ confirm the subject is retained. An extra `x/value` after the quoted subject mus
 
 ### Linking students to guardians
 
+`link s/INDEX g/NONE` removes only the displayed student's guardian link. The parser creates a `LinkCommand`
+with an empty optional guardian index. The command rejects guardians and already-unlinked students, then
+clears the selected student's guardian ID while preserving all contact IDs, fields, the current filter and
+other relationships. The normal candidate-model save flow applies, so a failed save preserves the original
+relationship. The result requests selection of the student, but selection clears if the student no longer
+matches the current filter, such as after `children g/INDEX`. A successful unlink invalidates deletion undo,
+as other successful non-deletion changes do.
+
+To test unlinking, link two students to one guardian, display just one student with `find`, and run
+`link s/1 g/NONE`. That student's details should show `Guardian: None`; the guardian and the other student's
+link should remain. Restart and confirm the saved result. Repeat with a locked data file to check that a
+failed unlink preserves the relationship and the displayed list.
+
 Use a disposable copy of TutorRoster in a separate folder so these tests do not change real contact data.
 Run the following cases in order.
 
@@ -1567,11 +1580,11 @@ Run the following cases in order.
    Restart and check that the guardian and both links remain absent.
 
 1. Incorrect commands to try while all contacts are displayed:
-   * `link s/1` or `link s/1 g/3 extra`: `Invalid link command. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX`
-   * `link s/1 g/3 x/4`: `Unknown parameter. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX`
+   * `link s/1` or `link s/1 g/3 extra`: `Invalid link command. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX or link s/STUDENT_INDEX g/NONE`
+   * `link s/1 g/3 x/4`: `Unknown parameter. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX or link s/STUDENT_INDEX g/NONE`
    * `link s/1 s/2 g/3`: `Each of s/ and g/ may appear only once.`
    * `link s/0 g/3`: `Student index must be a positive integer shown in the list.`
-   * `link s/1 g/-1`: `Guardian index must be a positive integer shown in the list.`
+   * `link s/1 g/-1`: `Guardian value must be a positive integer shown in the list, or NONE to remove the guardian link.`
    * `link s/999 g/3`: `No contact exists at student index 999.`
    * `link s/3 g/3`: `Student index must refer to a student.`
    * `link s/1 g/2`: `Guardian index must refer to a guardian.`

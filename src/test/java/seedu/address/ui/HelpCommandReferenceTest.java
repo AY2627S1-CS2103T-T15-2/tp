@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.CheckCommand;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.LinkCommand;
 import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.parser.AddressBookParser;
 
@@ -39,6 +40,13 @@ public class HelpCommandReferenceTest {
             assertTrue(parser.parseCommand(example) instanceof DeleteCommand);
         }
         assertTrue(parser.parseCommand("undo") instanceof UndoCommand);
+    }
+
+    @Test
+    public void getCommandFormats_link_includesUnlinkSyntax() throws Exception {
+        assertTrue(HelpWindow.getCommandFormats().contains(LinkCommand.COMMAND_FORMAT));
+        assertEquals(LinkCommand.unlink(seedu.address.commons.core.index.Index.fromOneBased(1)),
+                new AddressBookParser().parseCommand("link s/1 g/NONE"));
     }
 
     @Test

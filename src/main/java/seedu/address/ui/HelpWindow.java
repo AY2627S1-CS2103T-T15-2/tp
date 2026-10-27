@@ -51,7 +51,7 @@ public class HelpWindow extends UiPart<Stage> {
             new CommandHelp("Check contact data", CheckCommand.COMMAND_FORMAT),
             new CommandHelp("View contact", ViewCommand.COMMAND_FORMAT),
             new CommandHelp("Find by name", FindCommand.COMMAND_FORMAT),
-            new CommandHelp("Link guardian", LinkCommand.MESSAGE_USAGE),
+            new CommandHelp("Link or unlink guardian", LinkCommand.COMMAND_FORMAT),
             new CommandHelp("Unlink guardian", UnlinkCommand.MESSAGE_USAGE),
             new CommandHelp("Find linked students", ChildrenCommand.MESSAGE_USAGE),
             new CommandHelp("List contacts", ListCommand.COMMAND_FORMAT),

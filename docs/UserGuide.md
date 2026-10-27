@@ -435,19 +435,29 @@ Examples:
 
 Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 
+To remove only a relationship, use `link s/STUDENT_INDEX g/NONE`. `NONE` ignores letter case. Both contacts
+are kept, and other students linked to that guardian are unaffected. Only the student needs to be displayed;
+the guardian can be hidden by a filter. The removal is saved automatically. The student remains selected only
+if they still match the current filter. After `children g/INDEX`, an unlinked student disappears from that
+guardian's results and selection clears. Use `list` or `list st/all` to return to the contacts view.
+An unlinked student is rejected with `NAME has no guardian linked.`
+
 * Run `list` or `find NAME` first and use the indexes in the **currently displayed list**.
-* Both contacts must be visible. If a search hides either contact, run `list` before linking an active student.
+* For linking or replacing a guardian, both contacts must be visible. For `g/NONE`, only the student must be visible.
+  If a search hides either contact, run `list` before linking an active student.
   To link a former student without reactivating them, use `list st/all` to show both contacts, or `find NAME` with a
   search term that shows both; for example, `find Tan` can show former student Alex Tan and guardian Mei Tan
   together.
-* `s/` must identify a student and `g/` must identify a guardian.
+* `s/` must identify a student. For linking or replacing a guardian, `g/` must identify a guardian;
+  for unlinking, use `g/NONE` instead of an index.
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
 * Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
 * Each student can have one guardian; a guardian can be linked to several students.
 * Students with the same name remain separate contacts, even if both have no phone or email.
   Use the intended student's displayed index; linking one does not change the other student's guardian.
 * Linking to a different guardian replaces the previous relationship. Linking to the same guardian again is rejected.
-* A successful command selects the student and shows the guardian's current name, phone and email in the detail panel.
+* A successful linking or replacement command selects the student and shows the guardian's current name, phone
+  and email in the detail panel. After unlinking, the student is selected only if still visible in the current filter.
   The command box stays focused so you can immediately enter the next command.
 * The relationship is saved automatically and survives edits, reordering and restarting the application.
 
@@ -456,16 +466,18 @@ Examples, assuming Alex Tan is student `1`, Mei Tan is guardian `2`, and Sarah L
 * `link s/1 g/2` shows `Linked student Alex Tan to guardian Mei Tan.`
 * `link g/2 s/1` has the same effect, but is rejected if that relationship already exists: `Alex Tan is already linked to Mei Tan.`
 * `link s/1 g/3` replaces Mei Tan and shows `Changed Alex Tan’s guardian from Mei Tan to Sarah Lim.`
+* `link s/1 g/NONE` removes Alex's guardian relationship and shows `Removed guardian link from Alex Tan.`
+  When Alex remains visible, the card and details panel show `Guardian: None`. Restarting retains the unlinked state.
 
 Common errors:
 
 | Input problem | Result |
 |---|---|
-| Missing parameter or extra text | `Invalid link command. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX` |
-| Unknown parameter | `Unknown parameter. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX` |
+| Missing parameter or extra text | `Invalid link command. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX or link s/STUDENT_INDEX g/NONE` |
+| Unknown parameter | `Unknown parameter. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX or link s/STUDENT_INDEX g/NONE` |
 | Repeated parameter | `Each of s/ and g/ may appear only once.` |
 | Invalid student index | `Student index must be a positive integer shown in the list.` |
-| Invalid guardian index | `Guardian index must be a positive integer shown in the list.` |
+| Invalid guardian value | `Guardian value must be a positive integer shown in the list, or NONE to remove the guardian link.` |
 | Student index outside the displayed list | `No contact exists at student index INDEX.` |
 | Guardian index outside the displayed list | `No contact exists at guardian index INDEX.` |
 | Wrong student role | `Student index must refer to a student.` |
@@ -698,7 +710,7 @@ Action     | Format, Examples
 **Find**   | `find NAME`<br> e.g., `find alex`
 **Unlink** | `unlink s/STUDENT_INDEX`<br> e.g., `unlink s/1`
 **Guardian's students** | `children g/GUARDIAN_INDEX`<br> e.g., `children g/1`
-**Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
+**Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX` or `link s/STUDENT_INDEX g/NONE`<br> e.g., `link s/1 g/2`
 **List**   | `list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`<br> e.g., `list r/student`, `list st/former`, `list st/all`, `list lv/Sec 3 sub/A-Math`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
