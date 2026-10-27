@@ -88,8 +88,6 @@ Opens a command reference listing the available commands and their formats. For 
 field rules, use **Copy URL** to copy the User Guide link and open it in your browser.
 The Help window can be resized and scrolled.
 
-![help message](images/helpMessage.png)
-
 Format: `help`
 
 ### Adding a contact: `add`
@@ -477,6 +475,52 @@ Failed link commands leave the contacts, relationships, selected contact, detail
 
 ![A linked student selected with the guardian's contact details displayed](images/StudentGuardianLink.png)
 
+### Removing a guardian link: `unlink`
+
+Removes one student's guardian association while keeping both contacts.
+
+Format: `unlink s/STUDENT_INDEX`
+
+* Use the student's index in the **currently displayed list**. The guardian does not need to be visible.
+* The target must be a linked student. Active and former students are supported; use `list st/former` to
+  show former students first. Names, contact IDs, tuition details and other students' links are preserved.
+* A successful removal is saved automatically. The student's guardian becomes `None`.
+  The existing filter remains applied. If the student no longer matches it (for example, after `children`),
+  the student disappears from the results and selection clears. Otherwise, the student is selected.
+* A successful `unlink` clears the opportunity to undo an earlier deletion. It cannot itself be undone with
+  `undo`; use `link` to restore the association.
+* Supply lowercase `s/` exactly once, with one positive whole-number index. Leading zeroes are accepted.
+  Missing/repeated parameters, other parameters and extra text are rejected. Errors include the command format.
+* An unlinked student reports `NAME has no guardian link to remove.` A guardian target reports
+  `Student index must refer to a student.` An out-of-range index reports
+  `No contact exists at student index INDEX.` Failed commands and failed saves leave data unchanged.
+
+Example: if Alex Tan is the linked student at index 1, `unlink s/1` reports
+`Removed the guardian link from Alex Tan. Both contacts were kept.`
+
+### Finding a guardian's students: `children`
+
+Shows every student linked to a particular guardian, including former students.
+
+Format: `children g/GUARDIAN_INDEX`
+
+* Run `list r/guardian` or another command that displays the guardian, then use that guardian's **current** index.
+* Results replace the previous search/list filter and contain only that guardian's linked students.
+  Both active and former students are included. The usual alphabetical contact order and former badges apply.
+* Lookup uses the guardian's permanent identity. Guardians with the same name remain separate.
+* This command does not change or save contacts and preserves deletion undo.
+* Supply lowercase `g/` exactly once, with one positive whole-number index. Leading zeroes are accepted.
+  Missing/repeated parameters, other parameters and extra text are rejected. Errors include the command format.
+* A student target reports `Guardian index must refer to a guardian.` An out-of-range index reports
+  `No contact exists at guardian index INDEX.` These errors leave the current view unchanged.
+* A guardian without linked students produces an empty list and
+  `No students are linked to NAME. Use list to return to contacts.`
+* Use `list` to return to guardians and active students, or `list st/all` to show every contact.
+  Before looking up another guardian, display guardians again and use their newly displayed indexes.
+
+Example: after `list r/guardian`, if Mei Tan is guardian 1 with two linked students, `children g/1` reports
+`Listed 2 students linked to Mei Tan, including former students.` The message uses `1 student` for one match.
+
 ### Deleting contacts: `delete`
 
 Deletes one or more specified contacts from TutorRoster.
@@ -540,7 +584,7 @@ Format: `undo`
 * Restores the latest successful deletion by index, multiple indexes or name, including original contact IDs,
   details and student-guardian links. Bulk deletion is restored as one operation.
 * Restores the filter used before deletion and selects a restored contact visible in that view.
-* Read-only commands such as `list`, `find` and `view` preserve undo availability.
+* Read-only commands such as `list`, `find`, `view` and `children` preserve undo availability.
 * Another successful deletion replaces the undo opportunity. Any other successful data-changing command clears it.
 * Failed commands and failed saves preserve the undo opportunity. If saving an undo fails, no data changes are
   applied and you can retry `undo`.
@@ -586,7 +630,7 @@ Format: `exit`
 
 ### Saving the data
 
-TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear`, `link`, `archive` and `unarchive` commands.
+TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear`, `link`, `unlink`, `undo`, `archive` and `unarchive` commands.
 You do not need to save manually. Read-only commands do not write the data file.
 
 If saving fails, the command reports `Changes could not be saved. No changes were made.` Contacts, relationships and the previously saved data remain unchanged.
@@ -652,6 +696,8 @@ Action     | Format, Examples
 **Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
+**Unlink** | `unlink s/STUDENT_INDEX`<br> e.g., `unlink s/1`
+**Guardian's students** | `children g/GUARDIAN_INDEX`<br> e.g., `children g/1`
 **Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
 **List**   | `list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`<br> e.g., `list r/student`, `list st/former`, `list st/all`, `list lv/Sec 3 sub/A-Math`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`

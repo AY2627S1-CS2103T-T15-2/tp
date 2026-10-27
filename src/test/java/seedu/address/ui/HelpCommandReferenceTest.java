@@ -22,7 +22,8 @@ public class HelpCommandReferenceTest {
         Set<String> commandWords = formats.stream().map(format -> format.split(" ", 2)[0])
                 .collect(Collectors.toSet());
 
-        assertEquals(Set.of("add", "edit", "delete", "undo", "view", "find", "link", "list", "archive",
+        assertEquals(Set.of("add", "edit", "delete", "undo", "view", "find", "link", "unlink", "children", "list",
+                "archive",
                 "unarchive", "clear", "check", "help", "exit"), commandWords);
         assertEquals(commandWords.size(), formats.size());
     }

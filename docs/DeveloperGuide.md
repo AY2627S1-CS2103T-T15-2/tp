@@ -428,6 +428,45 @@ Bulk deletion resolves every target before removing any contact, so index shifts
 Its relationship count counts each affected student once, even when both that student and its guardian are deleted.
 These changes run on the candidate model described below; a failed save must not clear live relationships.
 
+### Removing and looking up guardian relationships
+
+`UnlinkCommandParser` and `ChildrenCommandParser` share `RelationshipIndexParser`, which accepts exactly one
+required prefix and parses its value with `ParserUtil.parseIndex`. Repeated prefixes, preambles, missing indexes
+and trailing arguments are rejected before a command executes. Reusing this parser keeps both commands' input
+validation consistent without coupling them to the two-target `link` syntax.
+
+**Unlink.** `UnlinkCommand` resolves the student's current displayed index, checks the role and existing link,
+then calls `Person.withGuardianId(Optional.empty())`. This retains the contact ID, role, name, phone, email,
+student status, level and subject. `Model.setPerson` replaces that one contact by persistent identity.
+The guardian and other students are untouched, including same-name students. The result requests selection by
+the student's ID; the UI clears selection if the preserved filter now excludes that student.
+
+<puml src="diagrams/UnlinkSequenceDiagram.puml" alt="Unlink execution with save-before-publish failure handling" />
+
+As a data-changing command, unlink uses `LogicManager`'s candidate-model flow. Only a successful save publishes
+the candidate and clears deletion undo. Validation errors, load failures and save failures preserve live data
+and any previous undo opportunity. This provides one persistence policy for linking, unlinking and other edits.
+
+**Guardian lookup.** `ChildrenCommand` first resolves and validates a guardian in the current displayed list,
+then replaces the model predicate with `GuardianChildrenPredicate`. The predicate stores a `ContactId` and
+matches students whose `guardianId` equals it; it does not impose a student-status condition. Therefore, lookup
+can reveal former students and students hidden by the previous search. Matching names never establish a
+relationship. The existing sorted observable list provides display order and reacts to later changes.
+For example, unlinking a student from this view removes that student from the results.
+
+Lookup inherits `Command.isDataChanging() == false`, so it neither saves data nor invalidates deletion undo.
+A wrong role or out-of-range index fails before the view changes. An empty result is a successful lookup and
+explains how to return to contacts with `list`.
+
+**Design choices.** Separate commands allow the user to remove an association without deleting either contact
+and retrieve a guardian's students without remembering their names. A persistent-ID predicate keeps lookup
+correct after a guardian is renamed or contacts are reordered. Including both statuses avoids silently hiding
+former students in a family lookup; users can distinguish them by their existing badges. Restricting each
+command to one target keeps validation and recovery predictable.
+
+`RelationshipManagementTest` covers displayed indexes, shared guardians, same-name students and guardians,
+former students, reactive filtering, persistence, failed saves, malformed input and deletion-undo interaction.
+
 ### Contact details and Add validation
 
 `AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE`, `e/EMAIL`, `lv/LEVEL` and `sub/SUBJECT` as optional
@@ -952,6 +991,39 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 
   Use case ends.
 
+#### UC04: Remove a student's guardian association
+
+**Preconditions:** The student contact already exists.
+
+**MSS**
+
+1. Tutor requests to display the relevant student contacts.
+2. TutorRoster displays the matching contacts.
+3. Tutor requests to remove one student's guardian association.
+4. TutorRoster saves the removal and displays confirmation, retaining both contacts.
+
+   Use case ends.
+
+**Extensions**
+
+* **3a. The requested target is invalid, absent from the displayed contacts or not a student.**
+
+  3a1. TutorRoster displays an error and leaves data unchanged.
+
+  Use case resumes at step 3.
+
+* **3b. The student has no guardian association.**
+
+  3b1. TutorRoster explains that there is no association to remove and makes no changes.
+
+  Use case ends.
+
+* **4a. TutorRoster cannot save the removal.**
+
+  4a1. TutorRoster displays an error, preserving existing contacts, relationships and saved data.
+
+  Use case ends.
+
 ### Non-Functional Requirements
 
 **Environment and portability**
@@ -1199,7 +1271,9 @@ and failed intervening changes, ensuring that live data, saved data and the prev
    `A guardian must have at least one contact method: phone or email.`
 
 1. Test case: `find` a name, then `edit 1 n/New Name`<br>
-   Expected: The first search result is edited, and the full contact list is shown again.
+   Expected: The first search result is edited. Editing an active student or guardian resets the view to guardians
+   and active students. Editing a former student resets it to the former-student view, so the edited record remains
+   visible. The previous name search is cleared.
 
 1. Test case: `edit 1 n/"Ravi s/o Kumar"`<br>
    Expected: The name becomes `Ravi s/o Kumar`. Without the quotes, the command is rejected with `Unknown parameter`.
@@ -1509,6 +1583,40 @@ Run the following cases in order.
    Restart and check that both students are present with their separate links. Run `link s/1 g/3`, then
    `edit 2 n/Bea Tan`. Only the second student is renamed and both retain Mei as guardian. Rename Bea back to Alex,
    then `delete 2`; only the second student is removed. Restart and check that the first Alex and Mei remain linked.
+
+### Removing links and finding a guardian's students
+
+Use a fresh, disposable application folder. Run these cases in order.
+
+1. Add `add r/student n/Alex Tan lv/Sec 3 sub/Math`, `add r/student n/Bea Tan` and
+   `add r/guardian n/Mei Tan p/98765432`. Run `list`: Alex is 1, Bea is 2 and Mei is 3.
+1. Run `link s/1 g/3`, `link s/2 g/3`, then `archive 2`.
+   Expected: Bea becomes former and disappears from the default view; both saved links remain.
+1. Run `list r/guardian`, then `children g/1`.
+   Expected: Alex and Bea are shown as students 1 and 2, with Bea marked former. The result is
+   `Listed 2 students linked to Mei Tan, including former students.`
+1. Run `unlink s/2`.
+   Expected: `Removed the guardian link from Bea Tan. Both contacts were kept.` Bea disappears from the
+   family results because she is no longer linked to Mei; Alex remains. Selection clears if Bea was selected.
+1. Run `list st/former`, then `view 1`.
+   Expected: Bea is still former and has no guardian. Run `unlink s/1` again:
+   `Bea Tan has no guardian link to remove.` No data changes.
+1. Restart, run `list st/all`, then inspect Alex, Bea and Mei.
+   Expected: all three contacts remain. Alex retains Mei; Bea has no guardian. Alex's level and subject remain.
+1. Run `list r/guardian`, then `children g/1`.
+   Expected: only Alex is listed and the result uses `1 student`. Run `unlink s/1`, then
+   `list r/guardian` and `children g/1` again.
+   Expected: an empty list and `No students are linked to Mei Tan. Use list to return to contacts.`
+1. Run `list st/all`, then separately try `unlink s/3`, `children g/1`, `unlink s/99`,
+   `children g/99`, `unlink s/1 s/2`, `children g/3 extra` and `unlink s/0`.
+   Expected: errors describe the invalid role, missing target or input format. No data or view changes.
+1. To check undo interaction, relink Alex to Mei, add an unrelated student, and delete only that unrelated
+   student. Run `list r/guardian`, `children g/1`, then `undo`.
+   Expected: the deleted student is restored. Repeat the unrelated deletion, then successfully unlink Alex:
+   `undo` now reports `No deletion is available to undo.`
+
+The automated tests also simulate unlink save failures and verify that the saved file, live relationships,
+filter and deletion undo remain unchanged.
 
 ### Saving data
 
