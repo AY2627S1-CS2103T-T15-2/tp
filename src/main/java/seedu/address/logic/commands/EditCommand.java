@@ -108,12 +108,7 @@ public class EditCommand extends Command {
         verifyNoDuplicate(model, personToEdit, editedPerson);
         CommandResult result = createSuccessResult(model, editedPerson);
 
-        model.setPerson(personToEdit, editedPerson);
-        // Show the list that the edited contact belongs to, so that it stays visible.
-        model.updateFilteredPersonList(editedPerson.isFormerStudent()
-                ? PREDICATE_SHOW_FORMER_STUDENTS
-                : PREDICATE_SHOW_ACTIVE_CONTACTS);
-        logger.fine("Prepared edit of contact " + editedPerson.getId() + ", pending save.");
+        applyEdit(model, personToEdit, editedPerson);
         return result;
     }
 
@@ -156,6 +151,16 @@ public class EditCommand extends Command {
         String feedback = String.format(MESSAGE_EDIT_PERSON_SUCCESS, editedPerson.getName(), editedPerson.getRole());
         return new CommandResult(warning.map(message -> feedback + "\n" + message).orElse(feedback),
                 editedPerson.getId());
+    }
+
+    /** Replaces the contact and shows its active or former view before the candidate model is saved. */
+    private static void applyEdit(Model model, Person personToEdit, Person editedPerson) {
+        model.setPerson(personToEdit, editedPerson);
+        // Show the list that the edited contact belongs to, so that it stays visible.
+        model.updateFilteredPersonList(editedPerson.isFormerStudent()
+                ? PREDICATE_SHOW_FORMER_STUDENTS
+                : PREDICATE_SHOW_ACTIVE_CONTACTS);
+        logger.fine("Prepared edit of contact " + editedPerson.getId() + ", pending save.");
     }
 
     /**
