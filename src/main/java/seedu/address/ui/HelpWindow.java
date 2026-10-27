@@ -112,6 +112,9 @@ public class HelpWindow extends UiPart<Stage> {
         return label;
     }
 
+    /**
+     * Stores a command's description and syntax for a row in the help window's command reference.
+     */
     private record CommandHelp(String description, String format) {
     }
 
