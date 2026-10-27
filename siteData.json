@@ -60,7 +60,6 @@
         "saving-contacts-and-relationships": "Saving contacts and relationships",
         "listing-and-finding-contacts": "Listing and finding contacts",
         "ordering-and-displaying-contacts": "Ordering and displaying contacts",
-        "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
         "appendix-requirements": "Appendix: Requirements",
         "product-scope": "Product scope",
@@ -144,7 +143,6 @@
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
         "editing-the-data-file": "Editing the data file",
-        "archiving-data-files-coming-in-v2-0": "Archiving data files [coming in v2.0]",
         "faq": "FAQ",
         "known-issues": "Known issues",
         "command-summary": "Command summary"
