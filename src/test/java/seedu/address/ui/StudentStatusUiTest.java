@@ -4,11 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -32,6 +30,7 @@ import seedu.address.model.person.StudentStatus;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.JavaFxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -49,11 +48,7 @@ public class StudentStatusUiTest {
 
     @BeforeAll
     public static void startJavaFx() {
-        try {
-            Platform.startup(() -> Platform.setImplicitExit(false));
-        } catch (IllegalStateException exception) {
-            // Another UI test may have already initialized JavaFX.
-        }
+        JavaFxTestUtil.startJavaFx();
     }
 
     @Test
@@ -183,11 +178,5 @@ public class StudentStatusUiTest {
                 .anyMatch(card -> name.equals(((Label) card.lookup("#name")).getText())
                         && role.equals(((Label) card.lookup("#roleBadge")).getText())
                         && card.lookup("#formerBadge").isVisible() == isFormer);
-    }
-
-    private void runOnJavaFxThread(Runnable action) throws Exception {
-        FutureTask<Void> task = new FutureTask<>(action, null);
-        Platform.runLater(task);
-        task.get(20, TimeUnit.SECONDS);
     }
 }

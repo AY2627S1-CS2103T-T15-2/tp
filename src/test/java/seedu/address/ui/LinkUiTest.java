@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -12,8 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.imageio.ImageIO;
 
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
-import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -53,6 +51,7 @@ import seedu.address.model.person.StudentStatus;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.JavaFxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -69,11 +68,7 @@ public class LinkUiTest {
 
     @BeforeAll
     public static void startJavaFx() {
-        try {
-            Platform.startup(() -> Platform.setImplicitExit(false));
-        } catch (IllegalStateException exception) {
-            // Another UI test may have already initialized JavaFX.
-        }
+        JavaFxTestUtil.startJavaFx();
     }
 
     @Test
@@ -303,12 +298,6 @@ public class LinkUiTest {
 
     private static Label label(Region root, String id) {
         return (Label) root.lookup("#" + id);
-    }
-
-    private void runOnJavaFxThread(Runnable action) throws Exception {
-        FutureTask<Void> task = new FutureTask<>(action, null);
-        Platform.runLater(task);
-        task.get(20, TimeUnit.SECONDS);
     }
 
     private void saveSnapshot(Region root) {

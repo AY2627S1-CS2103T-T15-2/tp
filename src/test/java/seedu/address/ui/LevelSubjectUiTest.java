@@ -3,23 +3,22 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
 
 import java.util.Optional;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
+import seedu.address.testutil.JavaFxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -30,11 +29,7 @@ public class LevelSubjectUiTest {
 
     @BeforeAll
     public static void startJavaFx() {
-        try {
-            Platform.startup(() -> Platform.setImplicitExit(false));
-        } catch (IllegalStateException exception) {
-            // Another UI test may have already initialized JavaFX.
-        }
+        JavaFxTestUtil.startJavaFx();
     }
 
     @Test
@@ -81,11 +76,5 @@ public class LevelSubjectUiTest {
 
     private static Label label(Region root, String id) {
         return (Label) root.lookup("#" + id);
-    }
-
-    private void runOnJavaFxThread(Runnable action) throws Exception {
-        FutureTask<Void> task = new FutureTask<>(action, null);
-        Platform.runLater(task);
-        task.get(20, TimeUnit.SECONDS);
     }
 }
