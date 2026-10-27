@@ -34,8 +34,8 @@ public class EditCommandParser implements Parser<EditCommand> {
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                        PREFIX_LEVEL, PREFIX_SUBJECT);
+                ArgumentTokenizer.tokenizeWithQuotedValues(args, List.of(PREFIX_NAME, PREFIX_SUBJECT), PREFIX_NAME,
+                        PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL, PREFIX_SUBJECT);
 
         verifyNoUnknownPrefixes(argMultimap);
         verifyNoRepeatedPrefixes(argMultimap);
@@ -93,7 +93,7 @@ public class EditCommandParser implements Parser<EditCommand> {
 
     /**
      * Throws if the preamble or any value contains a word ending in {@code /} that is not an edit prefix.
-     * Text inside a quoted name is skipped, so it may contain such words.
+     * Text inside a quoted name or subject is skipped, so it may contain such words.
      */
     private static void verifyNoUnknownPrefixes(ArgumentMultimap argMultimap) throws ParseException {
         throwIfUnknownPrefix(argMultimap.getPreamble());
@@ -105,13 +105,8 @@ public class EditCommandParser implements Parser<EditCommand> {
     }
 
     private static String extractTextOutsideQuotes(Prefix prefix, String value) {
-        String trimmedValue = value.trim();
-        if (!prefix.equals(PREFIX_NAME) || !trimmedValue.startsWith("\"")) {
-            return value;
-        }
-        // The tokenizer has already rejected a quoted name without a closing quotation mark.
-        int closingQuote = trimmedValue.indexOf('"', 1);
-        return " " + trimmedValue.substring(closingQuote + 1);
+        return prefix.equals(PREFIX_NAME) || prefix.equals(PREFIX_SUBJECT)
+                ? ParserUtil.textOutsideQuotedValue(value) : value;
     }
 
     private static void throwIfUnknownPrefix(String text) throws ParseException {

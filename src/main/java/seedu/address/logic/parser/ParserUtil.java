@@ -141,7 +141,14 @@ public class ParserUtil {
      */
     public static Subject parseSubject(String subject) throws ParseException {
         requireNonNull(subject);
-        String normalizedSubject = normalizeStudentDetail(subject);
+        String subjectValue = subject.trim();
+        if (subjectValue.startsWith("\"")) {
+            if (subjectValue.length() < 2 || !subjectValue.endsWith("\"")) {
+                throw new ParseException("Invalid quoted subject. Surround the entire subject with quotation marks.");
+            }
+            subjectValue = subjectValue.substring(1, subjectValue.length() - 1);
+        }
+        String normalizedSubject = normalizeStudentDetail(subjectValue);
         if (normalizedSubject.isEmpty()) {
             throw new ParseException(Subject.MESSAGE_EMPTY);
         }
@@ -150,6 +157,15 @@ public class ParserUtil {
             throw new ParseException(validationError);
         }
         return new Subject(normalizedSubject);
+    }
+
+    /** Returns text outside a leading quoted value after the tokenizer has checked its closing quote. */
+    public static String textOutsideQuotedValue(String value) {
+        String trimmedValue = value.trim();
+        if (!trimmedValue.startsWith("\"")) {
+            return value;
+        }
+        return " " + trimmedValue.substring(trimmedValue.indexOf('"', 1) + 1);
     }
 
     /**

@@ -314,7 +314,7 @@ public class EditCommandParserTest {
     @Test
     public void parse_invalidLevelOrSubject_failure() {
         assertParseFailure(parser, "1 lv/Sec #3", Level.MESSAGE_INVALID_CHARACTERS);
-        assertParseFailure(parser, "1 sub/Math & Science", Subject.MESSAGE_INVALID_CHARACTERS);
+        assertParseFailure(parser, "1 sub/Math # Science", Subject.MESSAGE_INVALID_CHARACTERS);
     }
 
     @Test
