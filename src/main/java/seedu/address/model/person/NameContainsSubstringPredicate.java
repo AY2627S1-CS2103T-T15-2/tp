@@ -34,11 +34,14 @@ public class NameContainsSubstringPredicate implements Predicate<Person> {
     }
 
     /**
-     * Returns {@code text} in lower case, with curly apostrophes replaced by straight apostrophes
-     * and accents removed as described in {@link Name#removeAccents(String)}.
+     * Returns {@code text} in lower case, with curly apostrophes replaced by straight apostrophes,
+     * both lowercase Greek sigma forms matched alike, and accents removed as described in
+     * {@link Name#removeAccents(String)}.
      */
     private static String toSearchableText(String text) {
-        return Name.removeAccents(Name.replaceCurlyApostrophes(text).toLowerCase(Locale.ROOT));
+        // Lowercasing a capital sigma depends on its position within a word.
+        String lowercaseText = Name.replaceCurlyApostrophes(text).toLowerCase(Locale.ROOT);
+        return Name.removeAccents(lowercaseText.replace('\u03c2', '\u03c3'));
     }
 
     @Override
