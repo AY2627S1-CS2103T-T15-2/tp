@@ -23,6 +23,17 @@ public class SubjectTest {
     }
 
     @Test
+    public void validationAndConstruction_reservedNone_rejectValue() {
+        for (String value : List.of("NONE", "none", "None", "nOnE")) {
+            assertFalse(Subject.isValidSubject(value));
+            assertThrows(IllegalArgumentException.class, () -> new Subject(value));
+            assertEquals("NONE cannot be used as a level or subject. Use lv/NONE or sub/NONE in edit to remove it.",
+                    Subject.getValidationErrorMessage(value));
+        }
+        assertTrue(Subject.isValidSubject("None Studies"));
+    }
+
+    @Test
     public void isValidSubject_validValues_returnsTrue() {
         assertTrue(Subject.isValidSubject("A-Math"));
         assertTrue(Subject.isValidSubject("Math"));

@@ -23,6 +23,17 @@ public class LevelTest {
     }
 
     @Test
+    public void validationAndConstruction_reservedNone_rejectValue() {
+        for (String value : List.of("NONE", "none", "None", "nOnE")) {
+            assertFalse(Level.isValidLevel(value));
+            assertThrows(IllegalArgumentException.class, () -> new Level(value));
+            assertEquals("NONE cannot be used as a level or subject. Use lv/NONE or sub/NONE in edit to remove it.",
+                    Level.getValidationErrorMessage(value));
+        }
+        assertTrue(Level.isValidLevel("None Level"));
+    }
+
+    @Test
     public void isValidLevel_validValues_returnsTrue() {
         assertTrue(Level.isValidLevel("Sec 3"));
         assertTrue(Level.isValidLevel("JC1"));

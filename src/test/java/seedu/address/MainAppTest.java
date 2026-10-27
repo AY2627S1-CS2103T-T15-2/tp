@@ -1,5 +1,6 @@
 package seedu.address;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -237,6 +238,33 @@ public class MainAppTest {
         assertEquals(Optional.of(LogicManager.MESSAGE_DATA_LOAD_FAILURE), logic.getStartupMessage());
         assertThrows(CommandException.class, LogicManager.MESSAGE_DATA_LOAD_FAILURE, () -> logic.execute("clear"));
         assertEquals(invalidData, Files.readString(contactsFile));
+    }
+
+    @Test
+    public void initModelManager_reservedStudentDetail_disablesChangesAndPreservesFile() throws Exception {
+        for (String field : List.of("level", "subject")) {
+            for (String value : List.of("NONE", "none", "None", "nOnE")) {
+                Path contactsFile = temporaryFolder.resolve("contacts.json");
+                String invalidData = String.format(
+                        "{\"persons\":[{\"name\":\"Al\",\"role\":\"STUDENT\",\"%s\":\"%s\"}]}", field, value);
+                Files.writeString(contactsFile, invalidData);
+                byte[] originalBytes = Files.readAllBytes(contactsFile);
+                StorageManager storage = createStorage(contactsFile);
+
+                Model model = new MainApp().initModelManager(storage, new UserPrefs());
+                LogicManager logic = new LogicManager(model, storage);
+                String failureMessage = LogicManager.MESSAGE_DATA_LOAD_FAILURE;
+
+                assertTrue(model.getAddressBook().getPersonList().isEmpty());
+                assertTrue(storage.isDataFileLoadFailed());
+                assertEquals(Optional.of(failureMessage), logic.getStartupMessage());
+                logic.execute("list");
+                assertThrows(CommandException.class, failureMessage, () ->
+                        logic.execute("add r/student n/Bea Tan"));
+                assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear"));
+                assertArrayEquals(originalBytes, Files.readAllBytes(contactsFile));
+            }
+        }
     }
 
     @Test

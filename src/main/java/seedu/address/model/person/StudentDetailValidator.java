@@ -7,6 +7,9 @@ import static java.util.Objects.requireNonNull;
  */
 final class StudentDetailValidator {
 
+    static final String MESSAGE_RESERVED_VALUE =
+            "NONE cannot be used as a level or subject. Use lv/NONE or sub/NONE in edit to remove it.";
+
     private static final String ALLOWED_CHARACTERS_REGEX = "[\\p{L}\\p{M}\\p{N} .+()-]*";
     private static final String SUBJECT_CHARACTERS_REGEX = "[\\p{L}\\p{M}\\p{N} .+()&/-]*";
 
@@ -42,11 +45,14 @@ final class StudentDetailValidator {
         if (!value.equals(value.trim())) {
             return ValidationResult.SURROUNDING_SPACES;
         }
+        if (value.equalsIgnoreCase("NONE")) {
+            return ValidationResult.RESERVED_VALUE;
+        }
         return ValidationResult.VALID;
     }
 
     /** The outcome of checking a student detail, independent of its field-specific message. */
     enum ValidationResult {
-        VALID, TOO_LONG, INVALID_CHARACTERS, MISSING_ALPHANUMERIC, SURROUNDING_SPACES
+        VALID, TOO_LONG, INVALID_CHARACTERS, MISSING_ALPHANUMERIC, SURROUNDING_SPACES, RESERVED_VALUE
     }
 }

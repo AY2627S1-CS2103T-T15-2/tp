@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
-import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Level;
@@ -19,8 +18,7 @@ import seedu.address.model.person.Subject;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
-    public static final String MESSAGE_RESERVED_REMOVE_VALUE =
-            "NONE cannot be used as a level or subject. Use lv/NONE or sub/NONE in edit to remove it.";
+    public static final String MESSAGE_RESERVED_REMOVE_VALUE = Level.MESSAGE_RESERVED_VALUE;
     public static final String MESSAGE_INVALID_NAME_QUOTES =
             "Invalid quoted name. Use n/NAME or n/\"NAME\", with quotation marks surrounding the entire name.";
 
@@ -170,16 +168,9 @@ public class ParserUtil {
 
     /**
      * Returns {@code value} trimmed with repeated spaces collapsed into one.
-     *
-     * @throws ParseException if {@code value} is NONE, ignoring case, which {@code edit} uses to remove
-     *     a field.
      */
-    private static String normalizeStudentDetail(String value) throws ParseException {
-        String normalizedValue = value.trim().replaceAll(" {2,}", " ");
-        if (normalizedValue.equalsIgnoreCase(EditCommand.REMOVE_FIELD_VALUE)) {
-            throw new ParseException(MESSAGE_RESERVED_REMOVE_VALUE);
-        }
-        return normalizedValue;
+    private static String normalizeStudentDetail(String value) {
+        return value.trim().replaceAll(" {2,}", " ");
     }
 
     /**
