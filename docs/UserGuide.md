@@ -432,6 +432,11 @@ Examples:
 
 Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 
+To remove only a relationship, use `link s/STUDENT_INDEX g/NONE`. `NONE` ignores letter case. Both contacts
+are kept, and other students linked to that guardian are unaffected. Only the student needs to be displayed;
+the guardian can be hidden by a filter. The student remains selected, and the removal is saved automatically.
+An unlinked student is rejected with `NAME has no guardian linked.`
+
 * Run `list` or `find NAME` first and use the indexes in the **currently displayed list**.
 * Both contacts must be visible. If a search hides either contact, run `list` before linking an active student.
   To link a former student without reactivating them, use `list st/all` to show both contacts, or `find NAME` with a
@@ -453,6 +458,8 @@ Examples, assuming Alex Tan is student `1`, Mei Tan is guardian `2`, and Sarah L
 * `link s/1 g/2` shows `Linked student Alex Tan to guardian Mei Tan.`
 * `link g/2 s/1` has the same effect, but is rejected if that relationship already exists: `Alex Tan is already linked to Mei Tan.`
 * `link s/1 g/3` replaces Mei Tan and shows `Changed Alex Tan’s guardian from Mei Tan to Sarah Lim.`
+* `link s/1 g/NONE` removes Alex's guardian relationship and shows `Removed guardian link from Alex Tan.`
+  Alex's card and details panel show `Guardian: None`. Restarting retains the unlinked state.
 
 Common errors:
 
@@ -640,7 +647,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
-**Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
+**Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX` or `link s/STUDENT_INDEX g/NONE`<br> e.g., `link s/1 g/2`
 **List**   | `list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`<br> e.g., `list r/student`, `list st/former`, `list st/all`, `list lv/Sec 3 sub/A-Math`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`

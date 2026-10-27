@@ -14,6 +14,16 @@ public class LinkCommandParserTest {
     private final LinkCommandParser parser = new LinkCommandParser();
 
     @Test
+    public void parse_removeGuardian_acceptsNoneAndRejectsMalformedTargets() {
+        for (String arguments : new String[]{"s/1 g/NONE", "g/none s/01", "s/1 g/NoNe"}) {
+            assertParseSuccess(parser, arguments, LinkCommand.unlink(INDEX_FIRST_PERSON));
+        }
+        assertParseFailure(parser, "s/1 g/NONE extra", LinkCommand.MESSAGE_INVALID_COMMAND);
+        assertParseFailure(parser, "s/1 g/NONE g/2", LinkCommand.MESSAGE_REPEATED_PARAMETER);
+        assertParseFailure(parser, "s/0 g/NONE", LinkCommand.MESSAGE_INVALID_STUDENT_INDEX);
+    }
+
+    @Test
     public void parse_validIndexes_acceptsEitherOrderWhitespaceAndLeadingZeroes() {
         LinkCommand expected = new LinkCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON);
         for (String arguments : new String[]{" s/1 g/2", "g/2 s/1", " s/001 g/02 ", "\ts/ 1\tg/ 2\n"}) {

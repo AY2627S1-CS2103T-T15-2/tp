@@ -46,6 +46,32 @@ public class LinkCommandTest {
     }
 
     @Test
+    public void execute_unlinkFilteredFormerStudent_preservesOtherContactsAndFilter() throws Exception {
+        Person linked = student.withStatus(StudentStatus.FORMER).withGuardianId(Optional.of(guardian.getId()));
+        model.setPerson(student, linked);
+        Person otherStudent = new PersonBuilder().withName("Bea Tan").withGuardianId(guardian.getId()).build();
+        model.addPerson(otherStudent);
+        model.updateFilteredPersonList(Person::isFormerStudent);
+
+        CommandResult result = LinkCommand.unlink(Index.fromOneBased(1)).execute(model);
+
+        assertEquals(linked.withGuardianId(Optional.empty()), getCurrentStudent());
+        assertEquals(List.of(getCurrentStudent()), List.copyOf(model.getFilteredPersonList()));
+        assertTrue(model.getAddressBook().getPersonList().containsAll(List.of(guardian, otherGuardian, otherStudent)));
+        assertEquals(Optional.of(student.getId()), result.getSelectedContactId());
+        assertEquals("Removed guardian link from Alex Tan.", result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_unlinkInvalidTarget_leavesContactsUnchanged() {
+        assertUnchangedFailure(LinkCommand.unlink(Index.fromOneBased(1)), "Alex Tan has no guardian linked.");
+        assertUnchangedFailure(LinkCommand.unlink(Index.fromOneBased(2)), LinkCommand.MESSAGE_NOT_STUDENT);
+        assertUnchangedFailure(LinkCommand.unlink(Index.fromOneBased(4)), "No contact exists at student index 4.");
+        assertEquals(LinkCommand.unlink(Index.fromOneBased(1)), LinkCommand.unlink(Index.fromOneBased(1)));
+        assertNotEquals(LinkCommand.unlink(Index.fromOneBased(1)), createLinkCommand(1, 2));
+    }
+
+    @Test
     public void execute_firstLink_usesSortedDisplayIndexesAndSelectsStudent() throws Exception {
         CommandResult result = createLinkCommand(1, 2).execute(model);
         assertEquals(Optional.of(guardian.getId()), getCurrentStudent().getGuardianId());

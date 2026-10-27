@@ -1435,6 +1435,17 @@ for each restart. This setup is independent of the data used in the other manual
 
 ### Linking students to guardians
 
+`link s/INDEX g/NONE` removes only the displayed student's guardian link. The parser creates a `LinkCommand`
+with an empty optional guardian index. The command rejects guardians and already-unlinked students, then
+clears the selected student's guardian ID while preserving all contact IDs, fields, the current filter and
+other relationships. The normal candidate-model save flow applies, so a failed save preserves the original
+relationship. A successful unlink invalidates deletion undo, as other successful non-deletion changes do.
+
+To test unlinking, link two students to one guardian, display just one student with `find`, and run
+`link s/1 g/NONE`. That student's details should show `Guardian: None`; the guardian and the other student's
+link should remain. Restart and confirm the saved result. Repeat with a locked data file to check that a
+failed unlink preserves the relationship and the displayed list.
+
 Use a disposable copy of TutorRoster in a separate folder so these tests do not change real contact data.
 Run the following cases in order.
 

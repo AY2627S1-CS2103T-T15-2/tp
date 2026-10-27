@@ -76,6 +76,40 @@ public class LinkUiTest {
     }
 
     @Test
+    public void command_unlink_showsNoGuardianAndKeepsStudentSelected() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
+            Person student = new PersonBuilder().withName("Alex Tan").withGuardianId(guardian.getId()).build();
+            AddressBook book = new AddressBook();
+            book.setPersons(List.of(student, guardian));
+            ModelManager model = new ModelManager(book, new UserPrefs());
+            Path dataPath = temporaryFolder.resolve("contacts.json");
+            LogicManager logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataPath),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+            Stage stage = new Stage();
+            try {
+                MainWindow window = new MainWindow(stage, logic, dataPath);
+                window.fillInnerParts();
+                Region root = (Region) stage.getScene().getRoot();
+                root.applyCss();
+                TextField command = (TextField) root.lookup("#commandTextField");
+                command.setText("find Alex");
+                command.fireEvent(new ActionEvent());
+                command.setText("link s/1 g/NONE");
+                command.fireEvent(new ActionEvent());
+
+                assertEquals(student.getId(), window.getPersonListPanel().getSelectedPerson().getId());
+                assertEquals("Guardian: None", label(root, "guardianName").getText());
+                assertEquals("", command.getText());
+                assertEquals(command, stage.getScene().getFocusOwner());
+                assertEquals(2, model.getAddressBook().getPersonList().size());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
     public void details_guardianEditedOrRemoved_refreshesSelectedStudent() throws Exception {
         runOnJavaFxThread(() -> {
             Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
