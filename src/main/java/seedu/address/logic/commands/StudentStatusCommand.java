@@ -53,13 +53,7 @@ public abstract class StudentStatusCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Person target = getStudentToUpdate(model);
-        Person updated = target.withStatus(targetStatus);
-        model.setPerson(target, updated);
-        assert updated.getStatus() == targetStatus;
-        // LogicManager saves the change afterwards, and discards it if saving fails.
-        logger.info(String.format("Prepared status change of contact %s to %s, pending save",
-                target.getId(), targetStatus));
-        return new CommandResult(String.format(getSuccessMessage(), target.getName()));
+        return updateStudentStatus(model, target);
     }
 
     /** Resolves the displayed index, then rejects guardians and repeated status changes in that order. */
@@ -80,6 +74,17 @@ public abstract class StudentStatusCommand extends Command {
             throw new CommandException(String.format(getAlreadyInStatusMessage(), target.getName()));
         }
         return target;
+    }
+
+    /** Updates the validated student in the candidate model and prepares success feedback. */
+    private CommandResult updateStudentStatus(Model model, Person target) {
+        Person updated = target.withStatus(targetStatus);
+        model.setPerson(target, updated);
+        assert updated.getStatus() == targetStatus;
+        // LogicManager saves the change afterwards, and discards it if saving fails.
+        logger.info(String.format("Prepared status change of contact %s to %s, pending save",
+                target.getId(), targetStatus));
+        return new CommandResult(String.format(getSuccessMessage(), target.getName()));
     }
 
     @Override
