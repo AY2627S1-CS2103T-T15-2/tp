@@ -17,6 +17,7 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.commands.CheckCommand;
+import seedu.address.logic.commands.ChildrenCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
@@ -27,6 +28,7 @@ import seedu.address.logic.commands.LinkCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.UnarchiveCommand;
 import seedu.address.logic.commands.UndoCommand;
+import seedu.address.logic.commands.UnlinkCommand;
 import seedu.address.logic.commands.ViewCommand;
 
 /**
@@ -50,6 +52,8 @@ public class HelpWindow extends UiPart<Stage> {
             new CommandHelp("View contact", ViewCommand.COMMAND_FORMAT),
             new CommandHelp("Find by name", FindCommand.COMMAND_FORMAT),
             new CommandHelp("Link guardian", LinkCommand.MESSAGE_USAGE),
+            new CommandHelp("Unlink guardian", UnlinkCommand.MESSAGE_USAGE),
+            new CommandHelp("Find linked students", ChildrenCommand.MESSAGE_USAGE),
             new CommandHelp("List contacts", ListCommand.COMMAND_FORMAT),
             new CommandHelp("Archive student", ArchiveCommand.COMMAND_FORMAT),
             new CommandHelp("Unarchive student", UnarchiveCommand.COMMAND_FORMAT),
