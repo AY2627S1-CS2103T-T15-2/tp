@@ -279,66 +279,35 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_repeatedValue_failure() {
-        String validExpectedPersonString = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
-                + ROLE_DESC_BOB;
+        String completeFields = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB;
+        // Each row contains the prefix, a valid repeated field, and an invalid repeated field.
+        String[][] repeatedFieldCases = {
+            {"n/", NAME_DESC_AMY, INVALID_NAME_DESC},
+            {"p/", PHONE_DESC_AMY, INVALID_PHONE_DESC},
+            {"e/", EMAIL_DESC_AMY, INVALID_EMAIL_DESC},
+            {"r/", ROLE_DESC_AMY, INVALID_ROLE_DESC}
+        };
 
-        // multiple names
-        assertParseFailure(parser, NAME_DESC_AMY + validExpectedPersonString,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "n/"));
+        for (String[] testCase : repeatedFieldCases) {
+            String prefix = testCase[0];
+            String validRepeatedField = testCase[1];
+            String invalidRepeatedField = testCase[2];
+            assertRepeatedFieldRejected(completeFields, validRepeatedField, prefix);
+            assertRepeatedFieldRejected(completeFields, invalidRepeatedField, prefix);
+        }
+    }
 
-        // multiple phones
-        assertParseFailure(parser, PHONE_DESC_AMY + validExpectedPersonString,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "p/"));
-
-        // multiple emails
-        assertParseFailure(parser, EMAIL_DESC_AMY + validExpectedPersonString,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "e/"));
-
-        // multiple roles
-        assertParseFailure(parser, ROLE_DESC_AMY + validExpectedPersonString,
+    @Test
+    public void parse_multipleFieldsRepeated_reportsRoleBeforeOtherFields() {
+        String completeFields = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ROLE_DESC_BOB;
+        assertParseFailure(parser, completeFields + PHONE_DESC_AMY + EMAIL_DESC_AMY + NAME_DESC_AMY + completeFields,
                 String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "r/"));
+    }
 
-        // multiple fields repeated
-        assertParseFailure(parser,
-                validExpectedPersonString + PHONE_DESC_AMY + EMAIL_DESC_AMY + NAME_DESC_AMY
-                        + validExpectedPersonString,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "r/"));
-
-        // invalid value followed by valid value
-
-        // invalid name
-        assertParseFailure(parser, INVALID_NAME_DESC + validExpectedPersonString,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "n/"));
-
-        // invalid email
-        assertParseFailure(parser, INVALID_EMAIL_DESC + validExpectedPersonString,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "e/"));
-
-        // invalid phone
-        assertParseFailure(parser, INVALID_PHONE_DESC + validExpectedPersonString,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "p/"));
-
-        // invalid role
-        assertParseFailure(parser, INVALID_ROLE_DESC + validExpectedPersonString,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "r/"));
-
-        // valid value followed by invalid value
-
-        // invalid name
-        assertParseFailure(parser, validExpectedPersonString + INVALID_NAME_DESC,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "n/"));
-
-        // invalid email
-        assertParseFailure(parser, validExpectedPersonString + INVALID_EMAIL_DESC,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "e/"));
-
-        // invalid phone
-        assertParseFailure(parser, validExpectedPersonString + INVALID_PHONE_DESC,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "p/"));
-
-        // invalid role
-        assertParseFailure(parser, validExpectedPersonString + INVALID_ROLE_DESC,
-                String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, "r/"));
+    private void assertRepeatedFieldRejected(String completeFields, String repeatedField, String prefix) {
+        String expectedMessage = String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, prefix);
+        assertParseFailure(parser, repeatedField + completeFields, expectedMessage);
+        assertParseFailure(parser, completeFields + repeatedField, expectedMessage);
     }
 
     @Test
