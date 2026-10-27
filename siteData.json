@@ -56,6 +56,7 @@
         "editing-contacts": "Editing contacts",
         "marking-students-as-former-and-active": "Marking students as former and active",
         "student-guardian-linking": "Student-guardian linking",
+        "removing-and-looking-up-guardian-relationships": "Removing and looking up guardian relationships",
         "contact-details-and-add-validation": "Contact details and Add validation",
         "saving-contacts-and-relationships": "Saving contacts and relationships",
         "listing-and-finding-contacts": "Listing and finding contacts",
@@ -79,7 +80,9 @@
         "filtering-the-contact-list": "Filtering the contact list",
         "finding-contacts": "Finding contacts",
         "ordering-and-displaying-contacts-2": "Ordering and displaying contacts",
+        "checking-subject-punctuation": "Checking subject punctuation",
         "linking-students-to-guardians": "Linking students to guardians",
+        "removing-links-and-finding-a-guardian-s-students": "Removing links and finding a guardian's students",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -136,6 +139,8 @@
         "locating-contacts-by-name-find": "Locating contacts by name: find",
         "viewing-a-contact-s-details-view": "Viewing a contact's details: view",
         "linking-a-student-to-a-guardian-link": "Linking a student to a guardian: link",
+        "removing-a-guardian-link-unlink": "Removing a guardian link: unlink",
+        "finding-a-guardian-s-students-children": "Finding a guardian's students: children",
         "deleting-contacts-delete": "Deleting contacts: delete",
         "undoing-the-latest-deletion-undo": "Undoing the latest deletion: undo",
         "reviewing-contact-data-check": "Reviewing contact data: check",
