@@ -163,6 +163,11 @@ Common email mistakes:
 **Level (`lv/`) and subject (`sub/`)**: One value each, for students only. Each must contain **1 to 30 characters**,
 including at least one letter or digit. Letters and digits (including non-English scripts), spaces, hyphens,
 periods, plus signs, and parentheses are allowed. Repeated spaces become one space before checking length.
+Subjects additionally allow slashes (`/`) and ampersands (`&`). Quote the entire subject when it contains a
+slash or text resembling a command prefix, for example `sub/"Combined Science (Chem/Bio)"`.
+The enclosing quotation marks are removed before validation and are not saved or counted towards the limit.
+The same subject syntax works in `add`, `edit`, and `list`; `sub/English Language & Literature` needs no quotes.
+Level values retain their existing character restrictions. Use unquoted `sub/NONE` in `edit` to remove a subject.
 Examples: `lv/Sec 3`, `sub/A-Math`. The value `NONE`, ignoring case, is reserved for removing fields with `edit`.
 
 #### Duplicate contacts and warnings

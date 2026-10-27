@@ -44,8 +44,14 @@ public class ArgumentTokenizer {
      */
     public static ArgumentMultimap tokenizeWithQuotedValue(String argsString, Prefix quotedValuePrefix,
             Prefix... prefixes) throws ParseException {
+        return tokenizeWithQuotedValues(argsString, List.of(quotedValuePrefix), prefixes);
+    }
+
+    /** Tokenizes arguments while retaining quoted values for all specified fields as literal text. */
+    public static ArgumentMultimap tokenizeWithQuotedValues(String argsString, List<Prefix> quotedValuePrefixes,
+            Prefix... prefixes) throws ParseException {
         List<PrefixPosition> positions = findAllPrefixPositionsOutsideQuotedValue(
-                argsString, quotedValuePrefix, prefixes);
+                argsString, quotedValuePrefixes, prefixes);
         return extractArguments(argsString, positions);
     }
 
@@ -63,10 +69,10 @@ public class ArgumentTokenizer {
     }
 
     /**
-     * Finds prefix positions while treating a quoted value for {@code quotedValuePrefix} as literal text.
+     * Finds prefix positions while treating quoted values for {@code quotedValuePrefixes} as literal text.
      */
     private static List<PrefixPosition> findAllPrefixPositionsOutsideQuotedValue(String argsString,
-            Prefix quotedValuePrefix, Prefix... prefixes) throws ParseException {
+            List<Prefix> quotedValuePrefixes, Prefix... prefixes) throws ParseException {
         List<PrefixPosition> positions = new ArrayList<>();
         boolean isInsideQuotedValue = false;
 
@@ -89,7 +95,7 @@ public class ArgumentTokenizer {
                 }
 
                 positions.add(new PrefixPosition(prefix, prefixStart));
-                if (prefix.equals(quotedValuePrefix)) {
+                if (quotedValuePrefixes.contains(prefix)) {
                     int valueStart = prefixStart + prefix.getPrefix().length();
                     while (valueStart < argsString.length()
                             && Character.isWhitespace(argsString.charAt(valueStart))) {

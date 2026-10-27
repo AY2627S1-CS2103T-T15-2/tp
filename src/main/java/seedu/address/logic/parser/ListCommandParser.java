@@ -42,9 +42,16 @@ public class ListCommandParser implements Parser<ListCommand> {
      *     an invalid role, status, level or subject, or a guardian with former status, a level or a subject.
      */
     public ListCommand parse(String args) throws ParseException {
-        throwIfUnknownPrefix(args);
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_ROLE, PREFIX_STATUS, PREFIX_LEVEL,
-                PREFIX_SUBJECT);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_SUBJECT,
+                PREFIX_ROLE, PREFIX_STATUS, PREFIX_LEVEL, PREFIX_SUBJECT);
+        throwIfUnknownPrefix(argMultimap.getPreamble());
+        for (Prefix prefix : LIST_PREFIXES) {
+            for (String value : argMultimap.getAllValues(prefix)) {
+                String checkedValue = prefix.equals(PREFIX_SUBJECT)
+                        ? ParserUtil.textOutsideQuotedValue(value) : value;
+                throwIfUnknownPrefix(prefix.getPrefix() + checkedValue);
+            }
+        }
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(getInvalidFormatMessage(argMultimap));
         }

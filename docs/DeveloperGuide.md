@@ -1433,6 +1433,18 @@ for each restart. This setup is independent of the data used in the other manual
    Expected: The whole name is visible. If it does not fit on one line, it wraps onto the next line instead of being
    cut off.
 
+### Checking subject punctuation
+
+Subjects allow `/` and `&` without expanding the character set for levels. The shared tokenizer accepts
+quoted names and subjects in Add and Edit, and quoted subjects in List. Prefix-like text within a quoted
+subject remains literal; unknown or repeated parameters outside the quotes are still rejected. The subject
+parser removes the enclosing quotes before applying the normal length, content and reserved-value checks.
+Saved subjects use the same validation rules and contain no enclosing command-syntax quotes.
+
+In a disposable folder, add `add r/student n/Alex sub/"Combined Science (Chem/Bio)"`, then run
+`list sub/"Combined Science (Chem/Bio)"`. Edit with `edit 1 sub/English Language & Literature`, restart, and
+confirm the subject is retained. An extra `x/value` after the quoted subject must fail without changing data.
+
 ### Linking students to guardians
 
 Use a disposable copy of TutorRoster in a separate folder so these tests do not change real contact data.
