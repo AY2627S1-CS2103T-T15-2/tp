@@ -25,13 +25,13 @@ public class LinkCommand extends Command {
     public static final String REMOVE_GUARDIAN_VALUE = "NONE";
     public static final String MESSAGE_UNLINKED = "Removed guardian link from %s.";
     public static final String MESSAGE_NOT_LINKED = "%s has no guardian linked.";
-    public static final String MESSAGE_INVALID_COMMAND = "Invalid link command. Use: " + MESSAGE_USAGE;
-    public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter. Use: " + MESSAGE_USAGE;
+    public static final String MESSAGE_INVALID_COMMAND = "Invalid link command. Use: " + COMMAND_FORMAT;
+    public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter. Use: " + COMMAND_FORMAT;
     public static final String MESSAGE_REPEATED_PARAMETER = "Each of s/ and g/ may appear only once.";
     public static final String MESSAGE_INVALID_STUDENT_INDEX =
             "Student index must be a positive integer shown in the list.";
     public static final String MESSAGE_INVALID_GUARDIAN_INDEX =
-            "Guardian index must be a positive integer shown in the list.";
+            "Guardian value must be a positive integer shown in the list, or NONE to remove the guardian link.";
     public static final String MESSAGE_STUDENT_NOT_FOUND = "No contact exists at student index %s.";
     public static final String MESSAGE_GUARDIAN_NOT_FOUND = "No contact exists at guardian index %s.";
     public static final String MESSAGE_NOT_STUDENT = "Student index must refer to a student.";

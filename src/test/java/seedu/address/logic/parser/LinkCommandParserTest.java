@@ -14,6 +14,16 @@ public class LinkCommandParserTest {
     private final LinkCommandParser parser = new LinkCommandParser();
 
     @Test
+    public void parse_invalidUnlinkInputs_hintsIncludeRemovalSyntax() {
+        assertParseFailure(parser, "s/1", "Invalid link command. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX"
+                + " or link s/STUDENT_INDEX g/NONE");
+        assertParseFailure(parser, "s/1 x/NONE", "Unknown parameter. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX"
+                + " or link s/STUDENT_INDEX g/NONE");
+        assertParseFailure(parser, "s/1 g/invalid", "Guardian value must be a positive integer shown in the list,"
+                + " or NONE to remove the guardian link.");
+    }
+
+    @Test
     public void parse_removeGuardian_acceptsNoneAndRejectsMalformedTargets() {
         for (String arguments : new String[]{"s/1 g/NONE", "g/none s/01", "s/1 g/NoNe"}) {
             assertParseSuccess(parser, arguments, LinkCommand.unlink(INDEX_FIRST_PERSON));
