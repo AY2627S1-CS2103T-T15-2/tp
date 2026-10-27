@@ -52,6 +52,12 @@ public abstract class StudentStatusCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
+        Person target = getStudentToUpdate(model);
+        return updateStudentStatus(model, target);
+    }
+
+    /** Resolves the displayed index, then rejects guardians and repeated status changes in that order. */
+    private Person getStudentToUpdate(Model model) throws CommandException {
         List<Person> lastShownList = model.getFilteredPersonList();
 
         if (targetIndex.getZeroBased() >= lastShownList.size()) {
@@ -60,12 +66,18 @@ public abstract class StudentStatusCommand extends Command {
 
         Person target = lastShownList.get(targetIndex.getZeroBased());
         if (target.getRole() != Role.STUDENT) {
+            logger.fine("Rejected student status change: target is not a student.");
             throw new CommandException(getNotStudentMessage());
         }
         if (target.getStatus() == targetStatus) {
+            logger.fine("Rejected student status change: target already has status " + targetStatus);
             throw new CommandException(String.format(getAlreadyInStatusMessage(), target.getName()));
         }
+        return target;
+    }
 
+    /** Updates the validated student in the candidate model and prepares success feedback. */
+    private CommandResult updateStudentStatus(Model model, Person target) {
         Person updated = target.withStatus(targetStatus);
         model.setPerson(target, updated);
         assert updated.getStatus() == targetStatus;
