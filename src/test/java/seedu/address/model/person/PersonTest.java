@@ -11,6 +11,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -219,9 +220,16 @@ public class PersonTest {
 
     @Test
     public void constructor_noStatus_defaultsToActive() {
-        Person person = new PersonBuilder().build();
-        assertEquals(StudentStatus.ACTIVE, person.getStatus());
-        assertFalse(person.isFormerStudent());
+        for (Role role : Role.values()) {
+            for (Person person : List.of(
+                    new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), role),
+                    new Person(ALICE.getId(), ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), role),
+                    new Person(ALICE.getId(), ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), role,
+                            Optional.empty()))) {
+                assertEquals(StudentStatus.ACTIVE, person.getStatus());
+                assertFalse(person.isFormerStudent());
+            }
+        }
     }
 
     @Test
