@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
@@ -27,8 +28,6 @@ import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 
 public class UnchangedEditTest {
-    private static final String NO_CHANGE_MESSAGE = "No changes made: the new values are the same as the current ones.";
-
     @TempDir
     public Path temporaryFolder;
 
@@ -64,7 +63,8 @@ public class UnchangedEditTest {
         List<Person> displayed = List.copyOf(model.getFilteredPersonList());
         byte[] savedData = Files.readAllBytes(file);
 
-        assertThrows(CommandException.class, NO_CHANGE_MESSAGE, () -> logic.execute("edit 1 " + editArguments));
+        assertThrows(CommandException.class, EditCommand.MESSAGE_NO_CHANGE, () ->
+                logic.execute("edit 1 " + editArguments));
 
         assertEquals(contacts, List.copyOf(model.getAddressBook().getPersonList()));
         assertEquals(originalIds.getFirst(), model.getAddressBook().getPersonList().getFirst().getId());
@@ -79,11 +79,11 @@ public class UnchangedEditTest {
 
     @Test
     public void execute_unchangedEditWithUnavailableStorage_doesNotAttemptSave() throws Exception {
-        boolean[] failSave = {false};
+        boolean[] isSaveFailing = {false};
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")) {
             @Override
             public void saveAddressBook(ReadOnlyAddressBook book) throws IOException {
-                if (failSave[0]) {
+                if (isSaveFailing[0]) {
                     throw new IOException("Storage unavailable after deletion");
                 }
                 super.saveAddressBook(book);
@@ -94,11 +94,12 @@ public class UnchangedEditTest {
         logic.execute("add r/student n/Alex Tan");
         logic.execute("add r/student n/Bea Lim");
         logic.execute("delete 2");
-        failSave[0] = true;
+        isSaveFailing[0] = true;
 
-        assertThrows(CommandException.class, NO_CHANGE_MESSAGE, () -> logic.execute("edit 1 n/Alex Tan"));
+        assertThrows(CommandException.class, EditCommand.MESSAGE_NO_CHANGE, () ->
+                logic.execute("edit 1 n/Alex Tan"));
 
-        failSave[0] = false;
+        isSaveFailing[0] = false;
         logic.execute("undo");
         assertEquals(2, model.getAddressBook().getPersonList().size());
     }

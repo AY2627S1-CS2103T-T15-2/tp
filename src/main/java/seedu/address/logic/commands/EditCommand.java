@@ -69,7 +69,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_GUARDIAN_STUDENT_DETAILS =
             "Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.";
     public static final String MESSAGE_DUPLICATE_PERSON = "This edit would create a duplicate contact.";
-    public static final String MESSAGE_NO_CHANGE = "No changes made: the new values are the same as the current ones.";
+    public static final String MESSAGE_NO_CHANGE =
+            "No changes made: the new values are the same as the current ones.";
     public static final String MESSAGE_POSSIBLE_DUPLICATE = "Warning: Another contact with the same role and name "
             + "exists. This contact may be a duplicate, but it was updated.";
     public static final String MESSAGE_POSSIBLE_DUPLICATE_PHONE = "Warning: Another contact with the same role and "
