@@ -294,9 +294,10 @@ This deletion-specific implementation is separate from the proposed general undo
 `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` changes the name, phone number, email address,
 level or subject of a displayed contact. Only a student can have a level or subject.
 The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
-first displayed contact `p`. Because edit changes data, `LogicManager` runs it on a candidate copy `c` of the live
-model `m`, saves `c` through `Storage`, and only then copies `c`'s data into `m`. If the save fails, `m` is never
-touched.
+first displayed contact `p`, assumed to be a student with a phone number. Because edit changes data, `LogicManager`
+copies the live model `m`'s data and preferences into a candidate `c` and applies the current filter to `c` before
+executing the command. It saves `c` through `Storage` before publishing both its data and filter to `m`.
+If the save fails, the live contacts, view and deletion-undo history stay unchanged.
 
 <puml src="diagrams/EditSequenceDiagram.puml" alt="Interactions inside the Logic component for the `edit 1 p/NONE` command" />
 
@@ -332,10 +333,15 @@ number (ignoring spaces and hyphens), the same email address, or a shared missin
 warning, which is appended to the success message. The edit is still applied, because different people may share a
 name.
 
-On success, `Model#setPerson` replaces the contact and the full list is shown again. The `CommandResult` carries the
-edited contact's ID, and `MainWindow` selects that contact so the detail panel shows the update. Like other
-data-changing commands, `LogicManager` runs the edit on a candidate model and saves it before replacing the live
-model, so a failed save leaves the contact unchanged.
+The command prepares its success feedback and any duplicate warning before changing the candidate.
+`Model#setPerson` then replaces the contact in `c`. The candidate's filter resets to
+`PREDICATE_SHOW_FORMER_STUDENTS` for a former student, or `PREDICATE_SHOW_ACTIVE_CONTACTS` for an active student or
+guardian. Thus editing a former student shows the former-student view; other edits show guardians and active
+students. The previous search, role, level or subject filter is replaced so the edited contact remains visible.
+
+After saving succeeds, `LogicManager` publishes the candidate data and filter, clears deletion-undo history, and
+returns the prepared `CommandResult`. Its contact ID lets `MainWindow` select the edited contact and refresh the
+details panel. A rejected edit or a failed save leaves the live contacts, filter and undo opportunity unchanged.
 
 **Design considerations.**
 
