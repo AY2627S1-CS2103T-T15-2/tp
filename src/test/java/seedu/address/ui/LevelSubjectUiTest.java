@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
@@ -56,7 +57,7 @@ public class LevelSubjectUiTest {
     @Test
     public void personDetailsPanel_selectStudentThenGuardian_showsLevelAndSubjectOnlyForStudent() throws Exception {
         runOnJavaFxThread(() -> {
-            Person student = new PersonBuilder().withName("Alex Tan").withLevel("JC1").build();
+            Person student = new PersonBuilder().withName("Alex Tan").withLevel("JC1").withSubject("H2 Math").build();
             Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
             ObservableList<Person> contacts = FXCollections.observableArrayList(student, guardian);
             PersonListPanel listPanel = new PersonListPanel(contacts, contacts);
@@ -67,10 +68,35 @@ public class LevelSubjectUiTest {
             listPanel.selectPerson(student.getId());
             assertTrue(details.getRoot().lookup("#studentDetails").isVisible());
             assertEquals("Level: JC1", label(details.getRoot(), "level").getText());
-            assertEquals("Subject: Not set", label(details.getRoot(), "subject").getText());
+            assertEquals("Subject: H2 Math", label(details.getRoot(), "subject").getText());
 
             listPanel.selectPerson(guardian.getId());
             assertFalse(details.getRoot().lookup("#studentDetails").isVisible());
+        });
+    }
+
+    @Test
+    public void personDetailsPanel_selectedStudentDetailsChanged_refreshesChangedAndClearedValues() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person student = new PersonBuilder().withLevel("JC1").withSubject("H2 Math").build();
+            ObservableList<Person> contacts = FXCollections.observableArrayList(student);
+            SimpleObjectProperty<Person> selection = new SimpleObjectProperty<>(student);
+            PersonDetailsPanel details = new PersonDetailsPanel(contacts, selection);
+            new Scene(details.getRoot());
+            details.getRoot().applyCss();
+            assertEquals("Level: JC1", label(details.getRoot(), "level").getText());
+            assertEquals("Subject: H2 Math", label(details.getRoot(), "subject").getText());
+
+            Person updated = new PersonBuilder(student).withLevel("Sec 4").withSubject("Physics").build();
+            contacts.set(0, updated);
+
+            assertEquals("Level: Sec 4", label(details.getRoot(), "level").getText());
+            assertEquals("Subject: Physics", label(details.getRoot(), "subject").getText());
+
+            contacts.set(0, new PersonBuilder(updated).withoutLevel().withoutSubject().build());
+
+            assertEquals("Level: Not set", label(details.getRoot(), "level").getText());
+            assertEquals("Subject: Not set", label(details.getRoot(), "subject").getText());
         });
     }
 
