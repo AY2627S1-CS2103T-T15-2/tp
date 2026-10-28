@@ -59,4 +59,11 @@ public interface Storage {
      */
     boolean isDataFileLoadFailed();
 
+    /**
+     * Returns the reason changes were disabled, if the storage implementation provides one.
+     */
+    default Optional<String> getDataFileLoadFailureReason() {
+        return Optional.empty();
+    }
+
 }

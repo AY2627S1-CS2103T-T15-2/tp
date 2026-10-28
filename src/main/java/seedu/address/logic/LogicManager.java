@@ -58,7 +58,7 @@ public class LogicManager implements Logic {
             return command.execute(model);
         }
         if (storage.isDataFileLoadFailed()) {
-            throw new CommandException(MESSAGE_DATA_LOAD_FAILURE);
+            throw new CommandException(getDataLoadFailureMessage());
         }
 
         Model candidate = new ModelManager(model.getAddressBook(), model.getUserPrefs());
@@ -109,7 +109,16 @@ public class LogicManager implements Logic {
 
     @Override
     public Optional<String> getStartupMessage() {
-        return storage.isDataFileLoadFailed() ? Optional.of(MESSAGE_DATA_LOAD_FAILURE) : Optional.empty();
+        return storage.isDataFileLoadFailed() ? Optional.of(getDataLoadFailureMessage()) : Optional.empty();
+    }
+
+    /**
+     * Uses the same actionable explanation at startup and when a change is blocked.
+     */
+    private String getDataLoadFailureMessage() {
+        return storage.getDataFileLoadFailureReason()
+                .map(reason -> MESSAGE_DATA_LOAD_FAILURE + " Reason: " + reason)
+                .orElse(MESSAGE_DATA_LOAD_FAILURE);
     }
 
     @Override
