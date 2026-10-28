@@ -2,19 +2,26 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
+import com.sun.javafx.font.PGFont;
+import com.sun.javafx.scene.text.FontHelper;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
@@ -100,6 +107,41 @@ public class PersonCardTest {
                     assertEquals(shownLabel.getText(), shownText.getText());
                     assertTrue(shownLabel.localToScene(shownLabel.getBoundsInLocal()).getMaxX() <= cardRightEdge);
                 }
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void personListPanel_namesInDifferentScripts_haveRenderableGlyphs() throws Exception {
+        runOnJavaFxThread(() -> {
+            List<String> names = List.of("\u0915\u093f\u0930\u0923", "\u674e\u5c0f\u660e", "\u00c9lise Tan");
+            ObservableList<Person> contacts = FXCollections.observableArrayList();
+            names.forEach(name -> contacts.add(new PersonBuilder().withName(name).build()));
+            PersonListPanel panel = new PersonListPanel(contacts, contacts);
+            Scene scene = new Scene(panel.getRoot(), 500, 450);
+            scene.getStylesheets().add(MainApp.class.getResource("/view/DarkTheme.css").toExternalForm());
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            stage.setOpacity(0);
+            stage.show();
+            try {
+                panel.getRoot().applyCss();
+                panel.getRoot().layout();
+                Set<String> displayedNames = new HashSet<>();
+                for (Node node : panel.getRoot().lookupAll(".list-cell #name")) {
+                    Label name = (Label) node;
+                    displayedNames.add(name.getText());
+                    // Text equality alone also passes when JavaFX renders missing-glyph boxes.
+                    PGFont font = (PGFont) FontHelper.getNativeFont(name.getFont());
+                    var mapper = font.getFontResource().getGlyphMapper();
+                    for (int codePoint : name.getText().codePoints().toArray()) {
+                        assertNotEquals(mapper.getMissingGlyphCode(), mapper.charToGlyph(codePoint),
+                                String.format("Missing U+%04X in %s", codePoint, name.getFont()));
+                    }
+                }
+                assertEquals(Set.copyOf(names), displayedNames);
             } finally {
                 stage.close();
             }
