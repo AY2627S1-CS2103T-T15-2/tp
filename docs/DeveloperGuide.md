@@ -352,8 +352,10 @@ model, so a failed save leaves the contact unchanged.
 `archive INDEX` marks a student as `FORMER`; `unarchive INDEX` marks a former student as `ACTIVE` again.
 Both commands retain the contact and its guardian relationship. They do not archive or export the data file.
 
-**Parsing and validation.** `ArchiveCommandParser` and `UnarchiveCommandParser` use `ParserUtil#parseIndex` to
-accept one positive integer. Invalid input, including a missing index or extra arguments, gives
+**Parsing and validation.** `ArchiveCommandParser` and `UnarchiveCommandParser` use `ParserUtil#parseSingleIndex`
+to accept one positive integer. Missing input gives `Missing contact index. Use: archive INDEX`; extra arguments
+give `Only one contact index is allowed. Use: archive INDEX`, using `unarchive INDEX` for Unarchive.
+Java whitespace is accepted around the index and separates extra arguments. A malformed index instead gives
 `The contact index must be a positive integer shown in the list.` Both concrete commands inherit
 `StudentStatusCommand#execute`, supplying a target status and command-specific messages. This shared method
 resolves the index against `Model#getFilteredPersonList`, which is sorted in displayed order. It rejects an index
