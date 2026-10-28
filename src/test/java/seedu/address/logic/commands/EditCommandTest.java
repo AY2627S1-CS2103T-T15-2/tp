@@ -379,17 +379,9 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_noFieldSpecifiedUnfilteredList_success() {
+    public void execute_noFieldSpecifiedUnfilteredList_failure() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptor());
-        Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, editedPerson.getName(),
-                editedPerson.getRole());
-
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-
-        assertCommandSuccess(editCommand, model, createExpectedResult(expectedMessage, INDEX_FIRST_PERSON),
-                expectedModel);
+        assertCommandFailure(editCommand, model, EditCommand.MESSAGE_NO_CHANGE);
     }
 
     @Test
@@ -552,18 +544,20 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_editOtherField_preservesLevelAndSubject() throws Exception {
+    public void execute_editName_preservesLevelAndSubject() throws Exception {
         Person student = new PersonBuilder().withRole("student").withLevel("JC1").withSubject("H2 Math")
                 .build();
         AddressBook addressBook = new AddressBook();
         addressBook.addPerson(student);
         Model studentModel = new ModelManager(addressBook, new UserPrefs());
 
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB)
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB)
                 .build();
         new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(studentModel);
 
         Person edited = studentModel.getFilteredPersonList().get(0);
+        assertEquals(VALID_NAME_BOB, edited.getName().fullName);
+        assertEquals(student.getId(), edited.getId());
         assertEquals(student.getLevel(), edited.getLevel());
         assertEquals(student.getSubject(), edited.getSubject());
     }

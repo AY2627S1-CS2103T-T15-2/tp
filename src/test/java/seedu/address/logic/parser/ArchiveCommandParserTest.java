@@ -41,4 +41,21 @@ public class ArchiveCommandParserTest {
         assertParseFailure(parser, "-1", Messages.MESSAGE_INVALID_CONTACT_INDEX);
         assertParseFailure(parser, "99999999999", Messages.MESSAGE_INVALID_CONTACT_INDEX);
     }
+
+    @Test
+    public void parse_unicodeWhitespace_distinguishesMissingExtraAndInvalidIndexes() {
+        assertParseFailure(parser, "\u2003", "Missing contact index. Use: archive INDEX");
+        assertParseSuccess(parser, "\u200301\u2003", new ArchiveCommand(INDEX_FIRST_PERSON));
+        assertParseFailure(parser, "1\u20032", "Only one contact index is allowed. Use: archive INDEX");
+        assertParseFailure(parser, "1\u2003r/student", "Only one contact index is allowed. Use: archive INDEX");
+        assertParseFailure(parser, "\u2003abc\u2003", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+    }
+
+    @Test
+    public void parseCommand_unicodeWhitespace_usesApplicationSeparatorRules() {
+        assertParseSuccess(new AddressBookParser()::parseCommand, "archive\u200301\u2003",
+                new ArchiveCommand(INDEX_FIRST_PERSON));
+        assertParseFailure(new AddressBookParser()::parseCommand, "archive\u20031\u20032",
+                "Only one contact index is allowed. Use: archive INDEX");
+    }
 }
