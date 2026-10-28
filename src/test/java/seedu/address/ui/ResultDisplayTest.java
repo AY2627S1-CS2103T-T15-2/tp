@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
 import static seedu.address.testutil.JavaFxTestUtil.waitForLayout;
+import static seedu.address.ui.ResultDisplay.DEFAULT_MAXIMUM_HEIGHT;
+import static seedu.address.ui.ResultDisplay.MAXIMUM_SCENE_HEIGHT_RATIO;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
@@ -96,7 +98,7 @@ public class ResultDisplayTest {
             runOnJavaFxThread(() -> {
                 assertTrue(fixture.text().getHeight() > initialHeight);
                 assertTrue(fixture.text().getHeight()
-                        <= fixture.stage().getScene().getHeight() * 0.25 + LAYOUT_TOLERANCE);
+                        <= fixture.stage().getScene().getHeight() * MAXIMUM_SCENE_HEIGHT_RATIO + LAYOUT_TOLERANCE);
                 assertTrue(fixture.text().isWrapText());
                 assertFalse(hasVisibleScrollBar(fixture.text(), Orientation.HORIZONTAL));
                 assertEquals(0, fixture.text().getCaretPosition());
@@ -166,7 +168,7 @@ public class ResultDisplayTest {
             runOnJavaFxThread(() -> {
                 assertTrue(fixture.text().getHeight() < tallHeight);
                 assertTrue(fixture.text().getHeight()
-                        <= fixture.stage().getScene().getHeight() * 0.25 + LAYOUT_TOLERANCE,
+                        <= fixture.stage().getScene().getHeight() * MAXIMUM_SCENE_HEIGHT_RATIO + LAYOUT_TOLERANCE,
                         describeLayout(fixture));
                 assertTrue(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL));
                 assertFalse(hasVisibleScrollBar(fixture.text(), Orientation.HORIZONTAL));
@@ -184,7 +186,7 @@ public class ResultDisplayTest {
             waitForLayout(fixture.layout());
             runOnJavaFxThread(() -> fixture.layout().getChildren().remove(fixture.display().getRoot()));
             waitForLayout(fixture.layout());
-            runOnJavaFxThread(() -> assertEquals(200, fixture.text().getPrefHeight()));
+            runOnJavaFxThread(() -> assertEquals(DEFAULT_MAXIMUM_HEIGHT, fixture.text().getPrefHeight()));
 
             runOnJavaFxThread(() -> {
                 fixture.layout().getChildren().add(0, fixture.display().getRoot());
@@ -192,7 +194,8 @@ public class ResultDisplayTest {
             });
             waitForLayout(fixture.layout());
             runOnJavaFxThread(() -> {
-                assertEquals(fixture.stage().getScene().getHeight() * 0.25, fixture.text().getPrefHeight(), 1);
+                assertEquals(fixture.stage().getScene().getHeight() * MAXIMUM_SCENE_HEIGHT_RATIO,
+                        fixture.text().getPrefHeight(), 1);
                 assertTrue(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL));
             });
         } finally {

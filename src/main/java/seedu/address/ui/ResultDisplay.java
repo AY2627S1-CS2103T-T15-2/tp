@@ -20,10 +20,12 @@ import javafx.scene.text.TextBoundsType;
 public class ResultDisplay extends UiPart<Region> {
 
     public static final String ERROR_STYLE_CLASS = "error";
+    static final double MAXIMUM_SCENE_HEIGHT_RATIO = 0.25;
+    static final double DEFAULT_MAXIMUM_HEIGHT = 200;
+
     private static final String FXML = "ResultDisplay.fxml";
     private static final int MINIMUM_ROW_COUNT = 3;
-    private static final double MAXIMUM_SCENE_HEIGHT_RATIO = 0.25;
-    private static final double DEFAULT_MAXIMUM_HEIGHT = 200;
+    // Allow for layout rounding so fitting text does not trigger an unnecessary vertical scrollbar.
     private static final double TEXT_HEIGHT_MARGIN = 2;
 
     private final ChangeListener<Number> sceneHeightListener = (observable, oldHeight, newHeight) -> requestResize();
@@ -100,9 +102,10 @@ public class ResultDisplay extends UiPart<Region> {
     }
 
     private void resizeToFitMessage() {
-        Region content = (Region) resultDisplay.lookup(".content");
-        ScrollPane scrollPane = (ScrollPane) resultDisplay.lookup(".scroll-pane");
-        if (content == null || scrollPane == null || resultDisplay.getWidth() <= 0) {
+        // These nodes depend on the skin; the skin listener requests another resize once it is installed.
+        if (!(resultDisplay.lookup(".content") instanceof Region content)
+                || !(resultDisplay.lookup(".scroll-pane") instanceof ScrollPane scrollPane)
+                || resultDisplay.getWidth() <= 0) {
             return;
         }
         Insets controlInsets = resultDisplay.getInsets();
@@ -138,7 +141,8 @@ public class ResultDisplay extends UiPart<Region> {
 
     private double getVerticalScrollBarWidth() {
         return resultDisplay.lookupAll(".scroll-bar").stream()
-                .map(node -> (ScrollBar) node)
+                .filter(ScrollBar.class::isInstance)
+                .map(ScrollBar.class::cast)
                 .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
                 .mapToDouble(scrollBar -> scrollBar.prefWidth(-1))
                 .max().orElse(0);

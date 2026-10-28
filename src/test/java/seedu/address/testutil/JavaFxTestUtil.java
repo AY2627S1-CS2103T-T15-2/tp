@@ -13,6 +13,12 @@ import javafx.scene.Parent;
  */
 public final class JavaFxTestUtil {
 
+    private static final int FX_TASK_TIMEOUT_SECONDS = 20;
+    // Allow the layout change, deferred resize and subsequent relayout to settle.
+    private static final int LAYOUT_PULSE_COUNT = 3;
+    // A few layout pulses should finish well before the timeout for a general JavaFX task.
+    private static final int LAYOUT_TIMEOUT_SECONDS = 5;
+
     private JavaFxTestUtil() {
     }
 
@@ -35,7 +41,7 @@ public final class JavaFxTestUtil {
     public static void runOnJavaFxThread(Runnable action) throws Exception {
         FutureTask<Void> task = new FutureTask<>(action, null);
         Platform.runLater(task);
-        task.get(20, TimeUnit.SECONDS);
+        task.get(FX_TASK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     /**
@@ -51,12 +57,12 @@ public final class JavaFxTestUtil {
             public void handle(long now) {
                 root.applyCss();
                 root.layout();
-                if (++pulses == 3) {
+                if (++pulses == LAYOUT_PULSE_COUNT) {
                     stop();
                     finished.complete(null);
                 }
             }
         }.start());
-        finished.get(5, TimeUnit.SECONDS);
+        finished.get(LAYOUT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 }
