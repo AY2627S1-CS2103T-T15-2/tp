@@ -130,6 +130,27 @@ public class NameContainsSubstringPredicateTest {
     }
 
     @Test
+    public void test_devanagariVowelSigns_keptWhenMatching() {
+        Person kiran = new PersonBuilder().withName("\u0915\u093f\u0930\u0923").build(); // किरण
+        Person karan = new PersonBuilder().withName("\u0915\u0930\u0923").build(); // करण
+        Person alex = new PersonBuilder().withName("Alex Tan").build();
+
+        // EP: the full name with a vowel sign matches only that name
+        NameContainsSubstringPredicate kiranPredicate = new NameContainsSubstringPredicate("\u0915\u093f\u0930\u0923");
+        assertTrue(kiranPredicate.test(kiran));
+        assertFalse(kiranPredicate.test(karan));
+
+        // EP: the name without the vowel sign does not match the name with it
+        assertFalse(new NameContainsSubstringPredicate("\u0915\u0930\u0923").test(kiran));
+
+        // Boundary: a search term made only of a vowel sign matches names containing it, not every name
+        NameContainsSubstringPredicate vowelSignPredicate = new NameContainsSubstringPredicate("\u093f");
+        assertTrue(vowelSignPredicate.test(kiran));
+        assertFalse(vowelSignPredicate.test(karan));
+        assertFalse(vowelSignPredicate.test(alex));
+    }
+
+    @Test
     public void test_curlyAndStraightApostrophes_treatedAsSame() {
         // straight apostrophe in search term, curly apostrophe in name
         NameContainsSubstringPredicate predicate = new NameContainsSubstringPredicate("o'brien");
