@@ -1199,7 +1199,11 @@ The failed command should remain in the command box, which keeps focus.
    1. Test case: `delete 0`<br>
       Expected: No contact is deleted. The status message shows error details.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
+   1. Test case: `delete`<br>
+      Expected: No contact is deleted. The status message is
+      `Invalid delete command. Use: delete INDEX [INDEX...] or delete n/NAME`.
+
+   1. Other incorrect delete commands to try: `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
 
 ### Reviewing contact data
@@ -1344,6 +1348,10 @@ for each restart. This setup is independent of the data used in the other manual
       | `unarchive 2` | `Only students can be unarchived.` |
       | `archive 3` and `unarchive 3`, separately | `No contact exists at index 3.` |
       | `archive 0` and `unarchive abc`, separately | `The contact index must be a positive integer shown in the list.` |
+      | `archive` | `Missing contact index. Use: archive INDEX` |
+      | `unarchive` | `Missing contact index. Use: unarchive INDEX` |
+      | `archive 1 2` | `Only one contact index is allowed. Use: archive INDEX` |
+      | `unarchive 1 2` | `Only one contact index is allowed. Use: unarchive INDEX` |
 
    1. Run `archive 1`, then repeat `archive 1`.<br>
       Expected: The first command succeeds and Ava remains visible because `find Tan` is still applied.

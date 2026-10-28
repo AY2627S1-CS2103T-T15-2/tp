@@ -52,6 +52,14 @@ public class DeleteCommandParserTest {
         assertParseSuccess(parser, "1", new DeleteCommand(INDEX_FIRST_PERSON));
         assertParseSuccess(parser, "1 2", new DeleteCommand(List.of(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON)));
         assertParseSuccess(parser, "  2   1  ", new DeleteCommand(List.of(INDEX_SECOND_PERSON, INDEX_FIRST_PERSON)));
+        assertParseSuccess(parser, "1\t2", new DeleteCommand(List.of(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON)));
+    }
+
+    @Test
+    public void parse_missingTarget_showsBothCommandFormats() {
+        for (String args : new String[] {"", "  ", "\t\n"}) {
+            assertParseFailure(parser, args, "Invalid delete command. Use: delete INDEX [INDEX...] or delete n/NAME");
+        }
     }
 
     @Test
@@ -63,7 +71,6 @@ public class DeleteCommandParserTest {
         assertParseFailure(parser, "-1", Messages.MESSAGE_INVALID_CONTACT_INDEX);
         assertParseFailure(parser, "1.5", Messages.MESSAGE_INVALID_CONTACT_INDEX);
         assertParseFailure(parser, "99999999999", Messages.MESSAGE_INVALID_CONTACT_INDEX);
-        assertParseFailure(parser, "", Messages.MESSAGE_INVALID_CONTACT_INDEX);
     }
 
     @Test
