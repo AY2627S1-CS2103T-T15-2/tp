@@ -85,19 +85,29 @@ public class LevelTest {
 
     @Test
     public void isSameValue_canonicallyEquivalentText_matchesBothDirections() {
-        for (String[] pair : List.of(new String[] {"Fran\u00e7ais", "Franc\u0327ais"},
-                new String[] {"FRAN \u00c7AIS", "franc\u0327ais"},
-                new String[] {"FRANC \u0327AIS", "fran\u00e7ais"},
-                new String[] {"s\u0323\u0307", "s\u0307\u0323"},
-                new String[] {"J\u030c", "j\u030c"},
-                new String[] {"\uac00", "\u1100\u1161"})) {
+        for (String[] pair : List.of(new String[] {"Fran\u00e7ais", "Franc\u0327ais", "composed and decomposed accent"},
+                new String[] {"FRAN \u00c7AIS", "franc\u0327ais", "case and spacing"},
+                new String[] {"FRANC \u0327AIS", "fran\u00e7ais", "space before combining mark"},
+                new String[] {"s\u0323\u0307", "s\u0307\u0323", "combining mark order"},
+                new String[] {"J\u030c", "j\u030c", "normalization after case conversion"},
+                new String[] {"\uac00", "\u1100\u1161", "Hangul decomposition"})) {
             Level first = new Level(pair[0]);
             Level second = new Level(pair[1]);
-            assertTrue(first.isSameValue(second));
-            assertTrue(second.isSameValue(first));
+            assertTrue(first.isSameValue(second), pair[2] + ": " + pair[0] + " vs " + pair[1]);
+            assertTrue(second.isSameValue(first), pair[2] + ": " + pair[1] + " vs " + pair[0]);
         }
         assertFalse(new Level("Fran\u00e7ais").isSameValue(new Level("Francais")));
         assertFalse(new Level("Fran\u00e7ais").isSameValue(new Level("\uff26ran\u00e7ais")));
+    }
+
+    @Test
+    public void isSameValue_greekSigmaVariants_matchesBothDirections() {
+        for (String first : List.of("\u039f\u03a3", "\u03bf\u03c3", "\u03bf\u03c2")) {
+            for (String second : List.of("\u039f\u03a3", "\u03bf\u03c3", "\u03bf\u03c2")) {
+                assertTrue(new Level(first).isSameValue(new Level(second)), first + " vs " + second);
+            }
+        }
+        assertFalse(new Level("\u03bf\u03c3").isSameValue(new Level("\u03cc\u03c3")));
     }
 
     @Test

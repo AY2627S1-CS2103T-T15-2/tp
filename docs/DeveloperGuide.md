@@ -518,8 +518,9 @@ value types and error messages. The `Person` constructor rejects a
 guardian with a level or subject. After validating phone and email, the Add parser checks the guardian contact-method
 requirement, then rejects student-only prefixes before parsing either value. `isSameValue` compares
 two values ignoring letter case and spaces, so that filters can treat `Sec 3` and `sec3` as the same level.
-Both types use `StudentDetailNormalizer` to remove spaces, normalize comparison text to Unicode NFC, and
-lowercase with `Locale.ROOT`. NFC is applied again after lowercasing, which can introduce decomposed characters.
+Both types use `StudentDetailNormalizer` to remove spaces, normalize comparison text to Unicode NFC,
+lowercase with `Locale.ROOT`, and map Greek final sigma to ordinary sigma for comparison.
+NFC is applied again after lowercasing, which can introduce decomposed characters.
 Composed and decomposed spellings of the same accented text therefore match,
 while different accents remain distinct. Stored values, validation limits, `equals` and `hashCode` are unchanged.
 

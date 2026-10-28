@@ -32,6 +32,12 @@ public class CanonicalStudentDetailTest {
         assertCanonicalFiltersAfterReload("Fran\u00e7ais", "Franc\u0327ais");
     }
 
+    @Test
+    public void execute_greekSigmaFilters_matchAfterReload() throws Exception {
+        assertCanonicalFiltersAfterReload("\u039f\u03a3", "\u03bf\u03c3");
+        assertCanonicalFiltersAfterReload("\u03bf\u03c3", "\u03bf\u03c2");
+    }
+
     private void assertCanonicalFiltersAfterReload(String storedValue, String queryValue) throws Exception {
         Path file = temporaryFolder.resolve("contacts.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
