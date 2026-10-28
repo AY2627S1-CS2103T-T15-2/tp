@@ -628,6 +628,8 @@ in one class.
 * **Format error:** any prefix other than `r/`, `st/`, `lv/` or `sub/` (such as `n/` in `n/Alex`), or any text before
   the first prefix (such as `extra` in `list extra r/student`), gives
   `Invalid list command. Use: list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`.
+  Text inside a quoted `sub/` value, such as `n/` in `sub/"Art n/Design"`, is part of the subject and is not
+  checked as a prefix.
   If the whole input is a single role or status without its prefix, such as `list former`, the message suggests the
   intended command instead: `Invalid list command. Did you mean: list st/former?`
 * **Repeated parameter:** a repeated prefix gives `Each of r/, st/, lv/ and sub/ may appear only once.`
@@ -1444,6 +1446,12 @@ for each restart. This setup is independent of the data used in the other manual
 1. Test case: `list sub/Math`<br>
    Expected: No contacts are shown, because `Math` and `A-Math` are different subjects. The status message shows
    `No contacts found.`
+
+1. Test case: `list sub/"Art n/Design"`, then `list sub/Art n/Design`<br>
+   Expected: The first command shows no contacts and the status message `No contacts found.`, because the quoted
+   `n/` is part of the subject. The second is rejected with
+   `Invalid list command. Use: list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`, and the shown contacts are
+   unchanged.
 
 1. Test case: `list r/guardian lv/Sec 3`<br>
    Expected: The shown contacts are unchanged. The status message shows
