@@ -3,8 +3,6 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
-import java.util.Locale;
-
 /**
  * Represents a student's level in TutorRoster, such as "Sec 3" or "JC1".
  * Guarantees: immutable; is valid as declared in {@link #isValidLevel(String)}
@@ -60,15 +58,12 @@ public class Level {
     }
 
     /**
-     * Returns true if both levels are the same after ignoring letter case and spaces,
+     * Returns true if both levels are canonically equivalent after ignoring letter case and spaces,
      * for example "Sec 3" and "sec3".
      */
     public boolean isSameValue(Level other) {
-        return other != null && normalize(value).equals(normalize(other.value));
-    }
-
-    private static String normalize(String text) {
-        return text.replace(" ", "").toLowerCase(Locale.ROOT);
+        return other != null && StudentDetailNormalizer.normalizeForComparison(value)
+                .equals(StudentDetailNormalizer.normalizeForComparison(other.value));
     }
 
     @Override

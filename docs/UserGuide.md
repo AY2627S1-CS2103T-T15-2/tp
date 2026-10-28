@@ -242,8 +242,9 @@ Command | Shows
   * `st/all` shows every contact, whatever its status.
 * `lv/LEVEL` and `sub/SUBJECT` show only students with that level and subject. Letter case and spaces are
   ignored, so `lv/sec3` matches a student at `Sec 3`. The whole value must match: `sub/Math` does not match
-  `A-Math`. Students without a level or subject are not shown. `LEVEL` and `SUBJECT` follow the same rules as in
-  `add`, and `NONE` cannot be used.
+  `A-Math`. The same accented spelling matches across input methods. Accents remain significant, so `Français`
+  does not match `Francais`. Students without a level or subject are not shown. `LEVEL` and `SUBJECT` follow the
+  same rules as in `add`, and `NONE` cannot be used.
 * Quote a subject that contains text resembling a parameter, as in `add`; for example,
   `list sub/"Art n/Design"`. Without the quotation marks, `n/` is read as an unknown parameter and the command is
   rejected.
