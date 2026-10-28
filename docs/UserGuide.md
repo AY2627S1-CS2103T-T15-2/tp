@@ -393,6 +393,8 @@ Format: `find NAME`
 * Leading and trailing spaces are ignored, and consecutive spaces are treated as one space.
 * Curly and straight apostrophes are treated as the same; for example, `o'brien` matches `O’Brien`.
 * Accents are ignored; for example, `elise` matches `Élise`, `élise` matches `Elise`, and `soren` matches `Søren`.
+  Vowel signs in scripts such as Devanagari are part of the name and must match; for example, `किरण` does not match
+  `करण`.
 * The search considers only names.
 * Former students are included in the results with a `Former` badge.
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.

@@ -690,8 +690,10 @@ Curly apostrophes (`’` and `‘`) in the name and the term are treated as stra
 `PersonDisplayOrderComparator` applies the same replacement, so these names are also ordered together. Accents are also
 ignored, using `Name#removeAccents`, so `find elise` matches `Élise` and `find soren` matches `Søren`. Tutors may not
 know how to type accented letters, and the contact list already orders accented letters with their unaccented forms.
-Both the name and the term are processed in the same way, so a match is never lost; scripts that use combining marks for
-vowels may match slightly more names.
+Both the name and the term are processed in the same way, so a match is never lost. Only the combining marks of Latin,
+Greek and Cyrillic letters are removed. In other scripts, such as Devanagari, combining marks include vowel signs that
+change a name, so removing them would make `find किरण` also match `करण`, and a term made only of a vowel sign would
+match every name.
 
 The sequence diagram below shows how `find ale` is executed.
 

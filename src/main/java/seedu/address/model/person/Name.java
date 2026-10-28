@@ -4,8 +4,9 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.text.Normalizer;
+import java.util.EnumSet;
 import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 /**
  * Represents a Person's name in the address book.
@@ -23,7 +24,13 @@ public class Name {
     private static final char APOSTROPHE_STRAIGHT = '\'';
     private static final char APOSTROPHE_CURLY_LEFT = '\u2018';
     private static final char APOSTROPHE_CURLY_RIGHT = '\u2019';
-    private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
+
+    /**
+     * Scripts whose combining marks are accents, such as the acute accent in "é". In other scripts, such as
+     * Devanagari, combining marks include vowel signs that change a word, so they must be kept.
+     */
+    private static final Set<Character.UnicodeScript> ACCENTED_SCRIPTS = EnumSet.of(
+            Character.UnicodeScript.LATIN, Character.UnicodeScript.GREEK, Character.UnicodeScript.CYRILLIC);
 
     /**
      * Replacements for letters that Unicode does not decompose into a base letter and an accent, such as
@@ -95,19 +102,37 @@ public class Name {
 
     /**
      * Returns {@code text} with accents removed from its letters, for example "Elise" for "Élise".
-     * Each letter is decomposed into its base letter and combining marks, and the combining marks are
-     * removed. Letters that cannot be decomposed in this way are replaced by their base letters, for
-     * example "Soren" for "Søren", "Lukasz" for "Łukasz" and "Strauss" for "Strauß".
+     * Each letter is decomposed into its base letter and combining marks, and the combining marks of
+     * Latin, Greek and Cyrillic letters are removed. Combining marks in other scripts are kept, because they
+     * can change a word, for example the vowel sign that makes "किरण" differ from "करण". Letters that cannot be
+     * decomposed are replaced by their base letters, for example "Soren" for "Søren", "Lukasz" for "Łukasz"
+     * and "Strauss" for "Strauß".
      */
     public static String removeAccents(String text) {
         requireNonNull(text);
         String decomposedText = Normalizer.normalize(text, Normalizer.Form.NFD);
-        String textWithoutMarks = COMBINING_MARKS.matcher(decomposedText).replaceAll("");
-        StringBuilder result = new StringBuilder(textWithoutMarks.length());
-        for (char letter : textWithoutMarks.toCharArray()) {
-            result.append(STANDALONE_LETTER_REPLACEMENTS.getOrDefault(letter, String.valueOf(letter)));
+        StringBuilder result = new StringBuilder(decomposedText.length());
+        Character.UnicodeScript baseScript = Character.UnicodeScript.COMMON;
+        for (int codePoint : decomposedText.codePoints().toArray()) {
+            if (isCombiningMark(codePoint)) {
+                if (!ACCENTED_SCRIPTS.contains(baseScript)) {
+                    result.appendCodePoint(codePoint);
+                }
+                continue;
+            }
+            baseScript = Character.UnicodeScript.of(codePoint);
+            String character = Character.toString(codePoint);
+            result.append(Character.isBmpCodePoint(codePoint)
+                    ? STANDALONE_LETTER_REPLACEMENTS.getOrDefault((char) codePoint, character)
+                    : character);
         }
         return result.toString();
+    }
+
+    private static boolean isCombiningMark(int codePoint) {
+        int type = Character.getType(codePoint);
+        return type == Character.NON_SPACING_MARK || type == Character.COMBINING_SPACING_MARK
+                || type == Character.ENCLOSING_MARK;
     }
 
     /**

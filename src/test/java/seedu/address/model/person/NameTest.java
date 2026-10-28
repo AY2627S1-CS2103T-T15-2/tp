@@ -118,6 +118,18 @@ public class NameTest {
 
         // no accents -> unchanged
         assertEquals("Alex O'Brien-Tan 2", Name.removeAccents("Alex O'Brien-Tan 2"));
+
+        // EP: Greek and Cyrillic accents -> base letters
+        assertEquals("\u03b1\u03bd\u03bd\u03b1", Name.removeAccents("\u03ac\u03bd\u03bd\u03b1")); // άννα
+        assertEquals("\u0438\u0432\u0430\u043d", Name.removeAccents("\u0439\u0432\u0430\u043d")); // йван
+
+        // EP: Devanagari vowel signs are part of the word -> kept
+        assertEquals("\u0915\u093f\u0930\u0923", Name.removeAccents("\u0915\u093f\u0930\u0923")); // किरण
+        assertEquals("\u093f", Name.removeAccents("\u093f")); // vowel sign ि on its own
+
+        // Boundary: a combining mark with no letter before it -> kept, as there is no accented letter
+        assertEquals("\u0301", Name.removeAccents("\u0301"));
+        assertEquals("A \u0301", Name.removeAccents("A \u0301"));
     }
 
     @Test
