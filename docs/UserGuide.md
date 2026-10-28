@@ -337,6 +337,10 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 * Edits the contact at the specified `INDEX`. The index refers to the index number shown in the displayed contact list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* If all resulting values are exactly the same as the current ones, the edit is rejected with
+  `No changes made: the new values are the same as the current ones.` This includes removing an already-absent
+  optional field. Changing only capitalization, such as `n/ALEX TAN`, counts as a change. When an edit is
+  rejected, the current view and any opportunity to undo a deletion are preserved.
 * After a successful edit, the edited contact is selected and its details are shown in the details panel.
   Editing a former student shows `list st/former`, and editing any other contact shows `list`, so the edited contact
   stays visible.

@@ -320,8 +320,10 @@ current value otherwise. The contact's ID, role, status and guardian link are al
 edit.
 
 The edit is rejected if it sets or removes the level or subject of a guardian. It is then rejected if it would leave
-a guardian with no phone number and no email, or if the edited contact
-would duplicate another contact. The duplicate check is skipped when the edited contact still matches its original
+a guardian with no phone number and no email, if every resulting value is the same as the current one
+(`No changes made: the new values are the same as the current ones.`), or if the edited contact would duplicate
+another contact. Values are compared exactly, so changing only capitalization is still an edit.
+The duplicate check is skipped when the edited contact still matches its original
 duplicate identity, so changing only the capitalization of a name is allowed.
 
 If the edit is allowed, `getPossibleDuplicateWarning` compares the edited contact with every other contact, excluding
@@ -947,6 +949,13 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 
   Use case resumes at step 3.
 
+* **3e. The requested edit would leave every stored value unchanged.**
+
+  3e1. TutorRoster reports that no changes were made. The contact, displayed list and any deletion undo remain
+  unchanged.
+
+  Use case resumes at step 3.
+
 * **4a. TutorRoster cannot save the changes.**
 
   4a1. TutorRoster displays an error. Existing contact details, relationships, and saved data remain unchanged.
@@ -1251,7 +1260,8 @@ The failed command should remain in the command box, which keeps focus.
    reports `No deletion is available to undo.`
 
 1. Test case: delete a contact, successfully edit a remaining contact, then `undo`.<br>
-   Expected: Undo is unavailable and the edit is retained. Repeat with an invalid edit instead; undo remains available.
+   Expected: Undo is unavailable and the edit is retained. Repeat with an invalid or unchanged edit instead;
+   undo remains available.
 
 1. Test case: delete a contact, close and reopen the application, then `undo`.<br>
    Expected: The deletion remains saved and undo is unavailable because history is session-only.
@@ -1290,6 +1300,9 @@ and failed intervening changes, ensuring that live data, saved data and the prev
    name, and the same email address exists, and that the contact may be a duplicate but was updated.
 
 1. Incorrect commands to try, each leaving the contacts unchanged:
+   * Editing a contact with only its current values, for example `edit INDEX n/NAME` using its current name, gives
+     `No changes made: the new values are the same as the current ones.` The current view and deletion undo remain
+     unchanged.
    * `edit 1` gives `At least one of n/, p/, e/, lv/, or sub/ must be provided.`
    * `edit n/Alex` gives `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
    * `edit 0 n/Alex` gives `The contact index must be a positive integer shown in the list.`
