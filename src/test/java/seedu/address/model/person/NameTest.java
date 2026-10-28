@@ -130,6 +130,16 @@ public class NameTest {
         // Boundary: a combining mark with no letter before it -> kept, as there is no accented letter
         assertEquals("\u0301", Name.removeAccents("\u0301"));
         assertEquals("A \u0301", Name.removeAccents("A \u0301"));
+
+        // EP: each kind of combining mark is removed after a Latin letter and kept after a Devanagari letter
+        assertEquals("A", Name.removeAccents("A\u20dd")); // enclosing circle
+        assertEquals("\u0915\u20dd", Name.removeAccents("\u0915\u20dd"));
+        assertEquals("a", Name.removeAccents("a\u0903")); // spacing mark (visarga)
+        assertEquals("\u0915\u094d\u0937", Name.removeAccents("\u0915\u094d\u0937")); // non-spacing virama in क्ष
+
+        // EP: a character outside the Basic Multilingual Plane -> unchanged, and marks after it are kept
+        assertEquals("\ud801\udc00", Name.removeAccents("\ud801\udc00")); // Deseret capital long I
+        assertEquals("\ud801\udc00\u0301", Name.removeAccents("\ud801\udc00\u0301"));
     }
 
     @Test
