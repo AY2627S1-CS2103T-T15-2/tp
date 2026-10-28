@@ -86,6 +86,23 @@ public class SubjectTest {
     }
 
     @Test
+    public void isSameValue_canonicallyEquivalentText_matchesBothDirections() {
+        for (String[] pair : List.of(new String[] {"Fran\u00e7ais", "Franc\u0327ais"},
+                new String[] {"FRAN \u00c7AIS", "franc\u0327ais"},
+                new String[] {"FRANC \u0327AIS", "fran\u00e7ais"},
+                new String[] {"s\u0323\u0307", "s\u0307\u0323"},
+                new String[] {"J\u030c", "j\u030c"},
+                new String[] {"\uac00", "\u1100\u1161"})) {
+            Subject first = new Subject(pair[0]);
+            Subject second = new Subject(pair[1]);
+            assertTrue(first.isSameValue(second));
+            assertTrue(second.isSameValue(first));
+        }
+        assertFalse(new Subject("Fran\u00e7ais").isSameValue(new Subject("Francais")));
+        assertFalse(new Subject("Fran\u00e7ais").isSameValue(new Subject("\uff26ran\u00e7ais")));
+    }
+
+    @Test
     public void equals() {
         Subject subject = new Subject("A-Math");
 

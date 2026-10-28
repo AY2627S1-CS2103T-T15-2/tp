@@ -84,6 +84,23 @@ public class LevelTest {
     }
 
     @Test
+    public void isSameValue_canonicallyEquivalentText_matchesBothDirections() {
+        for (String[] pair : List.of(new String[] {"Fran\u00e7ais", "Franc\u0327ais"},
+                new String[] {"FRAN \u00c7AIS", "franc\u0327ais"},
+                new String[] {"FRANC \u0327AIS", "fran\u00e7ais"},
+                new String[] {"s\u0323\u0307", "s\u0307\u0323"},
+                new String[] {"J\u030c", "j\u030c"},
+                new String[] {"\uac00", "\u1100\u1161"})) {
+            Level first = new Level(pair[0]);
+            Level second = new Level(pair[1]);
+            assertTrue(first.isSameValue(second));
+            assertTrue(second.isSameValue(first));
+        }
+        assertFalse(new Level("Fran\u00e7ais").isSameValue(new Level("Francais")));
+        assertFalse(new Level("Fran\u00e7ais").isSameValue(new Level("\uff26ran\u00e7ais")));
+    }
+
+    @Test
     public void equals() {
         Level level = new Level("Sec 3");
 
