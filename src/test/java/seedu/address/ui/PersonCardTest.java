@@ -15,6 +15,7 @@ import org.junit.jupiter.api.condition.OS;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
@@ -92,6 +93,13 @@ public class PersonCardTest {
                 panel.getRoot().applyCss();
                 panel.getRoot().layout();
                 Region card = (Region) panel.getRoot().lookup("#cardPane");
+                Region viewport = (Region) panel.getRoot().lookup(".virtual-flow .clipped-container");
+                Bounds viewportBounds = viewport.localToScene(viewport.getLayoutBounds());
+                Bounds cardBounds = card.localToScene(card.getLayoutBounds());
+                assertTrue(cardBounds.getMinX() >= viewportBounds.getMinX() - 1,
+                        "Card extends past viewport left edge");
+                assertTrue(cardBounds.getMaxX() <= viewportBounds.getMaxX() + 1,
+                        "Card extends past viewport right edge");
                 double cardRightEdge = card.localToScene(card.getBoundsInLocal()).getMaxX();
                 for (String id : List.of("name", "roleBadge", "formerBadge")) {
                     Label shownLabel = (Label) card.lookup("#" + id);
