@@ -54,6 +54,53 @@ public class LinkPersistenceTest {
     }
 
     @Test
+    public void execute_unlink_persistsWithoutDeletingContactsOrOtherLinks() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json"));
+        Model model = createModel();
+        Logic logic = createLogic(model, storage);
+        logic.execute("link s/1 g/2");
+        Person secondStudent = new PersonBuilder().withName("Bea Tan").withGuardianId(guardian.getId()).build();
+        model.addPerson(secondStudent);
+        logic.execute("find Alex");
+
+        assertEquals("Removed guardian link from Alex Tan.",
+                logic.execute("link s/1 g/NONE").getFeedbackToUser());
+
+        Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertEquals(3, reloaded.getAddressBook().getPersonList().size());
+        assertTrue(findContact(reloaded, student.getId()).getGuardianId().isEmpty());
+        assertEquals(secondStudent, findContact(reloaded, secondStudent.getId()));
+        assertEquals(guardian, findContact(reloaded, guardian.getId()));
+        assertEquals(List.of(findContact(model, student.getId())), List.copyOf(model.getFilteredPersonList()));
+    }
+
+    @Test
+    public void execute_unlinkSaveFailure_preservesRelationshipFilterAndFile() throws Exception {
+        Path file = temporaryFolder.resolve("contacts.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        Model model = createModel();
+        Logic logic = createLogic(model, storage);
+        logic.execute("link s/1 g/2");
+        logic.execute("find Alex");
+        List<Person> originalContacts = List.copyOf(model.getAddressBook().getPersonList());
+        List<Person> originalDisplay = List.copyOf(model.getFilteredPersonList());
+        String originalFile = Files.readString(file);
+        JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(file) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook book) throws IOException {
+                throw new IOException("Simulated disk failure");
+            }
+        };
+
+        assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () ->
+                createLogic(model, failingStorage).execute("link s/1 g/NONE"));
+
+        assertEquals(originalContacts, List.copyOf(model.getAddressBook().getPersonList()));
+        assertEquals(originalDisplay, List.copyOf(model.getFilteredPersonList()));
+        assertEquals(originalFile, Files.readString(file));
+    }
+
+    @Test
     public void execute_deleteStudentByName_persistsDeletionAndRetainsGuardian() throws Exception {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json"));
         Model model = createModel();

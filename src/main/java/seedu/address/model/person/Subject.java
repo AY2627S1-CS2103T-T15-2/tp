@@ -16,13 +16,14 @@ public class Subject {
             "Empty subject parameter: Subject cannot be empty when sub/ is specified.";
     public static final String MESSAGE_CONSTRAINTS = "Subject must contain 1 to " + MAX_LENGTH
             + " characters, including at least one letter or digit. It may contain letters, digits, spaces, "
-            + "hyphens, periods, plus signs and parentheses.";
+            + "hyphens, periods, plus signs, parentheses, slashes and ampersands. NONE is reserved.";
 
     public static final String MESSAGE_TOO_LONG = "Subject cannot exceed " + MAX_LENGTH + " characters.";
     public static final String MESSAGE_INVALID_CHARACTERS =
             "Subject contains unsupported characters. Use letters, digits, spaces, hyphens, "
-                    + "periods, plus signs and parentheses.";
+                    + "periods, plus signs, parentheses, slashes and ampersands.";
     public static final String MESSAGE_MISSING_ALPHANUMERIC = "Subject must contain at least one letter or digit.";
+    public static final String MESSAGE_RESERVED_VALUE = StudentDetailValidator.MESSAGE_RESERVED_VALUE;
 
     public final String value;
 
@@ -49,11 +50,12 @@ public class Subject {
      * Returns the failed constraint for {@code test}, or {@code null} for a valid, trimmed value.
      */
     public static String getValidationErrorMessage(String test) {
-        return switch (StudentDetailValidator.validate(test, MAX_LENGTH)) {
+        return switch (StudentDetailValidator.validateSubject(test, MAX_LENGTH)) {
             case TOO_LONG -> MESSAGE_TOO_LONG;
             case INVALID_CHARACTERS -> MESSAGE_INVALID_CHARACTERS;
             case MISSING_ALPHANUMERIC -> MESSAGE_MISSING_ALPHANUMERIC;
             case SURROUNDING_SPACES -> "Subject cannot start or end with spaces.";
+            case RESERVED_VALUE -> MESSAGE_RESERVED_VALUE;
             case VALID -> null;
         };
     }

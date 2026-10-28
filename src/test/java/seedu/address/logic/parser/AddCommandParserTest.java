@@ -138,7 +138,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_multipleInvalidFields_reportsFirstInFormatOrder() {
-        String invalidDetails = " sub/Math& lv/Sec#3";
+        String invalidDetails = " sub/Math# lv/Sec#3";
         assertParseFailure(parser, invalidDetails + " e/bad p/12 n/Alex! r/teacher",
                 Role.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, invalidDetails + " e/bad p/12 n/Alex! r/student",
@@ -149,7 +149,7 @@ public class AddCommandParserTest {
                 "Email address must contain exactly one @ symbol.");
         assertParseFailure(parser, invalidDetails + " e/alex@example.com p/123 n/Alex r/student",
                 Level.MESSAGE_INVALID_CHARACTERS);
-        assertParseFailure(parser, " sub/Math& lv/Sec 3 e/alex@example.com p/123 n/Alex r/student",
+        assertParseFailure(parser, " sub/Math# lv/Sec 3 e/alex@example.com p/123 n/Alex r/student",
                 Subject.MESSAGE_INVALID_CHARACTERS);
     }
 
@@ -163,13 +163,13 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_guardianWithInvalidDetails_checksContactMethodsFirst() {
-        assertParseFailure(parser, " sub/Math& lv/Sec#3 n/Alex r/guardian",
+        assertParseFailure(parser, " sub/Math# lv/Sec#3 n/Alex r/guardian",
                 AddCommand.MESSAGE_CONTACT_METHOD_REQUIRED);
-        assertParseFailure(parser, " sub/Math& lv/Sec#3 p/12 n/Alex r/guardian",
+        assertParseFailure(parser, " sub/Math# lv/Sec#3 p/12 n/Alex r/guardian",
                 Phone.MESSAGE_TOO_FEW_DIGITS);
-        assertParseFailure(parser, " sub/Math& lv/Sec#3 e/bad n/Alex r/guardian",
+        assertParseFailure(parser, " sub/Math# lv/Sec#3 e/bad n/Alex r/guardian",
                 "Email address must contain exactly one @ symbol.");
-        assertParseFailure(parser, " sub/Math& lv/Sec#3 p/123 n/Alex r/guardian",
+        assertParseFailure(parser, " sub/Math# lv/Sec#3 p/123 n/Alex r/guardian",
                 AddCommandParser.MESSAGE_GUARDIAN_STUDENT_DETAILS);
     }
 
@@ -179,6 +179,17 @@ public class AddCommandParserTest {
                 .withoutPhone().withoutEmail().withLevel("Sec 3").withSubject("Math").build();
         assertParseSuccess(parser, "\tr/student\tn/\t\"Ravi lv/Sec sub/Math\"\tlv/Sec 3\tsub/Math",
                 new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_quotedSubjectWithPrefixLikeText_keepsSubjectIntact() {
+        Person expected = new PersonBuilder(AMY).withName("Alex").withoutPhone().withoutEmail()
+                .withSubject("Math p/Applied").build();
+        for (String fields : List.of(" n/Alex sub/\"Math p/Applied\"", " sub/\"Math p/Applied\" n/Alex")) {
+            assertParseSuccess(parser, " r/student" + fields, new AddCommand(expected));
+        }
+        assertParseFailure(parser, " r/student n/Alex sub/\"Math p/Applied",
+                ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
     }
 
     @Test
@@ -640,7 +651,7 @@ public class AddCommandParserTest {
     public void parse_invalidLevelOrSubject_failure() {
         String fields = NAME_DESC_AMY + PHONE_DESC_AMY + ROLE_DESC_AMY;
         assertParseFailure(parser, fields + " " + PREFIX_LEVEL + "Sec #3", Level.MESSAGE_INVALID_CHARACTERS);
-        assertParseFailure(parser, fields + " " + PREFIX_SUBJECT + "Math & Sci", Subject.MESSAGE_INVALID_CHARACTERS);
+        assertParseFailure(parser, fields + " " + PREFIX_SUBJECT + "Math # Sci", Subject.MESSAGE_INVALID_CHARACTERS);
         assertParseFailure(parser, fields + " " + PREFIX_LEVEL + "NONE",
                 ParserUtil.MESSAGE_RESERVED_REMOVE_VALUE);
     }

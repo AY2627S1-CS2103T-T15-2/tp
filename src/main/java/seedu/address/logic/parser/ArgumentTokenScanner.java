@@ -2,23 +2,25 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
+
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /**
- * Scans argument characters outside a designated prefix's quoted value.
+ * Scans argument characters outside the designated prefixes' quoted values.
  * Quotes in other fields, or after the first non-whitespace value character, remain ordinary text.
  */
 final class ArgumentTokenScanner {
     private final String arguments;
-    private final Prefix quotedValuePrefix;
+    private final List<Prefix> quotedValuePrefixes;
     private int position;
     private int openingQuote = -1;
     private int tokenStart;
     private boolean hasSlashInToken;
 
-    ArgumentTokenScanner(String arguments, Prefix quotedValuePrefix) {
+    ArgumentTokenScanner(String arguments, List<Prefix> quotedValuePrefixes) {
         this.arguments = requireNonNull(arguments);
-        this.quotedValuePrefix = quotedValuePrefix;
+        this.quotedValuePrefixes = List.copyOf(quotedValuePrefixes);
     }
 
     boolean hasNext() {
@@ -73,7 +75,10 @@ final class ArgumentTokenScanner {
     }
 
     private void rememberOpeningQuote() {
-        if (quotedValuePrefix == null || !arguments.startsWith(quotedValuePrefix.getPrefix(), position)) {
+        Prefix quotedValuePrefix = quotedValuePrefixes.stream()
+                .filter(prefix -> arguments.startsWith(prefix.getPrefix(), position))
+                .findFirst().orElse(null);
+        if (quotedValuePrefix == null) {
             return;
         }
         int valueStart = position + quotedValuePrefix.getPrefix().length();

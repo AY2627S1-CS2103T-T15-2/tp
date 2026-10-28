@@ -23,12 +23,24 @@ public class SubjectTest {
     }
 
     @Test
+    public void isValidSubjectAndConstructor_reservedNone_rejected() {
+        for (String value : List.of("NONE", "none", "None", "nOnE")) {
+            assertFalse(Subject.isValidSubject(value));
+            assertThrows(IllegalArgumentException.class, () -> new Subject(value));
+            assertEquals(Subject.MESSAGE_RESERVED_VALUE, Subject.getValidationErrorMessage(value));
+        }
+        assertTrue(Subject.isValidSubject("None Studies"));
+    }
+
+    @Test
     public void isValidSubject_validValues_returnsTrue() {
         assertTrue(Subject.isValidSubject("A-Math"));
         assertTrue(Subject.isValidSubject("Math"));
         assertTrue(Subject.isValidSubject("IB (HL) Year 1"));
         assertTrue(Subject.isValidSubject("O-Level Pure Chem."));
         assertTrue(Subject.isValidSubject("Math+"));
+        assertTrue(Subject.isValidSubject("Combined Science (Chem/Bio)"));
+        assertTrue(Subject.isValidSubject("English Language & Literature"));
         assertTrue(Subject.isValidSubject("中三")); // non-English letters
         assertTrue(Subject.isValidSubject("a".repeat(Subject.MAX_LENGTH))); // maximum length
     }
@@ -50,7 +62,7 @@ public class SubjectTest {
         assertFalse(Subject.isValidSubject("-.+()")); // no letter or digit
         assertFalse(Subject.isValidSubject(" A-Math")); // leading space
         assertFalse(Subject.isValidSubject("A-Math ")); // trailing space
-        assertFalse(Subject.isValidSubject("Sec/3")); // slash
+        assertFalse(Subject.isValidSubject("/&")); // separators alone are not a subject
         assertFalse(Subject.isValidSubject("Sec #3")); // other symbol
         assertFalse(Subject.isValidSubject("a".repeat(Subject.MAX_LENGTH + 1))); // too long
     }
@@ -59,7 +71,7 @@ public class SubjectTest {
     public void getValidationErrorMessage_reportsSpecificConstraint() {
         assertThrows(NullPointerException.class, () -> Subject.getValidationErrorMessage(null));
         assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("a".repeat(31)));
-        assertEquals(Subject.MESSAGE_INVALID_CHARACTERS, Subject.getValidationErrorMessage("A&B"));
+        assertEquals(Subject.MESSAGE_INVALID_CHARACTERS, Subject.getValidationErrorMessage("A#B"));
         assertEquals(Subject.MESSAGE_MISSING_ALPHANUMERIC, Subject.getValidationErrorMessage("-.+()"));
         assertEquals("Subject cannot start or end with spaces.", Subject.getValidationErrorMessage(" A "));
         assertNull(Subject.getValidationErrorMessage("中".repeat(30)));
@@ -70,7 +82,7 @@ public class SubjectTest {
     @Test
     public void getValidationErrorMessage_multipleViolations_preservesConstraintPriority() {
         assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("&".repeat(31)));
-        assertEquals(Subject.MESSAGE_INVALID_CHARACTERS, Subject.getValidationErrorMessage(" & "));
+        assertEquals(Subject.MESSAGE_INVALID_CHARACTERS, Subject.getValidationErrorMessage(" # "));
         assertEquals(Subject.MESSAGE_MISSING_ALPHANUMERIC, Subject.getValidationErrorMessage(" --- "));
     }
 

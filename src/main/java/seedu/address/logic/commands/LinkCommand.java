@@ -21,13 +21,17 @@ public class LinkCommand extends Command {
 
     public static final String COMMAND_WORD = "link";
     public static final String MESSAGE_USAGE = "link s/STUDENT_INDEX g/GUARDIAN_INDEX";
-    public static final String MESSAGE_INVALID_COMMAND = "Invalid link command. Use: " + MESSAGE_USAGE;
-    public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter. Use: " + MESSAGE_USAGE;
+    public static final String COMMAND_FORMAT = MESSAGE_USAGE + " or link s/STUDENT_INDEX g/NONE";
+    public static final String REMOVE_GUARDIAN_VALUE = "NONE";
+    public static final String MESSAGE_UNLINKED = "Removed guardian link from %s.";
+    public static final String MESSAGE_NOT_LINKED = "%s has no guardian linked.";
+    public static final String MESSAGE_INVALID_COMMAND = "Invalid link command. Use: " + COMMAND_FORMAT;
+    public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter. Use: " + COMMAND_FORMAT;
     public static final String MESSAGE_REPEATED_PARAMETER = "Each of s/ and g/ may appear only once.";
     public static final String MESSAGE_INVALID_STUDENT_INDEX =
             "Student index must be a positive integer shown in the list.";
     public static final String MESSAGE_INVALID_GUARDIAN_INDEX =
-            "Guardian index must be a positive integer shown in the list.";
+            "Guardian value must be a positive integer shown in the list, or NONE to remove the guardian link.";
     public static final String MESSAGE_STUDENT_NOT_FOUND = "No contact exists at student index %s.";
     public static final String MESSAGE_GUARDIAN_NOT_FOUND = "No contact exists at guardian index %s.";
     public static final String MESSAGE_NOT_STUDENT = "Student index must refer to a student.";
@@ -39,15 +43,24 @@ public class LinkCommand extends Command {
             "The student's existing guardian could not be found. No changes were made.";
 
     private final Index studentIndex;
-    private final Index guardianIndex;
+    private final Optional<Index> guardianIndex;
 
     /**
      * Creates a link command using the displayed student and guardian indexes.
      */
     public LinkCommand(Index studentIndex, Index guardianIndex) {
+        this(studentIndex, Optional.of(guardianIndex));
+    }
+
+    private LinkCommand(Index studentIndex, Optional<Index> guardianIndex) {
         requireAllNonNull(studentIndex, guardianIndex);
         this.studentIndex = studentIndex;
         this.guardianIndex = guardianIndex;
+    }
+
+    /** Creates a command that removes only the displayed student's guardian link. */
+    public static LinkCommand unlink(Index studentIndex) {
+        return new LinkCommand(studentIndex, Optional.empty());
     }
 
     @Override
@@ -62,12 +75,16 @@ public class LinkCommand extends Command {
         if (studentIndex.getZeroBased() >= displayedPersons.size()) {
             throw new CommandException(String.format(MESSAGE_STUDENT_NOT_FOUND, studentIndex.getOneBased()));
         }
-        if (guardianIndex.getZeroBased() >= displayedPersons.size()) {
-            throw new CommandException(String.format(MESSAGE_GUARDIAN_NOT_FOUND, guardianIndex.getOneBased()));
+        if (guardianIndex.isEmpty()) {
+            return unlinkStudent(model, displayedPersons.get(studentIndex.getZeroBased()));
+        }
+        Index guardianTarget = guardianIndex.orElseThrow();
+        if (guardianTarget.getZeroBased() >= displayedPersons.size()) {
+            throw new CommandException(String.format(MESSAGE_GUARDIAN_NOT_FOUND, guardianTarget.getOneBased()));
         }
 
         Person student = displayedPersons.get(studentIndex.getZeroBased());
-        Person guardian = displayedPersons.get(guardianIndex.getZeroBased());
+        Person guardian = displayedPersons.get(guardianTarget.getZeroBased());
         if (student.getRole() != Role.STUDENT) {
             throw new CommandException(MESSAGE_NOT_STUDENT);
         }
@@ -87,6 +104,17 @@ public class LinkCommand extends Command {
         }
         model.setPerson(student, student.withGuardianId(Optional.of(guardian.getId())));
         return new CommandResult(feedback, student.getId());
+    }
+
+    private CommandResult unlinkStudent(Model model, Person student) throws CommandException {
+        if (student.getRole() != Role.STUDENT) {
+            throw new CommandException(MESSAGE_NOT_STUDENT);
+        }
+        if (student.getGuardianId().isEmpty()) {
+            throw new CommandException(String.format(MESSAGE_NOT_LINKED, student.getName()));
+        }
+        model.setPerson(student, student.withGuardianId(Optional.empty()));
+        return new CommandResult(String.format(MESSAGE_UNLINKED, student.getName()), student.getId());
     }
 
     @Override

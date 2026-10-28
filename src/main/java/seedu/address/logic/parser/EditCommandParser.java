@@ -8,6 +8,8 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,57 +36,50 @@ public class EditCommandParser implements Parser<EditCommand> {
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                        PREFIX_LEVEL, PREFIX_SUBJECT);
+                ArgumentTokenizer.tokenizeWithQuotedValues(args, List.of(PREFIX_NAME, PREFIX_SUBJECT), PREFIX_NAME,
+                        PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL, PREFIX_SUBJECT);
 
         verifyNoUnknownPrefixes(argMultimap);
         verifyNoRepeatedPrefixes(argMultimap);
         Index index = parseIndex(argMultimap.getPreamble());
 
-        EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
-
-        if (argMultimap.getValue(PREFIX_NAME).isPresent()) {
-            editPersonDescriptor.setName(ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get()));
-        }
-        if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
-            String phone = argMultimap.getValue(PREFIX_PHONE).get();
-            if (phone.trim().equalsIgnoreCase(EditCommand.REMOVE_FIELD_VALUE)) {
-                editPersonDescriptor.removePhone();
-            } else {
-                editPersonDescriptor.setPhone(ParserUtil.parsePhone(phone));
-            }
-        }
-        if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
-            String email = argMultimap.getValue(PREFIX_EMAIL).get();
-            if (email.trim().equalsIgnoreCase(EditCommand.REMOVE_FIELD_VALUE)) {
-                editPersonDescriptor.removeEmail();
-            } else {
-                editPersonDescriptor.setEmail(ParserUtil.parseEmail(email));
-            }
-        }
-
-        if (argMultimap.getValue(PREFIX_LEVEL).isPresent()) {
-            String level = argMultimap.getValue(PREFIX_LEVEL).get();
-            if (isRemoveValue(level)) {
-                editPersonDescriptor.removeLevel();
-            } else {
-                editPersonDescriptor.setLevel(ParserUtil.parseLevel(level));
-            }
-        }
-        if (argMultimap.getValue(PREFIX_SUBJECT).isPresent()) {
-            String subject = argMultimap.getValue(PREFIX_SUBJECT).get();
-            if (isRemoveValue(subject)) {
-                editPersonDescriptor.removeSubject();
-            } else {
-                editPersonDescriptor.setSubject(ParserUtil.parseSubject(subject));
-            }
-        }
-
-        if (!editPersonDescriptor.isAnyFieldEdited()) {
+        EditPersonDescriptor descriptor = parseEditedFields(argMultimap);
+        if (!descriptor.isAnyFieldEdited()) {
             throw new ParseException(EditCommand.MESSAGE_NOT_EDITED);
         }
 
-        return new EditCommand(index, editPersonDescriptor);
+        return new EditCommand(index, descriptor);
+    }
+
+    /** Parses values in command-format order so the first reported field error remains consistent. */
+    private static EditPersonDescriptor parseEditedFields(ArgumentMultimap argMultimap) throws ParseException {
+        EditPersonDescriptor descriptor = new EditPersonDescriptor();
+        if (argMultimap.getValue(PREFIX_NAME).isPresent()) {
+            descriptor.setName(ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).orElseThrow()));
+        }
+        parseOptionalField(argMultimap.getValue(PREFIX_PHONE), ParserUtil::parsePhone,
+                descriptor::setPhone, descriptor::removePhone);
+        parseOptionalField(argMultimap.getValue(PREFIX_EMAIL), ParserUtil::parseEmail,
+                descriptor::setEmail, descriptor::removeEmail);
+        parseOptionalField(argMultimap.getValue(PREFIX_LEVEL), ParserUtil::parseLevel,
+                descriptor::setLevel, descriptor::removeLevel);
+        parseOptionalField(argMultimap.getValue(PREFIX_SUBJECT), ParserUtil::parseSubject,
+                descriptor::setSubject, descriptor::removeSubject);
+        return descriptor;
+    }
+
+    /** Keeps an omitted field unchanged, removes NONE, or validates and sets a supplied value. */
+    private static <T> void parseOptionalField(Optional<String> value, FieldParser<T> parser,
+            Consumer<T> setter, Runnable remover) throws ParseException {
+        if (value.isEmpty()) {
+            return;
+        }
+        String fieldValue = value.orElseThrow();
+        if (isRemoveValue(fieldValue)) {
+            remover.run();
+        } else {
+            setter.accept(parser.parse(fieldValue));
+        }
     }
 
     private static boolean isRemoveValue(String value) {
@@ -93,7 +88,7 @@ public class EditCommandParser implements Parser<EditCommand> {
 
     /**
      * Throws if the preamble or any value contains a word ending in {@code /} that is not an edit prefix.
-     * Text inside a quoted name is skipped, so it may contain such words.
+     * Text inside a quoted name or subject is skipped, so it may contain such words.
      */
     private static void verifyNoUnknownPrefixes(ArgumentMultimap argMultimap) throws ParseException {
         throwIfUnknownPrefix(argMultimap.getPreamble());
@@ -105,13 +100,8 @@ public class EditCommandParser implements Parser<EditCommand> {
     }
 
     private static String extractTextOutsideQuotes(Prefix prefix, String value) {
-        String trimmedValue = value.trim();
-        if (!prefix.equals(PREFIX_NAME) || !trimmedValue.startsWith("\"")) {
-            return value;
-        }
-        // The tokenizer has already rejected a quoted name without a closing quotation mark.
-        int closingQuote = trimmedValue.indexOf('"', 1);
-        return " " + trimmedValue.substring(closingQuote + 1);
+        return prefix.equals(PREFIX_NAME) || prefix.equals(PREFIX_SUBJECT)
+                ? ParserUtil.textOutsideQuotedValue(value) : value;
     }
 
     private static void throwIfUnknownPrefix(String text) throws ParseException {
@@ -141,5 +131,11 @@ public class EditCommandParser implements Parser<EditCommand> {
         } catch (ParseException pe) {
             throw new ParseException(Messages.MESSAGE_INVALID_CONTACT_INDEX, pe);
         }
+    }
+
+    /** Validates one field value while preserving the parser's checked error. */
+    @FunctionalInterface
+    private interface FieldParser<T> {
+        T parse(String value) throws ParseException;
     }
 }

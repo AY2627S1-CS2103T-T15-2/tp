@@ -1,6 +1,9 @@
 package seedu.address;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -47,9 +50,12 @@ public class MainApp extends Application {
         logger.info("=============================[ Initializing AddressBook ]===========================");
         super.init();
 
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
+        Path applicationDirectory = getApplicationDirectory();
+        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(
+                applicationDirectory.resolve(USER_PREFS_FILE_PATH));
         UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(ADDRESS_BOOK_FILE_PATH);
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(
+                applicationDirectory.resolve(ADDRESS_BOOK_FILE_PATH));
         storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
         model = initModelManager(storage, userPrefs);
@@ -57,6 +63,21 @@ public class MainApp extends Application {
         logic = new LogicManager(model, storage);
 
         ui = new UiManager(logic, storage.getAddressBookFilePath());
+    }
+
+    /** Returns the directory containing the JAR, or the working directory for an unpackaged development run. */
+    Path getApplicationDirectory() throws URISyntaxException {
+        URI codeSourceLocation = MainApp.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+        return resolveApplicationDirectory(codeSourceLocation);
+    }
+
+    /** Resolves the code-source URI without treating escaped spaces or non-English characters as literal text. */
+    static Path resolveApplicationDirectory(URI codeSourceLocation) {
+        Path codeSourcePath = Path.of(codeSourceLocation);
+        if (Files.isDirectory(codeSourcePath)) {
+            return Paths.get("").toAbsolutePath();
+        }
+        return codeSourcePath.getParent();
     }
 
     /**

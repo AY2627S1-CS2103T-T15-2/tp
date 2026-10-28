@@ -247,6 +247,24 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_reservedLevel_throwsIllegalValueException() {
+        for (String value : List.of("NONE", "none", "None", "nOnE")) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                    VALID_ROLE, null, null, value, null);
+            assertThrows(IllegalValueException.class, Level.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+    }
+
+    @Test
+    public void toModelType_reservedSubject_throwsIllegalValueException() {
+        for (String value : List.of("NONE", "none", "None", "nOnE")) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                    VALID_ROLE, null, null, null, value);
+            assertThrows(IllegalValueException.class, Subject.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+    }
+
+    @Test
     public void toModelType_guardianWithLevel_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(null, VALID_NAME, VALID_PHONE, VALID_EMAIL,
                 "GUARDIAN", null, null, "Sec 3", null);

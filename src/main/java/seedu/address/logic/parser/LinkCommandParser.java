@@ -38,7 +38,11 @@ public class LinkCommandParser implements Parser<LinkCommand> {
         }
         Index studentIndex = parseIndex(arguments.getValue(PREFIX_STUDENT).get(),
                 LinkCommand.MESSAGE_INVALID_STUDENT_INDEX);
-        Index guardianIndex = parseIndex(arguments.getValue(PREFIX_GUARDIAN).get(),
+        String guardianValue = arguments.getValue(PREFIX_GUARDIAN).orElseThrow();
+        if (guardianValue.equalsIgnoreCase(LinkCommand.REMOVE_GUARDIAN_VALUE)) {
+            return LinkCommand.unlink(studentIndex);
+        }
+        Index guardianIndex = parseIndex(guardianValue,
                 LinkCommand.MESSAGE_INVALID_GUARDIAN_INDEX);
         return new LinkCommand(studentIndex, guardianIndex);
     }

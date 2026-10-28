@@ -149,6 +149,20 @@ public class FindCommandTest {
     }
 
     @Test
+    public void execute_sigmaSearchTerms_findGreekContactAndPreserveStoredName() {
+        Person greekContact = new PersonBuilder().withName("\u039f\u03a3").build();
+        model.addPerson(greekContact);
+
+        for (String searchTerm : new String[] {"\u03a3", "\u03c3", "\u03c2", "\u03bf\u03c3"}) {
+            CommandResult result = new FindCommand(new NameContainsSubstringPredicate(searchTerm)).execute(model);
+
+            assertEquals("Found 1 contact matching: " + searchTerm + ".", result.getFeedbackToUser());
+            assertEquals(List.of(greekContact), model.getFilteredPersonList());
+            assertEquals("\u039f\u03a3", model.getFilteredPersonList().getFirst().getName().fullName);
+        }
+    }
+
+    @Test
     public void execute_unaccentedSearchTerm_findsAccentedName() {
         Person elise = new PersonBuilder().withName("Élise Tan").withRole("student").build();
         model.addPerson(elise);

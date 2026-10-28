@@ -15,13 +15,14 @@ public class Level {
     public static final String MESSAGE_EMPTY = "Empty level parameter: Level cannot be empty when lv/ is specified.";
     public static final String MESSAGE_CONSTRAINTS = "Level must contain 1 to " + MAX_LENGTH
             + " characters, including at least one letter or digit. It may contain letters, digits, spaces, "
-            + "hyphens, periods, plus signs and parentheses.";
+            + "hyphens, periods, plus signs and parentheses. NONE is reserved.";
 
     public static final String MESSAGE_TOO_LONG = "Level cannot exceed " + MAX_LENGTH + " characters.";
     public static final String MESSAGE_INVALID_CHARACTERS =
             "Level contains unsupported characters. Use letters, digits, spaces, hyphens, "
                     + "periods, plus signs and parentheses.";
     public static final String MESSAGE_MISSING_ALPHANUMERIC = "Level must contain at least one letter or digit.";
+    public static final String MESSAGE_RESERVED_VALUE = StudentDetailValidator.MESSAGE_RESERVED_VALUE;
 
     public final String value;
 
@@ -53,6 +54,7 @@ public class Level {
             case INVALID_CHARACTERS -> MESSAGE_INVALID_CHARACTERS;
             case MISSING_ALPHANUMERIC -> MESSAGE_MISSING_ALPHANUMERIC;
             case SURROUNDING_SPACES -> "Level cannot start or end with spaces.";
+            case RESERVED_VALUE -> MESSAGE_RESERVED_VALUE;
             case VALID -> null;
         };
     }

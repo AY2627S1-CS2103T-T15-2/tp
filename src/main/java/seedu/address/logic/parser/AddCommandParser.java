@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
+import java.util.List;
 import java.util.Optional;
 
 import seedu.address.logic.commands.AddCommand;
@@ -64,8 +65,8 @@ public class AddCommandParser implements Parser<AddCommand> {
             throw new ParseException(parameterError.get());
         }
 
-        return ArgumentTokenizer.tokenizeWithQuotedValue(args, PREFIX_NAME, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                PREFIX_ROLE, PREFIX_LEVEL, PREFIX_SUBJECT);
+        return ArgumentTokenizer.tokenizeWithQuotedValues(args, List.of(PREFIX_NAME, PREFIX_SUBJECT), PREFIX_NAME,
+                PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ROLE, PREFIX_LEVEL, PREFIX_SUBJECT);
     }
 
     /**
@@ -167,10 +168,10 @@ public class AddCommandParser implements Parser<AddCommand> {
 
     /**
      * Returns an error message for an unrecognized parameter prefix, or an empty optional if none is found.
-     * A prefix is a whitespace-delimited token ending with a slash, outside a quoted name.
+     * A prefix is a whitespace-delimited token ending with a slash, outside a quoted name or subject.
      */
     private static Optional<String> getParameterError(String args) throws ParseException {
-        ArgumentTokenScanner scanner = new ArgumentTokenScanner(args, PREFIX_NAME);
+        ArgumentTokenScanner scanner = new ArgumentTokenScanner(args, List.of(PREFIX_NAME, PREFIX_SUBJECT));
         Prefix currentField = null;
         int currentFieldValueStart = 0;
         while (scanner.hasNext()) {

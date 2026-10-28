@@ -88,8 +88,6 @@ Opens a command reference listing the available commands and their formats. For 
 field rules, use **Copy URL** to copy the User Guide link and open it in your browser.
 The Help window can be resized and scrolled.
 
-![help message](images/helpMessage.png)
-
 Format: `help`
 
 ### Adding a contact: `add`
@@ -163,6 +161,11 @@ Common email mistakes:
 **Level (`lv/`) and subject (`sub/`)**: One value each, for students only. Each must contain **1 to 30 characters**,
 including at least one letter or digit. Letters and digits (including non-English scripts), spaces, hyphens,
 periods, plus signs, and parentheses are allowed. Repeated spaces become one space before checking length.
+Subjects additionally allow slashes (`/`) and ampersands (`&`). Quote the entire subject when it contains a
+slash or text resembling a command prefix, for example `sub/"Combined Science (Chem/Bio)"`.
+The enclosing quotation marks are removed before validation and are not saved or counted towards the limit.
+The same subject syntax works in `add`, `edit`, and `list`; `sub/English Language & Literature` needs no quotes.
+Level values retain their existing character restrictions. Use unquoted `sub/NONE` in `edit` to remove a subject.
 Examples: `lv/Sec 3`, `sub/A-Math`. The value `NONE`, ignoring case, is reserved for removing fields with `edit`.
 
 #### Duplicate contacts and warnings
@@ -334,6 +337,10 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 * Edits the contact at the specified `INDEX`. The index refers to the index number shown in the displayed contact list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* If all resulting values are exactly the same as the current ones, the edit is rejected with
+  `No changes made: the new values are the same as the current ones.` This includes removing an already-absent
+  optional field. Changing only capitalization, such as `n/ALEX TAN`, counts as a change. When an edit is
+  rejected, the current view and any opportunity to undo a deletion are preserved.
 * After a successful edit, the edited contact is selected and its details are shown in the details panel.
   Editing a former student shows `list st/former`, and editing any other contact shows `list`, so the edited contact
   stays visible.
@@ -390,6 +397,8 @@ Format: `find NAME`
 * Leading and trailing spaces are ignored, and consecutive spaces are treated as one space.
 * Curly and straight apostrophes are treated as the same; for example, `o'brien` matches `O’Brien`.
 * Accents are ignored; for example, `elise` matches `Élise`, `élise` matches `Elise`, and `soren` matches `Søren`.
+  Vowel signs in scripts such as Devanagari are part of the name and must match; for example, `किरण` does not match
+  `करण`.
 * The search considers only names.
 * Former students are included in the results with a `Former` badge.
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.
@@ -432,19 +441,29 @@ Examples:
 
 Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 
+To remove only a relationship, use `link s/STUDENT_INDEX g/NONE`. `NONE` ignores letter case. Both contacts
+are kept, and other students linked to that guardian are unaffected. Only the student needs to be displayed;
+the guardian can be hidden by a filter. The removal is saved automatically. The student remains selected only
+if they still match the current filter. After `children g/INDEX`, an unlinked student disappears from that
+guardian's results and selection clears. Use `list` or `list st/all` to return to the contacts view.
+An unlinked student is rejected with `NAME has no guardian linked.`
+
 * Run `list` or `find NAME` first and use the indexes in the **currently displayed list**.
-* Both contacts must be visible. If a search hides either contact, run `list` before linking an active student.
+* For linking or replacing a guardian, both contacts must be visible. For `g/NONE`, only the student must be visible.
+  If a search hides either contact, run `list` before linking an active student.
   To link a former student without reactivating them, use `list st/all` to show both contacts, or `find NAME` with a
   search term that shows both; for example, `find Tan` can show former student Alex Tan and guardian Mei Tan
   together.
-* `s/` must identify a student and `g/` must identify a guardian.
+* `s/` must identify a student. For linking or replacing a guardian, `g/` must identify a guardian;
+  for unlinking, use `g/NONE` instead of an index.
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
 * Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
 * Each student can have one guardian; a guardian can be linked to several students.
 * Students with the same name remain separate contacts, even if both have no phone or email.
   Use the intended student's displayed index; linking one does not change the other student's guardian.
 * Linking to a different guardian replaces the previous relationship. Linking to the same guardian again is rejected.
-* A successful command selects the student and shows the guardian's current name, phone and email in the detail panel.
+* A successful linking or replacement command selects the student and shows the guardian's current name, phone
+  and email in the detail panel. After unlinking, the student is selected only if still visible in the current filter.
   The command box stays focused so you can immediately enter the next command.
 * The relationship is saved automatically and survives edits, reordering and restarting the application.
 
@@ -453,16 +472,18 @@ Examples, assuming Alex Tan is student `1`, Mei Tan is guardian `2`, and Sarah L
 * `link s/1 g/2` shows `Linked student Alex Tan to guardian Mei Tan.`
 * `link g/2 s/1` has the same effect, but is rejected if that relationship already exists: `Alex Tan is already linked to Mei Tan.`
 * `link s/1 g/3` replaces Mei Tan and shows `Changed Alex Tan’s guardian from Mei Tan to Sarah Lim.`
+* `link s/1 g/NONE` removes Alex's guardian relationship and shows `Removed guardian link from Alex Tan.`
+  When Alex remains visible, the card and details panel show `Guardian: None`. Restarting retains the unlinked state.
 
 Common errors:
 
 | Input problem | Result |
 |---|---|
-| Missing parameter or extra text | `Invalid link command. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX` |
-| Unknown parameter | `Unknown parameter. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX` |
+| Missing parameter or extra text | `Invalid link command. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX or link s/STUDENT_INDEX g/NONE` |
+| Unknown parameter | `Unknown parameter. Use: link s/STUDENT_INDEX g/GUARDIAN_INDEX or link s/STUDENT_INDEX g/NONE` |
 | Repeated parameter | `Each of s/ and g/ may appear only once.` |
 | Invalid student index | `Student index must be a positive integer shown in the list.` |
-| Invalid guardian index | `Guardian index must be a positive integer shown in the list.` |
+| Invalid guardian value | `Guardian value must be a positive integer shown in the list, or NONE to remove the guardian link.` |
 | Student index outside the displayed list | `No contact exists at student index INDEX.` |
 | Guardian index outside the displayed list | `No contact exists at guardian index INDEX.` |
 | Wrong student role | `Student index must refer to a student.` |
@@ -471,6 +492,52 @@ Common errors:
 Failed link commands leave the contacts, relationships, selected contact, detail panel and saved data unchanged.
 
 ![A linked student selected with the guardian's contact details displayed](images/StudentGuardianLink.png)
+
+### Removing a guardian link: `unlink`
+
+Removes one student's guardian association while keeping both contacts.
+
+Format: `unlink s/STUDENT_INDEX`
+
+* Use the student's index in the **currently displayed list**. The guardian does not need to be visible.
+* The target must be a linked student. Active and former students are supported; use `list st/former` to
+  show former students first. Names, contact IDs, tuition details and other students' links are preserved.
+* A successful removal is saved automatically. The student's guardian becomes `None`.
+  The existing filter remains applied. If the student no longer matches it (for example, after `children`),
+  the student disappears from the results and selection clears. Otherwise, the student is selected.
+* A successful `unlink` clears the opportunity to undo an earlier deletion. It cannot itself be undone with
+  `undo`; use `link` to restore the association.
+* Supply lowercase `s/` exactly once, with one positive whole-number index. Leading zeroes are accepted.
+  Missing/repeated parameters, other parameters and extra text are rejected. Errors include the command format.
+* An unlinked student reports `NAME has no guardian link to remove.` A guardian target reports
+  `Student index must refer to a student.` An out-of-range index reports
+  `No contact exists at student index INDEX.` Failed commands and failed saves leave data unchanged.
+
+Example: if Alex Tan is the linked student at index 1, `unlink s/1` reports
+`Removed the guardian link from Alex Tan. Both contacts were kept.`
+
+### Finding a guardian's students: `children`
+
+Shows every student linked to a particular guardian, including former students.
+
+Format: `children g/GUARDIAN_INDEX`
+
+* Run `list r/guardian` or another command that displays the guardian, then use that guardian's **current** index.
+* Results replace the previous search/list filter and contain only that guardian's linked students.
+  Both active and former students are included. The usual alphabetical contact order and former badges apply.
+* Lookup uses the guardian's permanent identity. Guardians with the same name remain separate.
+* This command does not change or save contacts and preserves deletion undo.
+* Supply lowercase `g/` exactly once, with one positive whole-number index. Leading zeroes are accepted.
+  Missing/repeated parameters, other parameters and extra text are rejected. Errors include the command format.
+* A student target reports `Guardian index must refer to a guardian.` An out-of-range index reports
+  `No contact exists at guardian index INDEX.` These errors leave the current view unchanged.
+* A guardian without linked students produces an empty list and
+  `No students are linked to NAME. Use list to return to contacts.`
+* Use `list` to return to guardians and active students, or `list st/all` to show every contact.
+  Before looking up another guardian, display guardians again and use their newly displayed indexes.
+
+Example: after `list r/guardian`, if Mei Tan is guardian 1 with two linked students, `children g/1` reports
+`Listed 2 students linked to Mei Tan, including former students.` The message uses `1 student` for one match.
 
 ### Deleting contacts: `delete`
 
@@ -535,7 +602,7 @@ Format: `undo`
 * Restores the latest successful deletion by index, multiple indexes or name, including original contact IDs,
   details and student-guardian links. Bulk deletion is restored as one operation.
 * Restores the filter used before deletion and selects a restored contact visible in that view.
-* Read-only commands such as `list`, `find` and `view` preserve undo availability.
+* Read-only commands such as `list`, `find`, `view` and `children` preserve undo availability.
 * Another successful deletion replaces the undo opportunity. Any other successful data-changing command clears it.
 * Failed commands and failed saves preserve the undo opportunity. If saving an undo fails, no data changes are
   applied and you can retry `undo`.
@@ -581,7 +648,7 @@ Format: `exit`
 
 ### Saving the data
 
-TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear`, `link`, `archive` and `unarchive` commands.
+TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear`, `link`, `unlink`, `undo`, `archive` and `unarchive` commands.
 You do not need to save manually. Read-only commands do not write the data file.
 
 If saving fails, the command reports `Changes could not be saved. No changes were made.` Contacts, relationships and the previously saved data remain unchanged.
@@ -589,6 +656,13 @@ If saving fails, the command reports `Changes could not be saved. No changes wer
 ### Editing the data file
 
 TutorRoster data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+
+Preferences are stored in `[JAR file location]/preferences.json`. Both locations are relative to the JAR's folder,
+regardless of the terminal's working directory.
+
+If an older version saved your files in a different working directory, close TutorRoster and back up those files.
+Copy the existing `data/addressbook.json` into the `data` subfolder beside the JAR, and copy `preferences.json`
+beside the JAR, before restarting. Check for existing files at the destination before replacing them.
 
 <box type="warning" seamless>
 
@@ -640,7 +714,9 @@ Action     | Format, Examples
 **Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find NAME`<br> e.g., `find alex`
-**Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX`<br> e.g., `link s/1 g/2`
+**Unlink** | `unlink s/STUDENT_INDEX`<br> e.g., `unlink s/1`
+**Guardian's students** | `children g/GUARDIAN_INDEX`<br> e.g., `children g/1`
+**Link**   | `link s/STUDENT_INDEX g/GUARDIAN_INDEX` or `link s/STUDENT_INDEX g/NONE`<br> e.g., `link s/1 g/2`
 **List**   | `list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`<br> e.g., `list r/student`, `list st/former`, `list st/all`, `list lv/Sec 3 sub/A-Math`
 **Archive** | `archive INDEX`<br> e.g., `archive 2`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 1`
