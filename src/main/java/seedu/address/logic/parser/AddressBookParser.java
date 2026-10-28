@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.DeletionHistory;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.ArchiveCommand;
@@ -58,7 +59,8 @@ public class AddressBookParser {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public Command parseCommand(String userInput) throws ParseException {
-        final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim().strip());
+        String normalizedInput = StringUtil.normalizeSpaceSeparators(userInput);
+        final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(normalizedInput.trim().strip());
         if (!matcher.matches()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }

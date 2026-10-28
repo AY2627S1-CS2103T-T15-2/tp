@@ -22,6 +22,20 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void hasSamePhoneIgnoringFormatting_unicodeSpaces_matchesWithoutChangingStoredText() {
+        Person compact = new PersonBuilder(ALICE).withPhone("93333333").build();
+        for (String space : List.of("\u00a0", "\u2007", "\u202f", "\u2003", "\u3000")) {
+            String savedPhone = "9333" + space + "3333";
+            Person spaced = new PersonBuilder(ALICE).withPhone(savedPhone).build();
+            assertTrue(compact.hasSamePhoneIgnoringFormatting(spaced), savedPhone);
+            assertTrue(spaced.hasSamePhoneIgnoringFormatting(compact), savedPhone);
+            assertEquals(savedPhone, spaced.getPhone().orElseThrow().value);
+            assertFalse(spaced.hasSamePhoneIgnoringFormatting(
+                    new PersonBuilder(ALICE).withPhone("93333334").build()));
+        }
+    }
+
+    @Test
     public void isSamePerson_optionalEmailAndRole_comparesAllIdentityFields() {
         Person student = new PersonBuilder(ALICE).withoutEmail().build();
         Person sameStudent = new PersonBuilder(student).withName("ALICE PAULINE").build();

@@ -11,6 +11,15 @@ import java.io.StringWriter;
 public class StringUtil {
 
     /**
+     * Converts Unicode space separators, including non-breaking spaces, to ordinary spaces.
+     * Tabs, line breaks and other characters are preserved for callers to validate.
+     */
+    public static String normalizeSpaceSeparators(String text) {
+        requireNonNull(text);
+        return text.replaceAll("\\p{Zs}", " ");
+    }
+
+    /**
      * Returns a detailed message of {@code t}, including the stack trace.
      */
     public static String getDetails(Throwable t) {
