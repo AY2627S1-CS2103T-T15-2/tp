@@ -70,4 +70,9 @@ public class StorageManager implements Storage {
         return addressBookStorage.isDataFileLoadFailed();
     }
 
+    @Override
+    public Optional<String> getDataFileLoadFailureReason() {
+        return addressBookStorage.getDataFileLoadFailureReason();
+    }
+
 }

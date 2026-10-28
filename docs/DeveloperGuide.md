@@ -1673,8 +1673,20 @@ Use a disposable application folder and keep a backup of its data file before te
 
 1. Invalid data file: close TutorRoster, replace `data/addressbook.json` with `{invalid json}`, and restart.<br>
    Expected: An empty list and `Data changes are disabled because the data file could not be loaded.
-   Fix the file and restart TutorRoster.` Valid `add`, `link`, `edit`, `delete` and `clear` commands are blocked.
+   Fix the file and restart TutorRoster.` followed by `Reason: Invalid JSON:` and the parsing error.
+   Valid `add`, `link`, `unlink`, `edit`, `delete` and `clear` commands are blocked with the same explanation.
    `list` still works, and the invalid file remains unchanged. Restore the backup and restart to recover the contacts.
+
+1. Empty data file: close TutorRoster, back up the test data, replace the data file with a zero-byte file,
+   and restart. Repeat with a file containing only spaces, tabs and newlines.<br>
+   Expected: Changes remain disabled. The reason identifies the empty or whitespace-only file and explains
+   how to restore a backup or delete the empty file and restart for a fresh contact list. The file remains
+   unchanged. Repairing or removing the file without restarting does not re-enable changes in that session.
+
+1. Invalid guardian fields: close the app and add a non-empty `level` or `subject` to a guardian in the
+   disposable test file. Restart.<br>
+   Expected: The startup warning explains `Only a student can have a level or subject.` A blocked change
+   shows the same warning, and the original file is preserved. Restore the backup and restart.
 
 1. Invalid relationship: close the app and change a student's `guardianId` in the test file to the ID of a student,
    or to a UUID that is absent from the contact records. Restart.<br>

@@ -263,7 +263,8 @@ public class UndoDeletionTest {
         assertThrows(DataLoadingException.class, storage::readAddressBook);
         Logic logic = createLogic(new ModelManager(), storage);
 
-        assertThrows(CommandException.class, LogicManager.MESSAGE_DATA_LOAD_FAILURE, () -> logic.execute("undo"));
+        String failureMessage = logic.getStartupMessage().orElseThrow();
+        assertThrows(CommandException.class, failureMessage, () -> logic.execute("undo"));
 
         assertEquals("{invalid json}", Files.readString(file));
     }

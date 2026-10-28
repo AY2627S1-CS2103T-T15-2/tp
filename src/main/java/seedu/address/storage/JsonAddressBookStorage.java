@@ -9,6 +9,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
@@ -24,6 +26,7 @@ public class JsonAddressBookStorage {
 
     private Path filePath;
     private boolean hasDataFileLoadFailed;
+    private String dataFileLoadFailureReason;
 
     public JsonAddressBookStorage(Path filePath) {
         this.filePath = filePath;
@@ -59,10 +62,10 @@ public class JsonAddressBookStorage {
             }
             return Optional.of(jsonAddressBook.get().toModelType());
         } catch (DataLoadingException exception) {
-            hasDataFileLoadFailed = true;
+            recordDataFileLoadFailure(exception);
             throw exception;
         } catch (IllegalValueException | IllegalArgumentException exception) {
-            hasDataFileLoadFailed = true;
+            recordDataFileLoadFailure(exception);
             logger.info("Invalid data found in " + filePath + ": " + exception.getMessage());
             throw new DataLoadingException(exception);
         }
@@ -70,6 +73,42 @@ public class JsonAddressBookStorage {
 
     public boolean isDataFileLoadFailed() {
         return hasDataFileLoadFailed;
+    }
+
+    /**
+     * Returns the first load failure's explanation, retained until the application restarts.
+     */
+    public Optional<String> getDataFileLoadFailureReason() {
+        return Optional.ofNullable(dataFileLoadFailureReason);
+    }
+
+    /**
+     * Retains the reason for disabling changes even if a later read succeeds in the same session.
+     */
+    private void recordDataFileLoadFailure(Exception exception) {
+        hasDataFileLoadFailed = true;
+        if (dataFileLoadFailureReason != null) {
+            return;
+        }
+        Throwable cause = exception instanceof DataLoadingException ? exception.getCause() : exception;
+        if (cause instanceof JsonProcessingException jsonException) {
+            dataFileLoadFailureReason = describeJsonFailure(jsonException);
+        } else {
+            dataFileLoadFailureReason = Optional.ofNullable(cause.getMessage())
+                    .orElse("The data file could not be read.");
+        }
+    }
+
+    /**
+     * Removes Jackson's class/source details and gives a recovery action for an empty file.
+     */
+    private String describeJsonFailure(JsonProcessingException exception) {
+        String reason = exception.getOriginalMessage();
+        if (reason.startsWith("No content to map")) {
+            return "The data file is empty or contains only whitespace. Restore a backup, or delete the empty "
+                    + "file and restart TutorRoster to start with an empty contact list.";
+        }
+        return "Invalid JSON: " + reason;
     }
 
     /**
