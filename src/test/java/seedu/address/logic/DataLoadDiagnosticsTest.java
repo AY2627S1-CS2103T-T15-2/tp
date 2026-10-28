@@ -150,6 +150,32 @@ public class DataLoadDiagnosticsTest {
     }
 
     @Test
+    public void unreadableDataPath_showsIoReasonAndPreservesDirectory() throws Exception {
+        Files.createDirectory(getContactsFile());
+        StorageManager storage = createStorage();
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+        String reason = storage.getDataFileLoadFailureReason().orElseThrow();
+        assertFalse(reason.isBlank());
+        String warning = createLogic(storage).getStartupMessage().orElseThrow();
+        assertTrue(warning.contains("Reason: " + reason));
+        assertThrows(java.io.IOException.class, () -> storage.saveAddressBook(new AddressBook()));
+        assertTrue(Files.isDirectory(getContactsFile()));
+    }
+
+    @Test
+    public void secondLoadFailure_retainsOriginalExplanationUntilRestart() throws Exception {
+        StorageManager storage = loadInvalidData("{invalid json}");
+        String originalReason = storage.getDataFileLoadFailureReason().orElseThrow();
+        Files.writeString(getContactsFile(), "");
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+        assertEquals(Optional.of(originalReason), storage.getDataFileLoadFailureReason());
+        assertTrue(createLogic(storage).getStartupMessage().orElseThrow().contains("Reason: " + originalReason));
+        assertEquals("", Files.readString(getContactsFile()));
+    }
+
+    @Test
     public void missingFile_startsNormallyAndSavesFirstContact() throws Exception {
         StorageManager storage = createStorage();
         assertTrue(storage.readAddressBook().isEmpty());

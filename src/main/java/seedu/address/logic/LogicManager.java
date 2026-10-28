@@ -64,6 +64,8 @@ public class LogicManager implements Logic {
         Model candidate = new ModelManager(model.getAddressBook(), model.getUserPrefs());
         candidate.updateFilteredPersonList(model.getPersonFilter());
         CommandResult commandResult = command.execute(candidate);
+        assert candidate.getAddressBook().getPersonList().stream().map(Person::getId).distinct().count()
+                == candidate.getAddressBook().getPersonList().size() : "A command produced duplicate contact IDs";
         DeletionSnapshot deletionSnapshot = command instanceof DeleteCommand
                 ? captureDeletion(candidate) : null;
         try {
