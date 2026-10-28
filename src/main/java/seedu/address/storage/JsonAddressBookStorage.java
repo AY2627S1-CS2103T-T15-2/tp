@@ -94,7 +94,8 @@ public class JsonAddressBookStorage {
         if (cause instanceof JsonProcessingException jsonException) {
             dataFileLoadFailureReason = describeJsonFailure(jsonException);
         } else {
-            dataFileLoadFailureReason = Optional.ofNullable(cause.getMessage()).orElse("The data file could not be read.");
+            dataFileLoadFailureReason = Optional.ofNullable(cause.getMessage())
+                    .orElse("The data file could not be read.");
         }
     }
 
