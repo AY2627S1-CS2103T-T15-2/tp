@@ -244,6 +244,9 @@ Command | Shows
   ignored, so `lv/sec3` matches a student at `Sec 3`. The whole value must match: `sub/Math` does not match
   `A-Math`. Students without a level or subject are not shown. `LEVEL` and `SUBJECT` follow the same rules as in
   `add`, and `NONE` cannot be used.
+* Quote a subject that contains text resembling a parameter, as in `add`; for example,
+  `list sub/"Art n/Design"`. Without the quotation marks, `n/` is read as an unknown parameter and the command is
+  rejected.
 * Parameters can be given in any order, and each can appear only once. A contact must match all of them.
   Without `st/`, former students are hidden, so add `st/all` to include them.
 * Guardians are never former, so `list r/guardian st/former` is rejected with
