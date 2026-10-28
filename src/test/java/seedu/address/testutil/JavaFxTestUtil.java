@@ -1,9 +1,12 @@
 package seedu.address.testutil;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
+import javafx.scene.Parent;
 
 /**
  * Shared JavaFX startup and thread helpers for UI tests.
@@ -33,5 +36,27 @@ public final class JavaFxTestUtil {
         FutureTask<Void> task = new FutureTask<>(action, null);
         Platform.runLater(task);
         task.get(20, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Waits for three layout pulses, including deferred changes requested by layout listeners.
+     * Must be called from a non-JavaFX thread while the root belongs to a showing window.
+     */
+    public static void waitForLayout(Parent root) throws Exception {
+        CompletableFuture<Void> finished = new CompletableFuture<>();
+        runOnJavaFxThread(() -> new AnimationTimer() {
+            private int pulses;
+
+            @Override
+            public void handle(long now) {
+                root.applyCss();
+                root.layout();
+                if (++pulses == 3) {
+                    stop();
+                    finished.complete(null);
+                }
+            }
+        }.start());
+        finished.get(5, TimeUnit.SECONDS);
     }
 }

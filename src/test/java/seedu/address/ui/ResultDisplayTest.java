@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
+import static seedu.address.testutil.JavaFxTestUtil.waitForLayout;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
@@ -93,7 +92,7 @@ public class ResultDisplayTest {
         try {
             double initialHeight = callOnJavaFxThread(() -> fixture.text().getHeight());
             runOnJavaFxThread(() -> fixture.display().setErrorToUser(AddCommandParser.MESSAGE_MISSING_ROLE));
-            settleLayout(fixture);
+            waitForLayout(fixture.layout());
             runOnJavaFxThread(() -> {
                 assertTrue(fixture.text().getHeight() > initialHeight);
                 assertTrue(fixture.text().getHeight()
@@ -115,10 +114,10 @@ public class ResultDisplayTest {
         try {
             runOnJavaFxThread(() -> fixture.display().setErrorToUser(
                     "Please check the supplied contact details. ".repeat(6)));
-            settleLayout(fixture);
+            waitForLayout(fixture.layout());
             double wideHeight = callOnJavaFxThread(() -> fixture.text().getHeight());
             runOnJavaFxThread(() -> fixture.stage().setWidth(500));
-            settleLayout(fixture);
+            waitForLayout(fixture.layout());
             runOnJavaFxThread(() -> {
                 assertTrue(fixture.text().getHeight() > wideHeight);
                 assertFalse(hasVisibleScrollBar(fixture.text(), Orientation.HORIZONTAL));
@@ -135,14 +134,14 @@ public class ResultDisplayTest {
         try {
             double initialHeight = callOnJavaFxThread(() -> fixture.text().getHeight());
             runOnJavaFxThread(() -> fixture.display().setErrorToUser("Invalid contact details.\n".repeat(100)));
-            settleLayout(fixture);
+            waitForLayout(fixture.layout());
             runOnJavaFxThread(() -> {
                 assertTrue(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL));
                 fixture.text().positionCaret(fixture.text().getLength());
                 fixture.text().setScrollTop(500);
                 fixture.display().setFeedbackToUser("Listed 2 contacts");
             });
-            settleLayout(fixture);
+            waitForLayout(fixture.layout());
             runOnJavaFxThread(() -> {
                 assertEquals(initialHeight, fixture.text().getHeight(), 1);
                 assertEquals(0, fixture.text().getCaretPosition());
@@ -160,10 +159,10 @@ public class ResultDisplayTest {
         FeedbackFixture fixture = createFixture(900, 800);
         try {
             runOnJavaFxThread(() -> fixture.display().setErrorToUser("Invalid contact details.\n".repeat(100)));
-            settleLayout(fixture);
+            waitForLayout(fixture.layout());
             double tallHeight = callOnJavaFxThread(() -> fixture.text().getHeight());
             runOnJavaFxThread(() -> fixture.stage().setHeight(400));
-            settleLayout(fixture);
+            waitForLayout(fixture.layout());
             runOnJavaFxThread(() -> {
                 assertTrue(fixture.text().getHeight() < tallHeight);
                 assertTrue(fixture.text().getHeight()
@@ -171,6 +170,30 @@ public class ResultDisplayTest {
                         describeLayout(fixture));
                 assertTrue(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL));
                 assertFalse(hasVisibleScrollBar(fixture.text(), Orientation.HORIZONTAL));
+            });
+        } finally {
+            runOnJavaFxThread(() -> fixture.stage().close());
+        }
+    }
+
+    @Test
+    public void reattachDisplay_afterRemoval_resumesSceneHeightTracking() throws Exception {
+        FeedbackFixture fixture = createFixture(900, 800);
+        try {
+            runOnJavaFxThread(() -> fixture.display().setErrorToUser("Invalid contact details.\n".repeat(100)));
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> fixture.layout().getChildren().remove(fixture.display().getRoot()));
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> assertEquals(200, fixture.text().getPrefHeight()));
+
+            runOnJavaFxThread(() -> {
+                fixture.layout().getChildren().add(0, fixture.display().getRoot());
+                fixture.stage().setHeight(400);
+            });
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> {
+                assertEquals(fixture.stage().getScene().getHeight() * 0.25, fixture.text().getPrefHeight(), 1);
+                assertTrue(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL));
             });
         } finally {
             runOnJavaFxThread(() -> fixture.stage().close());
@@ -191,26 +214,8 @@ public class ResultDisplayTest {
             stage.show();
             return new FeedbackFixture(display, stage, layout, contacts);
         });
-        settleLayout(fixture);
+        waitForLayout(fixture.layout());
         return fixture;
-    }
-
-    private void settleLayout(FeedbackFixture fixture) throws Exception {
-        CompletableFuture<Void> finished = new CompletableFuture<>();
-        runOnJavaFxThread(() -> new AnimationTimer() {
-            private int pulses;
-
-            @Override
-            public void handle(long now) {
-                fixture.layout().applyCss();
-                fixture.layout().layout();
-                if (++pulses == 3) {
-                    stop();
-                    finished.complete(null);
-                }
-            }
-        }.start());
-        finished.get(5, TimeUnit.SECONDS);
     }
 
     private boolean hasVisibleScrollBar(TextArea text, Orientation orientation) {
