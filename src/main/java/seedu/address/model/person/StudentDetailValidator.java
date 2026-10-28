@@ -10,6 +10,8 @@ final class StudentDetailValidator {
     static final String MESSAGE_RESERVED_VALUE =
             "NONE cannot be used as a level or subject. Use lv/NONE or sub/NONE in edit to remove it.";
 
+    /** Value reserved by {@code edit} for removing a level or subject. */
+    private static final String RESERVED_VALUE = "NONE";
     private static final String ALLOWED_CHARACTERS_REGEX = "[\\p{L}\\p{M}\\p{N} .+()-]*";
     private static final String SUBJECT_CHARACTERS_REGEX = "[\\p{L}\\p{M}\\p{N} .+()&/-]*";
 
@@ -45,7 +47,7 @@ final class StudentDetailValidator {
         if (!value.equals(value.trim())) {
             return ValidationResult.SURROUNDING_SPACES;
         }
-        if (value.equalsIgnoreCase("NONE")) {
+        if (value.equalsIgnoreCase(RESERVED_VALUE)) {
             return ValidationResult.RESERVED_VALUE;
         }
         return ValidationResult.VALID;

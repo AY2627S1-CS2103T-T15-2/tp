@@ -507,12 +507,14 @@ unsupported role reports `Invalid role. Role must be student or guardian.`
 
 `Person` also stores an optional `Level` and `Subject` for students. Both are free-text value classes that allow 1 to
 30 Unicode code points, allowing letters, digits, spaces, hyphens, periods, plus signs and parentheses, with at least
-one letter or digit. `ParserUtil` trims the value, reduces repeated
-spaces to one and rejects `NONE`, which `edit` reserves for removing the field. The `Level` and `Subject` constructors
+one letter or digit. `ParserUtil` trims the value and reduces repeated spaces to one.
+`StudentDetailValidator` rejects `NONE`, ignoring case, because `edit` reserves it for removing the field; this
+also applies when loading the data file. The `Level` and `Subject` constructors
 reject blank values with their constraints messages. For command input, `ParserUtil` instead reports the specific
 empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. For other invalid values, it uses
-`getValidationErrorMessage` to distinguish excessive length, unsupported characters, and the absence of a letter or
-digit, in that order. `Level` and `Subject` delegate these common checks to `StudentDetailValidator` and map its
+`getValidationErrorMessage` to distinguish excessive length, unsupported characters, the absence of a letter or
+digit, surrounding spaces, and the reserved value `NONE`, in that order.
+`Level` and `Subject` delegate these common checks to `StudentDetailValidator` and map its
 validation result to their own field-specific messages. This keeps their rules aligned while preserving distinct
 value types and error messages. The `Person` constructor rejects a
 guardian with a level or subject. After validating phone and email, the Add parser checks the guardian contact-method

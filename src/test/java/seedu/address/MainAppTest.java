@@ -22,6 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -258,7 +259,7 @@ public class MainAppTest {
                 assertTrue(model.getAddressBook().getPersonList().isEmpty());
                 assertTrue(storage.isDataFileLoadFailed());
                 assertEquals(Optional.of(failureMessage), logic.getStartupMessage());
-                logic.execute("list");
+                assertEquals(ListCommand.MESSAGE_NO_CONTACTS, logic.execute("list").getFeedbackToUser());
                 assertThrows(CommandException.class, failureMessage, () ->
                         logic.execute("add r/student n/Bea Tan"));
                 assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear"));

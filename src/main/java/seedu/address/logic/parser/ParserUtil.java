@@ -18,6 +18,7 @@ import seedu.address.model.person.Subject;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    // Level and Subject share this message; the parser alias is retained for existing callers.
     public static final String MESSAGE_RESERVED_REMOVE_VALUE = Level.MESSAGE_RESERVED_VALUE;
     public static final String MESSAGE_INVALID_NAME_QUOTES =
             "Invalid quoted name. Use n/NAME or n/\"NAME\", with quotation marks surrounding the entire name.";
