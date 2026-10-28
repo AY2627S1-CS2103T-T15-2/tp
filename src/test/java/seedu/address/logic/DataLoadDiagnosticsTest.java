@@ -66,8 +66,8 @@ public class DataLoadDiagnosticsTest {
         assertTrue(warning.startsWith(LogicManager.MESSAGE_DATA_LOAD_FAILURE));
         assertTrue(warning.contains("Reason: Invalid JSON:"));
         assertFalse(warning.contains("com.fasterxml.jackson"));
-        CommandException failure = assertThrows(CommandException.class,
-                () -> logic.execute("add r/student n/Alex Tan"));
+        CommandException failure = assertThrows(CommandException.class, () ->
+                logic.execute("add r/student n/Alex Tan"));
         assertEquals(warning, failure.getMessage());
         assertEquals(ListCommand.MESSAGE_NO_CONTACTS, logic.execute("list").getFeedbackToUser());
         assertTrue(logic.getPersonList().isEmpty());
@@ -119,8 +119,8 @@ public class DataLoadDiagnosticsTest {
             String warning = logic.getStartupMessage().orElseThrow();
             assertTrue(warning.contains("The data file is empty or contains only whitespace."));
             assertTrue(warning.contains("Restore a backup, or delete the empty file and restart TutorRoster"));
-            assertEquals(warning, assertThrows(CommandException.class,
-                    () -> logic.execute("add r/student n/Alex Tan")).getMessage());
+            assertEquals(warning, assertThrows(CommandException.class, () ->
+                    logic.execute("add r/student n/Alex Tan")).getMessage());
             assertArrayEquals(originalBytes, Files.readAllBytes(getContactsFile()));
         }
     }
@@ -135,8 +135,8 @@ public class DataLoadDiagnosticsTest {
 
         assertTrue(storage.isDataFileLoadFailed());
         assertEquals(Optional.of(originalWarning), logic.getStartupMessage());
-        assertEquals(originalWarning, assertThrows(CommandException.class,
-                () -> logic.execute("clear")).getMessage());
+        assertEquals(originalWarning, assertThrows(CommandException.class, () ->
+                logic.execute("clear")).getMessage());
         assertEquals("{\"persons\":[]}", Files.readString(getContactsFile()));
 
         StorageManager restartedStorage = createStorage();
