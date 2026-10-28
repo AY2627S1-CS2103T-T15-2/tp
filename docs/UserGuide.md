@@ -245,6 +245,9 @@ Command | Shows
   `A-Math`. The same accented spelling matches across input methods. Accents remain significant, so `Français`
   does not match `Francais`. Students without a level or subject are not shown. `LEVEL` and `SUBJECT` follow the
   same rules as in `add`, and `NONE` cannot be used.
+* Quote a subject that contains text resembling a parameter, as in `add`; for example,
+  `list sub/"Art n/Design"`. Without the quotation marks, `n/` is read as an unknown parameter and the command is
+  rejected.
 * Parameters can be given in any order, and each can appear only once. A contact must match all of them.
   Without `st/`, former students are hidden, so add `st/all` to include them.
 * Guardians are never former, so `list r/guardian st/former` is rejected with
@@ -338,6 +341,10 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 * Edits the contact at the specified `INDEX`. The index refers to the index number shown in the displayed contact list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* If all resulting values are exactly the same as the current ones, the edit is rejected with
+  `No changes made: the new values are the same as the current ones.` This includes removing an already-absent
+  optional field. Changing only capitalization, such as `n/ALEX TAN`, counts as a change. When an edit is
+  rejected, the current view and any opportunity to undo a deletion are preserved.
 * After a successful edit, the edited contact is selected and its details are shown in the details panel.
   Editing a former student shows `list st/former`, and editing any other contact shows `list`, so the edited contact
   stays visible.
@@ -394,6 +401,8 @@ Format: `find NAME`
 * Leading and trailing spaces are ignored, and consecutive spaces are treated as one space.
 * Curly and straight apostrophes are treated as the same; for example, `o'brien` matches `O’Brien`.
 * Accents are ignored; for example, `elise` matches `Élise`, `élise` matches `Elise`, and `soren` matches `Søren`.
+  Vowel signs in scripts such as Devanagari are part of the name and must match; for example, `किरण` does not match
+  `करण`.
 * The search considers only names.
 * Former students are included in the results with a `Former` badge.
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.

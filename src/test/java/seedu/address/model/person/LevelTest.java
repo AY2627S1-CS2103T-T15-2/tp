@@ -23,6 +23,16 @@ public class LevelTest {
     }
 
     @Test
+    public void isValidLevelAndConstructor_reservedNone_rejected() {
+        for (String value : List.of("NONE", "none", "None", "nOnE")) {
+            assertFalse(Level.isValidLevel(value));
+            assertThrows(IllegalArgumentException.class, () -> new Level(value));
+            assertEquals(Level.MESSAGE_RESERVED_VALUE, Level.getValidationErrorMessage(value));
+        }
+        assertTrue(Level.isValidLevel("None Level"));
+    }
+
+    @Test
     public void isValidLevel_validValues_returnsTrue() {
         assertTrue(Level.isValidLevel("Sec 3"));
         assertTrue(Level.isValidLevel("JC1"));

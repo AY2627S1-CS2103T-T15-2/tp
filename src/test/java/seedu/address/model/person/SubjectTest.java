@@ -23,6 +23,16 @@ public class SubjectTest {
     }
 
     @Test
+    public void isValidSubjectAndConstructor_reservedNone_rejected() {
+        for (String value : List.of("NONE", "none", "None", "nOnE")) {
+            assertFalse(Subject.isValidSubject(value));
+            assertThrows(IllegalArgumentException.class, () -> new Subject(value));
+            assertEquals(Subject.MESSAGE_RESERVED_VALUE, Subject.getValidationErrorMessage(value));
+        }
+        assertTrue(Subject.isValidSubject("None Studies"));
+    }
+
+    @Test
     public void isValidSubject_validValues_returnsTrue() {
         assertTrue(Subject.isValidSubject("A-Math"));
         assertTrue(Subject.isValidSubject("Math"));

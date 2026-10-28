@@ -81,7 +81,9 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, `PersonDetailsPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+
+`PersonListPanel` shows a `PersonCard` for each contact in the list, and `PersonDetailsPanel` shows the selected contact's details, including a student's level, subject and guardian. Both use `RoleBadges`, a class of static helper methods, so that a contact's role and former-student status look the same in the list and in the details panel.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T15-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -318,8 +320,10 @@ current value otherwise. The contact's ID, role, status and guardian link are al
 edit.
 
 The edit is rejected if it sets or removes the level or subject of a guardian. It is then rejected if it would leave
-a guardian with no phone number and no email, or if the edited contact
-would duplicate another contact. The duplicate check is skipped when the edited contact still matches its original
+a guardian with no phone number and no email, if every resulting value is the same as the current one
+(`No changes made: the new values are the same as the current ones.`), or if the edited contact would duplicate
+another contact. Values are compared exactly, so changing only capitalization is still an edit.
+The duplicate check is skipped when the edited contact still matches its original
 duplicate identity, so changing only the capitalization of a name is allowed.
 
 If the edit is allowed, `getPossibleDuplicateWarning` compares the edited contact with every other contact, excluding
@@ -507,12 +511,14 @@ unsupported role reports `Invalid role. Role must be student or guardian.`
 
 `Person` also stores an optional `Level` and `Subject` for students. Both are free-text value classes that allow 1 to
 30 Unicode code points, allowing letters, digits, spaces, hyphens, periods, plus signs and parentheses, with at least
-one letter or digit. `ParserUtil` trims the value, reduces repeated
-spaces to one and rejects `NONE`, which `edit` reserves for removing the field. The `Level` and `Subject` constructors
+one letter or digit. `ParserUtil` trims the value and reduces repeated spaces to one.
+`StudentDetailValidator` rejects `NONE`, ignoring case, because `edit` reserves it for removing the field; this
+also applies when loading the data file. The `Level` and `Subject` constructors
 reject blank values with their constraints messages. For command input, `ParserUtil` instead reports the specific
 empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. For other invalid values, it uses
-`getValidationErrorMessage` to distinguish excessive length, unsupported characters, and the absence of a letter or
-digit, in that order. `Level` and `Subject` delegate these common checks to `StudentDetailValidator` and map its
+`getValidationErrorMessage` to distinguish excessive length, unsupported characters, the absence of a letter or
+digit, surrounding spaces, and the reserved value `NONE`, in that order.
+`Level` and `Subject` delegate these common checks to `StudentDetailValidator` and map its
 validation result to their own field-specific messages. This keeps their rules aligned while preserving distinct
 value types and error messages. The `Person` constructor rejects a
 guardian with a level or subject. After validating phone and email, the Add parser checks the guardian contact-method
@@ -633,6 +639,8 @@ in one class.
 * **Format error:** any prefix other than `r/`, `st/`, `lv/` or `sub/` (such as `n/` in `n/Alex`), or any text before
   the first prefix (such as `extra` in `list extra r/student`), gives
   `Invalid list command. Use: list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`.
+  Text inside a quoted `sub/` value, such as `n/` in `sub/"Art n/Design"`, is part of the subject and is not
+  checked as a prefix.
   If the whole input is a single role or status without its prefix, such as `list former`, the message suggests the
   intended command instead: `Invalid list command. Did you mean: list st/former?`
 * **Repeated parameter:** a repeated prefix gives `Each of r/, st/, lv/ and sub/ may appear only once.`
@@ -695,8 +703,10 @@ Curly apostrophes (`’` and `‘`) in the name and the term are treated as stra
 `PersonDisplayOrderComparator` applies the same replacement, so these names are also ordered together. Accents are also
 ignored, using `Name#removeAccents`, so `find elise` matches `Élise` and `find soren` matches `Søren`. Tutors may not
 know how to type accented letters, and the contact list already orders accented letters with their unaccented forms.
-Both the name and the term are processed in the same way, so a match is never lost; scripts that use combining marks for
-vowels may match slightly more names.
+Both the name and the term are processed in the same way, so a match is never lost. Only the combining marks of Latin,
+Greek and Cyrillic letters are removed. In other scripts, such as Devanagari, combining marks include vowel signs that
+change a name, so removing them would make `find किरण` also match `करण`, and a term made only of a vowel sign would
+match every name.
 
 The sequence diagram below shows how `find ale` is executed.
 
@@ -943,6 +953,13 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 * **3d. The updated contact would duplicate another existing contact.**
 
   3d1. TutorRoster reports the duplicate and leaves the contact unchanged.
+
+  Use case resumes at step 3.
+
+* **3e. The requested edit would leave every stored value unchanged.**
+
+  3e1. TutorRoster reports that no changes were made. The contact, displayed list and any deletion undo remain
+  unchanged.
 
   Use case resumes at step 3.
 
@@ -1250,7 +1267,8 @@ The failed command should remain in the command box, which keeps focus.
    reports `No deletion is available to undo.`
 
 1. Test case: delete a contact, successfully edit a remaining contact, then `undo`.<br>
-   Expected: Undo is unavailable and the edit is retained. Repeat with an invalid edit instead; undo remains available.
+   Expected: Undo is unavailable and the edit is retained. Repeat with an invalid or unchanged edit instead;
+   undo remains available.
 
 1. Test case: delete a contact, close and reopen the application, then `undo`.<br>
    Expected: The deletion remains saved and undo is unavailable because history is session-only.
@@ -1289,6 +1307,9 @@ and failed intervening changes, ensuring that live data, saved data and the prev
    name, and the same email address exists, and that the contact may be a duplicate but was updated.
 
 1. Incorrect commands to try, each leaving the contacts unchanged:
+   * Editing a contact with only its current values, for example `edit INDEX n/NAME` using its current name, gives
+     `No changes made: the new values are the same as the current ones.` The current view and deletion undo remain
+     unchanged.
    * `edit 1` gives `At least one of n/, p/, e/, lv/, or sub/ must be provided.`
    * `edit n/Alex` gives `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
    * `edit 0 n/Alex` gives `The contact index must be a positive integer shown in the list.`
@@ -1449,6 +1470,12 @@ for each restart. This setup is independent of the data used in the other manual
 1. Test case: `list sub/Math`<br>
    Expected: No contacts are shown, because `Math` and `A-Math` are different subjects. The status message shows
    `No contacts found.`
+
+1. Test case: `list sub/"Art n/Design"`, then `list sub/Art n/Design`<br>
+   Expected: The first command shows no contacts and the status message `No contacts found.`, because the quoted
+   `n/` is part of the subject. The second is rejected with
+   `Invalid list command. Use: list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`, and the shown contacts are
+   unchanged.
 
 1. Test case: `list r/guardian lv/Sec 3`<br>
    Expected: The shown contacts are unchanged. The status message shows
