@@ -20,6 +20,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Name;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -72,6 +73,27 @@ public class DataLoadDiagnosticsTest {
         assertEquals(ListCommand.MESSAGE_NO_CONTACTS, logic.execute("list").getFeedbackToUser());
         assertTrue(logic.getPersonList().isEmpty());
         assertArrayEquals(originalBytes, Files.readAllBytes(getContactsFile()));
+    }
+
+    @Test
+    public void startup_legacyPunctuationOnlyName_blocksChangesAndPreservesFile() throws Exception {
+        String invalidData = "{\"persons\":[{\"name\":\"Alex Tan\",\"role\":\"STUDENT\"},"
+                + "{\"name\":\"...\",\"role\":\"STUDENT\"}]}";
+        StorageManager storage = loadInvalidData(invalidData);
+        byte[] originalBytes = Files.readAllBytes(getContactsFile());
+        Logic logic = createLogic(storage);
+
+        String warning = logic.getStartupMessage().orElseThrow();
+        assertTrue(warning.contains("Reason: " + Name.MESSAGE_CONSTRAINTS));
+        assertEquals(warning, assertThrows(CommandException.class, () ->
+                logic.execute("add r/student n/Bea Lim")).getMessage());
+        assertTrue(logic.getPersonList().isEmpty());
+        assertArrayEquals(originalBytes, Files.readAllBytes(getContactsFile()));
+
+        Files.writeString(getContactsFile(), invalidData.replace("...", "Bea Lim"));
+        StorageManager restartedStorage = createStorage();
+        assertEquals(2, restartedStorage.readAddressBook().orElseThrow().getPersonList().size());
+        assertFalse(restartedStorage.isDataFileLoadFailed());
     }
 
     @Test

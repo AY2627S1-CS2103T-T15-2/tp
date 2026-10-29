@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class NameTest {
@@ -77,10 +79,34 @@ public class NameTest {
         assertTrue(Name.isValidName("J. R. R. Tolkien")); // periods
         assertTrue(Name.isValidName("李小龍")); // Unicode letters
         assertTrue(Name.isValidName("Jose\u0301")); // combining mark
-        assertTrue(Name.isValidName("///")); // punctuation only
-        assertTrue(Name.isValidName("...")); // punctuation only
-        assertTrue(Name.isValidName("'-./’")); // supported punctuation only
         assertTrue(Name.isValidName("a".repeat(Name.MAX_LENGTH))); // maximum length
+    }
+
+    @Test
+    public void validation_noLettersOrDigits_rejectsPunctuationAndCombiningMarks() {
+        for (String name : List.of("...", "-", "---", "'", "///", "'-./’", " . - ’ ", "\u0301", "-\u0301.")) {
+            assertFalse(Name.isValidName(name));
+            assertEquals(Name.MESSAGE_MISSING_ALPHANUMERIC, Name.getValidationErrorMessage(name));
+            assertThrows(IllegalArgumentException.class, () -> new Name(name));
+        }
+    }
+
+    @Test
+    public void validation_unicodeLettersAndNumbers_remainValid() {
+        for (String name : List.of("O’Brien", "Mary-Anne", "李小龍", "किरण", "123", "Jose\u0301",
+                "\uD801\uDC00", "\uD835\uDFD8", "²")) {
+            assertTrue(Name.isValidName(name));
+            assertEquals(name, new Name(name).fullName);
+        }
+    }
+
+    @Test
+    public void validation_multipleErrors_preservesErrorPriority() {
+        assertEquals("Name cannot be blank.", Name.getValidationErrorMessage(" "));
+        assertEquals("Name cannot exceed " + Name.MAX_LENGTH + " characters.",
+                Name.getValidationErrorMessage(".".repeat(Name.MAX_LENGTH + 1)));
+        assertEquals("Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
+                + "hyphens, periods, and slashes.", Name.getValidationErrorMessage("!"));
     }
 
     @Test

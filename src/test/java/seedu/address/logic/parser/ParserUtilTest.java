@@ -78,8 +78,14 @@ public class ParserUtilTest {
     public void parseName_validQuotedValue_returnsUnquotedName() throws Exception {
         assertEquals(new Name("Randy p/e ratio"), ParserUtil.parseName("\"Randy p/e ratio\""));
         assertEquals(new Name("Ravi s/o Kumar"), ParserUtil.parseName("  \"Ravi s/o Kumar\"  "));
-        assertEquals(new Name("///"), ParserUtil.parseName("\"///\""));
         assertEquals(new Name("李小龍"), ParserUtil.parseName("\"李小龍\""));
+    }
+
+    @Test
+    public void parseName_punctuationOnlyValue_throwsParseException() {
+        for (String name : List.of("...", "-", "'", "\"///\"", "\u0301")) {
+            assertThrows(ParseException.class, Name.MESSAGE_MISSING_ALPHANUMERIC, () -> ParserUtil.parseName(name));
+        }
     }
 
     @Test
