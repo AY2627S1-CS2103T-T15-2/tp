@@ -256,8 +256,7 @@ Command | Shows
 `list lv/Sec 3 sub/A-Math` | Active Sec 3 students who take A-Math
 `list sub/Physics st/all` | All students who take Physics, active and former
 
-* `list` shows all guardians and active students. Former students are hidden; see
-  [Marking a student as former](#marking-a-student-as-former-archive).
+* Former students are hidden; see [Marking a student as former](#marking-a-student-as-former-archive).
 * `r/ROLE` shows only contacts with that role. `ROLE` must be `student` or `guardian`, and ignores letter case.
 * `st/STATUS` chooses which contacts to show by status. `STATUS` must be `active`, `former` or `all`, and ignores
   letter case:
@@ -315,8 +314,7 @@ Command | Shows
   `Level: Sec 3 | Subject: Not set`. The line is hidden when both fields are missing.
 * Selecting a student shows separate `Level:` and `Subject:` lines in the details panel. Each missing value is shown
   as `Not set`. Guardians do not show level or subject details.
-* A former student has a `Former` badge beside the role badge. For example, Alex Tan's card shows `Student`
-  and `Former` badges beside his name. The details panel also shows `Role: Student [Former]`.
+* A former student has a `Former` badge beside the role badge.
 
 ### Marking a student as former: `archive`
 
@@ -447,7 +445,7 @@ Shows the full details of the specified contact in the details panel.
 
 Format: `view INDEX`
 
-* Shows the details of the contact at the specified `INDEX` in the details panel, and selects that contact in the list.
+* Selects the contact at the specified `INDEX` in the list.
 * The index refers to the index number shown in the displayed contact list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * A value that is not a positive integer is rejected with
