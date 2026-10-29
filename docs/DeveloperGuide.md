@@ -1207,6 +1207,10 @@ fullscreen mode before testing secondary windows. These tests do not require any
 
 ### Adding a contact
 
+1. In a disposable data folder, enter `add r/student n/玛丽·居里` with a middle dot (U+00B7).<br>
+   Expected: The name is accepted and displayed with the middle dot. Enter `edit 1 n/让·皮埃尔`, then restart.<br>
+   Expected: The name remains `让·皮埃尔`, and `find 让·皮埃尔` finds the contact.
+
 Use a disposable application folder with an empty contact list. Run the following cases in order.
 For each failed Add command, verify that contacts, selection, details and saved data remain unchanged.
 The failed command should remain in the command box, which keeps focus.

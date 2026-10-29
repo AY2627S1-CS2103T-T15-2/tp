@@ -122,7 +122,7 @@ public class EditCommandParserTest {
     public void parse_invalidValue_failure() {
         assertParseFailure(parser, "1" + INVALID_NAME_DESC,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, and slashes."); // invalid name
+                        + "hyphens, periods, middle dots (·), and slashes."); // invalid name
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC, Phone.MESSAGE_TOO_FEW_DIGITS); // invalid phone
         assertParseFailure(parser, "1" + INVALID_EMAIL_DESC,
                 "Email address must contain exactly one @ symbol."); // invalid email
@@ -133,7 +133,7 @@ public class EditCommandParserTest {
         // multiple invalid values, but only the first invalid value is captured
         assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + VALID_PHONE_AMY,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, and slashes.");
+                        + "hyphens, periods, middle dots (·), and slashes.");
     }
 
     @Test

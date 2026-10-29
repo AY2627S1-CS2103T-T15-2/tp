@@ -57,6 +57,15 @@ public class NameTest {
     }
 
     @Test
+    public void constructor_middleDotNames_preservesOriginalSpelling() {
+        String name = "玛丽\u00b7居里";
+        assertTrue(Name.isValidName(name));
+        assertEquals(name, new Name(name).fullName);
+        assertTrue(Name.isValidName("L\u00b7L"));
+        assertFalse(Name.isValidName("玛丽\u2022居里")); // a bullet is not a middle dot
+    }
+
+    @Test
     public void equals() {
         Name name = new Name("Valid Name");
 
