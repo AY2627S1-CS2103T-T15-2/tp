@@ -1420,6 +1420,8 @@ Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `
 1. Test case: `list`, delete the guardian by its displayed index, then `undo`.<br>
    Expected: The guardian returns with its original ID and details. Both students regain their guardian link,
    including the hidden former student. The active view is restored and the guardian is selected.
+   Feedback lists the guardian's name and role under `Restored 1 contact:` and reports
+   `Restored 2 student-guardian relationships.`
 
 1. Test case: `list st/former`, `delete 1`, `list`, then `undo`.<br>
    Expected: The former student returns with its original status, details and guardian. The former-student view
@@ -1428,6 +1430,8 @@ Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `
 1. Test case: `list`, `delete 1 2`, then `undo`.<br>
    Expected: Both original contacts return together, including any relationship between them. A second `undo`
    reports `No deletion is available to undo.`
+   Feedback lists both restored contacts under `Restored 2 contacts:`. Their shared relationship is counted once;
+   links from other students to the restored guardian are also included, even if those students are hidden.
 
 1. Test case: delete a contact, successfully edit a remaining contact, then `undo`.<br>
    Expected: Undo is unavailable and the edit is retained. Repeat with an invalid or unchanged edit instead;

@@ -67,7 +67,8 @@ public class UndoDeletionTest {
         CommandResult result = logic.execute("undo");
 
         assertEquals(Optional.of(guardian.getId()), result.getSelectedContactId());
-        assertEquals("Restored 1 deleted contact(s).", result.getFeedbackToUser());
+        assertEquals("Restored 1 contact:\nMei Tan [Guardian]. Restored 2 student-guardian relationships.",
+                result.getFeedbackToUser());
         assertEquals(List.of(guardian, student, former), List.copyOf(model.getAddressBook().getPersonList()));
         assertEquals(List.of(guardian.getId(), student.getId(), former.getId()),
                 model.getAddressBook().getPersonList().stream().map(Person::getId).toList());
@@ -83,10 +84,46 @@ public class UndoDeletionTest {
         Model model = createModel();
         Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
         logic.execute("delete 2 1");
-        logic.execute("undo");
+        CommandResult result = logic.execute("undo");
+        assertEquals("Restored 2 contacts:\nAlex Tan [Student]\nMei Tan [Guardian]. "
+                + "Restored 2 student-guardian relationships.", result.getFeedbackToUser());
         assertEquals(List.of(guardian.getId(), student.getId(), former.getId()),
                 model.getAddressBook().getPersonList().stream().map(Person::getId).toList());
         assertEquals(List.of(guardian, student, former), List.copyOf(model.getAddressBook().getPersonList()));
+    }
+
+    @Test
+    public void execute_undoUnlinkedStudent_reportsContactWithoutUnrelatedRelationships() throws Exception {
+        Model model = createModel();
+        Person unlinked = new PersonBuilder().withName("Unlinked Student").build();
+        model.addPerson(unlinked);
+        Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
+        logic.execute("delete n/Unlinked Student");
+
+        CommandResult result = logic.execute("undo");
+
+        assertEquals("Restored 1 contact:\nUnlinked Student [Student].", result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_undoBulkDeletion_formatsNamesAndRolesInDisplayOrder() throws Exception {
+        Person zoe = new PersonBuilder().withName("Zoe").build();
+        Person amyStudent = new PersonBuilder().withName("Amy").build();
+        Person amyGuardian = new PersonBuilder().withName("Amy").withRole("guardian").build();
+        AddressBook book = new AddressBook();
+        book.setPersons(List.of(zoe, amyStudent, amyGuardian));
+        Model model = new ModelManager(book, new UserPrefs());
+        Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
+        logic.execute("delete 3 2 1");
+
+        CommandResult result = logic.execute("undo");
+
+        assertEquals("Restored 3 contacts:\nAmy [Guardian]\nAmy [Student]\nZoe [Student].",
+                result.getFeedbackToUser());
+        assertEquals(List.of(amyGuardian.getId(), amyStudent.getId(), zoe.getId()),
+                model.getFilteredPersonList().stream().map(Person::getId).toList());
+        assertEquals(List.of(zoe.getId(), amyStudent.getId(), amyGuardian.getId()),
+                model.getAddressBook().getPersonList().stream().map(Person::getId).toList());
     }
 
     @Test
@@ -208,6 +245,8 @@ public class UndoDeletionTest {
         CommandResult result = logic.execute("undo");
 
         assertEquals(Optional.of(former.getId()), result.getSelectedContactId());
+        assertEquals("Restored 1 contact:\nZoe Tan [Student]. Restored 1 student-guardian relationship.",
+                result.getFeedbackToUser());
         assertEquals(List.of(former), List.copyOf(model.getFilteredPersonList()));
         assertEquals(List.of(former.getId()), model.getFilteredPersonList().stream().map(Person::getId).toList());
         assertEquals(former.getGuardianId(), model.getFilteredPersonList().getFirst().getGuardianId());
