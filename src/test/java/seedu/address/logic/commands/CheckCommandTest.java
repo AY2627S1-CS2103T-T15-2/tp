@@ -50,7 +50,7 @@ public class CheckCommandTest {
 
         String result = report(model, CheckCommand.Section.ALL);
 
-        assertTrue(result.contains("1 displayed contact(s)"));
+        assertTrue(result.startsWith("Data-quality report: 1 contact displayed.\n"));
         assertFalse(result.contains("no guardian linked"));
         assertFalse(result.contains("consider adding"));
         assertFalse(result.contains("Mei Tan"));
@@ -99,6 +99,7 @@ public class CheckCommandTest {
             model.addPerson(new PersonBuilder().withName("Alex Tan").withoutPhone().withoutEmail().build());
         }
         String result = report(model, CheckCommand.Section.DUPLICATES);
+        assertTrue(result.startsWith("Data-quality report: 3 contacts displayed.\n"));
         assertTrue(result.contains("Possible duplicates (3)"));
         assertEquals(3, result.lines().filter(line -> line.contains(" and ") && line.contains(": same role")).count());
         assertTrue(result.contains("1: Alex Tan [Student] and 2: Alex Tan [Student]"));

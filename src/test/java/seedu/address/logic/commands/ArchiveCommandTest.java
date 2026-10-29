@@ -27,6 +27,8 @@ import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for {@code ArchiveCommand}.
+ * Together with {@code UnarchiveCommandTest}, covers all command x student-status combinations:
+ * archive/unarchive x active/former. Guardians form a separate invalid target partition.
  */
 public class ArchiveCommandTest {
 
@@ -47,6 +49,7 @@ public class ArchiveCommandTest {
 
     @Test
     public void execute_filteredList_usesDisplayedIndex() {
+        // EP: a filtered list can map the same displayed index to a different saved contact.
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
         Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         String expectedMessage = String.format(ArchiveCommand.MESSAGE_SUCCESS, student.getName());
@@ -97,6 +100,7 @@ public class ArchiveCommandTest {
 
     @Test
     public void execute_indexOutOfBounds_throwsCommandException() {
+        // BVA: the first index immediately beyond the displayed list.
         Index outOfBounds = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
 
         assertCommandFailure(new ArchiveCommand(outOfBounds), model,

@@ -40,7 +40,7 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
    * `delete 1 3 5` : Deletes the 1st, 3rd and 5th contacts in one operation.
 
-   * `clear` : Deletes all contacts.
+   * `clear confirm` : Permanently deletes all contacts after explicit confirmation.
 
    * `exit` : Exits the app.
 
@@ -71,7 +71,8 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
   email spaces are removed, while spaces inside an email remain invalid. Internal tabs and line breaks are
   still checked under each field's rules.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
+* Extraneous parameters for commands that take no parameters, such as `help` and `exit`, are ignored.
+  `clear` requires the explicit argument `confirm`; all other arguments are rejected.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -83,6 +84,8 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 
 * Contacts are always displayed in alphabetical order of name, ignoring capitalization.
 * Contacts with the same name are displayed with guardians before students.
+  This includes capitalization variants such as Greek `ΟΣ`, `Οσ` and `ος`, and equivalent Unicode spellings
+  of accented letters. The original spelling of each saved name is preserved.
 * Accented letters are ordered with their unaccented forms, so `Élise Tan` is displayed between `Edward Lim` and
   `Felix Ng`. Letters without a separate accent mark are also ordered with the letters they are based on: `ø` with
   `o`, `ł` with `l`, `æ` with `ae` and `ß` with `ss`. A name without accents is displayed before the same
@@ -135,10 +138,13 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 **Role (`r/`)**: `student` or `guardian`, ignoring letter case.
 
 **Name (`n/`)**: A non-blank name of **1 to 70 characters**, allowing letters and numbers (including non-English
-scripts), spaces, apostrophes (`'` or `’`), hyphens, periods, middle dots (`·`, U+00B7), and slashes.
-For example, `add r/student n/玛丽·居里` preserves the middle dot in the saved name.
+scripts), spaces, apostrophes (`'`, `‘` or `’`), hyphens, periods, middle dots (`·`, U+00B7), and slashes.
+For example, `add r/student n/玛丽·居里` preserves the middle dot in the saved name. Include at least one letter or digit;
+punctuation-only names such as `...` or `-` are rejected with `Name must contain at least one letter or digit.`
 Consecutive spaces become one space
 before the length check. Enclose the **entire name** in double quotes if it contains `/`, even for `n/"AC/DC"`.
+Opening and closing curly apostrophes from pasted text are accepted, as in `O‘Brien` and `O’Brien`.
+The original apostrophe is preserved when the name is saved.
 The enclosing quotes are not saved; surrounding whitespace inside them is also removed.
 Use straight double quotes (`"`), with no extra text outside them. Prefix-like text inside a quoted name stays
 part of the name: `n/"Ravi p/e ratio"` does not supply a phone number. Quotes protect names only, not other fields.
@@ -182,12 +188,16 @@ Examples: `lv/Sec 3`, `sub/A-Math`. The value `NONE`, ignoring case, is reserved
 #### Duplicate contacts and warnings
 
 Checks include **all saved contacts**, including former students and contacts hidden by a filter. These rules
-apply to contacts with the **same role and name**, ignoring name capitalization. Level and subject do not affect
-these checks.
+apply to contacts with the **same role and name**. Exact duplicate rejection ignores name capitalization.
+Possible-duplicate warnings also recognize canonically equivalent Unicode spellings (such as composed and
+decomposed `É`), straight (`'`) and closing-curly (`’`) apostrophes, and repeated or surrounding ordinary spaces
+in saved names.
+Accents and word boundaries remain significant: `Élise` differs from `Elise`, and `Alex Tan` differs from `AlexTan`.
+Names are saved as entered after normal command parsing. Level and subject do not affect these checks.
 
 | Condition, checked in this order | Result |
 | --- | --- |
-| Phone and email both match, with at least one contact method present | Rejected: `This contact already exists.` |
+| Phone and email both match, with at least one contact method present, and names match ignoring capitalization only | Rejected: `This contact already exists.` |
 | Phone matches after spaces and hyphens are removed | Added with a phone warning. |
 | Email matches, ignoring capitalization | Added with an email warning. |
 | Phone is missing from both contacts, or email is missing from both | Added with a general warning. |
@@ -625,6 +635,9 @@ Format: `undo`
 * Restores the latest successful deletion by index, multiple indexes or name, including original contact IDs,
   details and student-guardian links. Bulk deletion is restored as one operation.
 * Restores the filter used before deletion and selects a restored contact visible in that view.
+* Success feedback lists the restored contacts by name and role in the same order as the displayed list, using `Restored 1 contact:` or
+  `Restored N contacts:`. If links were restored, it also reports their count, including links to hidden former
+  students. A link is counted once even if both its student and guardian were deleted.
 * Read-only commands such as `list`, `find`, `view` and `children` preserve undo availability.
 * Another successful deletion replaces the undo opportunity. Any other successful data-changing command clears it.
 * Failed commands and failed saves preserve the undo opportunity. If saving an undo fails, no data changes are
@@ -643,6 +656,8 @@ the view. Running this command does not invalidate deletion undo. Run `list`, `f
 first to choose the contacts to inspect.
 
 * `check` includes all three sections; `check guardians` reports students without linked guardians.
+* The report starts with `Data-quality report: 1 contact displayed.` or
+  `Data-quality report: N contacts displayed.`, using the number of contacts in the current view.
 * `check details` reports missing level or subject for students and missing contact methods when both phone and
   email are absent. Guardians are not expected to have student details.
 * `check duplicates` reports pairs using the same warning rules as `add` and `edit`: the same name and role plus
@@ -661,7 +676,15 @@ Example: run `find Tan`, then `check duplicates` to review matching displayed pa
 
 Clears all contacts from TutorRoster.
 
-Format: `clear`
+Format: `clear confirm`
+
+This permanently deletes **all** contacts and student-guardian links, including contacts hidden by the current
+filter and former students. It cannot be undone. Back up your data file first if you may need these contacts again.
+
+Entering `clear` alone, `clear 1`, or any arguments other than `confirm` rejects the command and shows:
+`This will permanently delete all contacts and student-guardian links. Use clear confirm to proceed. This cannot be undone.`
+The rejected command preserves contacts, the current view, the saved data and any existing deletion undo.
+Confirmation ignores letter case, so `clear CONFIRM` also works. Extra arguments such as `clear confirm 1` are rejected.
 
 ### Exiting the program: `exit`
 
@@ -692,10 +715,18 @@ beside the JAR, before restarting. Check for existing files at the destination b
 **Caution:**
 If the data file is invalid, TutorRoster starts with an empty list and disables data-changing commands for that session. It displays `Data changes are disabled because the data file could not be loaded. Fix the file and restart TutorRoster.` followed by `Reason:` and the specific loading or validation problem, for example `Only a student can have a level or subject.` The same explanation is shown when a data-changing command is blocked. The invalid file is preserved. Back up the file before editing it, fix the reported problem and restart the application.<br>
 An empty or whitespace-only data file is also preserved and identified explicitly. Restore a backup if contacts were expected. If you intend to start with an empty contact list, close TutorRoster, delete that empty file and restart; a missing data file starts normally.<br>
+Older files containing punctuation-only names, such as `...`, also fail name validation. Close TutorRoster,
+back up the file, and correct each affected `name` to include at least one letter or digit before restarting.
+Keep the contact IDs and guardian references unchanged; the app does not automatically rename or remove contacts.<br>
 Contacts have permanent `id` values, and a student's optional `guardianId` must refer to an existing guardian's `id`. Keep IDs unique and preserve them when editing contact details. Invalid IDs, repeated JSON fields, duplicate contacts and invalid guardian references make the file invalid. Older valid files without IDs are accepted; IDs are assigned on loading and included in the next successful save.
 </box>
 
 --------------------------------------------------------------------------------------------------------------------
+
+**Multiple copies and external changes:** If another copy saves contacts after this session loaded them, the
+next data-changing command is rejected with `Contact data changed or is being saved by another session. No changes were saved. Close other copies and restart TutorRoster to load the latest data.`
+The rejected command does not change this session's contacts or replace the saved file. Close the other copies,
+restart to load the latest contacts, then repeat the intended command. Read-only commands remain available.
 
 ## FAQ
 
@@ -733,7 +764,7 @@ Contacts have permanent `id` values, and a student's optional `guardianId` must 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
-**Clear**  | `clear`
+**Clear**  | `clear confirm` (permanent; cannot be undone)
 **Check data** | `check [guardians\|details\|duplicates]`<br> e.g., `check`, `check duplicates`
 **Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`

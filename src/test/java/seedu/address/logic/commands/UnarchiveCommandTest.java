@@ -26,6 +26,7 @@ import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for {@code UnarchiveCommand}.
+ * Completes the command x student-status combinations described in {@code ArchiveCommandTest}.
  */
 public class UnarchiveCommandTest {
 
@@ -68,6 +69,7 @@ public class UnarchiveCommandTest {
 
     @Test
     public void execute_indexOutOfBounds_throwsCommandException() {
+        // BVA: the first index immediately beyond the displayed list.
         Index outOfBounds = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
 
         assertCommandFailure(new UnarchiveCommand(outOfBounds), model,

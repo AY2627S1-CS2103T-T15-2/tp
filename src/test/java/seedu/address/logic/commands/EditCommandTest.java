@@ -1,5 +1,6 @@
 package seedu.address.logic.commands;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,6 +17,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -583,12 +586,16 @@ public class EditCommandTest {
         addressBook.addPerson(guardian);
         Model guardianModel = new ModelManager(addressBook, new UserPrefs());
 
-        EditCommand setLevel = new EditCommand(INDEX_FIRST_PERSON,
-                new EditPersonDescriptorBuilder().withLevel("Sec 3").build());
-        assertCommandFailure(setLevel, guardianModel, EditCommand.MESSAGE_GUARDIAN_STUDENT_DETAILS);
-
-        EditCommand removeSubject = new EditCommand(INDEX_FIRST_PERSON,
-                new EditPersonDescriptorBuilder().withoutSubject().build());
-        assertCommandFailure(removeSubject, guardianModel, EditCommand.MESSAGE_GUARDIAN_STUDENT_DETAILS);
+        // EP: guardians cannot edit student details, even when the value is valid for a student.
+        // All combinations: level/subject x set/remove, with only one field specified per command.
+        for (Map.Entry<String, EditPersonDescriptor> testCase : List.of(
+                Map.entry("level/set", new EditPersonDescriptorBuilder().withLevel("Sec 3").build()),
+                Map.entry("level/remove", new EditPersonDescriptorBuilder().withoutLevel().build()),
+                Map.entry("subject/set", new EditPersonDescriptorBuilder().withSubject("Math").build()),
+                Map.entry("subject/remove", new EditPersonDescriptorBuilder().withoutSubject().build()))) {
+            assertAll(testCase.getKey(), () -> assertCommandFailure(
+                    new EditCommand(INDEX_FIRST_PERSON, testCase.getValue()), guardianModel,
+                    EditCommand.MESSAGE_GUARDIAN_STUDENT_DETAILS));
+        }
     }
 }

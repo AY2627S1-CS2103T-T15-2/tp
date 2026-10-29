@@ -404,7 +404,7 @@ public class LinkPersistenceTest {
         String failureMessage = logic.getStartupMessage().orElseThrow();
         assertTrue(failureMessage.contains("Reason: Invalid JSON:"));
         assertThrows(CommandException.class, failureMessage, () -> logic.execute("link s/1 g/2"));
-        assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear"));
+        assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear confirm"));
         logic.execute("list");
         assertEquals("{invalid json}", Files.readString(file));
     }

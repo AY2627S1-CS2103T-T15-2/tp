@@ -478,12 +478,17 @@ public class AddCommandParserTest {
         assertNameParsesSuccessfully("\"ravi s/o\"", "ravi s/o");
         assertNameParsesSuccessfully("\"Ravi s/o Kumar\"", "Ravi s/o Kumar");
         assertNameParsesSuccessfully("\"Alex / Tan\"", "Alex / Tan");
-        assertNameParsesSuccessfully("\"///\"", "///");
-        assertNameParsesSuccessfully("...", "...");
         assertNameParsesSuccessfully("Mary-Anne O’Brien", "Mary-Anne O’Brien");
         assertNameParsesSuccessfully("李小龍", "李小龍");
         assertNameParsesSuccessfully("\"Alex    Tan\"", "Alex Tan");
         assertNameParsesSuccessfully("a".repeat(Name.MAX_LENGTH), "a".repeat(Name.MAX_LENGTH));
+    }
+
+    @Test
+    public void parse_punctuationOnlyName_failure() {
+        for (String name : List.of("...", "-", "'", "\"///\"", "\"'-./’\"", "\u0301")) {
+            assertParseFailure(parser, " r/student n/" + name, Name.MESSAGE_MISSING_ALPHANUMERIC);
+        }
     }
 
     @Test

@@ -117,6 +117,22 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void getFilteredPersonList_sigmaVariants_guardianFirstAfterRenameAndFilter() {
+        Person student = new PersonBuilder().withName("\u039f\u03a3").withRole("student").build();
+        Person guardian = new PersonBuilder().withName("\u039f\u03c3").withRole("guardian").build();
+        modelManager.addPerson(student);
+        modelManager.addPerson(guardian);
+        assertEquals(List.of(guardian.getId(), student.getId()), modelManager.getFilteredPersonList().stream()
+                .map(Person::getId).toList());
+
+        Person renamedStudent = new PersonBuilder(student).withName("\u03bf\u03c2").build();
+        modelManager.setPerson(student, renamedStudent);
+        modelManager.updateFilteredPersonList(new NameContainsSubstringPredicate("\u039f\u03a3"));
+        assertEquals(List.of(guardian.getId(), student.getId()), modelManager.getFilteredPersonList().stream()
+                .map(Person::getId).toList());
+    }
+
+    @Test
     public void getFilteredPersonList_formerStudent_hiddenByDefault() {
         Person former = new PersonBuilder(BENSON).withStatus(StudentStatus.FORMER).build();
         modelManager = new ModelManager(new AddressBookBuilder().withPerson(ALICE).withPerson(former).build(),
