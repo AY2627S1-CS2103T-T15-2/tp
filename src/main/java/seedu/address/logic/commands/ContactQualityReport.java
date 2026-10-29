@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import seedu.address.logic.Messages;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Role;
 
@@ -31,7 +32,7 @@ final class ContactQualityReport {
         if (section == CheckCommand.Section.ALL || section == CheckCommand.Section.DUPLICATES) {
             sections.add(formatSection("Possible duplicates", duplicateSuggestions()));
         }
-        return "Data-quality report: " + contacts.size() + " displayed contact(s).\n"
+        return "Data-quality report: " + Messages.formatContactCount(contacts.size()) + " displayed.\n"
                 + "Suggestions only: missing optional data and shared details may be intentional.\n"
                 + String.join("\n\n", sections) + "\nNo contacts were changed.";
     }

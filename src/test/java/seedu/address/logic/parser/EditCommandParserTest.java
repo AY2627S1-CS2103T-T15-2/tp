@@ -120,6 +120,7 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidValue_failure() {
+        // Heuristic: reject each invalid field independently before checking combined invalid inputs.
         assertParseFailure(parser, "1" + INVALID_NAME_DESC,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
                         + "hyphens, periods, and slashes."); // invalid name
@@ -130,8 +131,8 @@ public class EditCommandParserTest {
         // invalid phone followed by valid email
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC + EMAIL_DESC_AMY, Phone.MESSAGE_TOO_FEW_DIGITS);
 
-        // multiple invalid values, but only the first invalid value is captured
-        assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + VALID_PHONE_AMY,
+        // Combination: invalid name and email with a valid phone checks name-first error precedence.
+        assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + PHONE_DESC_AMY,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
                         + "hyphens, periods, and slashes.");
     }
@@ -154,6 +155,7 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidLevelAndSubject_reportsLevelFirst() {
+        // Combination: both invalid fields check precedence, independently of their command order.
         for (String input : List.of("1 lv/--- sub/---", "1 sub/--- lv/---")) {
             assertParseFailure(parser, input, Level.MESSAGE_MISSING_ALPHANUMERIC);
         }
@@ -320,6 +322,7 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_levelAndSubject_success() {
+        // All combinations across these four tests: level set/remove x subject set/remove.
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withLevel("Sec 4")
                 .withSubject("A-Math").build();
         assertParseSuccess(parser, "1 lv/ Sec  4 sub/A-Math",
@@ -332,6 +335,29 @@ public class EditCommandParserTest {
                 .build();
         assertParseSuccess(parser, "1 lv/NONE sub/none", new EditCommand(INDEX_FIRST_PERSON, descriptor));
         assertParseSuccess(parser, "1 lv/ None  sub/nOnE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_setLevelRemoveSubject_success() {
+        // Heuristic: a valid level must still be set when the other field requests removal.
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withLevel("Sec 4")
+                .withoutSubject().build();
+        assertParseSuccess(parser, "1 lv/Sec 4 sub/NONE", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_removeLevelSetSubject_success() {
+        // Heuristic: a valid subject must still be set when the other field requests removal.
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutLevel()
+                .withSubject("Physics").build();
+        assertParseSuccess(parser, "1 lv/NONE sub/Physics", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_oneInvalidStudentDetailWithValidCompanion_reportsInvalidField() {
+        // Heuristic: isolate each invalid input so another invalid field cannot mask its error.
+        assertParseFailure(parser, "1 lv/--- sub/Physics", Level.MESSAGE_MISSING_ALPHANUMERIC);
+        assertParseFailure(parser, "1 lv/Sec 4 sub/---", Subject.MESSAGE_MISSING_ALPHANUMERIC);
     }
 
     @Test

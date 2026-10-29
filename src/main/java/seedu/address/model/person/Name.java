@@ -7,6 +7,7 @@ import java.text.Normalizer;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Represents a Person's name in the address book.
@@ -16,14 +17,16 @@ public class Name {
 
     public static final int MAX_LENGTH = 70;
     public static final String MESSAGE_CONSTRAINTS =
-            "Names must contain 1 to 70 characters and cannot be blank. "
+            "Names must contain 1 to 70 characters, including at least one letter or digit, and cannot be blank. "
                     + "Names may contain letters, digits, spaces, apostrophes, hyphens, periods, and slashes.";
+    public static final String MESSAGE_MISSING_ALPHANUMERIC = "Name must contain at least one letter or digit.";
 
     public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N}\\p{Pd} './‘’]+";
 
     private static final char APOSTROPHE_STRAIGHT = '\'';
     private static final char APOSTROPHE_CURLY_LEFT = '\u2018';
     private static final char APOSTROPHE_CURLY_RIGHT = '\u2019';
+    private static final Pattern SPACE_RUNS = Pattern.compile(" +");
 
     /**
      * Scripts whose combining marks are accents, such as the acute accent in "é". In other scripts, such as
@@ -86,6 +89,9 @@ public class Name {
             return "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
                     + "hyphens, periods, and slashes.";
         }
+        if (!test.matches(".*[\\p{L}\\p{N}].*")) {
+            return MESSAGE_MISSING_ALPHANUMERIC;
+        }
         return null;
     }
 
@@ -140,6 +146,28 @@ public class Name {
      */
     public boolean isSameName(Name otherName) {
         return otherName != null && fullName.equalsIgnoreCase(otherName.fullName);
+    }
+
+    /**
+     * Returns true if both names match for possible-duplicate warnings, ignoring case, canonical Unicode
+     * representation, curly apostrophes and repeated or surrounding ordinary spaces.
+     * Accents and word boundaries are retained.
+     * Exact duplicate identity continues to use {@link #isSameName(Name)}.
+     */
+    public boolean isSameNameForDuplicateWarning(Name otherName) {
+        if (otherName == null) {
+            return false;
+        }
+        String first = normalizeWarningFormatting(fullName);
+        String second = normalizeWarningFormatting(otherName.fullName);
+        // Keep Java's existing case rules, then compare canonical decompositions for accented spellings.
+        return first.equalsIgnoreCase(second) || Normalizer.normalize(first, Normalizer.Form.NFD)
+                .equalsIgnoreCase(Normalizer.normalize(second, Normalizer.Form.NFD));
+    }
+
+    private static String normalizeWarningFormatting(String text) {
+        String spacedText = SPACE_RUNS.matcher(text.trim()).replaceAll(" ");
+        return replaceCurlyApostrophes(spacedText);
     }
 
     @Override

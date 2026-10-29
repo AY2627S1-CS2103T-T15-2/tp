@@ -57,7 +57,7 @@ public class HelpWindow extends UiPart<Stage> {
             new CommandHelp("List contacts", ListCommand.COMMAND_FORMAT),
             new CommandHelp("Archive student", ArchiveCommand.COMMAND_FORMAT),
             new CommandHelp("Unarchive student", UnarchiveCommand.COMMAND_FORMAT),
-            new CommandHelp("Clear contacts", ClearCommand.COMMAND_WORD),
+            new CommandHelp("Clear all contacts (cannot undo)", ClearCommand.COMMAND_FORMAT),
             new CommandHelp("Show help", HelpCommand.COMMAND_WORD),
             new CommandHelp("Exit app", ExitCommand.COMMAND_WORD));
 

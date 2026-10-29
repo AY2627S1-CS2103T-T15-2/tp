@@ -518,6 +518,11 @@ internal tabs and other unsupported whitespace fail validation. Add requires quo
 the Add error includes a name-quoting hint. Repeated prefixes are rejected in the fixed field order above.
 See the [UG field rules and error examples](UserGuide.md#adding-a-contact-add) for the user-facing constraints.
 
+`Name` requires at least one Unicode letter or number after checking blank input, length and supported characters.
+This rejects punctuation-only names and combining marks without a base letter or number through both Add and Edit.
+Saved contacts use the same invariant. An older file with such a name fails loading without being overwritten;
+the existing recovery flow requires correcting the name and restarting.
+
 #### Model invariants
 
 `Person` stores phone and email as non-null `Optional` values. A student may omit both, while a guardian must have
@@ -554,8 +559,18 @@ are allowed, with a general warning for the second. Exact duplicates are rejecte
 hyphens, so phone warnings and the duplicate report also recognize existing saved numbers containing Unicode spaces.
 This comparison does not rewrite those saved values or broaden exact duplicate identity.
 
-For contacts with the same role and name that are not exact duplicates, `DuplicateWarning#classify` returns the
-highest-priority match across all saved contacts, including former students and contacts hidden by filters:
+Warning-name comparison uses `Person#hasSameNameAndRole` and `Name#isSameNameForDuplicateWarning`.
+It trims ordinary spaces, collapses repeated ones and maps curly apostrophes to straight apostrophes.
+It first compares the names with `String#equalsIgnoreCase`, then compares their Unicode NFD decompositions
+ignoring case. Decomposition avoids case-dependent composition differences such as `J` with a combining caron
+versus precomposed lowercase `ǰ`.
+It retains accents and word boundaries and does not rewrite stored names.
+`Person#isSamePerson` continues using the narrower `Name#isSameName` comparison, so broader warning matching
+does not reject previously valid saved contacts as exact duplicates on loading.
+
+For contacts with the same role and equivalent warning names that are not exact duplicates,
+`DuplicateWarning#classify` returns the highest-priority match across all saved contacts, including former
+students and contacts hidden by filters:
 
 1. `PHONE`: phone numbers match after spaces and hyphens are removed.
 1. `EMAIL`: email addresses match ignoring capitalization.
@@ -642,6 +657,14 @@ capitalization may therefore fail duplicate validation on loading. IDs and guard
 duplicate identity.
 
 Each command declares whether it changes data through `Command.isDataChanging()`. `LogicManager` executes data-changing commands on a candidate model carrying the original filter. It saves that candidate before replacing the live model. An unsuccessful command or save therefore cannot change the live contacts, relationships or displayed list. `JsonAddressBookStorage` writes a temporary file in the destination directory and atomically replaces the data file; it fails safely if atomic replacement is unavailable. Read-only commands do not save data.
+
+Each successful load retains the exact file bytes parsed into that session's model (including whether the
+file was missing). Before saving, storage acquires an exclusive operating-system lock on the sibling
+`addressbook.json.lock` file, compares the current bytes with that snapshot, and refuses stale or overlapping
+writes with `DataFileConflictException`. `LogicManager` displays its recovery message without publishing the
+candidate or changing deletion undo. Successful replacement advances the session's snapshot to exactly the bytes
+written. The lock covers both comparison and replacement; the lock file is retained so processes keep locking
+the same filesystem object. Merely checking timestamps or using atomic replacement alone would not prevent lost updates.
 
 The activity diagram below separates command validation, persistence and publication to the live model. Temporary
 file cleanup is attempted after every save attempt; cleanup failures are logged without replacing the save outcome.
@@ -806,6 +829,10 @@ example `Søren` with `Soren`. Names that are still equal are then compared with
 only in accents have a fixed order. `java.text.Collator` was not used because it ignores spaces and some punctuation,
 which would place `Alexa Lim` before `Alex Tan`. Contacts with the same name are ordered by role, with guardians before
 students. The specification does not order contacts with the same name and role, so the comparator treats them as equal.
+
+Both name comparisons use `String#compareToIgnoreCase`, after canonical Unicode normalization, rather than lowercasing
+whole words. This keeps ordinary and final Greek sigma case variants together and lets the guardian-first tie-breaker
+apply consistently. Canonically equivalent accented spellings also compare alike without changing stored names.
 
 Commands that take an index, such as `edit`, `delete` and `link`, look it up in `Model#getFilteredPersonList`, so
 the index always refers to the order shown on screen. The order is kept after `list`, `find`, `add` and
@@ -1212,6 +1239,12 @@ fullscreen mode before testing secondary windows. These tests do not require any
    Expected: The saved name remains `D‘Souza`. `find D'Souza` using a straight apostrophe finds the contact.
    Repeat in fresh data folders with straight (U+0027) and closing curly (U+2019) apostrophes.
 
+1. With a disposable data folder, add `add r/student n/Alex Tan`. Then try `add r/student n/...`,
+   `add r/student n/-`, `add r/guardian n/--- p/91234567`, and `edit 1 n/'`.<br>
+   Expected: Each later command reports `Name must contain at least one letter or digit.`
+   Alex remains unchanged, no contact is added, and restarting retains the same saved contact.
+   Names such as `Mary-Anne`, `O’Brien`, `李小龍` and `123` remain accepted.
+
 Use a disposable application folder with an empty contact list. Run the following cases in order.
 For each failed Add command, verify that contacts, selection, details and saved data remain unchanged.
 The failed command should remain in the command box, which keeps focus.
@@ -1283,6 +1316,20 @@ The failed command should remain in the command box, which keeps focus.
    between parameters instead of spaces. The second contact has the same name and absent student details, and is
    added with a general possible-duplicate warning because both contacts lack phone and email values.
    A tab inside the quoted name is rejected instead, without adding a contact.
+
+### Equivalent names in duplicate warnings
+
+Use an empty disposable data folder for each pair. Copy the Unicode examples to preserve their code points.
+
+1. Enter `add r/student n/Élise p/91234567 e/elise@example.com`, then
+   `add r/student n/Élise p/91234567 e/elise@example.com`.<br>
+   Expected: Both contacts are saved; the second addition includes a possible-duplicate phone warning.
+   The first name starts with precomposed U+00C9; the second starts with U+0045 U+0301.
+   `check duplicates` reports one pair. Restart and verify both original spellings and the report are retained.
+
+1. Repeat with `D'Souza` and `D’Souza`, using the same phone/email values.<br>
+   Expected: The second addition warns and the report contains one pair. Repeat with `Élise` and `Elise` as a
+   negative control: these different accents produce no duplicate warning or suggestion.
 
 ### Pasted space separators
 
@@ -1378,6 +1425,8 @@ Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `
 1. Test case: `list`, delete the guardian by its displayed index, then `undo`.<br>
    Expected: The guardian returns with its original ID and details. Both students regain their guardian link,
    including the hidden former student. The active view is restored and the guardian is selected.
+   Feedback lists the guardian's name and role under `Restored 1 contact:` and reports
+   `Restored 2 student-guardian relationships.`
 
 1. Test case: `list st/former`, `delete 1`, `list`, then `undo`.<br>
    Expected: The former student returns with its original status, details and guardian. The former-student view
@@ -1386,6 +1435,8 @@ Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `
 1. Test case: `list`, `delete 1 2`, then `undo`.<br>
    Expected: Both original contacts return together, including any relationship between them. A second `undo`
    reports `No deletion is available to undo.`
+   Feedback lists both restored contacts under `Restored 2 contacts:`. Their shared relationship is counted once;
+   links from other students to the restored guardian are also included, even if those students are hidden.
 
 1. Test case: delete a contact, successfully edit a remaining contact, then `undo`.<br>
    Expected: Undo is unavailable and the edit is retained. Repeat with an invalid or unchanged edit instead;
@@ -1397,9 +1448,23 @@ Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `
 Save failures are verified by `UndoDeletionTest` with simulated storage errors. The tests check both failure to undo
 and failed intervening changes, ensuring that live data, saved data and the previous undo opportunity are preserved.
 
+#### Confirming a complete clear
+
+Use a disposable data folder containing a guardian, an active student and a linked former student.
+
+1. Delete the active student, then run `clear`, `clear 1` and `clear confirm extra`.<br>
+   Expected: Each command warns that clearing is permanent and instructs the user to run `clear confirm`.
+   Contacts, the current filter and saved data remain unchanged. `undo` still restores the deleted student.
+1. Run `list r/guardian`, then `clear confirm`.<br>
+   Expected: All contacts are removed, including hidden students and links. Restarting shows an empty roster.
+   `undo` cannot restore this confirmed clear. Help and the UG show the required confirmation syntax.
+
+`ClearConfirmationTest` also simulates a failed confirmed-clear save and checks that contacts, the saved file
+and prior deletion undo remain intact. A confirmed clear follows the existing candidate-model save policy.
+
 ### Editing a contact
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add three contacts:
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`. Then add three contacts:
    `add r/student n/Bernice Yu p/99272758`, `add r/guardian n/David Li p/91031282` and
    `add r/student n/Irfan Ibrahim e/irfan@example.com`.
 
@@ -1514,7 +1579,7 @@ for each restart. This setup is independent of the data used in the other manual
 
 ### Listing contacts
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`.
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`.
 
 1. Test case: `list`<br>
    Expected: No contacts are shown. The status message shows `No contacts found.`
@@ -1531,7 +1596,7 @@ for each restart. This setup is independent of the data used in the other manual
 
 ### Filtering the contact list
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add four contacts:
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`. Then add four contacts:
    `add r/guardian n/Mei Tan p/98765432`, `add r/student n/Alex Tan p/91234567 lv/Sec 3 sub/A-Math`,
    `add r/student n/Bea Lim lv/Sec 4 sub/A-Math` and `add r/student n/Chloe Ng lv/Sec 3`. Mark Chloe Ng as former
    with `find Chloe`, then `archive 1`.
@@ -1631,7 +1696,7 @@ for each restart. This setup is independent of the data used in the other manual
 
 ### Finding contacts
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add three contacts:
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`. Then add three contacts:
    `add r/student n/Alex Yeoh`, `add r/student n/Charlotte Oliveiro` and `add r/guardian n/David Li p/91031282`.
 
 1. Test case: `find ale`<br>
@@ -1653,7 +1718,7 @@ for each restart. This setup is independent of the data used in the other manual
 
 ### Ordering and displaying contacts
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add four contacts in this
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`. Then add four contacts in this
    order: `add r/guardian n/David Li p/91031282`, `add r/student n/Charlotte Oliveiro`, `add r/student n/Alex Yeoh`
    and `add r/guardian n/Bernice Yu p/99272758`.
 
@@ -1675,6 +1740,13 @@ for each restart. This setup is independent of the data used in the other manual
 
 1. Test case: `add r/guardian n/aaron lim p/81234567`<br>
    Expected: The new guardian `aaron lim` is shown first, as the order ignores capitalization.
+
+1. In a separate empty disposable data folder, run `add r/guardian n/Οσ p/91234567`, then
+   `add r/student n/ΟΣ` and `list`.<br>
+   Expected: The guardian is contact 1 and the student is contact 2. `view 1` selects the guardian. Run
+   `edit 2 n/ος`, then `find ΟΣ`.<br>
+   Expected: Both contacts still match, with the guardian first. Restart and run `list` again to confirm the same
+   order and original saved spellings. The names use Greek omicron and uppercase, ordinary lowercase or final sigma.
 
 1. Test case: `add r/student n/Maximilian Alexander Christopher Bartholomew Montgomery Fitzgerald`<br>
    Expected: The whole name is visible. If it does not fit on one line, it wraps onto the next line instead of being
@@ -1710,7 +1782,7 @@ failed unlink preserves the relationship and the displayed list.
 Use a disposable copy of TutorRoster in a separate folder so these tests do not change real contact data.
 Run the following cases in order.
 
-1. Prerequisites: run `clear`, then add `add r/student n/Alex Tan`, `add r/student n/Bea Tan`,
+1. Prerequisites: run `clear confirm`, then add `add r/student n/Alex Tan`, `add r/student n/Bea Tan`,
    `add r/guardian n/Mei Tan p/98765432` and `add r/guardian n/Sarah Lim e/sarah@example.com`.
    Run `list`. The displayed indexes are Alex 1, Bea 2, Mei 3 and Sarah 4.
 
@@ -1759,7 +1831,7 @@ Run the following cases in order.
    * `link s/1 g/2`: `Guardian index must refer to a guardian.`
    Expected for every failure: contacts, relationships, selection, details and saved data remain unchanged.
 
-1. Same-name students: run `clear`, add `add r/student n/Alex Tan` twice, then add
+1. Same-name students: run `clear confirm`, add `add r/student n/Alex Tan` twice, then add
    `add r/guardian n/Mei Tan p/98765432`. Run `link s/2 g/3`.<br>
    Expected: Only the second Alex is linked and selected. The first Alex still shows `Guardian: None`.
    Restart and check that both students are present with their separate links. Run `link s/1 g/3`, then
@@ -1803,6 +1875,13 @@ filter and deletion undo remain unchanged.
 ### Saving data
 
 Use a disposable application folder and keep a backup of its data file before testing failures.
+
+1. Concurrent copies: launch two copies of the same JAR from an empty disposable application folder before
+   adding contacts. Add `Alice` in the first copy, then try adding `Bob` in the second.<br>
+   Expected: The second command reports a save conflict and asks for other copies to be closed and TutorRoster
+   restarted. Its live list stays empty; the saved file still contains Alice. Close both copies, restart,
+   and add Bob again: both contacts now remain saved. `ConcurrentAppProcessTest` exercises two real JVMs and,
+   on Windows, submits these commands through two actual JavaFX windows.
 
 1. Missing data file: launch TutorRoster in a folder without `data/addressbook.json`.<br>
    Expected: An empty list, no selected contact and no load error. `list` does not create the file.

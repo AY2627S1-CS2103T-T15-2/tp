@@ -80,7 +80,6 @@ public abstract class StudentStatusCommand extends Command {
     private CommandResult updateStudentStatus(Model model, Person target) {
         Person updated = target.withStatus(targetStatus);
         model.setPerson(target, updated);
-        assert updated.getStatus() == targetStatus;
         // LogicManager saves the change afterwards, and discards it if saving fails.
         logger.info(String.format("Prepared status change of contact %s to %s, pending save",
                 target.getId(), targetStatus));

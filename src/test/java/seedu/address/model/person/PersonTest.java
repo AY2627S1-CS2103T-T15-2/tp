@@ -22,6 +22,34 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void hasSameNameAndRole_equivalentSpellings_matchWithoutBroadeningIdentity() {
+        // EP: canonical Unicode, apostrophe variants and legacy repeated spaces.
+        for (String[] pair : List.of(new String[] {"\u00c9lise", "E\u0301LISE"},
+                new String[] {"D'Souza", "D\u2019Souza"}, new String[] {"Alex Tan", "Alex  Tan"})) {
+            for (String role : List.of("student", "guardian")) {
+                Person first = new PersonBuilder().withRole(role).withName(pair[0]).build();
+                Person second = new PersonBuilder(first).withName(pair[1]).build();
+                assertTrue(first.hasSameNameAndRole(second));
+                assertTrue(second.hasSameNameAndRole(first));
+                assertFalse(first.isSamePerson(second));
+                assertEquals(pair[0], first.getName().fullName);
+                assertEquals(pair[1], second.getName().fullName);
+            }
+        }
+    }
+
+    @Test
+    public void hasSameNameAndRole_distinctNamesOrRoles_doNotMatch() {
+        Person student = new PersonBuilder().withName("\u00c9lise Tan").build();
+        // EP: accents and word boundaries distinguish names; roles remain significant.
+        for (String name : List.of("Elise Tan", "\u00c9liseTan", "\uff25lise Tan")) {
+            assertFalse(student.hasSameNameAndRole(new PersonBuilder(student).withName(name).build()));
+        }
+        assertFalse(student.hasSameNameAndRole(new PersonBuilder(student).withRole("guardian").build()));
+        assertFalse(student.hasSameNameAndRole(null));
+    }
+
+    @Test
     public void hasSamePhoneIgnoringFormatting_unicodeSpaces_matchesWithoutChangingStoredText() {
         Person compact = new PersonBuilder(ALICE).withPhone("93333333").build();
         for (String space : List.of("\u00a0", "\u2007", "\u202f", "\u2003", "\u3000")) {
