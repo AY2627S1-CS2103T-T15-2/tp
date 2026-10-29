@@ -154,7 +154,8 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 or `n/"AC/DC"`. The enclosing quotes are not saved.
 
 Text resembling a parameter stays part of a quoted name: `n/"Ravi p/e ratio"` does not supply a phone number.
-Names made entirely of punctuation, such as `...` or `-`, are rejected.
+Names made entirely of punctuation, such as `...` or `-`, are rejected with
+`Name must contain at least one letter or digit.`
 
 **Phone (`p/`)**: At least **3 digits from `0-9`**, with a maximum of **100 characters**. Other numerals are allowed
 as text but do not count. Labels, multiple numbers, spaces, and punctuation are accepted, for example
