@@ -643,6 +643,14 @@ duplicate identity.
 
 Each command declares whether it changes data through `Command.isDataChanging()`. `LogicManager` executes data-changing commands on a candidate model carrying the original filter. It saves that candidate before replacing the live model. An unsuccessful command or save therefore cannot change the live contacts, relationships or displayed list. `JsonAddressBookStorage` writes a temporary file in the destination directory and atomically replaces the data file; it fails safely if atomic replacement is unavailable. Read-only commands do not save data.
 
+Each successful load retains the exact file bytes parsed into that session's model (including whether the
+file was missing). Before saving, storage acquires an exclusive operating-system lock on the sibling
+`addressbook.json.lock` file, compares the current bytes with that snapshot, and refuses stale or overlapping
+writes with `DataFileConflictException`. `LogicManager` displays its recovery message without publishing the
+candidate or changing deletion undo. Successful replacement advances the session's snapshot to exactly the bytes
+written. The lock covers both comparison and replacement; the lock file is retained so processes keep locking
+the same filesystem object. Merely checking timestamps or using atomic replacement alone would not prevent lost updates.
+
 The activity diagram below separates command validation, persistence and publication to the live model. Temporary
 file cleanup is attempted after every save attempt; cleanup failures are logged without replacing the save outcome.
 
@@ -1798,6 +1806,13 @@ filter and deletion undo remain unchanged.
 ### Saving data
 
 Use a disposable application folder and keep a backup of its data file before testing failures.
+
+1. Concurrent copies: launch two copies of the same JAR from an empty disposable application folder before
+   adding contacts. Add `Alice` in the first copy, then try adding `Bob` in the second.<br>
+   Expected: The second command reports a save conflict and asks for other copies to be closed and TutorRoster
+   restarted. Its live list stays empty; the saved file still contains Alice. Close both copies, restart,
+   and add Bob again: both contacts now remain saved. `ConcurrentAppProcessTest` exercises two real JVMs and,
+   on Windows, submits these commands through two actual JavaFX windows.
 
 1. Missing data file: launch TutorRoster in a folder without `data/addressbook.json`.<br>
    Expected: An empty list, no selected contact and no load error. `list` does not create the file.

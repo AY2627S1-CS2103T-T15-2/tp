@@ -22,6 +22,20 @@ if (Command succeeds?) then (no)
   stop
 else (yes)
 endif
+:Acquire exclusive save lock;
+if (Lock acquired?) then (no)
+  :Report conflict or save error;
+  :Keep live data and saved contacts;
+  stop
+else (yes)
+endif
+if (Saved file matches loaded snapshot?) then (no)
+  :Release save lock;
+  :Report conflict and restart guidance;
+  :Keep live data and saved contacts;
+  stop
+else (yes)
+endif
 :Write candidate JSON to a temporary file;
 if (Temporary-file write succeeds?) then (no)
   :Attempt temporary-file cleanup;
@@ -29,6 +43,7 @@ if (Temporary-file write succeeds?) then (no)
     Delete the temporary file if it still exists.
     Log cleanup failure without changing the save result.
   end note
+  :Release save lock;
   :Report save failure without replacing destination;
   :Keep live contacts, relationships and filter;
   stop
@@ -41,6 +56,7 @@ if (Atomic replacement succeeds?) then (no)
     Delete the temporary file if it still exists.
     Log cleanup failure without changing the save result.
   end note
+  :Release save lock;
   :Report save failure;
   :Keep live contacts, relationships and filter;
   stop
@@ -51,6 +67,8 @@ note right
   Delete the temporary file if it still exists.
   Log cleanup failure without changing the save result.
 end note
+:Retain saved bytes as the session snapshot;
+:Release save lock;
 :Replace live data and apply candidate filter;
 :Return command result;
 stop
