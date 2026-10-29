@@ -97,9 +97,13 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 
 Opens a command reference listing the available commands and their formats. For full instructions, examples and
 field rules, use **Copy URL** to copy the User Guide link and open it in your browser.
-The Help window can be resized and scrolled.
+The Help window can be resized and scrolled. You can also press **F1** in the main window to open Help.
 
 Format: `help`
+
+![Help window showing the User Guide URL, Copy URL button and command reference](images/helpMessage.png)
+
+*The Help window opens at the top of the command reference. Scroll down to see the remaining commands.*
 
 ### Adding a contact: `add`
 
@@ -121,8 +125,9 @@ Examples:
 | A student whose name contains `/` | `add r/student n/"Ravi s/o Kumar" p/98765432` |
 
 The command word and its prefixes (`r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`) accept any letter case, for example
-`ADD R/student N/Alex Tan Lv/Sec 3 SuB/Math`. Parameter values retain their capitalization. Parameters may appear in any order,
-once each. Omit an optional field's prefix if unused; an empty prefix such as `p/` is rejected.
+`ADD R/student N/Alex Tan Lv/Sec 3 SuB/Math`. Parameter values retain their capitalization.
+Parameters may appear in any order, once each. Omit an optional field's prefix if unused;
+an empty prefix such as `p/` is rejected.
 Whitespace before a prefix, including pasted tabs or line breaks, separates parameters just like a space.
 Whitespace inside a value follows that field's rules; for example, a tab inside a phone number is rejected.
 Omitted phone and email values display as `Not provided`.
@@ -137,17 +142,20 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 
 **Role (`r/`)**: `student` or `guardian`, ignoring letter case.
 
-**Name (`n/`)**: A non-blank name of **1 to 70 characters**, allowing letters and numbers (including non-English
-scripts), spaces, apostrophes (`'`, `‘` or `’`), hyphens, periods, middle dots (`·`, U+00B7), and slashes.
-For example, `add r/student n/玛丽·居里` preserves the middle dot in the saved name. Include at least one letter or digit;
-punctuation-only names such as `...` or `-` are rejected with `Name must contain at least one letter or digit.`
-Consecutive spaces become one space
-before the length check. Enclose the **entire name** in double quotes if it contains `/`, even for `n/"AC/DC"`.
-Opening and closing curly apostrophes from pasted text are accepted, as in `O‘Brien` and `O’Brien`.
-The original apostrophe is preserved when the name is saved.
-The enclosing quotes are not saved; surrounding whitespace inside them is also removed.
-Use straight double quotes (`"`), with no extra text outside them. Prefix-like text inside a quoted name stays
-part of the name: `n/"Ravi p/e ratio"` does not supply a phone number. Quotes protect names only, not other fields.
+**Name (`n/`)**
+
+* Enter **1 to 70 characters**, including at least one letter or digit.
+* Names may contain letters and numbers from non-English scripts, spaces, apostrophes (`'`, `‘`, `’`),
+  hyphens, periods, middle dots (`·`), and slashes.
+* Surrounding spaces are removed, including inside enclosing quotes. Repeated spaces become one before checking
+  the length. Capitalization and punctuation are preserved.
+
+**Names containing `/` must be enclosed in straight double quotes**, for example `n/"Ravi s/o Kumar"`
+or `n/"AC/DC"`. The enclosing quotes are not saved.
+
+Text resembling a parameter stays part of a quoted name: `n/"Ravi p/e ratio"` does not supply a phone number.
+Names made entirely of punctuation, such as `...` or `-`, are rejected with
+`Name must contain at least one letter or digit.`
 
 **Phone (`p/`)**: At least **3 digits from `0-9`**, with a maximum of **100 characters**. Other numerals are allowed
 as text but do not count. Labels, multiple numbers, spaces, and punctuation are accepted, for example
@@ -159,8 +167,7 @@ characters such as tabs and line breaks.
 * Exactly one `@`, a non-empty part on each side, and no internal whitespace.
 * Before `@`: English letters (`A-Z`, `a-z`), digits (`0-9`), and `.`, `_`, `%`, `+`, or `-`.
   The local part is limited to **64 characters**. Periods cannot appear at the beginning or end, or consecutively.
-  Other allowed punctuation can appear consecutively and at either end, as in `mei__tan@example.com`,
-  `mei+_tan@example.com`, or `_mei@example.com`.
+  Other listed punctuation may appear consecutively or at either end.
 * After `@`: at least two non-empty labels separated by periods, as in `example.com`. Labels allow English
   letters, digits, and single hyphens between letters or digits. Each label is limited to **63 characters**.
   The final label needs at least two characters.
