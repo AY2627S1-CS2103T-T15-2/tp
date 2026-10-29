@@ -691,6 +691,11 @@ Contacts have permanent `id` values, and a student's optional `guardianId` must 
 
 --------------------------------------------------------------------------------------------------------------------
 
+**Multiple copies and external changes:** If another copy saves contacts after this session loaded them, the
+next data-changing command is rejected with `Contact data changed or is being saved by another session. No changes were saved. Close other copies and restart TutorRoster to load the latest data.`
+The rejected command does not change this session's contacts or replace the saved file. Close the other copies,
+restart to load the latest contacts, then repeat the intended command. Read-only commands remain available.
+
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>

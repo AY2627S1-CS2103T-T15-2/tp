@@ -22,6 +22,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
+import seedu.address.storage.DataFileConflictException;
 import seedu.address.storage.Storage;
 
 /**
@@ -70,6 +71,9 @@ public class LogicManager implements Logic {
                 ? captureDeletion(candidate) : null;
         try {
             storage.saveAddressBook(candidate.getAddressBook());
+        } catch (DataFileConflictException exception) {
+            logger.warning("Refused to overwrite contact data changed by another session.");
+            throw new CommandException(exception.getMessage(), exception);
         } catch (IOException exception) {
             logger.warning("Could not save contact changes: " + exception.getMessage());
             throw new CommandException(MESSAGE_SAVE_FAILURE, exception);
