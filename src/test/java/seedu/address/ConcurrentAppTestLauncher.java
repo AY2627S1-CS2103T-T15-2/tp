@@ -52,7 +52,7 @@ public final class ConcurrentAppTestLauncher {
             app.init();
         }
         try {
-            Files.writeString(control.resolve(session + ".ready"), showsGui ? "GUI" : "HEADLESS");
+            publish(control.resolve(session + ".ready"), showsGui ? "GUI" : "HEADLESS");
             awaitSignal(control.resolve(session + ".go"));
             String feedback;
             if (showsGui) {
@@ -62,8 +62,10 @@ public final class ConcurrentAppTestLauncher {
                     command.fireEvent(new ActionEvent());
                 });
                 CompletableFuture<String> result = new CompletableFuture<>();
-                Platform.runLater(() -> result.complete(
-                        ((TextArea) stage.getScene().lookup("#resultDisplay")).getText()));
+                Platform.runLater(() -> {
+                    TextArea display = (TextArea) stage.getScene().lookup("#resultDisplay");
+                    result.complete(display.getText());
+                });
                 feedback = result.get(15, TimeUnit.SECONDS);
             } else {
                 try {
@@ -72,7 +74,7 @@ public final class ConcurrentAppTestLauncher {
                     feedback = exception.getMessage();
                 }
             }
-            Files.writeString(control.resolve(session + ".result"), feedback);
+            publish(control.resolve(session + ".result"), feedback);
             awaitSignal(control.resolve(session + ".stop"));
         } finally {
             if (showsGui) {
@@ -91,9 +93,15 @@ public final class ConcurrentAppTestLauncher {
         Path data = Files.createDirectories(control.resolve("data"));
         try (FileChannel channel = FileChannel.open(data.resolve("addressbook.json.lock"),
                 StandardOpenOption.CREATE, StandardOpenOption.WRITE); FileLock lock = channel.lock()) {
-            Files.writeString(control.resolve(session + ".ready"), "LOCKED");
+            publish(control.resolve(session + ".ready"), "LOCKED");
             awaitSignal(control.resolve(session + ".stop"));
         }
+    }
+
+    private static void publish(Path path, String value) throws Exception {
+        Path temporary = path.resolveSibling(path.getFileName() + ".tmp");
+        Files.writeString(temporary, value);
+        Files.move(temporary, path, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
     }
 
     private static void onFx(Runnable action) throws Exception {

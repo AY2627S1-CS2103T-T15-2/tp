@@ -141,6 +141,26 @@ public class ConcurrentSaveTest {
     }
 
     @Test
+    public void conflictingUndo_retainsHistoryForSuccessfulRetry() throws Exception {
+        Logic session = openSession();
+        session.execute("add r/student n/Alice");
+        session.execute("add r/student n/Bob");
+        session.execute("delete 1");
+        String beforeConflict = Files.readString(getContactsFile());
+        Logic other = openSession();
+        other.execute("add r/student n/Carol");
+
+        assertEquals(DataFileConflictException.MESSAGE, assertThrows(CommandException.class, () ->
+                session.execute("undo")).getMessage());
+        assertEquals(List.of("Bob", "Carol"), readSavedNames());
+        assertEquals(1, session.getPersonList().size());
+
+        Files.writeString(getContactsFile(), beforeConflict);
+        session.execute("undo");
+        assertEquals(List.of("Alice", "Bob"), readSavedNames());
+    }
+
+    @Test
     public void externallyDeletedFile_isNotRecreatedFromStaleData() throws Exception {
         Logic session = openSession();
         session.execute("add r/student n/Alice");

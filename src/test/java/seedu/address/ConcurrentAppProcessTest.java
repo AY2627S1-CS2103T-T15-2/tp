@@ -72,8 +72,11 @@ public class ConcurrentAppProcessTest {
             assertEquals(List.of("Alice"), new JsonAddressBookStorage(contacts).readAddressBook().orElseThrow()
                     .getPersonList().stream().map(person -> person.getName().fullName).toList());
         } finally {
-            stopSession("first", first);
-            stopSession("second", second);
+            try {
+                stopSession("first", first);
+            } finally {
+                stopSession("second", second);
+            }
         }
     }
 
