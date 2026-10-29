@@ -110,6 +110,17 @@ public class NameTest {
     }
 
     @Test
+    public void constructor_apostropheVariants_preservesOriginalSpelling() {
+        for (String apostrophe : List.of("'", "\u2018", "\u2019")) {
+            String name = "O" + apostrophe + "Brien";
+            assertTrue(Name.isValidName(name));
+            assertEquals(name, new Name(name).fullName);
+            assertFalse(Name.isValidName(apostrophe));
+            assertEquals(Name.MESSAGE_MISSING_ALPHANUMERIC, Name.getValidationErrorMessage(apostrophe));
+        }
+    }
+
+    @Test
     public void equals() {
         Name name = new Name("Valid Name");
 

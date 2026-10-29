@@ -138,10 +138,12 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 **Role (`r/`)**: `student` or `guardian`, ignoring letter case.
 
 **Name (`n/`)**: A non-blank name of **1 to 70 characters**, allowing letters and numbers (including non-English
-scripts), spaces, apostrophes (`'` or `’`), hyphens, periods, and slashes. Include at least one letter or digit;
+scripts), spaces, apostrophes (`'`, `‘` or `’`), hyphens, periods, and slashes. Include at least one letter or digit;
 punctuation-only names such as `...` or `-` are rejected with `Name must contain at least one letter or digit.`
 Consecutive spaces become one space
 before the length check. Enclose the **entire name** in double quotes if it contains `/`, even for `n/"AC/DC"`.
+Opening and closing curly apostrophes from pasted text are accepted, as in `O‘Brien` and `O’Brien`.
+The original apostrophe is preserved when the name is saved.
 The enclosing quotes are not saved; surrounding whitespace inside them is also removed.
 Use straight double quotes (`"`), with no extra text outside them. Prefix-like text inside a quoted name stays
 part of the name: `n/"Ravi p/e ratio"` does not supply a phone number. Quotes protect names only, not other fields.

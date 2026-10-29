@@ -1234,6 +1234,11 @@ fullscreen mode before testing secondary windows. These tests do not require any
 
 ### Adding a contact
 
+1. In a disposable data folder, enter `add r/student n/O‘Brien` using the opening curly apostrophe (U+2018).<br>
+   Expected: The name is accepted and displayed as `O‘Brien`. Enter `edit 1 n/D‘Souza`, then restart.<br>
+   Expected: The saved name remains `D‘Souza`. `find D'Souza` using a straight apostrophe finds the contact.
+   Repeat in fresh data folders with straight (U+0027) and closing curly (U+2019) apostrophes.
+
 1. With a disposable data folder, add `add r/student n/Alex Tan`. Then try `add r/student n/...`,
    `add r/student n/-`, `add r/guardian n/--- p/91234567`, and `edit 1 n/'`.<br>
    Expected: Each later command reports `Name must contain at least one letter or digit.`

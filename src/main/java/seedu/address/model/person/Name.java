@@ -21,7 +21,7 @@ public class Name {
                     + "Names may contain letters, digits, spaces, apostrophes, hyphens, periods, and slashes.";
     public static final String MESSAGE_MISSING_ALPHANUMERIC = "Name must contain at least one letter or digit.";
 
-    public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N}\\p{Pd} './’]+";
+    public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N}\\p{Pd} './‘’]+";
 
     private static final char APOSTROPHE_STRAIGHT = '\'';
     private static final char APOSTROPHE_CURLY_LEFT = '\u2018';
