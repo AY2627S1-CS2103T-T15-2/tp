@@ -41,7 +41,7 @@ public class StudentStatusPersistenceTest {
 
     private final Person guardian = new PersonBuilder().withName("Mei Tan").withRole("guardian").build();
     private final Person student = new PersonBuilder().withName("Alex Tan")
-            .withGuardianId(guardian.getId()).build();
+            .withGuardianId(guardian.getId()).withLevel("Sec 3").withSubject("Math").build();
     private final Person unrelatedStudent = new PersonBuilder().withName("Zoe Lim").build();
 
     @Test
@@ -147,6 +147,8 @@ public class StudentStatusPersistenceTest {
         assertEquals(student.getPhone(), actualStudent.getPhone());
         assertEquals(student.getEmail(), actualStudent.getEmail());
         assertEquals(student.getRole(), actualStudent.getRole());
+        assertEquals(student.getLevel(), actualStudent.getLevel());
+        assertEquals(student.getSubject(), actualStudent.getSubject());
         assertEquals(Optional.of(guardian.getId()), actualStudent.getGuardianId());
         assertEquals(guardian, findContact(model, guardian.getId()));
         assertEquals(unrelatedStudent, findContact(model, unrelatedStudent.getId()));
