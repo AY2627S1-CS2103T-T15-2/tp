@@ -7,6 +7,7 @@ import java.text.Normalizer;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Represents a Person's name in the address book.
@@ -24,6 +25,7 @@ public class Name {
     private static final char APOSTROPHE_STRAIGHT = '\'';
     private static final char APOSTROPHE_CURLY_LEFT = '\u2018';
     private static final char APOSTROPHE_CURLY_RIGHT = '\u2019';
+    private static final Pattern REPEATED_SPACES = Pattern.compile(" +");
 
     /**
      * Scripts whose combining marks are accents, such as the acute accent in "é". In other scripts, such as
@@ -140,6 +142,27 @@ public class Name {
      */
     public boolean isSameName(Name otherName) {
         return otherName != null && fullName.equalsIgnoreCase(otherName.fullName);
+    }
+
+    /**
+     * Compares names for possible-duplicate warnings, ignoring case, canonical Unicode representation,
+     * curly apostrophes and repeated or surrounding ordinary spaces. Accents and word boundaries are retained.
+     * Exact duplicate identity continues to use {@link #isSameName(Name)}.
+     */
+    public boolean isSameNameForDuplicateWarning(Name otherName) {
+        if (otherName == null) {
+            return false;
+        }
+        String first = normalizeWarningFormatting(fullName);
+        String second = normalizeWarningFormatting(otherName.fullName);
+        // Keep Java's existing case rules, then compare canonical decompositions for accented spellings.
+        return first.equalsIgnoreCase(second) || Normalizer.normalize(first, Normalizer.Form.NFD)
+                .equalsIgnoreCase(Normalizer.normalize(second, Normalizer.Form.NFD));
+    }
+
+    private static String normalizeWarningFormatting(String text) {
+        String spacedText = REPEATED_SPACES.matcher(text.trim()).replaceAll(" ");
+        return replaceCurlyApostrophes(spacedText);
     }
 
     @Override

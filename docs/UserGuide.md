@@ -180,12 +180,16 @@ Examples: `lv/Sec 3`, `sub/A-Math`. The value `NONE`, ignoring case, is reserved
 #### Duplicate contacts and warnings
 
 Checks include **all saved contacts**, including former students and contacts hidden by a filter. These rules
-apply to contacts with the **same role and name**, ignoring name capitalization. Level and subject do not affect
-these checks.
+apply to contacts with the **same role and name**. Exact duplicate rejection ignores name capitalization.
+Possible-duplicate warnings also recognize canonically equivalent Unicode spellings (such as composed and
+decomposed `É`), straight (`'`) and closing-curly (`’`) apostrophes, and repeated or surrounding ordinary spaces
+in saved names.
+Accents and word boundaries remain significant: `Élise` differs from `Elise`, and `Alex Tan` differs from `AlexTan`.
+Names are saved as entered after normal command parsing. Level and subject do not affect these checks.
 
 | Condition, checked in this order | Result |
 | --- | --- |
-| Phone and email both match, with at least one contact method present | Rejected: `This contact already exists.` |
+| Phone and email both match, with at least one contact method present, and names match ignoring capitalization only | Rejected: `This contact already exists.` |
 | Phone matches after spaces and hyphens are removed | Added with a phone warning. |
 | Email matches, ignoring capitalization | Added with an email warning. |
 | Phone is missing from both contacts, or email is missing from both | Added with a general warning. |
