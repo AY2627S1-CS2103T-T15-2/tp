@@ -554,8 +554,18 @@ are allowed, with a general warning for the second. Exact duplicates are rejecte
 hyphens, so phone warnings and the duplicate report also recognize existing saved numbers containing Unicode spaces.
 This comparison does not rewrite those saved values or broaden exact duplicate identity.
 
-For contacts with the same role and name that are not exact duplicates, `DuplicateWarning#classify` returns the
-highest-priority match across all saved contacts, including former students and contacts hidden by filters:
+Warning-name comparison uses `Person#hasSameNameAndRole` and `Name#isSameNameForDuplicateWarning`.
+It trims ordinary spaces, collapses repeated ones and maps curly apostrophes to straight apostrophes.
+It first compares the names with `String#equalsIgnoreCase`, then compares their Unicode NFD decompositions
+ignoring case. Decomposition avoids case-dependent composition differences such as `J` with a combining caron
+versus precomposed lowercase `ǰ`.
+It retains accents and word boundaries and does not rewrite stored names.
+`Person#isSamePerson` continues using the narrower `Name#isSameName` comparison, so broader warning matching
+does not reject previously valid saved contacts as exact duplicates on loading.
+
+For contacts with the same role and equivalent warning names that are not exact duplicates,
+`DuplicateWarning#classify` returns the highest-priority match across all saved contacts, including former
+students and contacts hidden by filters:
 
 1. `PHONE`: phone numbers match after spaces and hyphens are removed.
 1. `EMAIL`: email addresses match ignoring capitalization.
@@ -1286,6 +1296,20 @@ The failed command should remain in the command box, which keeps focus.
    between parameters instead of spaces. The second contact has the same name and absent student details, and is
    added with a general possible-duplicate warning because both contacts lack phone and email values.
    A tab inside the quoted name is rejected instead, without adding a contact.
+
+### Equivalent names in duplicate warnings
+
+Use an empty disposable data folder for each pair. Copy the Unicode examples to preserve their code points.
+
+1. Enter `add r/student n/Élise p/91234567 e/elise@example.com`, then
+   `add r/student n/Élise p/91234567 e/elise@example.com`.<br>
+   Expected: Both contacts are saved; the second addition includes a possible-duplicate phone warning.
+   The first name starts with precomposed U+00C9; the second starts with U+0045 U+0301.
+   `check duplicates` reports one pair. Restart and verify both original spellings and the report are retained.
+
+1. Repeat with `D'Souza` and `D’Souza`, using the same phone/email values.<br>
+   Expected: The second addition warns and the report contains one pair. Repeat with `Élise` and `Elise` as a
+   negative control: these different accents produce no duplicate warning or suggestion.
 
 ### Pasted space separators
 

@@ -10,6 +10,33 @@ import org.junit.jupiter.api.Test;
 public class NameTest {
 
     @Test
+    public void isSameNameForDuplicateWarning_caseDependentComposition_matchesBothDirections() {
+        Name uppercase = new Name("J\u030can");
+        Name lowercase = new Name("j\u030can");
+        Name composed = new Name("\u01f0an");
+        // EP: only lowercase j with caron has a precomposed character.
+        assertTrue(uppercase.isSameName(lowercase));
+        assertTrue(uppercase.isSameNameForDuplicateWarning(lowercase));
+        assertTrue(lowercase.isSameNameForDuplicateWarning(uppercase));
+        assertTrue(uppercase.isSameNameForDuplicateWarning(composed));
+        assertTrue(composed.isSameNameForDuplicateWarning(uppercase));
+    }
+
+    @Test
+    public void isSameNameForDuplicateWarning_preservesCaseRulesAndWordBoundaries() {
+        Name name = new Name("\u00c9lise Tan");
+        // EP: equivalent representation and case, including surrounding/repeated legacy spaces.
+        assertTrue(name.isSameNameForDuplicateWarning(new Name(" E\u0301LISE  TAN ")));
+        assertTrue(new Name("I").isSameNameForDuplicateWarning(new Name("\u0131")));
+        assertTrue(new Name(" \u0130 ").isSameNameForDuplicateWarning(new Name("i")));
+        // EP: different accent, word boundary, compatibility character, or absent name.
+        assertFalse(name.isSameNameForDuplicateWarning(new Name("Elise Tan")));
+        assertFalse(name.isSameNameForDuplicateWarning(new Name("\u00c9liseTan")));
+        assertFalse(name.isSameNameForDuplicateWarning(new Name("\uff25lise Tan")));
+        assertFalse(name.isSameNameForDuplicateWarning(null));
+    }
+
+    @Test
     public void constructor_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Name(null));
     }

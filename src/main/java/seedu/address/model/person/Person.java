@@ -185,12 +185,12 @@ public class Person {
     }
 
     /**
-     * Returns true if both persons have the same role and name, ignoring name case.
+     * Returns true if both persons have the same role and equivalent names for possible-duplicate warnings.
      */
     public boolean hasSameNameAndRole(Person otherPerson) {
         return otherPerson != null
                 && role == otherPerson.role
-                && name.isSameName(otherPerson.name);
+                && name.isSameNameForDuplicateWarning(otherPerson.name);
     }
 
     /**
