@@ -25,7 +25,7 @@ public class Name {
     private static final char APOSTROPHE_STRAIGHT = '\'';
     private static final char APOSTROPHE_CURLY_LEFT = '\u2018';
     private static final char APOSTROPHE_CURLY_RIGHT = '\u2019';
-    private static final Pattern REPEATED_SPACES = Pattern.compile(" +");
+    private static final Pattern SPACE_RUNS = Pattern.compile(" +");
 
     /**
      * Scripts whose combining marks are accents, such as the acute accent in "é". In other scripts, such as
@@ -145,8 +145,9 @@ public class Name {
     }
 
     /**
-     * Compares names for possible-duplicate warnings, ignoring case, canonical Unicode representation,
-     * curly apostrophes and repeated or surrounding ordinary spaces. Accents and word boundaries are retained.
+     * Returns true if both names match for possible-duplicate warnings, ignoring case, canonical Unicode
+     * representation, curly apostrophes and repeated or surrounding ordinary spaces.
+     * Accents and word boundaries are retained.
      * Exact duplicate identity continues to use {@link #isSameName(Name)}.
      */
     public boolean isSameNameForDuplicateWarning(Name otherName) {
@@ -161,7 +162,7 @@ public class Name {
     }
 
     private static String normalizeWarningFormatting(String text) {
-        String spacedText = REPEATED_SPACES.matcher(text.trim()).replaceAll(" ");
+        String spacedText = SPACE_RUNS.matcher(text.trim()).replaceAll(" ");
         return replaceCurlyApostrophes(spacedText);
     }
 

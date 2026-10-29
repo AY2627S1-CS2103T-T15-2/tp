@@ -555,9 +555,10 @@ hyphens, so phone warnings and the duplicate report also recognize existing save
 This comparison does not rewrite those saved values or broaden exact duplicate identity.
 
 Warning-name comparison uses `Person#hasSameNameAndRole` and `Name#isSameNameForDuplicateWarning`.
-It trims/collapses ordinary spaces and maps curly apostrophes to straight apostrophes. It first compares ignoring
-case using Java's existing rules, then compares Unicode NFD decompositions ignoring case. Decomposition avoids
-case-dependent composition differences such as `J` with a combining caron versus precomposed lowercase `ǰ`.
+It trims ordinary spaces, collapses repeated ones and maps curly apostrophes to straight apostrophes.
+It first compares the names with `String#equalsIgnoreCase`, then compares their Unicode NFD decompositions
+ignoring case. Decomposition avoids case-dependent composition differences such as `J` with a combining caron
+versus precomposed lowercase `ǰ`.
 It retains accents and word boundaries and does not rewrite stored names.
 `Person#isSamePerson` continues using the narrower `Name#isSameName` comparison, so broader warning matching
 does not reject previously valid saved contacts as exact duplicates on loading.

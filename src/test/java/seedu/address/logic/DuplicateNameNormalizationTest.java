@@ -2,8 +2,8 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -100,10 +100,9 @@ public class DuplicateNameNormalizationTest {
         logic.execute("add r/student n/Alex p/91234567 e/alex@example.com");
         byte[] saved = Files.readAllBytes(dataFile());
 
-        CommandException error = assertThrows(CommandException.class, () ->
+        assertThrows(CommandException.class, AddCommand.MESSAGE_DUPLICATE_PERSON, () ->
                 logic.execute("add r/student n/ALEX p/91234567 e/ALEX@example.com"));
 
-        assertEquals(AddCommand.MESSAGE_DUPLICATE_PERSON, error.getMessage());
         assertEquals(1, logic.getPersonList().size());
         assertArrayEquals(saved, Files.readAllBytes(dataFile()));
     }
