@@ -158,7 +158,7 @@ public class DataLoadDiagnosticsTest {
         assertTrue(storage.isDataFileLoadFailed());
         assertEquals(Optional.of(originalWarning), logic.getStartupMessage());
         assertEquals(originalWarning, assertThrows(CommandException.class, () ->
-                logic.execute("clear")).getMessage());
+                logic.execute("clear confirm")).getMessage());
         assertEquals("{\"persons\":[]}", Files.readString(getContactsFile()));
 
         StorageManager restartedStorage = createStorage();

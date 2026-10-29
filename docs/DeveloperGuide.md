@@ -1439,9 +1439,23 @@ Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `
 Save failures are verified by `UndoDeletionTest` with simulated storage errors. The tests check both failure to undo
 and failed intervening changes, ensuring that live data, saved data and the previous undo opportunity are preserved.
 
+#### Confirming a complete clear
+
+Use a disposable data folder containing a guardian, an active student and a linked former student.
+
+1. Delete the active student, then run `clear`, `clear 1` and `clear confirm extra`.<br>
+   Expected: Each command warns that clearing is permanent and instructs the user to run `clear confirm`.
+   Contacts, the current filter and saved data remain unchanged. `undo` still restores the deleted student.
+1. Run `list r/guardian`, then `clear confirm`.<br>
+   Expected: All contacts are removed, including hidden students and links. Restarting shows an empty roster.
+   `undo` cannot restore this confirmed clear. Help and the UG show the required confirmation syntax.
+
+`ClearConfirmationTest` also simulates a failed confirmed-clear save and checks that contacts, the saved file
+and prior deletion undo remain intact. A confirmed clear follows the existing candidate-model save policy.
+
 ### Editing a contact
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add three contacts:
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`. Then add three contacts:
    `add r/student n/Bernice Yu p/99272758`, `add r/guardian n/David Li p/91031282` and
    `add r/student n/Irfan Ibrahim e/irfan@example.com`.
 
@@ -1556,7 +1570,7 @@ for each restart. This setup is independent of the data used in the other manual
 
 ### Listing contacts
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`.
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`.
 
 1. Test case: `list`<br>
    Expected: No contacts are shown. The status message shows `No contacts found.`
@@ -1573,7 +1587,7 @@ for each restart. This setup is independent of the data used in the other manual
 
 ### Filtering the contact list
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add four contacts:
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`. Then add four contacts:
    `add r/guardian n/Mei Tan p/98765432`, `add r/student n/Alex Tan p/91234567 lv/Sec 3 sub/A-Math`,
    `add r/student n/Bea Lim lv/Sec 4 sub/A-Math` and `add r/student n/Chloe Ng lv/Sec 3`. Mark Chloe Ng as former
    with `find Chloe`, then `archive 1`.
@@ -1673,7 +1687,7 @@ for each restart. This setup is independent of the data used in the other manual
 
 ### Finding contacts
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add three contacts:
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`. Then add three contacts:
    `add r/student n/Alex Yeoh`, `add r/student n/Charlotte Oliveiro` and `add r/guardian n/David Li p/91031282`.
 
 1. Test case: `find ale`<br>
@@ -1695,7 +1709,7 @@ for each restart. This setup is independent of the data used in the other manual
 
 ### Ordering and displaying contacts
 
-1. Prerequisites: start with an empty contact list, for example by running `clear`. Then add four contacts in this
+1. Prerequisites: start with an empty contact list, for example by running `clear confirm`. Then add four contacts in this
    order: `add r/guardian n/David Li p/91031282`, `add r/student n/Charlotte Oliveiro`, `add r/student n/Alex Yeoh`
    and `add r/guardian n/Bernice Yu p/99272758`.
 
@@ -1759,7 +1773,7 @@ failed unlink preserves the relationship and the displayed list.
 Use a disposable copy of TutorRoster in a separate folder so these tests do not change real contact data.
 Run the following cases in order.
 
-1. Prerequisites: run `clear`, then add `add r/student n/Alex Tan`, `add r/student n/Bea Tan`,
+1. Prerequisites: run `clear confirm`, then add `add r/student n/Alex Tan`, `add r/student n/Bea Tan`,
    `add r/guardian n/Mei Tan p/98765432` and `add r/guardian n/Sarah Lim e/sarah@example.com`.
    Run `list`. The displayed indexes are Alex 1, Bea 2, Mei 3 and Sarah 4.
 
@@ -1808,7 +1822,7 @@ Run the following cases in order.
    * `link s/1 g/2`: `Guardian index must refer to a guardian.`
    Expected for every failure: contacts, relationships, selection, details and saved data remain unchanged.
 
-1. Same-name students: run `clear`, add `add r/student n/Alex Tan` twice, then add
+1. Same-name students: run `clear confirm`, add `add r/student n/Alex Tan` twice, then add
    `add r/guardian n/Mei Tan p/98765432`. Run `link s/2 g/3`.<br>
    Expected: Only the second Alex is linked and selected. The first Alex still shows `Guardian: None`.
    Restart and check that both students are present with their separate links. Run `link s/1 g/3`, then

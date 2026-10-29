@@ -238,7 +238,7 @@ public class MainAppTest {
         assertTrue(model.getAddressBook().getPersonList().isEmpty());
         String failureMessage = logic.getStartupMessage().orElseThrow();
         assertTrue(failureMessage.contains("Reason: Invalid JSON:"));
-        assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear"));
+        assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear confirm"));
         assertEquals(invalidData, Files.readString(contactsFile));
     }
 
@@ -264,7 +264,7 @@ public class MainAppTest {
                 assertEquals(ListCommand.MESSAGE_NO_CONTACTS, logic.execute("list").getFeedbackToUser());
                 assertThrows(CommandException.class, failureMessage, () ->
                         logic.execute("add r/student n/Bea Tan"));
-                assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear"));
+                assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear confirm"));
                 assertArrayEquals(originalBytes, Files.readAllBytes(contactsFile));
             }
         }

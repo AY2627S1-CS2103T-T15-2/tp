@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.CheckCommand;
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.LinkCommand;
 import seedu.address.logic.commands.UndoCommand;
@@ -56,5 +57,11 @@ public class HelpCommandReferenceTest {
         for (String example : List.of("check", "check guardians", "check details", "check duplicates")) {
             assertTrue(parser.parseCommand(example) instanceof CheckCommand);
         }
+    }
+
+    @Test
+    public void getCommandFormats_clear_requiresConfirmation() throws Exception {
+        assertTrue(HelpWindow.getCommandFormats().contains("clear confirm"));
+        assertTrue(new AddressBookParser().parseCommand("clear confirm") instanceof ClearCommand);
     }
 }
