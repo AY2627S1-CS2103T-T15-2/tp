@@ -16,6 +16,8 @@
 * TutorRoster is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the
   [SE-EDU initiative](https://se-education.org/). Its code, documentation structure and UML diagrams have been reused
   and adapted for student and guardian contact management. This includes the proposed undo/redo design below.
+  The original [User Guide](https://se-education.org/addressbook-level3/UserGuide.html) and
+  [Developer Guide](https://se-education.org/addressbook-level3/DeveloperGuide.html) provide the starting documentation.
 * [JavaFX](https://openjfx.io/) provides the graphical interface, and
   [Jackson](https://github.com/FasterXML/jackson) handles JSON serialization.
 * [JUnit 5](https://junit.org/junit5/) provides the automated testing framework.
@@ -507,8 +509,8 @@ For case-insensitive dispatch, only the command word is lowercased using `Locale
 For Add, the scanner skips a quoted name or subject only when the first non-whitespace character after `n/` or
 `sub/` is a straight double quote. Quotes in phone text remain literal and cannot hide later parameters.
 Centralizing these rules keeps unknown-parameter detection consistent with tokenization.
-`AddCommandParser` still formats Add-specific errors and
-name-quoting hints. Callers inspect each position before advancing, so an unknown parameter before an unclosed
+`AddCommandParser` still formats Add-specific errors and name-quoting hints.
+Callers inspect each position before advancing, so an unknown parameter before an unclosed
 quoted value is reported first.
 
 `ParserUtil#parseName` trims surrounding whitespace before and after removing enclosing quotes, including Java
@@ -520,6 +522,8 @@ See the [UG field rules and error examples](UserGuide.md#adding-a-contact-add) f
 
 `Name` requires at least one Unicode letter or number after checking blank input, length and supported characters.
 This rejects punctuation-only names and combining marks without a base letter or number through both Add and Edit.
+The whitelist accepts straight and both curly apostrophes, as well as the middle dot U+00B7, without changing their
+stored spelling. Shared value-class validation keeps Add, Edit and JSON loading consistent.
 Saved contacts use the same invariant. An older file with such a name fails loading without being overwritten;
 the existing recovery flow requires correcting the name and restarting.
 
@@ -545,6 +549,26 @@ lowercase with `Locale.ROOT`, and map Greek final sigma to ordinary sigma for co
 NFC is applied again after lowercasing, which can introduce decomposed characters.
 Composed and decomposed spellings of the same accented text therefore match,
 while different accents remain distinct. Stored values, validation limits, `equals` and `hashCode` are unchanged.
+
+#### Email validation
+
+`ParserUtil#parseEmail` trims surrounding whitespace, then delegates to `Email#getValidationErrorMessage`.
+`Email#isValidEmail` uses that same method, so command parsing and model construction share the rules.
+The helpers preserve the following error priority when several constraints fail:
+
+| Stage | Checks |
+| --- | --- |
+| Address structure | Total length of at most 254 ASCII characters, then exactly one `@`. |
+| Address parts | Local-part presence, its 64-character limit, domain presence, then internal whitespace. |
+| Local-part contents | Supported characters, then period placement. |
+| Domain | Every label's 63-character limit, label count, then label contents in order. The final label must have at least two characters. |
+
+`getAddressStructureError`, `getAddressPartsError`, `getLocalPartError` and `getDomainError` each return the
+first error or `null` when their checks pass. Character and punctuation rules are kept separate to provide
+specific feedback; see the [UG field rules](UserGuide.md#field-rules) for accepted characters and examples.
+Character scans avoid recursive regex matching, and the total-length check rejects oversized input first.
+Because email accepts ASCII only, character and byte counts agree. `EmailTest` covers length boundaries and
+competing failures; parser and storage tests cover propagation through their respective entry points.
 
 #### Duplicate detection
 
@@ -614,6 +638,34 @@ under [Saving contacts and relationships](#saving-contacts-and-relationships).
   stored data. Updating the live model first would avoid the copy but require reliable rollback of data, filters
   and selection on failure. The candidate approach uses additional memory in exchange for simpler failure handling.
 
+### Help command and command reference
+
+`HelpCommand` returns a `CommandResult` with `isShowHelp()` set to true. `MainWindow` handles that flag after
+displaying the command feedback, keeping window operations in the UI component. Help is read-only: it does not
+save contact data, replace the current filter or clear deletion undo.
+
+The sequence below focuses on dispatching an already parsed `help` command and reusing the Help window.
+Parsing and routine feedback updates are omitted.
+
+<puml src="diagrams/HelpSequenceDiagram.puml" width="680" alt="Help execution returning a UI flag and reusing the existing Help window" />
+
+`MainWindow` creates one `HelpWindow` during initialization. `handleHelp` shows it when hidden and focuses it
+when already showing, so repeated requests do not create extra windows. F1 and the Help menu call this same UI
+handler directly; they do not execute a `HelpCommand`. Closing the Help window hides it for later reuse, while
+exiting the application hides both windows. The minimized-window limitation is documented in the
+[UG known issues](UserGuide.md#known-issues).
+
+`HelpWindow` builds its command-reference rows from the command classes' format constants, using usage strings
+where those already contain only the syntax. This avoids maintaining a second copy of command formats.
+The rows live inside a scroll pane, and command labels wrap as the window narrows. The **Copy URL** handler
+writes `USERGUIDE_URL` to the system clipboard; it does not launch a browser or fetch the guide.
+
+**Design choices.** Returning a UI flag keeps JavaFX window state out of command logic and allows command tests
+without opening a window. Reusing one window avoids duplicate references and gives keyboard and menu actions
+the same behavior. Sharing format constants reduces syntax drift, but adding a command still requires adding
+its reference row; `HelpCommandReferenceTest` checks the command set and selected formats.
+`HelpWindowTest` covers the window controls and displayed reference.
+
 ### Saving contacts and relationships
 
 Contact JSON records contain an `id` UUID string and an optional `guardianId` UUID string, alongside the existing fields. `JsonAdaptedPerson` restores saved IDs; legacy records without IDs receive new IDs that are persisted on the next successful save. `JsonSerializableAddressBook` first loads all contacts, rejecting duplicate IDs and duplicate contact details, then validates that every guardian reference points to an existing contact with the guardian role. A guardian cannot carry a guardian reference. Repeated JSON object fields are rejected during parsing.
@@ -634,21 +686,9 @@ Level and subject are optional JSON strings. Legacy records without these proper
 load with the corresponding fields absent. Present values must satisfy their value-class constraints; blank or
 invalid strings and guardian records containing either field are rejected during loading.
 
-Email validation uses iterative character scans for the local part and domain labels, avoiding recursive regex
-matching on long inputs. `Email.isValidEmail` and the parser share the same validation rules and specific errors.
-For each component, unsupported characters are reported separately from punctuation-placement errors. Only ASCII
-letters and digits are accepted. The domain permits hyphens only, appearing singly between letters or digits.
-The local part also permits periods, underscores, percent signs, plus signs and hyphens. Local-part periods cannot
-appear at either end or consecutively; the other supported punctuation can appear consecutively and at either end.
-An email is limited to 254 characters, with at most 64 in the local part and 63 in each domain label.
-The parser trims surrounding whitespace before checking these limits and reports
-`Email address cannot exceed 254 characters.` for longer values. The same limits apply to saved email values;
-overlong values cause loading to fail without rewriting the file.
-Email component length validation also applies during Add, Edit and JSON loading. Previously accepted emails
-with local parts longer than 64 characters or domain labels longer than 63 characters fail loading. The original
-file is preserved; correct the invalid values and restart to re-enable data-changing commands. Length errors
-report the exceeded limit in CLI parsing. Email accepts ASCII characters only, so character and byte counts agree.
-
+Saved emails use the same [email validation](#email-validation) as Add and Edit. Previously accepted values
+exceeding the total, local-part or domain-label limits fail loading without rewriting the file.
+Correct the invalid values and restart to re-enable data-changing commands.
 
 Loading applies the duplicate identity rules described under Contact details and Add validation, including the
 exception for contactless students. Full object equality remains case-sensitive so capitalization-only edits remain
@@ -1213,8 +1253,8 @@ fullscreen mode before testing secondary windows. These tests do not require any
 
 1. Test case: scroll through the command reference and compare its entries with the
    [UG command summary](UserGuide.md#command-summary).<br>
-   Expected: Each supported command appears once. In particular, `check` is present and the `list` format includes
-   role, status, level and subject parameters.
+   Expected: Each supported command appears once, including `check`, `unlink` and `children`.
+   The `list` format includes role, status, level and subject parameters; clearing requires `clear confirm`.
 
 1. Test case: resize the Help window to its minimum size, then scroll to the bottom and back to the top.<br>
    Expected: The reference remains readable, long command formats wrap, and the final **Exit app** entry is
@@ -1234,92 +1274,51 @@ fullscreen mode before testing secondary windows. These tests do not require any
 
 ### Adding a contact
 
-1. In a disposable data folder, enter `add r/student n/玛丽·居里` with a middle dot (U+00B7).<br>
-   Expected: The name is accepted and displayed with the middle dot. Enter `edit 1 n/让·皮埃尔`, then restart.<br>
-   Expected: The name remains `让·皮埃尔`, and `find 让·皮埃尔` finds the contact.
+Use a fresh disposable application folder for each numbered workflow below. Run commands individually in the
+given order. For rejected commands, check that the contact list, selection, details and saved file stay unchanged;
+the failed input should remain in the command box. The [UG Add section](UserGuide.md#adding-a-contact-add)
+contains the complete field rules and ordinary error examples.
 
-1. In a disposable data folder, enter `add r/student n/O‘Brien` using the opening curly apostrophe (U+2018).<br>
-   Expected: The name is accepted and displayed as `O‘Brien`. Enter `edit 1 n/D‘Souza`, then restart.<br>
-   Expected: The saved name remains `D‘Souza`. `find D'Souza` using a straight apostrophe finds the contact.
-   Repeat in fresh data folders with straight (U+0027) and closing curly (U+2019) apostrophes.
+1. **Contact methods and roles.** Enter `add r/student n/Ben Lim`,
+   `add r/guardian n/Mei Tan p/91234567`, and `add r/guardian n/Betsy Crowe e/betsy@example.com`.<br>
+   Expected: All three are saved and selected when added. Ben has no contact methods; each guardian has one.
+   Try `add r/guardian n/No Contact`: it is rejected because a guardian needs a contact method.
 
-1. With a disposable data folder, add `add r/student n/Alex Tan`. Then try `add r/student n/...`,
-   `add r/student n/-`, `add r/guardian n/--- p/91234567`, and `edit 1 n/'`.<br>
-   Expected: Each later command reports `Name must contain at least one letter or digit.`
-   Alex remains unchanged, no contact is added, and restarting retains the same saved contact.
-   Names such as `Mary-Anne`, `O’Brien`, `李小龍` and `123` remain accepted.
+1. **Duplicate rejection versus warnings.** Enter `add r/student n/Alex Tan p/91234567 e/alex@example.com`
+   twice, then `add r/student n/Alex Tan p/9123 4567 e/other@example.com`.<br>
+   Expected: The exact repeat is rejected; the formatted-phone variant is saved with a phone warning.
+   Enter `add r/student n/Ben Lim` twice: both are saved, with a general warning on the second.
+   Restart and verify all four accepted contacts remain.
 
-Use a disposable application folder with an empty contact list. Run the following cases in order.
-For each failed Add command, verify that contacts, selection, details and saved data remain unchanged.
-The failed command should remain in the command box, which keeps focus.
+1. **Validation order and atomic rejection.** Add `add r/student n/Alex Tan`, then try each command below.<br>
+   Expected: Every command fails without changing Alex or the saved data.
 
-1. Test case: `add r/student n/Ben Lim`<br>
-   Expected: The student is added with no phone number or email address.
+   | Command | First error to check |
+   | --- | --- |
+   | `add p/12 n/Bea Lim r/teacher` | Invalid role, before the phone error. |
+   | `add r/guardian n/Mei Tan lv/Sec 3` | Missing guardian contact method, before the student-only field error. |
+   | `add r/guardian n/Mei Tan p/91234567 lv/Sec 3` | Student-only field error. |
+   | `add r/student n/Bea Lim sub/ lv/` | Empty level, before empty subject. |
+   | `add r/student n/Bea Lim e/bea@example.c` | Final email label is too short. |
+   | `add r/student n/...` | Name needs a letter or digit. |
 
-1. Test case: `add r/guardian n/Mei Tan p/91234567`<br>
-   Expected: The guardian is added with a phone number and no email address.
+1. **Case-insensitive prefixes and protected text.** Enter
+   `ADD R/student N/"Ravi P/e Ratio" Lv/Sec 3 SuB/"Math N/Applied"`.<br>
+   Expected: The name is `Ravi P/e Ratio`, level is `Sec 3`, and subject is `Math N/Applied`, with no phone or
+   email. Prefix-like text inside quotes keeps its capitalization and does not create additional fields.
+   Try `add r/student n/Alex N/Bob`: the mixed-case name prefixes count as a repeated `n/` parameter.
+   Restart and verify the accepted contact's spelling and student details are retained.
 
-1. Test case: `add r/guardian n/Betsy Crowe e/betsycrowe@example.com`<br>
-   Expected: The guardian is added with an email address and no phone number.
+1. **International punctuation across Add, Edit and reload.** Use a fresh folder for each row.
 
-1. Test case: `add r/guardian n/No Contact`<br>
-   Expected: No contact is added. The result says `A guardian must have at least one contact method: phone or email.`
+   | Add, then edit | Expected after restart |
+   | --- | --- |
+   | `add r/student n/玛丽·居里`, then `edit 1 n/让·皮埃尔` | Name remains `让·皮埃尔`; `find 让·皮埃尔` finds it. |
+   | `add r/student n/O‘Brien`, then `edit 1 n/D‘Souza` | Name remains `D‘Souza`; `find D'Souza` using a straight apostrophe finds it. |
 
-1. Repeat the first command.<br>
-   Expected: A second contact is added with the same role and name. The success message is followed by the general
-   possible-duplicate warning because both contacts have no phone number or email address.
+   Repeat the apostrophe workflow with straight (`'`) and closing curly (`’`) apostrophes as controls.
+   `edit 1 n/'` must fail without modifying the saved contact.
 
-1. Test case: `add r/student n/Alex Tan p/91234567 e/alex@example.com`, then repeat the command with the same values.<br>
-   Expected: The second command is rejected with `This contact already exists.`
-
-1. Test case: `add r/student n/Casey Lee p/9123 4567`, then `add r/student n/Casey Lee p/91234567`.<br>
-   Expected: The second contact is added with the phone-related possible-duplicate warning.
-
-1. Test case: `add r/student n/Jamie Ng p/12345678 e/jamie@example.com`, then `add r/student n/Jamie Ng p/87654321 e/JAMIE@example.com`.<br>
-   Expected: The second contact is added with the email-related possible-duplicate warning.
-
-1. Test case: `add r/student n/Alex Tan p/12`.<br>
-   Expected: The phone error says it must contain at least 3 digits (0-9).
-
-1. Test case: `add r/student n/Alex Tan p/`.<br>
-   Expected: The result says `Empty phone parameter: Phone cannot be empty when p/ is specified.`
-
-1. Test case: paste the following command, whose phone value contains 101 ASCII digits:
-
-   ```
-   add r/student n/Alex Tan p/11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
-   ```
-
-   Expected: The result says `Phone details cannot exceed 100 characters.` No contact is added.
-
-1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
-   Expected: Both report the role error first, following the fixed parameter order regardless of command order.
-
-1. Syntax errors to try, each leaving the existing contacts unchanged:
-   * `add` reports `Missing required field: r/ROLE.` followed by the command usage.
-   * `add r/student` reports `Missing required field: n/NAME.` followed by the command usage.
-   * `add r/student n/"Alex Tan" a/15` identifies `Invalid parameter: a/.` and lists valid parameters.
-   * `add r/student n/Alex Tan r/guardian` reports
-     `Repeated parameter: r/. Each parameter may appear only once.`
-
-1. Test case: `add r/student n/Casey Lee lv/Sec 3 sub/A-Math`.<br>
-   Expected: The student is added with both student details and no contact methods. The same name as an earlier
-   student does not cause rejection because the contact methods differ. A general warning is shown because both
-   students have no email. Restart and verify that the level and subject remain saved.
-
-1. Test case: `add r/student n/Ravi lv/ sub/` and `add sub/ lv/ n/Ravi r/student`.<br>
-   Expected: Both report `Empty level parameter: Level cannot be empty when lv/ is specified.`
-   With `lv/Sec 3` instead, both report the empty-subject message. No contact is added.
-
-1. Test case: `add r/guardian n/Mei Tan p/91234567 lv/Sec 3`.<br>
-   Expected: `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
-   Without the phone prefix, the guardian contact-method error takes precedence.
-
-1. Test case: `add r/student n/"Ravi lv/Sec sub/Math"`.<br>
-   Expected: The entire quoted text is saved as the name, with no level or subject set. Repeat with pasted tabs
-   between parameters instead of spaces. The second contact has the same name and absent student details, and is
-   added with a general possible-duplicate warning because both contacts lack phone and email values.
-   A tab inside the quoted name is rejected instead, without adding a contact.
 
 ### Equivalent names in duplicate warnings
 
