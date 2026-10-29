@@ -1,5 +1,6 @@
 package seedu.address.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -9,6 +10,28 @@ import java.io.FileNotFoundException;
 import org.junit.jupiter.api.Test;
 
 public class StringUtilTest {
+
+    @Test
+    public void normalizeSpaceSeparators() {
+        // EP: Unicode space separators become ordinary spaces
+        assertEquals("Alice Tan", StringUtil.normalizeSpaceSeparators("Alice\u00a0Tan"));
+        assertEquals("Alice Tan", StringUtil.normalizeSpaceSeparators("Alice\u3000Tan"));
+
+        // EP: control whitespace is preserved for callers to validate
+        assertEquals("Alice\tTan\r\n", StringUtil.normalizeSpaceSeparators("Alice\tTan\r\n"));
+
+        // EP: ordinary spaces and other characters are unchanged
+        assertEquals(" Alice Tan ", StringUtil.normalizeSpaceSeparators(" Alice Tan "));
+
+        // EP: empty input remains empty
+        assertEquals("", StringUtil.normalizeSpaceSeparators(""));
+    }
+
+    @Test
+    public void normalizeSpaceSeparators_nullGiven_throwsNullPointerException() {
+        // EP: null input is rejected
+        assertThrows(NullPointerException.class, () -> StringUtil.normalizeSpaceSeparators(null));
+    }
 
     //---------------- Tests for isNonZeroUnsignedInteger --------------------------------------
 

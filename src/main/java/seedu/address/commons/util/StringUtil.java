@@ -4,11 +4,14 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.regex.Pattern;
 
 /**
  * Helper functions for handling strings.
  */
 public class StringUtil {
+
+    private static final Pattern SPACE_SEPARATOR = Pattern.compile("\\p{Zs}");
 
     /**
      * Converts Unicode space separators, including non-breaking spaces, to ordinary spaces.
@@ -16,7 +19,7 @@ public class StringUtil {
      */
     public static String normalizeSpaceSeparators(String text) {
         requireNonNull(text);
-        return text.replaceAll("\\p{Zs}", " ");
+        return SPACE_SEPARATOR.matcher(text).replaceAll(" ");
     }
 
     /**
