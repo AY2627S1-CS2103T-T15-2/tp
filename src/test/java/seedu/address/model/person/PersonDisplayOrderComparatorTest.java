@@ -3,6 +3,8 @@ package seedu.address.model.person;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.testutil.PersonBuilder;
@@ -106,6 +108,24 @@ public class PersonDisplayOrderComparatorTest {
         assertTrue(comparator.compare(curlyObrien, oliver) < 0);
         assertTrue(comparator.compare(curlyObrien, zoe) < 0);
         assertEquals(0, comparator.compare(curlyObrien, straightObrien));
+    }
+
+    @Test
+    public void compare_namesDifferingOnlyInSigmaForm_treatedAsSameName() {
+        // EP: uppercase "ΟΣ", ordinary lowercase "οσ" and word-final lowercase "ος", in every pair and direction
+        List<String> names = List.of("\u039f\u03a3", "\u039f\u03c3", "\u039f\u03c2", "\u03bf\u03c3");
+        for (String guardianName : names) {
+            for (String studentName : names) {
+                Person guardian = new PersonBuilder().withName(guardianName).withRole("guardian").build();
+                Person student = new PersonBuilder().withName(studentName).withRole("student").build();
+                Person otherStudent = new PersonBuilder().withName(guardianName).withRole("student").build();
+                String pair = guardianName + " vs " + studentName;
+
+                assertTrue(comparator.compare(guardian, student) < 0, pair);
+                assertTrue(comparator.compare(student, guardian) > 0, pair);
+                assertEquals(0, comparator.compare(student, otherStudent), pair);
+            }
+        }
     }
 
     @Test

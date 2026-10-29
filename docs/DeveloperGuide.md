@@ -816,7 +816,10 @@ The sequence diagram below shows how `find ale` is executed.
 
 **Ordering.** `ModelManager` wraps its `FilteredList` in a `SortedList` that uses `PersonDisplayOrderComparator`, and
 `Model#getFilteredPersonList` returns this sorted view. The comparator orders contacts by name, ignoring letter case and
-treating consecutive spaces as one space. It first compares names with accents removed using `Name#removeAccents`, so
+treating consecutive spaces as one space. Lowercasing a Greek capital sigma `Σ` gives `ς` at the end of a word and `σ`
+elsewhere, so `Name#toLowerCaseIgnoringSigmaForm`, which `find` also uses, treats both forms alike; otherwise `ΟΣ` and
+`Οσ` would be different names and skip the guardian-first rule.
+It first compares names with accents removed using `Name#removeAccents`, so
 that `Élise` is ordered with `Elise` rather than after `Zoe`. This method decomposes the name with
 `java.text.Normalizer` and removes the combining marks. Some letters, such as `ø`, `ł`, `æ` and `ß`, are separate
 letters in Unicode and cannot be decomposed, so the method replaces them with their base letters from a fixed table, for

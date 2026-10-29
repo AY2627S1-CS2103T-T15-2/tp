@@ -5,6 +5,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.text.Normalizer;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -25,6 +26,8 @@ public class Name {
     private static final char APOSTROPHE_STRAIGHT = '\'';
     private static final char APOSTROPHE_CURLY_LEFT = '\u2018';
     private static final char APOSTROPHE_CURLY_RIGHT = '\u2019';
+    private static final char GREEK_SIGMA = '\u03c3';
+    private static final char GREEK_FINAL_SIGMA = '\u03c2';
     private static final Pattern SPACE_RUNS = Pattern.compile(" +");
 
     /**
@@ -100,6 +103,16 @@ public class Name {
         requireNonNull(text);
         return text.replace(APOSTROPHE_CURLY_LEFT, APOSTROPHE_STRAIGHT)
                 .replace(APOSTROPHE_CURLY_RIGHT, APOSTROPHE_STRAIGHT);
+    }
+
+    /**
+     * Returns {@code text} in lower case, with the Greek final sigma "ς" replaced by the ordinary sigma "σ".
+     * Lowercasing a capital sigma "Σ" gives either form depending on its position in a word, so names that
+     * differ only in letter case, such as "ΟΣ" and "Οσ", give the same result.
+     */
+    public static String toLowerCaseIgnoringSigmaForm(String text) {
+        requireNonNull(text);
+        return text.toLowerCase(Locale.ROOT).replace(GREEK_FINAL_SIGMA, GREEK_SIGMA);
     }
 
     /**

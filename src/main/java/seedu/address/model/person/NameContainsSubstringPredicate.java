@@ -2,7 +2,6 @@ package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Locale;
 import java.util.function.Predicate;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -39,9 +38,7 @@ public class NameContainsSubstringPredicate implements Predicate<Person> {
      * {@link Name#removeAccents(String)}.
      */
     private static String toSearchableText(String text) {
-        // Lowercasing a capital sigma depends on its position within a word.
-        String lowercaseText = Name.replaceCurlyApostrophes(text).toLowerCase(Locale.ROOT);
-        return Name.removeAccents(lowercaseText.replace('\u03c2', '\u03c3'));
+        return Name.removeAccents(Name.toLowerCaseIgnoringSigmaForm(Name.replaceCurlyApostrophes(text)));
     }
 
     @Override

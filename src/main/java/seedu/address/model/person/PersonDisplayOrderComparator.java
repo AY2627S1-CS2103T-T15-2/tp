@@ -1,7 +1,6 @@
 package seedu.address.model.person;
 
 import java.util.Comparator;
-import java.util.Locale;
 
 /**
  * Compares {@code Person}s by the order in which they are displayed in the contact list.
@@ -28,11 +27,12 @@ public class PersonDisplayOrderComparator implements Comparator<Person> {
 
     /**
      * Returns the name of {@code person} in lower case, with consecutive spaces reduced to a single space
-     * and curly apostrophes replaced by straight apostrophes.
+     * and curly apostrophes replaced by straight apostrophes. Both lowercase forms of the Greek sigma are
+     * treated alike, as described in {@link Name#toLowerCaseIgnoringSigmaForm(String)}.
      */
     private static String toNormalizedName(Person person) {
         String name = person.getName().fullName.replaceAll("\\s+", " ");
-        return Name.replaceCurlyApostrophes(name).toLowerCase(Locale.ROOT);
+        return Name.toLowerCaseIgnoringSigmaForm(Name.replaceCurlyApostrophes(name));
     }
 
     /**

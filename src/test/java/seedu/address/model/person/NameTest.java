@@ -170,6 +170,21 @@ public class NameTest {
     }
 
     @Test
+    public void toLowerCaseIgnoringSigmaForm() {
+        assertThrows(NullPointerException.class, () -> Name.toLowerCaseIgnoringSigmaForm(null));
+
+        // EP: capital sigma at the end of a word, which Java lowercases to the final form
+        assertEquals("\u03bf\u03c3", Name.toLowerCaseIgnoringSigmaForm("\u039f\u03a3"));
+        // EP: ordinary and final lowercase sigma
+        assertEquals("\u03bf\u03c3", Name.toLowerCaseIgnoringSigmaForm("\u03bf\u03c3"));
+        assertEquals("\u03bf\u03c3", Name.toLowerCaseIgnoringSigmaForm("\u03bf\u03c2"));
+        // EP: text without a sigma is only lowercased
+        assertEquals("alex o'brien", Name.toLowerCaseIgnoringSigmaForm("Alex O'Brien"));
+        // Boundary: empty text
+        assertEquals("", Name.toLowerCaseIgnoringSigmaForm(""));
+    }
+
+    @Test
     public void isSameName() {
         Name name = new Name("Valid Name");
 
