@@ -19,6 +19,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -92,11 +93,19 @@ public class ClearConfirmationTest {
         logic.execute("add r/student n/Alice");
         logic.execute("add r/student n/Bob");
         logic.execute("delete n/Bob");
+        logic.execute("find Alice");
+        List<Person> originalContacts = List.copyOf(model.getAddressBook().getPersonList());
+        var originalIds = originalContacts.stream().map(Person::getId).toList();
+        var originalFilter = model.getPersonFilter();
+        List<Person> originalDisplayedContacts = List.copyOf(model.getFilteredPersonList());
         String originalFile = Files.readString(file);
         failSave[0] = true;
 
         assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () -> logic.execute("clear confirm"));
-        assertEquals(1, model.getAddressBook().getPersonList().size());
+        assertEquals(originalContacts, List.copyOf(model.getAddressBook().getPersonList()));
+        assertEquals(originalIds, model.getAddressBook().getPersonList().stream().map(Person::getId).toList());
+        assertEquals(originalFilter, model.getPersonFilter());
+        assertEquals(originalDisplayedContacts, List.copyOf(model.getFilteredPersonList()));
         assertEquals(originalFile, Files.readString(file));
         failSave[0] = false;
         logic.execute("undo");

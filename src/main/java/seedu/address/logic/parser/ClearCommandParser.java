@@ -10,7 +10,7 @@ public class ClearCommandParser implements Parser<ClearCommand> {
     @Override
     public ClearCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        if (!args.strip().equalsIgnoreCase("confirm")) {
+        if (!args.strip().equalsIgnoreCase(ClearCommand.CONFIRMATION_KEYWORD)) {
             throw new ParseException(ClearCommand.MESSAGE_USAGE);
         }
         return new ClearCommand();
