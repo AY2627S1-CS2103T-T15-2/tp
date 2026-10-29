@@ -358,8 +358,10 @@ details panel. A rejected edit or a failed save leaves the live contacts, filter
 `archive INDEX` marks a student as `FORMER`; `unarchive INDEX` marks a former student as `ACTIVE` again.
 Both commands retain the contact and its guardian relationship. They do not archive or export the data file.
 
-**Parsing and validation.** `ArchiveCommandParser` and `UnarchiveCommandParser` use `ParserUtil#parseIndex` to
-accept one positive integer. Invalid input, including a missing index or extra arguments, gives
+**Parsing and validation.** `ArchiveCommandParser` and `UnarchiveCommandParser` use `ParserUtil#parseSingleIndex`
+to accept one positive integer. Missing input gives `Missing contact index. Use: archive INDEX`; extra arguments
+give `Only one contact index is allowed. Use: archive INDEX`, using `unarchive INDEX` for Unarchive.
+Java whitespace is accepted around the index and separates extra arguments. A malformed index instead gives
 `The contact index must be a positive integer shown in the list.` Both concrete commands inherit
 `StudentStatusCommand#execute`, supplying a target status and command-specific messages. This shared method
 resolves the index against `Model#getFilteredPersonList`, which is sorted in displayed order. It rejects an index
@@ -1253,10 +1255,20 @@ Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `
       out-of-range index.
 
    1. Test case: `delete 0`<br>
-      Expected: No contact is deleted. The status message shows error details.
+      Expected: No contact is deleted. The status message is
+      `The contact index must be a positive integer shown in the list.`
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Test case: `delete`<br>
+      Expected: No contact is deleted. The status message is
+      `Invalid delete command. Use: delete INDEX [INDEX...] or delete n/NAME`.
+
+   1. Test case: `delete x`, using the literal nonnumeric value `x`.<br>
+      Expected: No contact is deleted. The status message is
+      `The contact index must be a positive integer shown in the list.`
+
+   1. Test case: `delete INDEX`, replacing `INDEX` with a number larger than the displayed list size.<br>
+      Expected: No contact is deleted. The status message is `No contact exists at index INDEX.`, with `INDEX`
+      replaced by the supplied number.
 
 ### Reviewing contact data
 
@@ -1404,6 +1416,10 @@ for each restart. This setup is independent of the data used in the other manual
       | `unarchive 2` | `Only students can be unarchived.` |
       | `archive 3` and `unarchive 3`, separately | `No contact exists at index 3.` |
       | `archive 0` and `unarchive abc`, separately | `The contact index must be a positive integer shown in the list.` |
+      | `archive` | `Missing contact index. Use: archive INDEX` |
+      | `unarchive` | `Missing contact index. Use: unarchive INDEX` |
+      | `archive 1 2` | `Only one contact index is allowed. Use: archive INDEX` |
+      | `unarchive 1 2` | `Only one contact index is allowed. Use: unarchive INDEX` |
 
    1. Run `archive 1`, then repeat `archive 1`.<br>
       Expected: The first command succeeds and Ava remains visible because `find Tan` is still applied.

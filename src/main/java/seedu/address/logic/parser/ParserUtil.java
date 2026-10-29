@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Level;
@@ -23,6 +24,9 @@ public class ParserUtil {
     public static final String MESSAGE_INVALID_NAME_QUOTES =
             "Invalid quoted name. Use n/NAME or n/\"NAME\", with quotation marks surrounding the entire name.";
 
+    private static final String MESSAGE_MISSING_INDEX = "Missing contact index. Use: %1$s";
+    private static final String MESSAGE_MULTIPLE_INDEXES = "Only one contact index is allowed. Use: %1$s";
+
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
@@ -34,6 +38,27 @@ public class ParserUtil {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    /**
+     * Parses exactly one displayed contact index, showing {@code commandFormat} for missing or extra arguments.
+     * Uses the same Java-whitespace boundaries and separators as {@link AddressBookParser}.
+     *
+     * @throws ParseException if the arguments are missing, contain extra tokens, or contain an invalid index.
+     */
+    public static Index parseSingleIndex(String args, String commandFormat) throws ParseException {
+        String trimmedArgs = args.trim().strip();
+        if (trimmedArgs.isEmpty()) {
+            throw new ParseException(String.format(MESSAGE_MISSING_INDEX, commandFormat));
+        }
+        if (trimmedArgs.split("\\p{javaWhitespace}+").length > 1) {
+            throw new ParseException(String.format(MESSAGE_MULTIPLE_INDEXES, commandFormat));
+        }
+        try {
+            return parseIndex(trimmedArgs);
+        } catch (ParseException exception) {
+            throw new ParseException(Messages.MESSAGE_INVALID_CONTACT_INDEX, exception);
+        }
     }
 
     /**

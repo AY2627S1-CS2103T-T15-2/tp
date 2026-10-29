@@ -310,6 +310,9 @@ Marks a student who no longer takes lessons as a former student, so that they ar
 Format: `archive INDEX`
 
 * `INDEX` is the index shown in the displayed contact list, and must be a positive integer 1, 2, 3, ...
+* A missing index gives `Missing contact index. Use: archive INDEX`. Extra arguments, such as `archive 1 2`,
+  give `Only one contact index is allowed. Use: archive INDEX`. A single invalid value, such as `archive abc`,
+  gives `The contact index must be a positive integer shown in the list.`
 * The student keeps their details and guardian link. Their guardian stays in `list`.
 * The current search or list filter is kept and refreshed. In an active-only view, such as `list` or
   `list r/student`, the student disappears straight away. After `list st/all` or `find NAME`, they remain visible
@@ -336,6 +339,7 @@ Format: `unarchive INDEX`
 * Only students can be unarchived. Unarchiving a guardian is rejected with `Only students can be unarchived.`
 * Unarchiving a student who is already active is rejected with `Alex Tan is already an active student.`
 * Index rules are the same as for `archive`.
+  Missing and extra arguments show `Use: unarchive INDEX`; only one index is accepted per command.
 
 Examples:
 * `list st/former` followed by `unarchive 1` marks the 1st former student as active again.
@@ -575,6 +579,7 @@ Alternatively, delete one contact by full name: `delete n/NAME`.
 * Deletes the contacts at the specified indexes.
 * Each index refers to the index number shown in the displayed contact list.
 * Each index **must be a unique positive integer** 1, 2, 3, ...
+* A missing target gives `Invalid delete command. Use: delete INDEX [INDEX...] or delete n/NAME`.
 * The indexes can be supplied in any order. They always refer to the original displayed list, so deleting one contact
   does not change which other contacts the command deletes.
 * The command is atomic. If any index is invalid, repeated or outside the displayed list, no contacts are deleted.
