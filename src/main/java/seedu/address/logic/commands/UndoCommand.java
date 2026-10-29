@@ -60,7 +60,8 @@ public class UndoCommand extends Command {
                 .collect(Collectors.joining("\n"));
         String feedback = String.format(MESSAGE_SUCCESS, Messages.formatContactCount(restoredContacts.size()),
                 descriptions);
-        long restoredRelationships = RelationshipCount.countAffected(model.getAddressBook().getPersonList(), deletedIds);
+        long restoredRelationships = RelationshipCount.countAffected(
+                model.getAddressBook().getPersonList(), deletedIds);
         if (restoredRelationships > 0) {
             feedback += " Restored " + restoredRelationships + (restoredRelationships == 1
                     ? " student-guardian relationship." : " student-guardian relationships.");
