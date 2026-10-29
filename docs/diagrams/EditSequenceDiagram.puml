@@ -23,6 +23,11 @@ end box
 [-> LogicManager : execute("edit 1 p/NONE")
 activate LogicManager
 
+note over LogicManager, EditCommand
+  The first displayed contact is a student with a phone number.
+  Command validation, warning calculation and deletion-history maintenance are omitted.
+end note
+
 LogicManager -> AddressBookParser : parseCommand("edit 1 p/NONE")
 activate AddressBookParser
 
@@ -66,9 +71,14 @@ AddressBookParser --> LogicManager : e
 deactivate AddressBookParser
 
 create Model
-LogicManager -> Model : ModelManager(m's data)
+LogicManager -> Model : ModelManager(m's data, preferences)
 activate Model
 
+Model --> LogicManager
+deactivate Model
+
+LogicManager -> Model : updateFilteredPersonList(m's filter)
+activate Model
 Model --> LogicManager
 deactivate Model
 
@@ -87,24 +97,29 @@ activate EditCommand
 EditCommand --> EditCommand : edited
 deactivate EditCommand
 
+create CommandResult
+EditCommand -> CommandResult : CommandResult(message, edited id)
+activate CommandResult
+CommandResult --> EditCommand
+deactivate CommandResult
+
 EditCommand -> Model : setPerson(p, edited)
 activate Model
 
 Model --> EditCommand
 deactivate Model
 
-EditCommand -> Model : updateFilteredPersonList(all)
-activate Model
-
-Model --> EditCommand
-deactivate Model
-
-create CommandResult
-EditCommand -> CommandResult : CommandResult(message, edited id)
-activate CommandResult
-
-CommandResult --> EditCommand
-deactivate CommandResult
+alt edited.isFormerStudent()
+    EditCommand -> Model : updateFilteredPersonList(former students)
+    activate Model
+    Model --> EditCommand
+    deactivate Model
+else active student or guardian
+    EditCommand -> Model : updateFilteredPersonList(active contacts)
+    activate Model
+    Model --> EditCommand
+    deactivate Model
+end
 
 EditCommand --> LogicManager : r
 deactivate EditCommand
@@ -112,15 +127,28 @@ deactivate EditCommand
 LogicManager -> Storage : saveAddressBook(c's data)
 activate Storage
 
-Storage --> LogicManager
-deactivate Storage
+alt save succeeds
+    Storage --> LogicManager : saved
+    deactivate Storage
 
-LogicManager -> LiveModel : setAddressBook(c's data)
-activate LiveModel
+    LogicManager -> LiveModel : setAddressBook(c's data)
+    activate LiveModel
+    LiveModel --> LogicManager
+    deactivate LiveModel
 
-LiveModel --> LogicManager
-deactivate LiveModel
+    LogicManager -> LiveModel : updateFilteredPersonList(c's filter)
+    activate LiveModel
+    LiveModel --> LogicManager
+    deactivate LiveModel
 
-[<--LogicManager : r
+    [<--LogicManager : r
+else save fails
+    Storage --> LogicManager : IOException
+    note over LogicManager, LiveModel
+      Live data, filter and deletion-undo history remain unchanged.
+      No command result is returned to select a different contact.
+    end note
+    [<--LogicManager : CommandException(MESSAGE_SAVE_FAILURE)
+end
 deactivate LogicManager
 @enduml

@@ -38,6 +38,7 @@ public class DeleteCommand extends Command {
     public static final String MESSAGE_DELETE_CONTACTS_SUCCESS = "Deleted %1$d contacts:\n%2$s.";
     public static final String MESSAGE_DUPLICATE_INDEX = "Each contact index may appear only once.";
     public static final String MESSAGE_INVALID_TARGET = "Use delete INDEX [INDEX...] or delete n/NAME.";
+    public static final String MESSAGE_INVALID_COMMAND = "Invalid delete command. Use: " + COMMAND_FORMAT;
     public static final String MESSAGE_NAME_NOT_FOUND = "No displayed contact matches name: %s.";
     public static final String MESSAGE_AMBIGUOUS_NAME =
             "Multiple displayed contacts match name: %s. Use delete INDEX to choose a contact:\n%s";

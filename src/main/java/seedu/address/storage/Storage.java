@@ -59,4 +59,9 @@ public interface Storage {
      */
     boolean isDataFileLoadFailed();
 
+    /**
+     * Returns the retained explanation for a data-file load failure, or empty if none has occurred.
+     */
+    Optional<String> getDataFileLoadFailureReason();
+
 }

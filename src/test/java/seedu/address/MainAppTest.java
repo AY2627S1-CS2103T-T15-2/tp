@@ -236,8 +236,9 @@ public class MainAppTest {
         LogicManager logic = new LogicManager(model, storage);
 
         assertTrue(model.getAddressBook().getPersonList().isEmpty());
-        assertEquals(Optional.of(LogicManager.MESSAGE_DATA_LOAD_FAILURE), logic.getStartupMessage());
-        assertThrows(CommandException.class, LogicManager.MESSAGE_DATA_LOAD_FAILURE, () -> logic.execute("clear"));
+        String failureMessage = logic.getStartupMessage().orElseThrow();
+        assertTrue(failureMessage.contains("Reason: Invalid JSON:"));
+        assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear"));
         assertEquals(invalidData, Files.readString(contactsFile));
     }
 
@@ -254,7 +255,8 @@ public class MainAppTest {
 
                 Model model = new MainApp().initModelManager(storage, new UserPrefs());
                 LogicManager logic = new LogicManager(model, storage);
-                String failureMessage = LogicManager.MESSAGE_DATA_LOAD_FAILURE;
+                String failureMessage = logic.getStartupMessage().orElseThrow();
+                assertTrue(failureMessage.contains("Reason:"));
 
                 assertTrue(model.getAddressBook().getPersonList().isEmpty());
                 assertTrue(storage.isDataFileLoadFailed());

@@ -1,7 +1,5 @@
 package seedu.address.logic.parser;
 
-import seedu.address.commons.core.index.Index;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -17,12 +15,7 @@ public class ArchiveCommandParser implements Parser<ArchiveCommand> {
      * @throws ParseException if the user input is not a single positive index.
      */
     public ArchiveCommand parse(String args) throws ParseException {
-        try {
-            Index index = ParserUtil.parseIndex(args);
-            return new ArchiveCommand(index);
-        } catch (ParseException pe) {
-            throw new ParseException(Messages.MESSAGE_INVALID_CONTACT_INDEX, pe);
-        }
+        return new ArchiveCommand(ParserUtil.parseSingleIndex(args, ArchiveCommand.COMMAND_FORMAT));
     }
 
 }

@@ -12,6 +12,28 @@ import org.junit.jupiter.api.Test;
 public class EmailTest {
 
     @Test
+    public void getValidationErrorMessage_multipleInvalidConstraints_preservesErrorPriority() {
+        String[][] invalidCases = {
+            {"a".repeat(Email.MAX_LENGTH + 1), Email.MESSAGE_TOO_LONG},
+            {"@ ", Email.MESSAGE_LOCAL_PART_EMPTY},
+            {"a".repeat(Email.MAX_LOCAL_PART_LENGTH + 1) + "@", Email.MESSAGE_LOCAL_PART_TOO_LONG},
+            {"a!@", Email.MESSAGE_DOMAIN_EMPTY},
+            {"a!@ ", Email.MESSAGE_WHITESPACE},
+            {"a..@exam_ple.com", Email.MESSAGE_LOCAL_PUNCTUATION},
+            {"a@" + "b".repeat(Email.MAX_DOMAIN_LABEL_LENGTH + 1), Email.MESSAGE_DOMAIN_LABEL_TOO_LONG},
+            {"a@." + "b".repeat(Email.MAX_DOMAIN_LABEL_LENGTH + 1), Email.MESSAGE_DOMAIN_LABEL_TOO_LONG},
+            {"a@exam_ple.c", Email.MESSAGE_DOMAIN_CHARACTERS},
+            {"a@-example.", Email.MESSAGE_DOMAIN_PUNCTUATION},
+            {"a@example.", Email.MESSAGE_DOMAIN_LABEL_EMPTY},
+            {"a@example.-", Email.MESSAGE_FINAL_LABEL_TOO_SHORT}
+        };
+
+        for (String[] testCase : invalidCases) {
+            assertEquals(testCase[1], Email.getValidationErrorMessage(testCase[0]), testCase[0]);
+        }
+    }
+
+    @Test
     public void getValidationErrorMessage_distinguishesCharactersFromPunctuation() {
         for (String local : List.of("alex!tan", "alex'", "aléx", "alex..tan!")) {
             assertEquals(Email.MESSAGE_LOCAL_CHARACTERS,

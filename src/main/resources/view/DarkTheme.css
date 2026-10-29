@@ -155,6 +155,11 @@
     -fx-font-weight: bold;
 }
 
+/* Regular weight retains fallback glyphs for scripts such as Devanagari on Windows. */
+.list-cell #name {
+    -fx-font-weight: normal;
+}
+
 .list-cell .cell_small_label {
     -fx-font-family: "System";
     -fx-font-size: 13px;

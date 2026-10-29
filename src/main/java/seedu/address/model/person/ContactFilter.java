@@ -43,7 +43,7 @@ public class ContactFilter implements Predicate<Person> {
     /**
      * Creates a filter that matches contacts with {@code role}, {@code status}, {@code level} and {@code subject}.
      * An empty value matches any contact. Levels and subjects match when {@link Level#isSameValue(Level)} and
-     * {@link Subject#isSameValue(Subject)} hold, so letter case and spaces are ignored.
+     * {@link Subject#isSameValue(Subject)} hold, so canonical Unicode spellings match and case and spaces are ignored.
      */
     public ContactFilter(Optional<Role> role, Optional<StudentStatus> status, Optional<Level> level,
             Optional<Subject> subject) {

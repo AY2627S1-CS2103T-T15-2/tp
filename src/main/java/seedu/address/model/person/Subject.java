@@ -3,8 +3,6 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
-import java.util.Locale;
-
 /**
  * Represents a student's subject in TutorRoster, such as "Math" or "A-Math".
  * Guarantees: immutable; is valid as declared in {@link #isValidSubject(String)}
@@ -61,15 +59,12 @@ public class Subject {
     }
 
     /**
-     * Returns true if both subjects are the same after ignoring letter case and spaces,
+     * Returns true if both subjects are canonically equivalent after ignoring letter case and spaces,
      * for example "A Math" and "amath".
      */
     public boolean isSameValue(Subject other) {
-        return other != null && normalize(value).equals(normalize(other.value));
-    }
-
-    private static String normalize(String text) {
-        return text.replace(" ", "").toLowerCase(Locale.ROOT);
+        return other != null && StudentDetailNormalizer.normalizeForComparison(value)
+                .equals(StudentDetailNormalizer.normalizeForComparison(other.value));
     }
 
     @Override

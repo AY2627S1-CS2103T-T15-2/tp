@@ -294,9 +294,10 @@ This deletion-specific implementation is separate from the proposed general undo
 `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` changes the name, phone number, email address,
 level or subject of a displayed contact. Only a student can have a level or subject.
 The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
-first displayed contact `p`. Because edit changes data, `LogicManager` runs it on a candidate copy `c` of the live
-model `m`, saves `c` through `Storage`, and only then copies `c`'s data into `m`. If the save fails, `m` is never
-touched.
+first displayed contact `p`, assumed to be a student with a phone number. Because edit changes data, `LogicManager`
+copies the live model `m`'s data and preferences into a candidate `c` and applies the current filter to `c` before
+executing the command. It saves `c` through `Storage` before publishing both its data and filter to `m`.
+If the save fails, the live contacts, view and deletion-undo history stay unchanged.
 
 <puml src="diagrams/EditSequenceDiagram.puml" alt="Interactions inside the Logic component for the `edit 1 p/NONE` command" />
 
@@ -332,10 +333,15 @@ number (ignoring spaces and hyphens), the same email address, or a shared missin
 warning, which is appended to the success message. The edit is still applied, because different people may share a
 name.
 
-On success, `Model#setPerson` replaces the contact and the full list is shown again. The `CommandResult` carries the
-edited contact's ID, and `MainWindow` selects that contact so the detail panel shows the update. Like other
-data-changing commands, `LogicManager` runs the edit on a candidate model and saves it before replacing the live
-model, so a failed save leaves the contact unchanged.
+The command prepares its success feedback and any duplicate warning before changing the candidate.
+`Model#setPerson` then replaces the contact in `c`. The candidate's filter resets to
+`PREDICATE_SHOW_FORMER_STUDENTS` for a former student, or `PREDICATE_SHOW_ACTIVE_CONTACTS` for an active student or
+guardian. Thus editing a former student shows the former-student view; other edits show guardians and active
+students. The previous search, role, level or subject filter is replaced so the edited contact remains visible.
+
+After saving succeeds, `LogicManager` publishes the candidate data and filter, clears deletion-undo history, and
+returns the prepared `CommandResult`. Its contact ID lets `MainWindow` select the edited contact and refresh the
+details panel. A rejected edit or a failed save leaves the live contacts, filter and undo opportunity unchanged.
 
 **Design considerations.**
 
@@ -352,8 +358,10 @@ model, so a failed save leaves the contact unchanged.
 `archive INDEX` marks a student as `FORMER`; `unarchive INDEX` marks a former student as `ACTIVE` again.
 Both commands retain the contact and its guardian relationship. They do not archive or export the data file.
 
-**Parsing and validation.** `ArchiveCommandParser` and `UnarchiveCommandParser` use `ParserUtil#parseIndex` to
-accept one positive integer. Invalid input, including a missing index or extra arguments, gives
+**Parsing and validation.** `ArchiveCommandParser` and `UnarchiveCommandParser` use `ParserUtil#parseSingleIndex`
+to accept one positive integer. Missing input gives `Missing contact index. Use: archive INDEX`; extra arguments
+give `Only one contact index is allowed. Use: archive INDEX`, using `unarchive INDEX` for Unarchive.
+Java whitespace is accepted around the index and separates extra arguments. A malformed index instead gives
 `The contact index must be a positive integer shown in the list.` Both concrete commands inherit
 `StudentStatusCommand#execute`, supplying a target status and command-specific messages. This shared method
 resolves the index against `Model#getFilteredPersonList`, which is sorted in displayed order. It rejects an index
@@ -473,81 +481,123 @@ former students, reactive filtering, persistence, failed saves, malformed input 
 
 ### Contact details and Add validation
 
-`AddCommandParser` requires `r/ROLE` and `n/NAME` and parses `p/PHONE`, `e/EMAIL`, `lv/LEVEL` and `sub/SUBJECT` as optional
-fields. It validates supplied values in the fixed order role, name, phone, email, level, then subject, regardless of
-the order in which parameters appear.
-The shared tokenizer recognizes prefixes at the start of the arguments or after `Character.isWhitespace`
-characters, including tabs and line breaks, while preserving internal value whitespace and quoted names.
-Command dispatch accepts the same separators and preserves multiline arguments for field validation.
-Unknown prefixes, repeated prefixes and unclosed quotes are syntax errors reported before field-value validation.
-The parser checks for a missing role, validates the role, then checks for a missing name and unexpected preamble
-before validating the name. A student may omit both contact methods. The
-parser rejects a guardian if both are absent to provide a user-facing command error, and `EditCommand` applies the same
-rule to the resulting contact before updating the model. `Person` stores
-phone and email as optional values, but its constructor also enforces that a guardian has at least one contact
-method. This model invariant applies regardless of which code path creates a `Person`.
+Adding a contact involves three responsibilities: the parser validates command input, the model enforces contact
+invariants, and `LogicManager` saves a candidate model before publishing the change. `AddCommand` checks duplicate
+identity and prepares any warning before inserting the new contact. The following subsections explain these
+responsibilities and the design choices behind them.
 
-`parse` delegates syntax handling to `tokenizeArguments` and field parsing to `parsePerson`. Field-specific helpers
-keep the validation sequence visible without mixing it with extraction details. `AddCommand#execute` similarly
-separates rejection checks, feedback preparation and model updates. Feedback is prepared before insertion so the
-new contact cannot match itself when checking for possible duplicates.
+#### Parsing and validation
 
-Both the Add scanner and tokenizer enter quoted mode only when the first non-whitespace character after `n/` is
-a straight double quote. Quotes in phone text remain literal characters and cannot hide later parameters.
+`AddCommandParser` requires `r/ROLE` and `n/NAME`; phone, email, level and subject are optional. Its `parse` method
+delegates syntax handling to `tokenizeArguments` and field parsing to `parsePerson`. Syntax errors are reported
+before field-value errors. Fields are checked in the fixed order role, name, phone, email, level, then subject,
+regardless of parameter order. Missing role and name checks precede their respective value checks; unexpected
+preamble is rejected before name validation.
+
+`AddCommandParser` and the quote-aware path in `ArgumentTokenizer` use `ArgumentTokenScanner` to share quote and
+token-boundary recognition. Prefixes begin at the start of the arguments or after `Character.isWhitespace`
+characters, including tabs and line breaks. Internal value whitespace is preserved for field validation.
+Add recognizes prefixes without regard to letter case and normalizes only those prefixes before tokenization.
+Field values, including prefix-like text inside quoted values, keep their original capitalization.
+Before dispatch, `AddressBookParser` uses `StringUtil#normalizeSpaceSeparators` to replace Unicode `Zs` characters
+with ordinary spaces throughout the input, including quoted values. This includes non-breaking, figure and narrow
+non-breaking spaces from pasted text. Tabs and line breaks remain unchanged for the existing tokenizer and field
+validation rules. Normalizing at this boundary keeps Add, Edit, Find, List and name-based Delete consistent.
+For case-insensitive dispatch, only the command word is lowercased using `Locale.ROOT`.
+For Add, the scanner skips a quoted name or subject only when the first non-whitespace character after `n/` or
+`sub/` is a straight double quote. Quotes in phone text remain literal and cannot hide later parameters.
+Centralizing these rules keeps unknown-parameter detection consistent with tokenization.
+`AddCommandParser` still formats Add-specific errors and
+name-quoting hints. Callers inspect each position before advancing, so an unknown parameter before an unclosed
+quoted value is reported first.
+
 `ParserUtil#parseName` trims surrounding whitespace before and after removing enclosing quotes, including Java
-whitespace such as em spaces, tabs and line breaks. Internal tabs and other unsupported whitespace still fail name
-validation; only repeated ordinary spaces are collapsed. Keeping these rules consistent lets quotation marks protect
-prefix-like name text without changing whitespace validation.
+whitespace such as em spaces, tabs and line breaks. Only repeated ordinary spaces inside the name are collapsed;
+internal tabs and other unsupported whitespace fail validation. Add requires quotes around every name containing
+`/`, including `AC/DC`; Edit accepts unquoted embedded slashes. If an unknown parameter follows an unquoted name,
+the Add error includes a name-quoting hint. Repeated prefixes are rejected in the fixed field order above.
+See the [UG field rules and error examples](UserGuide.md#adding-a-contact-add) for the user-facing constraints.
 
-The Add parser identifies the unknown prefix, for example `Invalid parameter: a/. Valid parameters are r/ROLE,
-n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, and sub/SUBJECT.` If an unknown parameter follows an unquoted name, it also suggests
-quoting the full name. After a quoted name, it reports only the invalid parameter. For Add, every name containing
-`/` must be enclosed in double quotes, including an embedded slash such as
-`AC/DC`. Edit retains its separate behavior, which accepts unquoted embedded slashes. Missing `r/ROLE` or `n/NAME`
-errors identify the missing field and append the add command usage. Repeated parameters return
-`Repeated parameter: lv/. Each parameter may appear only once.`, substituting the repeated prefix. If several
-prefixes repeat, it reports the first in the fixed field order. Empty roles receive a separate error from unsupported roles; an
-unsupported role reports `Invalid role. Role must be student or guardian.`
+#### Model invariants
 
-`Person` also stores an optional `Level` and `Subject` for students. Both are free-text value classes that allow 1 to
-30 Unicode code points, allowing letters, digits, spaces, hyphens, periods, plus signs and parentheses, with at least
-one letter or digit. `ParserUtil` trims the value and reduces repeated spaces to one.
-`StudentDetailValidator` rejects `NONE`, ignoring case, because `edit` reserves it for removing the field; this
-also applies when loading the data file. The `Level` and `Subject` constructors
-reject blank values with their constraints messages. For command input, `ParserUtil` instead reports the specific
-empty-parameter message from `Level.MESSAGE_EMPTY` or `Subject.MESSAGE_EMPTY`. For other invalid values, it uses
-`getValidationErrorMessage` to distinguish excessive length, unsupported characters, the absence of a letter or
-digit, surrounding spaces, and the reserved value `NONE`, in that order.
-`Level` and `Subject` delegate these common checks to `StudentDetailValidator` and map its
-validation result to their own field-specific messages. This keeps their rules aligned while preserving distinct
-value types and error messages. The `Person` constructor rejects a
-guardian with a level or subject. After validating phone and email, the Add parser checks the guardian contact-method
-requirement, then rejects student-only prefixes before parsing either value. `isSameValue` compares
-two values ignoring letter case and spaces, so that filters can treat `Sec 3` and `sec3` as the same level.
+`Person` stores phone and email as non-null `Optional` values. A student may omit both, while a guardian must have
+at least one contact method. The parser checks the guardian requirement after validating supplied phone and email
+values, then rejects student-only prefixes before parsing their values. The `Person` constructor enforces these
+role constraints independently of parsing, so other creation paths cannot bypass them. `EditCommand` checks the
+resulting contact against the same contact-method requirement.
 
-`AddCommand` rejects an exact duplicate using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Duplicate
-identity consists of role, name, phone and email. Name and email comparisons ignore capitalization; phone numbers are
-compared after trimming leading and trailing whitespace, while internal spaces and hyphens remain significant. Two
-absent values for an optional field match, provided both contacts have at least one contact method. Exact duplicates
-are rejected with `This contact already exists.` This gives students with neither a phone number nor an email address
-a specific exception: matching role and name alone does not make them exact duplicates. They may both be added, with a
-general possible-duplicate warning. For other contacts, matching role and name with different details is allowed. Add
-checks possible duplicates in this order: a phone number that matches after spaces and hyphens are ignored; an email
-address that matches case-insensitively; then a contact method that is absent from both contacts. It displays only the
-first matching warning, appends it after the normal success message, and still adds the contact. Contacts with
-different roles or names do not receive these warnings.
+`Level` and `Subject` are optional student-only value types. Both allow 1 to 30 Unicode code points, with at least
+one letter or digit. Both support Unicode letters, combining marks, digits, spaces, hyphens, periods, plus signs
+and parentheses; subjects additionally support slashes and ampersands. `ParserUtil` trims their values, collapses
+repeated ordinary spaces and removes enclosing subject quotes. `StudentDetailValidator` rejects `NONE`, which
+Edit reserves for removing a field, including when loading saved data. Empty command values receive field-specific
+empty-parameter messages.
+`StudentDetailValidator` checks length, supported characters, alphanumeric content and surrounding spaces; each
+value class maps the result to its own error message. The constructors reject invalid values, including blank
+strings. `isSameValue` ignores letter case and spaces, allowing a filter for `sec3` to match `Sec 3`.
+Both types use `StudentDetailNormalizer` to remove spaces, normalize comparison text to Unicode NFC,
+lowercase with `Locale.ROOT`, and map Greek final sigma to ordinary sigma for comparison.
+NFC is applied again after lowercasing, which can introduce decomposed characters.
+Composed and decomposed spellings of the same accented text therefore match,
+while different accents remain distinct. Stored values, validation limits, `equals` and `hashCode` are unchanged.
 
-`DuplicateWarning#classify` owns the warning priority shared by Add and Edit and returns `PHONE`, `EMAIL`, `GENERAL`
-or `NONE`. Each command supplies its own wording; Add also logs the selected warning. Edit excludes the contact
-being edited by ID before calling the classifier. Sharing classification prevents the commands' warning rules from
-drifting apart without coupling their success messages or exact-duplicate rejection.
+#### Duplicate detection
 
-Duplicate and warning checks use the complete saved contact list, including former students, regardless of the
-current filter. Level, subject, IDs and guardian links do not contribute to duplicate identity.
+`AddCommand` rejects exact duplicates using `Model#hasPerson`, which delegates to `Person#isSamePerson`. Identity
+consists of role, name, phone and email. Name and email comparisons ignore capitalization; phone comparisons trim
+surrounding whitespace but retain internal spaces and hyphens. Two absent optional values match only when both
+contacts have at least one contact method. Consequently, two contactless students with the same name and role
+are allowed, with a general warning for the second. Exact duplicates are rejected with
+`This contact already exists.` Level, subject, IDs and guardian links do not contribute to duplicate identity.
 
-After adding the contact, `AddCommand` resets the filter with `PREDICATE_SHOW_ACTIVE_CONTACTS`, showing guardians
-and active students while hiding former students. The new contact starts active. The command result carries its ID
-so the UI can select it after a successful save, even if an earlier search or list filter hid similar contacts.
+`Person#hasSamePhoneIgnoringFormatting` applies the same space-separator normalization before removing spaces and
+hyphens, so phone warnings and the duplicate report also recognize existing saved numbers containing Unicode spaces.
+This comparison does not rewrite those saved values or broaden exact duplicate identity.
+
+For contacts with the same role and name that are not exact duplicates, `DuplicateWarning#classify` returns the
+highest-priority match across all saved contacts, including former students and contacts hidden by filters:
+
+1. `PHONE`: phone numbers match after spaces and hyphens are removed.
+1. `EMAIL`: email addresses match ignoring capitalization.
+1. `GENERAL`: both contacts lack a phone number, or both lack an email address.
+1. `NONE`: no warning condition matches.
+
+Add and Edit share this classification but supply their own feedback. Edit excludes the contact being edited by
+ID. Add logs the chosen warning and prepares feedback before insertion, so the new contact cannot match itself.
+A possible-duplicate warning accompanies a successful addition; it does not reject the contact.
+
+#### Execution and persistence
+
+The activity diagram follows an Add command from input validation to publication of a saved change. It assumes
+the data file loaded successfully; otherwise, `LogicManager` rejects data-changing commands before creating a
+candidate. Parsing or command-validation errors terminate the operation before saving.
+
+<puml src="diagrams/AddContactActivityDiagram.puml" width="620" alt="Add flow showing validation, duplicate classification, candidate update and saving before publication" />
+
+`LogicManager` executes `AddCommand` on a candidate model copied from the live data and current filter.
+`AddCommand#execute` separates rejection checks, feedback preparation and candidate updates. After insertion,
+it asserts that the candidate contains the new contact ID and resets the filter with
+`PREDICATE_SHOW_ACTIVE_CONTACTS`, showing guardians and active students while hiding former students.
+The new contact starts active. Only after saving succeeds does `LogicManager` publish the candidate and return
+the command result, whose contact ID lets the UI select the new contact. Failed commands and saves leave the live
+contacts, relationships, filter and selection unchanged. The file-writing and replacement mechanism is described
+under [Saving contacts and relationships](#saving-contacts-and-relationships).
+
+#### Design considerations for Add
+
+* **Validation in both parser and model:** Parser checks provide specific errors and predictable error ordering.
+  Constructor checks protect invariants when contacts are created through storage or other commands. Parser-only
+  validation would reduce repeated checks but leave those other paths able to construct invalid contacts.
+* **Warn about possible duplicates:** Rejecting only exact duplicates lets tutors record different people with the
+  same name, including students without contact methods. Rejecting every matching name and role would prevent
+  legitimate records; accepting them silently would make accidental duplicates harder to notice. Warnings retain
+  that flexibility but leave the final decision to the tutor.
+* **Share classification, keep feedback in each command:** `DuplicateWarning` keeps Add and Edit warning priority
+  aligned, while separate message formatting lets each command describe its own outcome. Separate classifiers
+  would be simpler to change independently but could drift into inconsistent duplicate rules.
+* **Save before publishing:** Executing on a candidate prevents a failed save from leaving the UI ahead of the
+  stored data. Updating the live model first would avoid the copy but require reliable rollback of data, filters
+  and selection on failure. The candidate approach uses additional memory in exchange for simpler failure handling.
 
 ### Saving contacts and relationships
 
@@ -573,8 +623,8 @@ Email validation uses iterative character scans for the local part and domain la
 matching on long inputs. `Email.isValidEmail` and the parser share the same validation rules and specific errors.
 For each component, unsupported characters are reported separately from punctuation-placement errors. Only ASCII
 letters and digits are accepted. The domain permits hyphens only, appearing singly between letters or digits.
-The local part also permits periods, underscores, percent signs and plus signs. Local-part periods cannot appear
-at either end or consecutively; the other supported punctuation can appear consecutively and at either end.
+The local part also permits periods, underscores, percent signs, plus signs and hyphens. Local-part periods cannot
+appear at either end or consecutively; the other supported punctuation can appear consecutively and at either end.
 An email is limited to 254 characters, with at most 64 in the local part and 63 in each domain label.
 The parser trims surrounding whitespace before checking these limits and reports
 `Email address cannot exceed 254 characters.` for longer values. The same limits apply to saved email values;
@@ -1121,6 +1171,40 @@ testers are expected to do more *exploratory* testing.
    1. Relaunch the app by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
 
+### Viewing help
+
+Prerequisites: launch TutorRoster with the main window visible and the Help window closed. On macOS, leave
+fullscreen mode before testing secondary windows. These tests do not require any saved contacts.
+
+1. Test case: enter `help` in the command box and press Enter.<br>
+   Expected: One Help window opens with the command reference, User Guide URL and **Copy URL** button.
+   The main window reports `Opened help window.`
+
+1. Test case: close the Help window, focus the main window's command box and press F1. Close the Help window
+   again, then select **Help > Help** in the main window's menu.<br>
+   Expected: Each action opens the Help window. Closing it leaves the main window open and usable.
+
+1. Test case: scroll through the command reference and compare its entries with the
+   [UG command summary](UserGuide.md#command-summary).<br>
+   Expected: Each supported command appears once. In particular, `check` is present and the `list` format includes
+   role, status, level and subject parameters.
+
+1. Test case: resize the Help window to its minimum size, then scroll to the bottom and back to the top.<br>
+   Expected: The reference remains readable, long command formats wrap, and the final **Exit app** entry is
+   reachable. The User Guide URL and **Copy URL** button remain accessible at the top.
+
+1. Test case: click **Copy URL**, then paste into a plain-text editor.<br>
+   Expected: The pasted text is exactly `https://ay2627s1-cs2103t-t15-2.github.io/tp/UserGuide.html`.
+   The button copies the URL without opening a browser.
+
+1. Test case: with the Help window still open and not minimized, return to the main window and run `help` again.<br>
+   Expected: The existing Help window receives focus; no additional Help window is created. Close it and run
+   `help` once more to verify that it can be reopened. For minimized-window behavior, see the
+   [UG known issues](UserGuide.md#known-issues).
+
+1. Test case: leave the Help window open, return to the main window and run `exit`.<br>
+   Expected: Both windows close. Relaunch TutorRoster before continuing with the next section.
+
 ### Adding a contact
 
 Use a disposable application folder with an empty contact list. Run the following cases in order.
@@ -1158,8 +1242,13 @@ The failed command should remain in the command box, which keeps focus.
 1. Test case: `add r/student n/Alex Tan p/`.<br>
    Expected: The result says `Empty phone parameter: Phone cannot be empty when p/ is specified.`
 
-1. Test case: `add r/student n/Alex Tan p/` followed immediately by 101 ASCII digits.<br>
-   Expected: The result says `Phone details cannot exceed 100 characters.`
+1. Test case: paste the following command, whose phone value contains 101 ASCII digits:
+
+   ```
+   add r/student n/Alex Tan p/11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+   ```
+
+   Expected: The result says `Phone details cannot exceed 100 characters.` No contact is added.
 
 1. Test case: `add r/teacher n/Alex Tan p/12` and `add p/12 n/Alex Tan r/teacher`.<br>
    Expected: Both report the role error first, following the fixed parameter order regardless of command order.
@@ -1186,7 +1275,29 @@ The failed command should remain in the command box, which keeps focus.
 
 1. Test case: `add r/student n/"Ravi lv/Sec sub/Math"`.<br>
    Expected: The entire quoted text is saved as the name, with no level or subject set. Repeat with pasted tabs
-   between parameters instead of spaces; the result is unchanged. A tab inside the quoted name is rejected.
+   between parameters instead of spaces. The second contact has the same name and absent student details, and is
+   added with a general possible-duplicate warning because both contacts lack phone and email values.
+   A tab inside the quoted name is rejected instead, without adding a contact.
+
+### Pasted space separators
+
+Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `9333 3333`, `Sec 3` and
+`Alex Tan` below are non-breaking spaces (U+00A0); copy the commands to retain them.
+
+1. Enter `add r/student n/Bea Lim p/93333333`, then
+   `add r/student n/Bea Lim p/9333 3333 e/b@x.com`, then
+   `add r/student n/Bea Lim p/9333 3333 e/c@x.com`.<br>
+   Expected: Both later additions show the phone-match warning. `check duplicates` reports three pairs.
+   The second contact is saved as `Bea Lim` with phone `9333 3333` using ordinary spaces. Restart and verify
+   that the names, phone values and duplicate report are retained.
+
+1. Enter `add r/student n/Alex Tan lv/Sec 3 sub/Math`, then `list lv/Sec 3`, then `find Alex Tan`.<br>
+   Expected: Alex is added and both queries show that contact. `edit 1 lv/Sec 4` updates the level to `Sec 4`.
+   `delete n/Alex Tan` deletes the contact successfully.
+
+1. Paste a non-breaking space after the email in `add r/guardian n/Mei Tan e/mei@example.com`.<br>
+   Expected: Mei is added with email `mei@example.com`. Moving that space inside the email, immediately before
+   `@`, gives `Email address cannot contain whitespace.` without changing the contacts or saved data.
 
 ### Deleting contacts
 
@@ -1214,10 +1325,20 @@ The failed command should remain in the command box, which keeps focus.
       out-of-range index.
 
    1. Test case: `delete 0`<br>
-      Expected: No contact is deleted. The status message shows error details.
+      Expected: No contact is deleted. The status message is
+      `The contact index must be a positive integer shown in the list.`
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Test case: `delete`<br>
+      Expected: No contact is deleted. The status message is
+      `Invalid delete command. Use: delete INDEX [INDEX...] or delete n/NAME`.
+
+   1. Test case: `delete x`, using the literal nonnumeric value `x`.<br>
+      Expected: No contact is deleted. The status message is
+      `The contact index must be a positive integer shown in the list.`
+
+   1. Test case: `delete INDEX`, replacing `INDEX` with a number larger than the displayed list size.<br>
+      Expected: No contact is deleted. The status message is `No contact exists at index INDEX.`, with `INDEX`
+      replaced by the supplied number.
 
 ### Reviewing contact data
 
@@ -1365,10 +1486,26 @@ for each restart. This setup is independent of the data used in the other manual
       | `unarchive 2` | `Only students can be unarchived.` |
       | `archive 3` and `unarchive 3`, separately | `No contact exists at index 3.` |
       | `archive 0` and `unarchive abc`, separately | `The contact index must be a positive integer shown in the list.` |
+      | `archive` | `Missing contact index. Use: archive INDEX` |
+      | `unarchive` | `Missing contact index. Use: unarchive INDEX` |
+      | `archive 1 2` | `Only one contact index is allowed. Use: archive INDEX` |
+      | `unarchive 1 2` | `Only one contact index is allowed. Use: unarchive INDEX` |
 
    1. Run `archive 1`, then repeat `archive 1`.<br>
       Expected: The first command succeeds and Ava remains visible because `find Tan` is still applied.
       The second reports `Ava Tan is already a former student.` and leaves the data unchanged.
+
+### Contact-name rendering on Windows
+
+1. Use a separate disposable application folder with an empty contact list. Add students named `किरण`, `李小明` and
+   `Élise Tan`, then run `list` and select each contact with `view INDEX`.<br>
+   Expected: All three names are readable in their list cards and the details panel, without missing-glyph boxes.
+   Each card shows its Student badge.
+
+1. Run `archive INDEX` for one of these students, using its current displayed index, then run `list st/former`
+   and select the archived student with `view INDEX` using its new displayed index.<br>
+   Expected: The archived student's name remains readable in its list card and the details panel, and its card shows
+   both Student and Former badges.
 
 ### Listing contacts
 
@@ -1668,8 +1805,20 @@ Use a disposable application folder and keep a backup of its data file before te
 
 1. Invalid data file: close TutorRoster, replace `data/addressbook.json` with `{invalid json}`, and restart.<br>
    Expected: An empty list and `Data changes are disabled because the data file could not be loaded.
-   Fix the file and restart TutorRoster.` Valid `add`, `link`, `edit`, `delete` and `clear` commands are blocked.
+   Fix the file and restart TutorRoster.` followed by `Reason: Invalid JSON:` and the parsing error.
+   Valid `add`, `link`, `unlink`, `edit`, `delete` and `clear` commands are blocked with the same explanation.
    `list` still works, and the invalid file remains unchanged. Restore the backup and restart to recover the contacts.
+
+1. Empty data file: close TutorRoster, back up the test data, replace the data file with a zero-byte file,
+   and restart. Repeat with a file containing only spaces, tabs and newlines.<br>
+   Expected: Changes remain disabled. The reason identifies the empty or whitespace-only file and explains
+   how to restore a backup or delete the empty file and restart for a fresh contact list. The file remains
+   unchanged. Repairing or removing the file without restarting does not re-enable changes in that session.
+
+1. Invalid guardian fields: close the app and add a non-empty `level` or `subject` to a guardian in the
+   disposable test file. Restart.<br>
+   Expected: The startup warning explains `Only a student can have a level or subject.` A blocked change
+   shows the same warning, and the original file is preserved. Restore the backup and restart.
 
 1. Invalid relationship: close the app and change a student's `guardianId` in the test file to the ID of a student,
    or to a UUID that is absent from the contact records. Restart.<br>

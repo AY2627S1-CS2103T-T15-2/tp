@@ -54,6 +54,9 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 
 **Notes about the command format:**<br>
 
+* Command words ignore letter case, so `add`, `ADD` and `AdD` are equivalent.
+  Add's parameter prefixes also ignore letter case; use the documented lowercase prefixes for other commands.
+
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
@@ -62,6 +65,11 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
+
+* Pasted Unicode space separators, including non-breaking spaces, are treated as ordinary spaces throughout
+  commands, including quoted values. Names, levels and subjects follow their usual space rules; surrounding
+  email spaces are removed, while spaces inside an email remain invalid. Internal tabs and line breaks are
+  still checked under each field's rules.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -109,7 +117,8 @@ Examples:
 | A guardian with email only | `add r/guardian n/Mei Tan e/mei@example.com` |
 | A student whose name contains `/` | `add r/student n/"Ravi s/o Kumar" p/98765432` |
 
-Use lowercase `add` and prefixes (`r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`). Parameters may appear in any order,
+The command word and its prefixes (`r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`) accept any letter case, for example
+`ADD R/student N/Alex Tan Lv/Sec 3 SuB/Math`. Parameter values retain their capitalization. Parameters may appear in any order,
 once each. Omit an optional field's prefix if unused; an empty prefix such as `p/` is rejected.
 Whitespace before a prefix, including pasted tabs or line breaks, separates parameters just like a space.
 Whitespace inside a value follows that field's rules; for example, a tab inside a phone number is rejected.
@@ -182,6 +191,9 @@ these checks.
 | Phone is missing from both contacts, or email is missing from both | Added with a general warning. |
 | None of the above | Added without a warning. |
 
+Phone warnings and `check duplicates` also ignore Unicode space separators in phone numbers already saved in the
+data file. Those saved phone values are preserved.
+
 Exact duplicates ignore email capitalization and treat two omitted values as matching. **Internal phone spaces and
 hyphens remain significant for rejection**: `p/9123 4567` and `p/91234567` produce a warning instead.
 
@@ -242,8 +254,9 @@ Command | Shows
   * `st/all` shows every contact, whatever its status.
 * `lv/LEVEL` and `sub/SUBJECT` show only students with that level and subject. Letter case and spaces are
   ignored, so `lv/sec3` matches a student at `Sec 3`. The whole value must match: `sub/Math` does not match
-  `A-Math`. Students without a level or subject are not shown. `LEVEL` and `SUBJECT` follow the same rules as in
-  `add`, and `NONE` cannot be used.
+  `A-Math`. The same accented spelling matches across input methods. Accents remain significant, so `Français`
+  does not match `Francais`. Students without a level or subject are not shown. `LEVEL` and `SUBJECT` follow the
+  same rules as in `add`, and `NONE` cannot be used.
 * Quote a subject that contains text resembling a parameter, as in `add`; for example,
   `list sub/"Art n/Design"`. Without the quotation marks, `n/` is read as an unknown parameter and the command is
   rejected.
@@ -301,6 +314,9 @@ Marks a student who no longer takes lessons as a former student, so that they ar
 Format: `archive INDEX`
 
 * `INDEX` is the index shown in the displayed contact list, and must be a positive integer 1, 2, 3, ...
+* A missing index gives `Missing contact index. Use: archive INDEX`. Extra arguments, such as `archive 1 2`,
+  give `Only one contact index is allowed. Use: archive INDEX`. A single invalid value, such as `archive abc`,
+  gives `The contact index must be a positive integer shown in the list.`
 * The student keeps their details and guardian link. Their guardian stays in `list`.
 * The current search or list filter is kept and refreshed. In an active-only view, such as `list` or
   `list r/student`, the student disappears straight away. After `list st/all` or `find NAME`, they remain visible
@@ -327,6 +343,7 @@ Format: `unarchive INDEX`
 * Only students can be unarchived. Unarchiving a guardian is rejected with `Only students can be unarchived.`
 * Unarchiving a student who is already active is rejected with `Alex Tan is already an active student.`
 * Index rules are the same as for `archive`.
+  Missing and extra arguments show `Use: unarchive INDEX`; only one index is accepted per command.
 
 Examples:
 * `list st/former` followed by `unarchive 1` marks the 1st former student as active again.
@@ -460,7 +477,7 @@ An unlinked student is rejected with `NAME has no guardian linked.`
 * `s/` must identify a student. For linking or replacing a guardian, `g/` must identify a guardian;
   for unlinking, use `g/NONE` instead of an index.
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
-* Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
+* Parameters may appear in either order; each must appear exactly once. Prefixes are case-sensitive.
 * Each student can have one guardian; a guardian can be linked to several students.
 * Students with the same name remain separate contacts, even if both have no phone or email.
   Use the intended student's displayed index; linking one does not change the other student's guardian.
@@ -566,6 +583,7 @@ Alternatively, delete one contact by full name: `delete n/NAME`.
 * Deletes the contacts at the specified indexes.
 * Each index refers to the index number shown in the displayed contact list.
 * Each index **must be a unique positive integer** 1, 2, 3, ...
+* A missing target gives `Invalid delete command. Use: delete INDEX [INDEX...] or delete n/NAME`.
 * The indexes can be supplied in any order. They always refer to the original displayed list, so deleting one contact
   does not change which other contacts the command deletes.
 * The command is atomic. If any index is invalid, repeated or outside the displayed list, no contacts are deleted.
@@ -670,7 +688,8 @@ beside the JAR, before restarting. Check for existing files at the destination b
 <box type="warning" seamless>
 
 **Caution:**
-If the data file is invalid, TutorRoster starts with an empty list and disables data-changing commands for that session. It displays `Data changes are disabled because the data file could not be loaded. Fix the file and restart TutorRoster.` The invalid file is preserved. Back up the file before editing it, fix the error and restart the application.<br>
+If the data file is invalid, TutorRoster starts with an empty list and disables data-changing commands for that session. It displays `Data changes are disabled because the data file could not be loaded. Fix the file and restart TutorRoster.` followed by `Reason:` and the specific loading or validation problem, for example `Only a student can have a level or subject.` The same explanation is shown when a data-changing command is blocked. The invalid file is preserved. Back up the file before editing it, fix the reported problem and restart the application.<br>
+An empty or whitespace-only data file is also preserved and identified explicitly. Restore a backup if contacts were expected. If you intend to start with an empty contact list, close TutorRoster, delete that empty file and restart; a missing data file starts normally.<br>
 Contacts have permanent `id` values, and a student's optional `guardianId` must refer to an existing guardian's `id`. Keep IDs unique and preserve them when editing contact details. Invalid IDs, repeated JSON fields, duplicate contacts and invalid guardian references make the file invalid. Older valid files without IDs are accepted; IDs are assigned on loading and included in the next successful save.
 </box>
 

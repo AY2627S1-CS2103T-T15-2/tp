@@ -32,7 +32,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             return new DeleteCommand(ParserUtil.parseName(arguments.getValue(CliSyntax.PREFIX_NAME).get()));
         }
         if (trimmedArgs.isEmpty()) {
-            throw new ParseException(Messages.MESSAGE_INVALID_CONTACT_INDEX);
+            throw new ParseException(DeleteCommand.MESSAGE_INVALID_COMMAND);
         }
 
         List<Index> indexes = new ArrayList<>();

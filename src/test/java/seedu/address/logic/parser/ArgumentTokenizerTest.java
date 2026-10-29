@@ -219,6 +219,40 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
+    public void tokenizeWithQuotedValue_adjacentTextAfterClosingQuote_remainsInNameValue() throws Exception {
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenizeWithQuotedValue(
+                " n/\"Alex\"p/123 p/456", nSlash, nSlash, pSlash);
+
+        assertArgumentPresent(arguments, nSlash, "\"Alex\"p/123");
+        assertArgumentPresent(arguments, pSlash, "456");
+    }
+
+    @Test
+    public void tokenizeWithQuotedValue_unsupportedQuotedPrefix_doesNotHideSupportedPrefixes() throws Exception {
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenizeWithQuotedValue(
+                " n/\"Alex p/123", nSlash, pSlash);
+
+        assertPreamblePresent(arguments, "n/\"Alex");
+        assertArgumentPresent(arguments, pSlash, "123");
+    }
+
+    @Test
+    public void tokenizeWithQuotedValues_multipleQuotedFields_keepsPrefixesLiteral() throws Exception {
+        for (String arguments : List.of(" n/\"Alex p/Example\" e/\"Science p/Applied\" p/123",
+                " e/\"Science p/Applied\" n/\"Alex p/Example\" p/123")) {
+            ArgumentMultimap values = ArgumentTokenizer.tokenizeWithQuotedValues(
+                    arguments, List.of(nSlash, eSlash), nSlash, eSlash, pSlash);
+
+            assertArgumentPresent(values, nSlash, "\"Alex p/Example\"");
+            assertArgumentPresent(values, eSlash, "\"Science p/Applied\"");
+            assertArgumentPresent(values, pSlash, "123");
+        }
+        assertThrows(ParseException.class, ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE, () ->
+                ArgumentTokenizer.tokenizeWithQuotedValues(" n/\"Alex\" e/\"Science p/Applied",
+                        List.of(nSlash, eSlash), nSlash, eSlash, pSlash));
+    }
+
+    @Test
     public void equalsMethod() {
         Prefix aaa = new Prefix("aaa");
 

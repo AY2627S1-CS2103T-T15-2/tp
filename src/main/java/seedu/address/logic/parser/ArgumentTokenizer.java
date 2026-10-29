@@ -74,46 +74,25 @@ public class ArgumentTokenizer {
     private static List<PrefixPosition> findAllPrefixPositionsOutsideQuotedValue(String argsString,
             List<Prefix> quotedValuePrefixes, Prefix... prefixes) throws ParseException {
         List<PrefixPosition> positions = new ArrayList<>();
-        boolean isInsideQuotedValue = false;
-
-        for (int i = 0; i < argsString.length(); i++) {
-            if (isInsideQuotedValue) {
-                if (argsString.charAt(i) == '"') {
-                    isInsideQuotedValue = false;
-                }
-                continue;
+        List<Prefix> supportedQuotedPrefixes = Arrays.stream(prefixes).filter(quotedValuePrefixes::contains).toList();
+        ArgumentTokenScanner scanner = new ArgumentTokenScanner(argsString, supportedQuotedPrefixes);
+        while (scanner.hasNext()) {
+            if (scanner.isTokenStart()) {
+                addMatchingPrefix(positions, argsString, scanner.getPosition(), prefixes);
             }
-
-            if (i > 0 && !Character.isWhitespace(argsString.charAt(i - 1))) {
-                continue;
-            }
-
-            for (Prefix prefix : prefixes) {
-                int prefixStart = i;
-                if (!argsString.startsWith(prefix.getPrefix(), prefixStart)) {
-                    continue;
-                }
-
-                positions.add(new PrefixPosition(prefix, prefixStart));
-                if (quotedValuePrefixes.contains(prefix)) {
-                    int valueStart = prefixStart + prefix.getPrefix().length();
-                    while (valueStart < argsString.length()
-                            && Character.isWhitespace(argsString.charAt(valueStart))) {
-                        valueStart++;
-                    }
-                    if (valueStart < argsString.length() && argsString.charAt(valueStart) == '"') {
-                        isInsideQuotedValue = true;
-                        i = valueStart;
-                    }
-                }
-                break;
-            }
-        }
-
-        if (isInsideQuotedValue) {
-            throw new ParseException(MESSAGE_UNCLOSED_QUOTED_VALUE);
+            scanner.advance();
         }
         return positions;
+    }
+
+    private static void addMatchingPrefix(List<PrefixPosition> positions, String arguments, int position,
+            Prefix... prefixes) {
+        for (Prefix prefix : prefixes) {
+            if (arguments.startsWith(prefix.getPrefix(), position)) {
+                positions.add(new PrefixPosition(prefix, position));
+                return;
+            }
+        }
     }
 
     /**
