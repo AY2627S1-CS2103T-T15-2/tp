@@ -1,0 +1,43 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box UI UI_COLOR_T1
+participant ":MainWindow" as Ui UI_COLOR
+participant ":HelpWindow" as Help UI_COLOR
+end box
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as Logic LOGIC_COLOR
+participant ":HelpCommand" as Command LOGIC_COLOR
+end box
+
+[-> Ui : executeCommand("help")
+activate Ui
+Ui -> Logic : execute("help")
+activate Logic
+Logic -> Command : execute(model)
+activate Command
+Command --> Logic : CommandResult(showHelp = true)
+deactivate Command
+Logic --> Ui : command result
+deactivate Logic
+
+Ui -> Help : isShowing()
+activate Help
+Help --> Ui : window visibility
+deactivate Help
+alt window is showing
+  Ui -> Help : focus()
+  activate Help
+  Help --> Ui
+  deactivate Help
+else window is hidden
+  Ui -> Help : show()
+  activate Help
+  Help --> Ui
+  deactivate Help
+end
+
+deactivate Ui
+@enduml
