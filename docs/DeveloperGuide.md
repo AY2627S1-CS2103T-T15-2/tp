@@ -838,9 +838,11 @@ Commands that take an index, such as `edit`, `delete` and `link`, look it up in 
 the index always refers to the order shown on screen. The order is kept after `list`, `find`, `add` and
 `edit`, and when the application starts, without any command having to sort the list itself.
 
-**List cards.** `PersonCard` shows each contact as `NAME [ROLE]` followed by `Phone:` and `Email:` lines.
+**List cards.** `PersonCard` shows each contact's name with a role badge, and a `Former` badge for a former student,
+followed by `Phone:` and `Email:` lines.
 `ContactDisplayFormatter` formats these values, showing `Not provided` for a missing phone number or email address.
-A student's card also shows `Guardian: NAME`, or `Guardian: None` if the student has no linked guardian.
+A student's card also shows `Guardian: NAME`, or `Guardian: None` if the student has no linked guardian, and a
+`Level: LEVEL | Subject: SUBJECT` line if either value is set.
 Each line wraps instead of being cut off, so long names, email addresses and guardian names are shown in full.
 
 `PersonListPanel` receives both the displayed list and the complete contact list. It looks up a student's guardian in
