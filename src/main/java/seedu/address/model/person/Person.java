@@ -6,6 +6,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.Objects;
 import java.util.Optional;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
 
 /**
@@ -193,7 +194,7 @@ public class Person {
     }
 
     /**
-     * Returns true if both persons have phone numbers that match after removing spaces and hyphens.
+     * Returns true if both persons have phone numbers that match after removing Unicode space separators and hyphens.
      */
     public boolean hasSamePhoneIgnoringFormatting(Person otherPerson) {
         return otherPerson != null
@@ -220,7 +221,7 @@ public class Person {
     }
 
     private String normalizePhone(Phone phoneNumber) {
-        return phoneNumber.value.trim().replace(" ", "").replace("-", "");
+        return StringUtil.normalizeSpaceSeparators(phoneNumber.value).trim().replace(" ", "").replace("-", "");
     }
 
     private boolean hasSameEmail(Person otherPerson) {

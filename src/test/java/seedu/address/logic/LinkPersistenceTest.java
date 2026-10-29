@@ -401,10 +401,10 @@ public class LinkPersistenceTest {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         assertThrows(DataLoadingException.class, storage::readAddressBook);
         Logic logic = createLogic(new ModelManager(), storage);
-        assertEquals(Optional.of(LogicManager.MESSAGE_DATA_LOAD_FAILURE), logic.getStartupMessage());
-        assertThrows(CommandException.class,
-                LogicManager.MESSAGE_DATA_LOAD_FAILURE, () -> logic.execute("link s/1 g/2"));
-        assertThrows(CommandException.class, LogicManager.MESSAGE_DATA_LOAD_FAILURE, () -> logic.execute("clear"));
+        String failureMessage = logic.getStartupMessage().orElseThrow();
+        assertTrue(failureMessage.contains("Reason: Invalid JSON:"));
+        assertThrows(CommandException.class, failureMessage, () -> logic.execute("link s/1 g/2"));
+        assertThrows(CommandException.class, failureMessage, () -> logic.execute("clear"));
         logic.execute("list");
         assertEquals("{invalid json}", Files.readString(file));
     }

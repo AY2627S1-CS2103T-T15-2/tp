@@ -5,13 +5,29 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
+import static seedu.address.testutil.JavaFxTestUtil.waitForLayout;
+import static seedu.address.ui.ResultDisplay.DEFAULT_MAXIMUM_HEIGHT;
+import static seedu.address.ui.ResultDisplay.MAXIMUM_SCENE_HEIGHT_RATIO;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
+import javafx.application.Platform;
+import javafx.geometry.Orientation;
+import javafx.scene.Scene;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import seedu.address.logic.parser.AddCommandParser;
 import seedu.address.testutil.JavaFxTestUtil;
 
 /**
@@ -19,6 +35,9 @@ import seedu.address.testutil.JavaFxTestUtil;
  */
 @EnabledOnOs(OS.WINDOWS)
 public class ResultDisplayTest {
+
+    // Nested layout panes can snap their dimensions separately on scaled displays.
+    private static final double LAYOUT_TOLERANCE = 2;
 
     @BeforeAll
     public static void startJavaFx() {
@@ -67,5 +86,162 @@ public class ResultDisplayTest {
             assertTrue(text.getStyleClass().contains("result-display"));
             assertFalse(text.getStyleClass().contains(ResultDisplay.ERROR_STYLE_CLASS));
         });
+    }
+
+    @Test
+    public void setErrorToUser_longError_growsAndWrapsWithinWindow() throws Exception {
+        FeedbackFixture fixture = createFixture(900, 800);
+        try {
+            double initialHeight = callOnJavaFxThread(() -> fixture.text().getHeight());
+            runOnJavaFxThread(() -> fixture.display().setErrorToUser(AddCommandParser.MESSAGE_MISSING_ROLE));
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> {
+                assertTrue(fixture.text().getHeight() > initialHeight);
+                assertTrue(fixture.text().getHeight()
+                        <= fixture.stage().getScene().getHeight() * MAXIMUM_SCENE_HEIGHT_RATIO + LAYOUT_TOLERANCE);
+                assertTrue(fixture.text().isWrapText());
+                assertFalse(hasVisibleScrollBar(fixture.text(), Orientation.HORIZONTAL));
+                assertEquals(0, fixture.text().getCaretPosition());
+                assertEquals(0, fixture.text().getScrollTop());
+                assertTrue(fixture.contacts().getHeight() > fixture.text().getHeight());
+            });
+        } finally {
+            runOnJavaFxThread(() -> fixture.stage().close());
+        }
+    }
+
+    @Test
+    public void resize_narrowerWindow_growsForWrappedLines() throws Exception {
+        FeedbackFixture fixture = createFixture(1000, 900);
+        try {
+            runOnJavaFxThread(() -> fixture.display().setErrorToUser(
+                    "Please check the supplied contact details. ".repeat(6)));
+            waitForLayout(fixture.layout());
+            double wideHeight = callOnJavaFxThread(() -> fixture.text().getHeight());
+            runOnJavaFxThread(() -> fixture.stage().setWidth(500));
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> {
+                assertTrue(fixture.text().getHeight() > wideHeight);
+                assertFalse(hasVisibleScrollBar(fixture.text(), Orientation.HORIZONTAL));
+                assertFalse(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL), describeLayout(fixture));
+            });
+        } finally {
+            runOnJavaFxThread(() -> fixture.stage().close());
+        }
+    }
+
+    @Test
+    public void setFeedbackToUser_afterScrolledError_shrinksAndStartsAtTop() throws Exception {
+        FeedbackFixture fixture = createFixture(900, 800);
+        try {
+            double initialHeight = callOnJavaFxThread(() -> fixture.text().getHeight());
+            runOnJavaFxThread(() -> fixture.display().setErrorToUser("Invalid contact details.\n".repeat(100)));
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> {
+                assertTrue(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL));
+                fixture.text().positionCaret(fixture.text().getLength());
+                fixture.text().setScrollTop(500);
+                fixture.display().setFeedbackToUser("Listed 2 contacts");
+            });
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> {
+                assertEquals(initialHeight, fixture.text().getHeight(), 1);
+                assertEquals(0, fixture.text().getCaretPosition());
+                assertEquals(0, fixture.text().getScrollTop());
+                assertEquals(0, fixture.text().getScrollLeft());
+                assertFalse(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL));
+            });
+        } finally {
+            runOnJavaFxThread(() -> fixture.stage().close());
+        }
+    }
+
+    @Test
+    public void resize_shorterWindow_reducesFeedbackHeightCap() throws Exception {
+        FeedbackFixture fixture = createFixture(900, 800);
+        try {
+            runOnJavaFxThread(() -> fixture.display().setErrorToUser("Invalid contact details.\n".repeat(100)));
+            waitForLayout(fixture.layout());
+            double tallHeight = callOnJavaFxThread(() -> fixture.text().getHeight());
+            runOnJavaFxThread(() -> fixture.stage().setHeight(400));
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> {
+                assertTrue(fixture.text().getHeight() < tallHeight);
+                assertTrue(fixture.text().getHeight()
+                        <= fixture.stage().getScene().getHeight() * MAXIMUM_SCENE_HEIGHT_RATIO + LAYOUT_TOLERANCE,
+                        describeLayout(fixture));
+                assertTrue(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL));
+                assertFalse(hasVisibleScrollBar(fixture.text(), Orientation.HORIZONTAL));
+            });
+        } finally {
+            runOnJavaFxThread(() -> fixture.stage().close());
+        }
+    }
+
+    @Test
+    public void reattachDisplay_afterRemoval_resumesSceneHeightTracking() throws Exception {
+        FeedbackFixture fixture = createFixture(900, 800);
+        try {
+            runOnJavaFxThread(() -> fixture.display().setErrorToUser("Invalid contact details.\n".repeat(100)));
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> fixture.layout().getChildren().remove(fixture.display().getRoot()));
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> assertEquals(DEFAULT_MAXIMUM_HEIGHT, fixture.text().getPrefHeight()));
+
+            runOnJavaFxThread(() -> {
+                fixture.layout().getChildren().add(0, fixture.display().getRoot());
+                fixture.stage().setHeight(400);
+            });
+            waitForLayout(fixture.layout());
+            runOnJavaFxThread(() -> {
+                assertEquals(fixture.stage().getScene().getHeight() * MAXIMUM_SCENE_HEIGHT_RATIO,
+                        fixture.text().getPrefHeight(), 1);
+                assertTrue(hasVisibleScrollBar(fixture.text(), Orientation.VERTICAL));
+            });
+        } finally {
+            runOnJavaFxThread(() -> fixture.stage().close());
+        }
+    }
+
+    private FeedbackFixture createFixture(double width, double height) throws Exception {
+        FeedbackFixture fixture = callOnJavaFxThread(() -> {
+            ResultDisplay display = new ResultDisplay();
+            Region contacts = new Region();
+            VBox.setVgrow(contacts, Priority.ALWAYS);
+            VBox layout = new VBox(display.getRoot(), contacts);
+            Scene scene = new Scene(layout, width, height);
+            scene.getStylesheets().add(getClass().getResource("/view/DarkTheme.css").toExternalForm());
+            Stage stage = new Stage();
+            stage.setOpacity(0);
+            stage.setScene(scene);
+            stage.show();
+            return new FeedbackFixture(display, stage, layout, contacts);
+        });
+        waitForLayout(fixture.layout());
+        return fixture;
+    }
+
+    private boolean hasVisibleScrollBar(TextArea text, Orientation orientation) {
+        return text.lookupAll(".scroll-bar").stream().map(node -> (ScrollBar) node)
+                .anyMatch(scrollBar -> scrollBar.getOrientation() == orientation && scrollBar.isVisible());
+    }
+
+    private String describeLayout(FeedbackFixture fixture) {
+        return "Height=" + fixture.text().getHeight() + ", preferred=" + fixture.text().getPrefHeight()
+                + ", scene=" + fixture.stage().getScene().getHeight() + ", width=" + fixture.text().getWidth()
+                + ", content=" + fixture.text().lookup(".content").getLayoutBounds()
+                + ", text=" + fixture.text().lookup(".text").getLayoutBounds();
+    }
+
+    private record FeedbackFixture(ResultDisplay display, Stage stage, VBox layout, Region contacts) {
+        TextArea text() {
+            return (TextArea) display.getRoot().lookup("#resultDisplay");
+        }
+    }
+
+    private <T> T callOnJavaFxThread(Callable<T> action) throws Exception {
+        FutureTask<T> task = new FutureTask<>(action);
+        Platform.runLater(task);
+        return task.get(20, TimeUnit.SECONDS);
     }
 }

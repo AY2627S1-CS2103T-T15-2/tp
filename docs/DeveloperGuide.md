@@ -294,9 +294,10 @@ This deletion-specific implementation is separate from the proposed general undo
 `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` changes the name, phone number, email address,
 level or subject of a displayed contact. Only a student can have a level or subject.
 The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
-first displayed contact `p`. Because edit changes data, `LogicManager` runs it on a candidate copy `c` of the live
-model `m`, saves `c` through `Storage`, and only then copies `c`'s data into `m`. If the save fails, `m` is never
-touched.
+first displayed contact `p`, assumed to be a student with a phone number. Because edit changes data, `LogicManager`
+copies the live model `m`'s data and preferences into a candidate `c` and applies the current filter to `c` before
+executing the command. It saves `c` through `Storage` before publishing both its data and filter to `m`.
+If the save fails, the live contacts, view and deletion-undo history stay unchanged.
 
 <puml src="diagrams/EditSequenceDiagram.puml" alt="Interactions inside the Logic component for the `edit 1 p/NONE` command" />
 
@@ -332,10 +333,15 @@ number (ignoring spaces and hyphens), the same email address, or a shared missin
 warning, which is appended to the success message. The edit is still applied, because different people may share a
 name.
 
-On success, `Model#setPerson` replaces the contact and the full list is shown again. The `CommandResult` carries the
-edited contact's ID, and `MainWindow` selects that contact so the detail panel shows the update. Like other
-data-changing commands, `LogicManager` runs the edit on a candidate model and saves it before replacing the live
-model, so a failed save leaves the contact unchanged.
+The command prepares its success feedback and any duplicate warning before changing the candidate.
+`Model#setPerson` then replaces the contact in `c`. The candidate's filter resets to
+`PREDICATE_SHOW_FORMER_STUDENTS` for a former student, or `PREDICATE_SHOW_ACTIVE_CONTACTS` for an active student or
+guardian. Thus editing a former student shows the former-student view; other edits show guardians and active
+students. The previous search, role, level or subject filter is replaced so the edited contact remains visible.
+
+After saving succeeds, `LogicManager` publishes the candidate data and filter, clears deletion-undo history, and
+returns the prepared `CommandResult`. Its contact ID lets `MainWindow` select the edited contact and refresh the
+details panel. A rejected edit or a failed save leaves the live contacts, filter and undo opportunity unchanged.
 
 **Design considerations.**
 
@@ -491,7 +497,11 @@ token-boundary recognition. Prefixes begin at the start of the arguments or afte
 characters, including tabs and line breaks. Internal value whitespace is preserved for field validation.
 Add recognizes prefixes without regard to letter case and normalizes only those prefixes before tokenization.
 Field values, including prefix-like text inside quoted values, keep their original capitalization.
-Command dispatch normalizes only the command word using `Locale.ROOT`, so it also ignores letter case.
+Before dispatch, `AddressBookParser` uses `StringUtil#normalizeSpaceSeparators` to replace Unicode `Zs` characters
+with ordinary spaces throughout the input, including quoted values. This includes non-breaking, figure and narrow
+non-breaking spaces from pasted text. Tabs and line breaks remain unchanged for the existing tokenizer and field
+validation rules. Normalizing at this boundary keeps Add, Edit, Find, List and name-based Delete consistent.
+For case-insensitive dispatch, only the command word is lowercased using `Locale.ROOT`.
 For Add, the scanner skips a quoted name or subject only when the first non-whitespace character after `n/` or
 `sub/` is a straight double quote. Quotes in phone text remain literal and cannot hide later parameters.
 Centralizing these rules keeps unknown-parameter detection consistent with tokenization.
@@ -523,6 +533,11 @@ empty-parameter messages.
 `StudentDetailValidator` checks length, supported characters, alphanumeric content and surrounding spaces; each
 value class maps the result to its own error message. The constructors reject invalid values, including blank
 strings. `isSameValue` ignores letter case and spaces, allowing a filter for `sec3` to match `Sec 3`.
+Both types use `StudentDetailNormalizer` to remove spaces, normalize comparison text to Unicode NFC,
+lowercase with `Locale.ROOT`, and map Greek final sigma to ordinary sigma for comparison.
+NFC is applied again after lowercasing, which can introduce decomposed characters.
+Composed and decomposed spellings of the same accented text therefore match,
+while different accents remain distinct. Stored values, validation limits, `equals` and `hashCode` are unchanged.
 
 #### Duplicate detection
 
@@ -532,6 +547,10 @@ surrounding whitespace but retain internal spaces and hyphens. Two absent option
 contacts have at least one contact method. Consequently, two contactless students with the same name and role
 are allowed, with a general warning for the second. Exact duplicates are rejected with
 `This contact already exists.` Level, subject, IDs and guardian links do not contribute to duplicate identity.
+
+`Person#hasSamePhoneIgnoringFormatting` applies the same space-separator normalization before removing spaces and
+hyphens, so phone warnings and the duplicate report also recognize existing saved numbers containing Unicode spaces.
+This comparison does not rewrite those saved values or broaden exact duplicate identity.
 
 For contacts with the same role and name that are not exact duplicates, `DuplicateWarning#classify` returns the
 highest-priority match across all saved contacts, including former students and contacts hidden by filters:
@@ -663,6 +682,8 @@ in one class.
 * **Format error:** any prefix other than `r/`, `st/`, `lv/` or `sub/` (such as `n/` in `n/Alex`), or any text before
   the first prefix (such as `extra` in `list extra r/student`), gives
   `Invalid list command. Use: list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`.
+  Text inside a quoted `sub/` value, such as `n/` in `sub/"Art n/Design"`, is part of the subject and is not
+  checked as a prefix.
   If the whole input is a single role or status without its prefix, such as `list former`, the message suggests the
   intended command instead: `Invalid list command. Did you mean: list st/former?`
 * **Repeated parameter:** a repeated prefix gives `Each of r/, st/, lv/ and sub/ may appear only once.`
@@ -1256,6 +1277,26 @@ The failed command should remain in the command box, which keeps focus.
    added with a general possible-duplicate warning because both contacts lack phone and email values.
    A tab inside the quoted name is rejected instead, without adding a contact.
 
+### Pasted space separators
+
+Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `9333 3333`, `Sec 3` and
+`Alex Tan` below are non-breaking spaces (U+00A0); copy the commands to retain them.
+
+1. Enter `add r/student n/Bea Lim p/93333333`, then
+   `add r/student n/Bea Lim p/9333 3333 e/b@x.com`, then
+   `add r/student n/Bea Lim p/9333 3333 e/c@x.com`.<br>
+   Expected: Both later additions show the phone-match warning. `check duplicates` reports three pairs.
+   The second contact is saved as `Bea Lim` with phone `9333 3333` using ordinary spaces. Restart and verify
+   that the names, phone values and duplicate report are retained.
+
+1. Enter `add r/student n/Alex Tan lv/Sec 3 sub/Math`, then `list lv/Sec 3`, then `find Alex Tan`.<br>
+   Expected: Alex is added and both queries show that contact. `edit 1 lv/Sec 4` updates the level to `Sec 4`.
+   `delete n/Alex Tan` deletes the contact successfully.
+
+1. Paste a non-breaking space after the email in `add r/guardian n/Mei Tan e/mei@example.com`.<br>
+   Expected: Mei is added with email `mei@example.com`. Moving that space inside the email, immediately before
+   `@`, gives `Email address cannot contain whitespace.` without changing the contacts or saved data.
+
 ### Deleting contacts
 
 1. Deleting contacts while all contacts are being shown
@@ -1534,6 +1575,12 @@ for each restart. This setup is independent of the data used in the other manual
    Expected: No contacts are shown, because `Math` and `A-Math` are different subjects. The status message shows
    `No contacts found.`
 
+1. Test case: `list sub/"Art n/Design"`, then `list sub/Art n/Design`<br>
+   Expected: The first command shows no contacts and the status message `No contacts found.`, because the quoted
+   `n/` is part of the subject. The second is rejected with
+   `Invalid list command. Use: list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`, and the shown contacts are
+   unchanged.
+
 1. Test case: `list r/guardian lv/Sec 3`<br>
    Expected: The shown contacts are unchanged. The status message shows
    `Guardians have no level or subject. Remove r/guardian, or remove lv/ and sub/.`
@@ -1730,8 +1777,20 @@ Use a disposable application folder and keep a backup of its data file before te
 
 1. Invalid data file: close TutorRoster, replace `data/addressbook.json` with `{invalid json}`, and restart.<br>
    Expected: An empty list and `Data changes are disabled because the data file could not be loaded.
-   Fix the file and restart TutorRoster.` Valid `add`, `link`, `edit`, `delete` and `clear` commands are blocked.
+   Fix the file and restart TutorRoster.` followed by `Reason: Invalid JSON:` and the parsing error.
+   Valid `add`, `link`, `unlink`, `edit`, `delete` and `clear` commands are blocked with the same explanation.
    `list` still works, and the invalid file remains unchanged. Restore the backup and restart to recover the contacts.
+
+1. Empty data file: close TutorRoster, back up the test data, replace the data file with a zero-byte file,
+   and restart. Repeat with a file containing only spaces, tabs and newlines.<br>
+   Expected: Changes remain disabled. The reason identifies the empty or whitespace-only file and explains
+   how to restore a backup or delete the empty file and restart for a fresh contact list. The file remains
+   unchanged. Repairing or removing the file without restarting does not re-enable changes in that session.
+
+1. Invalid guardian fields: close the app and add a non-empty `level` or `subject` to a guardian in the
+   disposable test file. Restart.<br>
+   Expected: The startup warning explains `Only a student can have a level or subject.` A blocked change
+   shows the same warning, and the original file is preserved. Restore the backup and restart.
 
 1. Invalid relationship: close the app and change a student's `guardianId` in the test file to the ID of a student,
    or to a UUID that is absent from the contact records. Restart.<br>

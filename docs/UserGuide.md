@@ -66,6 +66,11 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
 
+* Pasted Unicode space separators, including non-breaking spaces, are treated as ordinary spaces throughout
+  commands, including quoted values. Names, levels and subjects follow their usual space rules; surrounding
+  email spaces are removed, while spaces inside an email remain invalid. Internal tabs and line breaks are
+  still checked under each field's rules.
+
 * Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
@@ -186,6 +191,9 @@ these checks.
 | Phone is missing from both contacts, or email is missing from both | Added with a general warning. |
 | None of the above | Added without a warning. |
 
+Phone warnings and `check duplicates` also ignore Unicode space separators in phone numbers already saved in the
+data file. Those saved phone values are preserved.
+
 Exact duplicates ignore email capitalization and treat two omitted values as matching. **Internal phone spaces and
 hyphens remain significant for rejection**: `p/9123 4567` and `p/91234567` produce a warning instead.
 
@@ -246,8 +254,12 @@ Command | Shows
   * `st/all` shows every contact, whatever its status.
 * `lv/LEVEL` and `sub/SUBJECT` show only students with that level and subject. Letter case and spaces are
   ignored, so `lv/sec3` matches a student at `Sec 3`. The whole value must match: `sub/Math` does not match
-  `A-Math`. Students without a level or subject are not shown. `LEVEL` and `SUBJECT` follow the same rules as in
-  `add`, and `NONE` cannot be used.
+  `A-Math`. The same accented spelling matches across input methods. Accents remain significant, so `Français`
+  does not match `Francais`. Students without a level or subject are not shown. `LEVEL` and `SUBJECT` follow the
+  same rules as in `add`, and `NONE` cannot be used.
+* Quote a subject that contains text resembling a parameter, as in `add`; for example,
+  `list sub/"Art n/Design"`. Without the quotation marks, `n/` is read as an unknown parameter and the command is
+  rejected.
 * Parameters can be given in any order, and each can appear only once. A contact must match all of them.
   Without `st/`, former students are hidden, so add `st/all` to include them.
 * Guardians are never former, so `list r/guardian st/former` is rejected with
@@ -671,7 +683,8 @@ beside the JAR, before restarting. Check for existing files at the destination b
 <box type="warning" seamless>
 
 **Caution:**
-If the data file is invalid, TutorRoster starts with an empty list and disables data-changing commands for that session. It displays `Data changes are disabled because the data file could not be loaded. Fix the file and restart TutorRoster.` The invalid file is preserved. Back up the file before editing it, fix the error and restart the application.<br>
+If the data file is invalid, TutorRoster starts with an empty list and disables data-changing commands for that session. It displays `Data changes are disabled because the data file could not be loaded. Fix the file and restart TutorRoster.` followed by `Reason:` and the specific loading or validation problem, for example `Only a student can have a level or subject.` The same explanation is shown when a data-changing command is blocked. The invalid file is preserved. Back up the file before editing it, fix the reported problem and restart the application.<br>
+An empty or whitespace-only data file is also preserved and identified explicitly. Restore a backup if contacts were expected. If you intend to start with an empty contact list, close TutorRoster, delete that empty file and restart; a missing data file starts normally.<br>
 Contacts have permanent `id` values, and a student's optional `guardianId` must refer to an existing guardian's `id`. Keep IDs unique and preserve them when editing contact details. Invalid IDs, repeated JSON fields, duplicate contacts and invalid guardian references make the file invalid. Older valid files without IDs are accepted; IDs are assigned on loading and included in the next successful save.
 </box>
 
