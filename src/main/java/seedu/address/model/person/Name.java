@@ -16,8 +16,9 @@ public class Name {
 
     public static final int MAX_LENGTH = 70;
     public static final String MESSAGE_CONSTRAINTS =
-            "Names must contain 1 to 70 characters and cannot be blank. "
+            "Names must contain 1 to 70 characters, including at least one letter or digit, and cannot be blank. "
                     + "Names may contain letters, digits, spaces, apostrophes, hyphens, periods, and slashes.";
+    public static final String MESSAGE_MISSING_ALPHANUMERIC = "Name must contain at least one letter or digit.";
 
     public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N}\\p{Pd} './’]+";
 
@@ -85,6 +86,9 @@ public class Name {
         if (!test.matches(VALIDATION_REGEX)) {
             return "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
                     + "hyphens, periods, and slashes.";
+        }
+        if (!test.matches(".*[\\p{L}\\p{N}].*")) {
+            return MESSAGE_MISSING_ALPHANUMERIC;
         }
         return null;
     }

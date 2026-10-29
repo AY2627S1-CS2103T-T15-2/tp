@@ -135,7 +135,9 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 **Role (`r/`)**: `student` or `guardian`, ignoring letter case.
 
 **Name (`n/`)**: A non-blank name of **1 to 70 characters**, allowing letters and numbers (including non-English
-scripts), spaces, apostrophes (`'` or `’`), hyphens, periods, and slashes. Consecutive spaces become one space
+scripts), spaces, apostrophes (`'` or `’`), hyphens, periods, and slashes. Include at least one letter or digit;
+punctuation-only names such as `...` or `-` are rejected with `Name must contain at least one letter or digit.`
+Consecutive spaces become one space
 before the length check. Enclose the **entire name** in double quotes if it contains `/`, even for `n/"AC/DC"`.
 The enclosing quotes are not saved; surrounding whitespace inside them is also removed.
 Use straight double quotes (`"`), with no extra text outside them. Prefix-like text inside a quoted name stays
@@ -690,6 +692,9 @@ beside the JAR, before restarting. Check for existing files at the destination b
 **Caution:**
 If the data file is invalid, TutorRoster starts with an empty list and disables data-changing commands for that session. It displays `Data changes are disabled because the data file could not be loaded. Fix the file and restart TutorRoster.` followed by `Reason:` and the specific loading or validation problem, for example `Only a student can have a level or subject.` The same explanation is shown when a data-changing command is blocked. The invalid file is preserved. Back up the file before editing it, fix the reported problem and restart the application.<br>
 An empty or whitespace-only data file is also preserved and identified explicitly. Restore a backup if contacts were expected. If you intend to start with an empty contact list, close TutorRoster, delete that empty file and restart; a missing data file starts normally.<br>
+Older files containing punctuation-only names, such as `...`, also fail name validation. Close TutorRoster,
+back up the file, and correct each affected `name` to include at least one letter or digit before restarting.
+Keep the contact IDs and guardian references unchanged; the app does not automatically rename or remove contacts.<br>
 Contacts have permanent `id` values, and a student's optional `guardianId` must refer to an existing guardian's `id`. Keep IDs unique and preserve them when editing contact details. Invalid IDs, repeated JSON fields, duplicate contacts and invalid guardian references make the file invalid. Older valid files without IDs are accepted; IDs are assigned on loading and included in the next successful save.
 </box>
 

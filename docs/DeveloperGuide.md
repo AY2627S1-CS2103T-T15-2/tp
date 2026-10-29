@@ -518,6 +518,11 @@ internal tabs and other unsupported whitespace fail validation. Add requires quo
 the Add error includes a name-quoting hint. Repeated prefixes are rejected in the fixed field order above.
 See the [UG field rules and error examples](UserGuide.md#adding-a-contact-add) for the user-facing constraints.
 
+`Name` requires at least one Unicode letter or number after checking blank input, length and supported characters.
+This rejects punctuation-only names and combining marks without a base letter or number through both Add and Edit.
+Saved contacts use the same invariant. An older file with such a name fails loading without being overwritten;
+the existing recovery flow requires correcting the name and restarting.
+
 #### Model invariants
 
 `Person` stores phone and email as non-null `Optional` values. A student may omit both, while a guardian must have
@@ -1206,6 +1211,12 @@ fullscreen mode before testing secondary windows. These tests do not require any
    Expected: Both windows close. Relaunch TutorRoster before continuing with the next section.
 
 ### Adding a contact
+
+1. With a disposable data folder, add `add r/student n/Alex Tan`. Then try `add r/student n/...`,
+   `add r/student n/-`, `add r/guardian n/--- p/91234567`, and `edit 1 n/'`.<br>
+   Expected: Each later command reports `Name must contain at least one letter or digit.`
+   Alex remains unchanged, no contact is added, and restarting retains the same saved contact.
+   Names such as `Mary-Anne`, `O’Brien`, `李小龍` and `123` remain accepted.
 
 Use a disposable application folder with an empty contact list. Run the following cases in order.
 For each failed Add command, verify that contacts, selection, details and saved data remain unchanged.
