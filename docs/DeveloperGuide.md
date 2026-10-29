@@ -1234,6 +1234,10 @@ fullscreen mode before testing secondary windows. These tests do not require any
 
 ### Adding a contact
 
+1. In a disposable data folder, enter `add r/student n/玛丽·居里` with a middle dot (U+00B7).<br>
+   Expected: The name is accepted and displayed with the middle dot. Enter `edit 1 n/让·皮埃尔`, then restart.<br>
+   Expected: The name remains `让·皮埃尔`, and `find 让·皮埃尔` finds the contact.
+
 1. In a disposable data folder, enter `add r/student n/O‘Brien` using the opening curly apostrophe (U+2018).<br>
    Expected: The name is accepted and displayed as `O‘Brien`. Enter `edit 1 n/D‘Souza`, then restart.<br>
    Expected: The saved name remains `D‘Souza`. `find D'Souza` using a straight apostrophe finds the contact.

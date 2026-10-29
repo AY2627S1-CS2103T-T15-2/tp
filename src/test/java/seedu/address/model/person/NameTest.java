@@ -106,7 +106,7 @@ public class NameTest {
         assertEquals("Name cannot exceed " + Name.MAX_LENGTH + " characters.",
                 Name.getValidationErrorMessage(".".repeat(Name.MAX_LENGTH + 1)));
         assertEquals("Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                + "hyphens, periods, and slashes.", Name.getValidationErrorMessage("!"));
+                + "hyphens, periods, middle dots (·), and slashes.", Name.getValidationErrorMessage("!"));
     }
 
     @Test
@@ -118,6 +118,17 @@ public class NameTest {
             assertFalse(Name.isValidName(apostrophe));
             assertEquals(Name.MESSAGE_MISSING_ALPHANUMERIC, Name.getValidationErrorMessage(apostrophe));
         }
+    }
+
+    @Test
+    public void constructor_middleDotNames_preservesOriginalSpelling() {
+        String name = "玛丽\u00b7居里";
+        assertTrue(Name.isValidName(name));
+        assertEquals(name, new Name(name).fullName);
+        assertTrue(Name.isValidName("L\u00b7L"));
+        assertFalse(Name.isValidName("玛丽\u2022居里")); // a bullet is not a middle dot
+        assertFalse(Name.isValidName("\u00b7"));
+        assertEquals(Name.MESSAGE_MISSING_ALPHANUMERIC, Name.getValidationErrorMessage("\u00b7"));
     }
 
     @Test

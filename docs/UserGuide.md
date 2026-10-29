@@ -138,7 +138,8 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 **Role (`r/`)**: `student` or `guardian`, ignoring letter case.
 
 **Name (`n/`)**: A non-blank name of **1 to 70 characters**, allowing letters and numbers (including non-English
-scripts), spaces, apostrophes (`'`, `‘` or `’`), hyphens, periods, and slashes. Include at least one letter or digit;
+scripts), spaces, apostrophes (`'`, `‘` or `’`), hyphens, periods, middle dots (`·`, U+00B7), and slashes.
+For example, `add r/student n/玛丽·居里` preserves the middle dot in the saved name. Include at least one letter or digit;
 punctuation-only names such as `...` or `-` are rejected with `Name must contain at least one letter or digit.`
 Consecutive spaces become one space
 before the length check. Enclose the **entire name** in double quotes if it contains `/`, even for `n/"AC/DC"`.

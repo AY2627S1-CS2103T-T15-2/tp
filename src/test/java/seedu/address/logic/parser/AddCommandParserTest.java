@@ -398,7 +398,7 @@ public class AddCommandParserTest {
         // invalid name
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ROLE_DESC_BOB, "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, and slashes.");
+                        + "hyphens, periods, middle dots (·), and slashes.");
 
         // invalid phone
         assertParseFailure(parser, NAME_DESC_BOB + INVALID_PHONE_DESC + EMAIL_DESC_BOB
@@ -425,14 +425,14 @@ public class AddCommandParserTest {
         assertParseFailure(parser, INVALID_NAME_DESC + INVALID_PHONE_DESC + EMAIL_DESC_BOB
                 + ROLE_DESC_BOB,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, and slashes.");
+                        + "hyphens, periods, middle dots (·), and slashes.");
 
         // invalid fields are checked in documented parameter order, regardless of input order
         assertParseFailure(parser, INVALID_EMAIL_DESC + INVALID_PHONE_DESC + INVALID_NAME_DESC + INVALID_ROLE_DESC,
                 Role.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, INVALID_EMAIL_DESC + INVALID_PHONE_DESC + INVALID_NAME_DESC + ROLE_DESC_BOB,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, and slashes.");
+                        + "hyphens, periods, middle dots (·), and slashes.");
         assertParseFailure(parser, INVALID_EMAIL_DESC + INVALID_PHONE_DESC + NAME_DESC_BOB + ROLE_DESC_BOB,
                 Phone.MESSAGE_TOO_FEW_DIGITS);
 
@@ -521,7 +521,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser, " " + PREFIX_NAME + "\"   \"" + otherFields, "Name cannot be blank.");
         assertParseFailure(parser, " " + PREFIX_NAME + "Alex@Tan" + otherFields,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, and slashes.");
+                        + "hyphens, periods, middle dots (·), and slashes.");
         assertParseFailure(parser, " " + PREFIX_NAME + "a".repeat(Name.MAX_LENGTH + 1) + otherFields,
                 "Name cannot exceed " + Name.MAX_LENGTH + " characters.");
     }

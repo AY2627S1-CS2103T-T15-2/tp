@@ -123,7 +123,7 @@ public class EditCommandParserTest {
         // Heuristic: reject each invalid field independently before checking combined invalid inputs.
         assertParseFailure(parser, "1" + INVALID_NAME_DESC,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, and slashes."); // invalid name
+                        + "hyphens, periods, middle dots (·), and slashes."); // invalid name
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC, Phone.MESSAGE_TOO_FEW_DIGITS); // invalid phone
         assertParseFailure(parser, "1" + INVALID_EMAIL_DESC,
                 "Email address must contain exactly one @ symbol."); // invalid email
@@ -134,7 +134,7 @@ public class EditCommandParserTest {
         // Combination: invalid name and email with a valid phone checks name-first error precedence.
         assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + PHONE_DESC_AMY,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, and slashes.");
+                        + "hyphens, periods, middle dots (·), and slashes.");
     }
 
     @Test
