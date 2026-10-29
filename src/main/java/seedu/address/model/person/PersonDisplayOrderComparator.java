@@ -1,7 +1,7 @@
 package seedu.address.model.person;
 
+import java.text.Normalizer;
 import java.util.Comparator;
-import java.util.Locale;
 
 /**
  * Compares {@code Person}s by the order in which they are displayed in the contact list.
@@ -15,11 +15,12 @@ public class PersonDisplayOrderComparator implements Comparator<Person> {
 
     @Override
     public int compare(Person firstPerson, Person secondPerson) {
-        int unaccentedNameComparison = toUnaccentedName(firstPerson).compareTo(toUnaccentedName(secondPerson));
+        int unaccentedNameComparison = toUnaccentedName(firstPerson)
+                .compareToIgnoreCase(toUnaccentedName(secondPerson));
         if (unaccentedNameComparison != 0) {
             return unaccentedNameComparison;
         }
-        int nameComparison = toNormalizedName(firstPerson).compareTo(toNormalizedName(secondPerson));
+        int nameComparison = toNormalizedName(firstPerson).compareToIgnoreCase(toNormalizedName(secondPerson));
         if (nameComparison != 0) {
             return nameComparison;
         }
@@ -27,18 +28,19 @@ public class PersonDisplayOrderComparator implements Comparator<Person> {
     }
 
     /**
-     * Returns the name of {@code person} in lower case, with consecutive spaces reduced to a single space
-     * and curly apostrophes replaced by straight apostrophes.
+     * Returns the name of {@code person} in canonical Unicode form, with consecutive spaces reduced to a
+     * single space and curly apostrophes replaced by straight apostrophes. Case is ignored during comparison;
+     * lowercasing whole words would treat the ordinary and final Greek sigma differently.
      */
     private static String toNormalizedName(Person person) {
         String name = person.getName().fullName.replaceAll("\\s+", " ");
-        return Name.replaceCurlyApostrophes(name).toLowerCase(Locale.ROOT);
+        return Normalizer.normalize(Name.replaceCurlyApostrophes(name), Normalizer.Form.NFD);
     }
 
     /**
      * Returns the name of {@code person} as given by {@link #toNormalizedName(Person)}, with accents removed
      * as described in {@link Name#removeAccents(String)}. For example, "Élise  O’Brien" gives
-     * "elise o'brien".
+     * "Elise O'Brien".
      */
     private static String toUnaccentedName(Person person) {
         return Name.removeAccents(toNormalizedName(person));

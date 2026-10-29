@@ -126,6 +126,73 @@ public class PersonDisplayOrderComparatorTest {
     }
 
     @Test
+    public void compare_sigmaCaseVariants_sameRoleComparesEqually() {
+        // EP: capital, ordinary lowercase and final lowercase sigma are case variants of one letter.
+        String[] names = {"\u039f\u03a3", "\u039f\u03c3", "\u03bf\u03c2"};
+        for (String first : names) {
+            for (String second : names) {
+                Person firstStudent = new PersonBuilder().withName(first).withRole("student").build();
+                Person secondStudent = new PersonBuilder().withName(second).withRole("student").build();
+                assertEquals(0, comparator.compare(firstStudent, secondStudent), first + " / " + second);
+            }
+        }
+    }
+
+    @Test
+    public void compare_sigmaCaseVariants_guardianBeforeStudentInBothDirections() {
+        String[] names = {"\u039f\u03a3", "\u039f\u03c3", "\u03bf\u03c2"};
+        for (String guardianName : names) {
+            for (String studentName : names) {
+                Person guardian = new PersonBuilder().withName(guardianName).withRole("guardian").build();
+                Person student = new PersonBuilder().withName(studentName).withRole("student").build();
+                assertTrue(comparator.compare(guardian, student) < 0, guardianName + " / " + studentName);
+                assertTrue(comparator.compare(student, guardian) > 0, studentName + " / " + guardianName);
+            }
+        }
+    }
+
+    @Test
+    public void compare_otherUnicodeCaseVariants_guardianBeforeStudent() {
+        // EP: long-s needs case folding, and supplementary-plane case pairs must also compare consistently.
+        String[][] names = {{"\u017fam", "Sam"}, {"\ud801\udc00", "\ud801\udc28"}};
+        for (String[] pair : names) {
+            Person guardian = new PersonBuilder().withName(pair[0]).withRole("guardian").build();
+            Person student = new PersonBuilder().withName(pair[1]).withRole("student").build();
+            assertTrue(comparator.compare(guardian, student) < 0);
+            assertTrue(comparator.compare(student, guardian) > 0);
+        }
+    }
+
+    @Test
+    public void compare_canonicalAccentSpellings_guardianBeforeStudentAndPreservesNames() {
+        String[] names = {"E\u0301lise", "\u00c9lise", "\u00e9lise"};
+        for (String guardianName : names) {
+            for (String studentName : names) {
+                Person guardian = new PersonBuilder().withName(guardianName).withRole("guardian").build();
+                Person student = new PersonBuilder().withName(studentName).withRole("student").build();
+                assertTrue(comparator.compare(guardian, student) < 0);
+                assertTrue(comparator.compare(student, guardian) > 0);
+                assertEquals(guardianName, guardian.getName().fullName);
+                assertEquals(studentName, student.getName().fullName);
+            }
+        }
+    }
+
+    @Test
+    public void compare_caseDependentAccentComposition_guardianBeforeStudent() {
+        // Only lowercase j with caron has a precomposed character; case comparison must still agree.
+        String[] names = {"J\u030can", "j\u030can", "\u01f0an"};
+        for (String guardianName : names) {
+            for (String studentName : names) {
+                Person guardian = new PersonBuilder().withName(guardianName).withRole("guardian").build();
+                Person student = new PersonBuilder().withName(studentName).withRole("student").build();
+                assertTrue(comparator.compare(guardian, student) < 0);
+                assertTrue(comparator.compare(student, guardian) > 0);
+            }
+        }
+    }
+
+    @Test
     public void compare_differentNameAndRole_nameTakesPrecedence() {
         Person studentAlex = new PersonBuilder().withName("Alex Tan").withRole("student").build();
         Person guardianBernice = new PersonBuilder().withName("Bernice Yu").withRole("guardian").build();
