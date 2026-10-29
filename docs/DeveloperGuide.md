@@ -815,6 +815,10 @@ only in accents have a fixed order. `java.text.Collator` was not used because it
 which would place `Alexa Lim` before `Alex Tan`. Contacts with the same name are ordered by role, with guardians before
 students. The specification does not order contacts with the same name and role, so the comparator treats them as equal.
 
+Both name comparisons use `String#compareToIgnoreCase`, after canonical Unicode normalization, rather than lowercasing
+whole words. This keeps ordinary and final Greek sigma case variants together and lets the guardian-first tie-breaker
+apply consistently. Canonically equivalent accented spellings also compare alike without changing stored names.
+
 Commands that take an index, such as `edit`, `delete` and `link`, look it up in `Model#getFilteredPersonList`, so
 the index always refers to the order shown on screen. The order is kept after `list`, `find`, `add` and
 `edit`, and when the application starts, without any command having to sort the list itself.
@@ -1678,6 +1682,13 @@ for each restart. This setup is independent of the data used in the other manual
 
 1. Test case: `add r/guardian n/aaron lim p/81234567`<br>
    Expected: The new guardian `aaron lim` is shown first, as the order ignores capitalization.
+
+1. In a separate empty disposable data folder, run `add r/guardian n/Οσ p/91234567`, then
+   `add r/student n/ΟΣ` and `list`.<br>
+   Expected: The guardian is contact 1 and the student is contact 2. `view 1` selects the guardian. Run
+   `edit 2 n/ος`, then `find ΟΣ`.<br>
+   Expected: Both contacts still match, with the guardian first. Restart and run `list` again to confirm the same
+   order and original saved spellings. The names use Greek omicron and uppercase, ordinary lowercase or final sigma.
 
 1. Test case: `add r/student n/Maximilian Alexander Christopher Bartholomew Montgomery Fitzgerald`<br>
    Expected: The whole name is visible. If it does not fit on one line, it wraps onto the next line instead of being

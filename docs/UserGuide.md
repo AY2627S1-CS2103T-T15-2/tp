@@ -83,6 +83,8 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 
 * Contacts are always displayed in alphabetical order of name, ignoring capitalization.
 * Contacts with the same name are displayed with guardians before students.
+  This includes capitalization variants such as Greek `ΟΣ`, `Οσ` and `ος`, and equivalent Unicode spellings
+  of accented letters. The original spelling of each saved name is preserved.
 * Accented letters are ordered with their unaccented forms, so `Élise Tan` is displayed between `Edward Lim` and
   `Felix Ng`. Letters without a separate accent mark are also ordered with the letters they are based on: `ø` with
   `o`, `ł` with `l`, `æ` with `ae` and `ß` with `ss`. A name without accents is displayed before the same
