@@ -42,6 +42,18 @@ public class AddressBookParserTest {
     private final AddressBookParser parser = new AddressBookParser();
 
     @Test
+    public void parseCommand_caseInsensitiveCommandWords_preservesArguments() throws Exception {
+        Person student = new PersonBuilder().withName("Alex Tan").withRole("student")
+                .withoutPhone().withEmail("Alex@Example.COM").build();
+        for (String commandWord : List.of("add", "ADD", "AdD")) {
+            assertEquals(new AddCommand(student), parser.parseCommand(
+                    commandWord + " R/student N/Alex Tan E/Alex@Example.COM"));
+        }
+        assertTrue(parser.parseCommand("HeLp") instanceof HelpCommand);
+        assertEquals(new ViewCommand(INDEX_FIRST_PERSON), parser.parseCommand("VIEW 1"));
+    }
+
+    @Test
     public void parseCommand_addWithWhitespaceSeparators_returnsAddCommand() throws Exception {
         Person student = new PersonBuilder().withName("Alex").withRole("student")
                 .withoutPhone().withoutEmail().withLevel("Sec 3").withSubject("Math").build();

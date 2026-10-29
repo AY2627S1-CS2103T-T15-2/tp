@@ -53,7 +53,9 @@ final class StudentDetailValidator {
         return ValidationResult.VALID;
     }
 
-    /** The outcome of checking a student detail, independent of its field-specific message. */
+    /**
+     * The outcome of checking a student detail, independent of its field-specific message.
+     */
     enum ValidationResult {
         VALID, TOO_LONG, INVALID_CHARACTERS, MISSING_ALPHANUMERIC, SURROUNDING_SPACES, RESERVED_VALUE
     }

@@ -235,13 +235,13 @@ public class ParserUtilTest {
     public void parseEmail_invalidExamples_reportsExactMessage() {
         assertThrows(ParseException.class, "Email domain must contain at least two labels separated by a period.", ()
                 -> ParserUtil.parseEmail("alex@example"));
-        assertThrows(ParseException.class, "Email address cannot contain whitespace.", ()
+        assertThrows(ParseException.class, Email.MESSAGE_WHITESPACE, ()
                 -> ParserUtil.parseEmail("alex @example.com"));
-        assertThrows(ParseException.class, "Email local part cannot be empty.", ()
+        assertThrows(ParseException.class, Email.MESSAGE_LOCAL_PART_EMPTY, ()
                 -> ParserUtil.parseEmail("@example.com"));
-        assertThrows(ParseException.class, "Email domain labels cannot be empty.", ()
+        assertThrows(ParseException.class, Email.MESSAGE_DOMAIN_LABEL_EMPTY, ()
                 -> ParserUtil.parseEmail("alex@.com"));
-        assertThrows(ParseException.class, "Email domain labels cannot be empty.", ()
+        assertThrows(ParseException.class, Email.MESSAGE_DOMAIN_LABEL_EMPTY, ()
                 -> ParserUtil.parseEmail("alex@example..com"));
         assertThrows(ParseException.class, "Email address must contain exactly one @ symbol.", ()
                 -> ParserUtil.parseEmail("alex@@example.com"));
@@ -251,11 +251,11 @@ public class ParserUtilTest {
         assertThrows(ParseException.class,
                 Email.MESSAGE_LOCAL_CHARACTERS, ()
                 -> ParserUtil.parseEmail("alex!@example.com"));
-        assertThrows(ParseException.class, "Email address cannot contain whitespace.", ()
+        assertThrows(ParseException.class, Email.MESSAGE_WHITESPACE, ()
                 -> ParserUtil.parseEmail("alex\t@example.com"));
-        assertThrows(ParseException.class, "Email domain labels cannot be empty.", ()
+        assertThrows(ParseException.class, Email.MESSAGE_DOMAIN_LABEL_EMPTY, ()
                 -> ParserUtil.parseEmail("alex@example.com."));
-        assertThrows(ParseException.class, "Email's final domain label must contain at least two characters.", ()
+        assertThrows(ParseException.class, Email.MESSAGE_FINAL_LABEL_TOO_SHORT, ()
                 -> ParserUtil.parseEmail("a@b.c"));
     }
 

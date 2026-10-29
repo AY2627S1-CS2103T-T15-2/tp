@@ -20,16 +20,16 @@ enum DuplicateWarning {
     static DuplicateWarning classify(Person candidate, List<Person> otherPersons) {
         requireNonNull(candidate);
         requireNonNull(otherPersons);
-        List<Person> sameNameAndRole = otherPersons.stream()
+        List<Person> personsWithSameNameAndRole = otherPersons.stream()
                 .filter(candidate::hasSameNameAndRole)
                 .toList();
-        if (sameNameAndRole.stream().anyMatch(candidate::hasSamePhoneIgnoringFormatting)) {
+        if (personsWithSameNameAndRole.stream().anyMatch(candidate::hasSamePhoneIgnoringFormatting)) {
             return PHONE;
         }
-        if (sameNameAndRole.stream().anyMatch(candidate::hasSameEmailAddress)) {
+        if (personsWithSameNameAndRole.stream().anyMatch(candidate::hasSameEmailAddress)) {
             return EMAIL;
         }
-        if (sameNameAndRole.stream().anyMatch(person -> hasSharedEmptyContactField(candidate, person))) {
+        if (personsWithSameNameAndRole.stream().anyMatch(person -> hasSharedEmptyContactField(candidate, person))) {
             return GENERAL;
         }
         return NONE;

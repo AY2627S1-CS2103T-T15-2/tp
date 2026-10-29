@@ -116,26 +116,16 @@ public class HelpWindow extends UiPart<Stage> {
         return label;
     }
 
+    /**
+     * Stores a command's description and syntax for a row in the help window's command reference.
+     */
     private record CommandHelp(String description, String format) {
     }
 
     /**
      * Shows the help window.
-     * @throws IllegalStateException
-     *     <ul>
-     *         <li>
-     *             if this method is called on a thread other than the JavaFX Application Thread.
-     *         </li>
-     *         <li>
-     *             if this method is called during animation or layout processing.
-     *         </li>
-     *         <li>
-     *             if this method is called on the primary stage.
-     *         </li>
-     *         <li>
-     *             if {@code dialogStage} is already showing.
-     *         </li>
-     *     </ul>
+     *
+     * @throws IllegalStateException if called on a thread other than the JavaFX Application Thread.
      */
     public void show() {
         logger.fine("Showing help page about the application.");

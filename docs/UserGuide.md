@@ -54,6 +54,9 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 
 **Notes about the command format:**<br>
 
+* Command words ignore letter case, so `add`, `ADD` and `AdD` are equivalent.
+  Add's parameter prefixes also ignore letter case; use the documented lowercase prefixes for other commands.
+
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
@@ -114,7 +117,8 @@ Examples:
 | A guardian with email only | `add r/guardian n/Mei Tan e/mei@example.com` |
 | A student whose name contains `/` | `add r/student n/"Ravi s/o Kumar" p/98765432` |
 
-Use lowercase `add` and prefixes (`r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`). Parameters may appear in any order,
+The command word and its prefixes (`r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`) accept any letter case, for example
+`ADD R/student N/Alex Tan Lv/Sec 3 SuB/Math`. Parameter values retain their capitalization. Parameters may appear in any order,
 once each. Omit an optional field's prefix if unused; an empty prefix such as `p/` is rejected.
 Whitespace before a prefix, including pasted tabs or line breaks, separates parameters just like a space.
 Whitespace inside a value follows that field's rules; for example, a tab inside a phone number is rejected.
@@ -473,7 +477,7 @@ An unlinked student is rejected with `NAME has no guardian linked.`
 * `s/` must identify a student. For linking or replacing a guardian, `g/` must identify a guardian;
   for unlinking, use `g/NONE` instead of an index.
 * Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
-* Parameters may appear in either order; each must appear exactly once. Command words and prefixes are case-sensitive.
+* Parameters may appear in either order; each must appear exactly once. Prefixes are case-sensitive.
 * Each student can have one guardian; a guardian can be linked to several students.
 * Students with the same name remain separate contacts, even if both have no phone or email.
   Use the intended student's displayed index; linking one does not change the other student's guardian.
