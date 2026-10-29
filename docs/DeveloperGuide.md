@@ -1425,6 +1425,18 @@ for each restart. This setup is independent of the data used in the other manual
       Expected: The first command succeeds and Ava remains visible because `find Tan` is still applied.
       The second reports `Ava Tan is already a former student.` and leaves the data unchanged.
 
+### Contact-name rendering on Windows
+
+1. Use a separate disposable application folder with an empty contact list. Add students named `किरण`, `李小明` and
+   `Élise Tan`, then run `list` and select each contact with `view INDEX`.<br>
+   Expected: All three names are readable in their list cards and the details panel, without missing-glyph boxes.
+   Each card shows its Student badge.
+
+1. Run `archive INDEX` for one of these students, using its current displayed index, then run `list st/former`
+   and select the archived student with `view INDEX` using its new displayed index.<br>
+   Expected: The archived student's name remains readable in its list card and the details panel, and its card shows
+   both Student and Former badges.
+
 ### Listing contacts
 
 1. Prerequisites: start with an empty contact list, for example by running `clear`.
