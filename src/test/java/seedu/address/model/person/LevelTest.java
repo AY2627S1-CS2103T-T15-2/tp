@@ -34,17 +34,25 @@ public class LevelTest {
 
     @Test
     public void isValidLevel_validValues_returnsTrue() {
+        // BVA: shortest valid value, just below the upper limit, and the upper limit itself.
+        assertTrue(Level.isValidLevel("A"));
+        // EP and BVA: a digit alone satisfies the content rule at the minimum valid length.
+        assertTrue(Level.isValidLevel("3"));
+        assertTrue(Level.isValidLevel("a".repeat(Level.MAX_LENGTH - 1)));
+        assertTrue(Level.isValidLevel("a".repeat(Level.MAX_LENGTH)));
+
+        // EP: ordinary text, permitted punctuation, digits and non-English letters.
         assertTrue(Level.isValidLevel("Sec 3"));
         assertTrue(Level.isValidLevel("JC1"));
         assertTrue(Level.isValidLevel("IB (HL) Year 1"));
         assertTrue(Level.isValidLevel("O-Level Pure Chem."));
         assertTrue(Level.isValidLevel("Math+"));
         assertTrue(Level.isValidLevel("中三")); // non-English letters
-        assertTrue(Level.isValidLevel("a".repeat(Level.MAX_LENGTH))); // maximum length
     }
 
     @Test
     public void constructor_combiningMarks_preservesTextAndValidationLimits() {
+        // EP: combining marks attached to letters are valid; marks alone are invalid.
         for (String value : List.of("\u0ba4\u0bae\u0bbf\u0bb4\u0bcd", "\u0939\u093f\u0928\u094d\u0926\u0940",
                 "Franc\u0327ais", "e\u0301".repeat(15))) {
             assertEquals(value, new Level(value).value);
@@ -55,6 +63,7 @@ public class LevelTest {
 
     @Test
     public void isValidLevel_invalidValues_returnsFalse() {
+        // EP: empty, blank, punctuation-only, surrounding spaces and unsupported characters.
         assertFalse(Level.isValidLevel("")); // empty
         assertFalse(Level.isValidLevel("   ")); // spaces only
         assertFalse(Level.isValidLevel("-.+()")); // no letter or digit
@@ -62,7 +71,8 @@ public class LevelTest {
         assertFalse(Level.isValidLevel("Sec 3 ")); // trailing space
         assertFalse(Level.isValidLevel("Sec/3")); // slash
         assertFalse(Level.isValidLevel("Sec #3")); // other symbol
-        assertFalse(Level.isValidLevel("a".repeat(Level.MAX_LENGTH + 1))); // too long
+        // BVA: one code point beyond the maximum, with all other constraints satisfied.
+        assertFalse(Level.isValidLevel("a".repeat(Level.MAX_LENGTH + 1)));
     }
 
     @Test
@@ -72,6 +82,7 @@ public class LevelTest {
         assertEquals(Level.MESSAGE_INVALID_CHARACTERS, Level.getValidationErrorMessage("A&B"));
         assertEquals(Level.MESSAGE_MISSING_ALPHANUMERIC, Level.getValidationErrorMessage("-.+()"));
         assertEquals("Level cannot start or end with spaces.", Level.getValidationErrorMessage(" A "));
+        // BVA: the limit counts Unicode code points, including supplementary letters, not UTF-16 units.
         assertNull(Level.getValidationErrorMessage("中".repeat(30)));
         assertNull(Level.getValidationErrorMessage("\uD801\uDC00".repeat(30)));
         assertEquals(Level.MESSAGE_TOO_LONG, Level.getValidationErrorMessage("\uD801\uDC00".repeat(31)));
@@ -79,6 +90,7 @@ public class LevelTest {
 
     @Test
     public void getValidationErrorMessage_multipleViolations_preservesConstraintPriority() {
+        // Combination: after isolated constraints above, overlapping violations check error precedence.
         assertEquals(Level.MESSAGE_TOO_LONG, Level.getValidationErrorMessage("&".repeat(31)));
         assertEquals(Level.MESSAGE_INVALID_CHARACTERS, Level.getValidationErrorMessage(" & "));
         assertEquals(Level.MESSAGE_MISSING_ALPHANUMERIC, Level.getValidationErrorMessage(" --- "));
@@ -112,6 +124,7 @@ public class LevelTest {
 
     @Test
     public void isSameValue_greekSigmaVariants_matchesBothDirections() {
+        // All combinations: all 3 x 3 pairs of uppercase, ordinary lowercase and final sigma.
         for (String first : List.of("\u039f\u03a3", "\u03bf\u03c3", "\u03bf\u03c2")) {
             for (String second : List.of("\u039f\u03a3", "\u03bf\u03c3", "\u03bf\u03c2")) {
                 assertTrue(new Level(first).isSameValue(new Level(second)), first + " vs " + second);
