@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class NameTest {
@@ -54,6 +56,15 @@ public class NameTest {
         assertTrue(Name.isValidName("...")); // punctuation only
         assertTrue(Name.isValidName("'-./’")); // supported punctuation only
         assertTrue(Name.isValidName("a".repeat(Name.MAX_LENGTH))); // maximum length
+    }
+
+    @Test
+    public void constructor_apostropheVariants_preservesOriginalSpelling() {
+        for (String apostrophe : List.of("'", "\u2018", "\u2019")) {
+            String name = "O" + apostrophe + "Brien";
+            assertTrue(Name.isValidName(name));
+            assertEquals(name, new Name(name).fullName);
+        }
     }
 
     @Test

@@ -19,7 +19,7 @@ public class Name {
             "Names must contain 1 to 70 characters and cannot be blank. "
                     + "Names may contain letters, digits, spaces, apostrophes, hyphens, periods, and slashes.";
 
-    public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N}\\p{Pd} './’]+";
+    public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}\\p{N}\\p{Pd} './‘’]+";
 
     private static final char APOSTROPHE_STRAIGHT = '\'';
     private static final char APOSTROPHE_CURLY_LEFT = '\u2018';

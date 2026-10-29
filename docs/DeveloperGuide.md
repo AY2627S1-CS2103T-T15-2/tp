@@ -1207,6 +1207,11 @@ fullscreen mode before testing secondary windows. These tests do not require any
 
 ### Adding a contact
 
+1. In a disposable data folder, enter `add r/student n/O‘Brien` using the opening curly apostrophe (U+2018).<br>
+   Expected: The name is accepted and displayed as `O‘Brien`. Enter `edit 1 n/D‘Souza`, then restart.<br>
+   Expected: The saved name remains `D‘Souza`. `find D'Souza` using a straight apostrophe finds the contact.
+   Repeat in fresh data folders with straight (U+0027) and closing curly (U+2019) apostrophes.
+
 Use a disposable application folder with an empty contact list. Run the following cases in order.
 For each failed Add command, verify that contacts, selection, details and saved data remain unchanged.
 The failed command should remain in the command box, which keeps focus.
