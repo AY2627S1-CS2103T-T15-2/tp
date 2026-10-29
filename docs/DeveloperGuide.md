@@ -1354,7 +1354,12 @@ for each restart. This setup is independent of the data used in the other manual
 1. Use a separate disposable application folder with an empty contact list. Add students named `किरण`, `李小明` and
    `Élise Tan`, then run `list` and select each contact with `view INDEX`.<br>
    Expected: All three names are readable in their list cards and the details panel, without missing-glyph boxes.
-   Student and former-student badges remain visible when applicable.
+   Each card shows its Student badge.
+
+1. Run `archive INDEX` for one of these students, using its current displayed index, then run `list st/former`
+   and select the archived student with `view INDEX` using its new displayed index.<br>
+   Expected: The archived student's name remains readable in its list card and the details panel, and its card shows
+   both Student and Former badges.
 
 ### Listing contacts
 

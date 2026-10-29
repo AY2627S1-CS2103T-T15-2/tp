@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
+import com.sun.javafx.font.CharToGlyphMapper;
 import com.sun.javafx.font.PGFont;
 import com.sun.javafx.scene.text.FontHelper;
 
@@ -41,6 +42,8 @@ public class PersonCardTest {
 
     /** Minimum width of the contact list in {@code MainWindow.fxml}. */
     private static final int NARROWEST_LIST_WIDTH = 240;
+    private static final int GLYPH_TEST_SCENE_WIDTH = 500;
+    private static final int GLYPH_TEST_SCENE_HEIGHT = 450;
 
     @BeforeAll
     public static void startJavaFx() {
@@ -120,7 +123,7 @@ public class PersonCardTest {
             ObservableList<Person> contacts = FXCollections.observableArrayList();
             names.forEach(name -> contacts.add(new PersonBuilder().withName(name).build()));
             PersonListPanel panel = new PersonListPanel(contacts, contacts);
-            Scene scene = new Scene(panel.getRoot(), 500, 450);
+            Scene scene = new Scene(panel.getRoot(), GLYPH_TEST_SCENE_WIDTH, GLYPH_TEST_SCENE_HEIGHT);
             scene.getStylesheets().add(MainApp.class.getResource("/view/DarkTheme.css").toExternalForm());
             Stage stage = new Stage();
             stage.setScene(scene);
@@ -135,7 +138,7 @@ public class PersonCardTest {
                     displayedNames.add(name.getText());
                     // Text equality alone also passes when JavaFX renders missing-glyph boxes.
                     PGFont font = (PGFont) FontHelper.getNativeFont(name.getFont());
-                    var mapper = font.getFontResource().getGlyphMapper();
+                    CharToGlyphMapper mapper = font.getFontResource().getGlyphMapper();
                     for (int codePoint : name.getText().codePoints().toArray()) {
                         assertNotEquals(mapper.getMissingGlyphCode(), mapper.charToGlyph(codePoint),
                                 String.format("Missing U+%04X in %s", codePoint, name.getFont()));
