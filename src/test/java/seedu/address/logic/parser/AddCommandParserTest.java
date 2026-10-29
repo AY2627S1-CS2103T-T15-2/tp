@@ -47,6 +47,56 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_caseInsensitivePrefixes_preservesFieldValues() {
+        Person expected = new PersonBuilder(AMY).withName("Alex Tan").withPhone("91234567")
+                .withEmail("Alex.Tan@Example.COM").withLevel("Sec 3").withSubject("Pure Math").build();
+        for (String fields : List.of(
+                " r/student n/Alex Tan p/91234567 e/Alex.Tan@Example.COM lv/Sec 3 sub/Pure Math",
+                " R/STUDENT N/Alex Tan P/91234567 E/Alex.Tan@Example.COM LV/Sec 3 SUB/Pure Math",
+                " SuB/Pure Math E/Alex.Tan@Example.COM N/Alex Tan R/Student lV/Sec 3 P/91234567")) {
+            assertParseSuccess(parser, fields, new AddCommand(expected));
+        }
+    }
+
+    @Test
+    public void parse_uppercaseQuotedPrefixes_preservesPrefixLikeText() {
+        Person expected = new PersonBuilder(AMY).withName("Ravi P/e Ratio").withoutPhone().withoutEmail()
+                .withSubject("Math N/Applied").build();
+        for (String fields : List.of(" N/\"Ravi P/e Ratio\" SUB/\"Math N/Applied\"",
+                " SuB/\"Math N/Applied\" N/\"Ravi P/e Ratio\"")) {
+            assertParseSuccess(parser, " R/student" + fields, new AddCommand(expected));
+        }
+        assertParseFailure(parser, " R/student N/\"Ravi P/e Ratio",
+                ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
+        assertParseFailure(parser, " R/student N/Alex SUB/\"Math N/Applied",
+                ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
+    }
+
+    @Test
+    public void parse_mixedCaseRepeatedPrefixes_rejectsDuplicates() {
+        String[][] invalidCases = {
+            {" R/student r/student N/Alex", "r/"},
+            {" r/student N/Alex n/Bob", "n/"},
+            {" r/student n/Alex P/91234567 p/98765432", "p/"},
+            {" r/student n/Alex E/Alex@Example.com e/Bob@Example.com", "e/"},
+            {" r/student n/Alex LV/Sec 3 lV/Sec 4", "lv/"},
+            {" r/student n/Alex SUB/Math sub/Science", "sub/"}
+        };
+        for (String[] invalidCase : invalidCases) {
+            assertParseFailure(parser, invalidCase[0],
+                    String.format(AddCommandParser.MESSAGE_DUPLICATE_PREFIXES, invalidCase[1]));
+        }
+    }
+
+    @Test
+    public void parse_uppercaseUnknownPrefix_preservesErrorAndPriority() {
+        assertParseFailure(parser, " X/unknown N/\"Unclosed",
+                String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "X/"));
+        assertParseFailure(parser, " R/student N/Alex X/unknown",
+                String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "X/") + AddCommand.MESSAGE_NAME_SLASH_HINT);
+    }
+
+    @Test
     public void parse_nullArgs_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> parser.parse(null));
     }

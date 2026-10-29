@@ -489,6 +489,9 @@ preamble is rejected before name validation.
 `AddCommandParser` and the quote-aware path in `ArgumentTokenizer` use `ArgumentTokenScanner` to share quote and
 token-boundary recognition. Prefixes begin at the start of the arguments or after `Character.isWhitespace`
 characters, including tabs and line breaks. Internal value whitespace is preserved for field validation.
+Add recognizes prefixes without regard to letter case and normalizes only those prefixes before tokenization.
+Field values, including prefix-like text inside quoted values, keep their original capitalization.
+Command dispatch normalizes only the command word using `Locale.ROOT`, so it also ignores letter case.
 For Add, the scanner skips a quoted name or subject only when the first non-whitespace character after `n/` or
 `sub/` is a straight double quote. Quotes in phone text remain literal and cannot hide later parameters.
 Centralizing these rules keeps unknown-parameter detection consistent with tokenization.

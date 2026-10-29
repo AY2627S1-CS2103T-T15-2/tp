@@ -60,13 +60,10 @@ public class AddCommandParser implements Parser<AddCommand> {
      * Rejects unknown parameters before tokenizing the supported fields.
      */
     private static ArgumentMultimap tokenizeArguments(String args) throws ParseException {
-        Optional<String> parameterError = getParameterError(args);
-        if (parameterError.isPresent()) {
-            throw new ParseException(parameterError.get());
-        }
-
-        return ArgumentTokenizer.tokenizeWithQuotedValues(args, List.of(PREFIX_NAME, PREFIX_SUBJECT), PREFIX_NAME,
-                PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ROLE, PREFIX_LEVEL, PREFIX_SUBJECT);
+        String normalizedArguments = normalizeParameterPrefixes(args);
+        return ArgumentTokenizer.tokenizeWithQuotedValues(normalizedArguments,
+                List.of(PREFIX_NAME, PREFIX_SUBJECT), PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
+                PREFIX_ROLE, PREFIX_LEVEL, PREFIX_SUBJECT);
     }
 
     /**
@@ -167,11 +164,13 @@ public class AddCommandParser implements Parser<AddCommand> {
     }
 
     /**
-     * Returns an error message for an unrecognized parameter prefix, or an empty optional if none is found.
+     * Returns arguments with recognized prefixes in their canonical case, preserving all field values.
+     * Rejects unrecognized parameters in input order before field validation.
      * A prefix is a whitespace-delimited token ending with a slash, outside a quoted name or subject.
      */
-    private static Optional<String> getParameterError(String args) throws ParseException {
-        ArgumentTokenScanner scanner = new ArgumentTokenScanner(args, List.of(PREFIX_NAME, PREFIX_SUBJECT));
+    private static String normalizeParameterPrefixes(String args) throws ParseException {
+        ArgumentTokenScanner scanner = new ArgumentTokenScanner(args, List.of(PREFIX_NAME, PREFIX_SUBJECT), true);
+        StringBuilder normalizedArguments = new StringBuilder(args);
         Prefix currentField = null;
         int currentFieldValueStart = 0;
         while (scanner.hasNext()) {
@@ -180,14 +179,16 @@ public class AddCommandParser implements Parser<AddCommand> {
                 Prefix recognizedPrefix = getRecognizedPrefix(prefix);
                 if (recognizedPrefix == null) {
                     String currentFieldValue = args.substring(currentFieldValueStart, scanner.getTokenStart());
-                    return Optional.of(formatUnknownParameterError(prefix, currentField, currentFieldValue));
+                    throw new ParseException(formatUnknownParameterError(prefix, currentField, currentFieldValue));
                 }
+                normalizedArguments.replace(scanner.getTokenStart(), scanner.getPosition() + 1,
+                        recognizedPrefix.getPrefix());
                 currentField = recognizedPrefix;
                 currentFieldValueStart = scanner.getPosition() + 1;
             }
             scanner.advance();
         }
-        return Optional.empty();
+        return normalizedArguments.toString();
     }
 
     private static String formatUnknownParameterError(String prefix, Prefix currentField, String currentFieldValue) {
@@ -200,17 +201,17 @@ public class AddCommandParser implements Parser<AddCommand> {
     }
 
     private static Prefix getRecognizedPrefix(String prefix) {
-        if (PREFIX_NAME.getPrefix().equals(prefix)) {
+        if (PREFIX_NAME.getPrefix().equalsIgnoreCase(prefix)) {
             return PREFIX_NAME;
-        } else if (PREFIX_PHONE.getPrefix().equals(prefix)) {
+        } else if (PREFIX_PHONE.getPrefix().equalsIgnoreCase(prefix)) {
             return PREFIX_PHONE;
-        } else if (PREFIX_EMAIL.getPrefix().equals(prefix)) {
+        } else if (PREFIX_EMAIL.getPrefix().equalsIgnoreCase(prefix)) {
             return PREFIX_EMAIL;
-        } else if (PREFIX_ROLE.getPrefix().equals(prefix)) {
+        } else if (PREFIX_ROLE.getPrefix().equalsIgnoreCase(prefix)) {
             return PREFIX_ROLE;
-        } else if (PREFIX_LEVEL.getPrefix().equals(prefix)) {
+        } else if (PREFIX_LEVEL.getPrefix().equalsIgnoreCase(prefix)) {
             return PREFIX_LEVEL;
-        } else if (PREFIX_SUBJECT.getPrefix().equals(prefix)) {
+        } else if (PREFIX_SUBJECT.getPrefix().equalsIgnoreCase(prefix)) {
             return PREFIX_SUBJECT;
         }
         return null;

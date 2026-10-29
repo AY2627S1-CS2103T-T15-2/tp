@@ -15,14 +15,20 @@ final class ArgumentTokenScanner {
 
     private final String arguments;
     private final List<Prefix> quotedValuePrefixes;
+    private final boolean isCaseInsensitive;
     private int position;
     private int openingQuoteIndex = NO_OPENING_QUOTE;
     private int tokenStart;
     private boolean hasSlashInToken;
 
     ArgumentTokenScanner(String arguments, List<Prefix> quotedValuePrefixes) {
+        this(arguments, quotedValuePrefixes, false);
+    }
+
+    ArgumentTokenScanner(String arguments, List<Prefix> quotedValuePrefixes, boolean isCaseInsensitive) {
         this.arguments = requireNonNull(arguments);
         this.quotedValuePrefixes = List.copyOf(quotedValuePrefixes);
+        this.isCaseInsensitive = isCaseInsensitive;
     }
 
     boolean hasNext() {
@@ -78,7 +84,8 @@ final class ArgumentTokenScanner {
 
     private void rememberOpeningQuote() {
         Prefix quotedValuePrefix = quotedValuePrefixes.stream()
-                .filter(prefix -> arguments.startsWith(prefix.getPrefix(), position))
+                .filter(prefix -> arguments.regionMatches(isCaseInsensitive, position,
+                        prefix.getPrefix(), 0, prefix.getPrefix().length()))
                 .findFirst().orElse(null);
         if (quotedValuePrefix == null) {
             return;
