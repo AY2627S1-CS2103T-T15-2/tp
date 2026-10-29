@@ -573,77 +573,56 @@ Example: after `list r/guardian`, if Mei Tan is guardian 1 with two linked stude
 
 ### Deleting contacts: `delete`
 
-Deletes one or more specified contacts from TutorRoster.
+Format: `delete INDEX [INDEX...]` or `delete n/NAME`
 
-Format: `delete INDEX [INDEX...]`
+Deletes contacts from the **currently displayed list**. Use `list`, `find NAME` or `list st/former` first to
+display your targets.
 
-Alternatively, delete one contact by full name: `delete n/NAME`.
+* **By index:** supply unique positive integers in any order. All refer to the original displayed list;
+  earlier deletions do not shift later targets. If any index is invalid, repeated or out of range, nothing is deleted.
+* **By name:** supply one non-empty full name, without index targets. Matching ignores capitalization and repeated
+  or surrounding spaces; accents, punctuation and word order must match. Partial names do not match. Digits after
+  `n/` belong to the name, so `delete n/Alex 2` searches for `Alex 2`.
+* If several displayed contacts match a name, the error lists their indexes and roles. Use an index to choose one;
+  no contact is deleted automatically.
 
-* Name matching ignores letter case and repeated or surrounding spaces. Accents, punctuation and word order
-  must match. Partial names do not match.
-* Only the currently displayed contacts are searched. Use `list`, `find NAME` or `list st/former` first to
-  display the intended contact.
-* Exactly one displayed contact must match. If none match, the error is
-  `No displayed contact matches name: NAME.`
-* If multiple contacts match, no contact is deleted. The error lists their displayed indexes and roles;
-  use `delete INDEX` to choose the intended contact.
-* An empty name is rejected. Supply one `n/NAME` parameter and do not combine it with index targets.
-  Digits after `n/` are part of the name, for example `delete n/Alex 2` searches for the full name `Alex 2`.
-* Deletion by name uses the same relationship cleanup and automatic saving as deletion by index.
-  Failed commands or failed saves leave the contacts and saved data unchanged.
+| Input problem | Error |
+| --- | --- |
+| Missing target | `Invalid delete command. Use: delete INDEX [INDEX...] or delete n/NAME` |
+| Invalid index | `The contact index must be a positive integer shown in the list.` |
+| Repeated index | `Each contact index may appear only once.` |
+| Index out of range | `No contact exists at index INDEX.` |
+| No matching name | `No displayed contact matches name: NAME.` |
 
-* Deletes the contacts at the specified indexes.
-* Each index refers to the index number shown in the displayed contact list.
-* Each index **must be a unique positive integer** 1, 2, 3, ...
-* A missing target gives `Invalid delete command. Use: delete INDEX [INDEX...] or delete n/NAME`.
-* The indexes can be supplied in any order. They always refer to the original displayed list, so deleting one contact
-  does not change which other contacts the command deletes.
-* The command is atomic. If any index is invalid, repeated or outside the displayed list, no contacts are deleted.
-* A value that is not a positive integer is rejected with
-  `The contact index must be a positive integer shown in the list.`
-* A repeated index is rejected with `Each contact index may appear only once.`
-* An index outside the displayed list is rejected with `No contact exists at index INDEX.`
+Deleting a linked student keeps the guardian. Deleting a guardian keeps all their students, including hidden former
+students, and removes their links to that guardian. Unlinked students show `Guardian: None`. Each affected link is
+counted once, even when both endpoints are deleted.
 
-Deleting an unlinked contact does not remove any student-guardian relationships. Deleting a linked student removes
-that student's relationship while retaining the guardian. Deleting a guardian clears the relationships of all students
-linked to that guardian while retaining those student contacts.
-
-The success message reports how many relationships were removed, when applicable:
-
-* Deleting an unlinked contact: `Deleted contact: Alex Tan [Student].`
-* Deleting a linked student: `Deleted contact: Alex Tan [Student]. Removed 1 student-guardian relationship.`
-* Deleting a guardian linked to one student: `Deleted contact: Mei Tan [Guardian]. Removed 1 student-guardian relationship.`
-* Deleting a guardian linked to two students: `Deleted contact: Mei Tan [Guardian]. Removed 2 student-guardian relationships.`
-* Deleting several contacts lists each deleted contact. If both a student and that student's guardian are deleted,
-  their relationship is counted once.
-
-Students without a guardian show `Guardian: None` in the detail panel.
+Success feedback names each deleted contact and reports removed links, for example:
+`Deleted contact: Alex Tan [Student]. Removed 1 student-guardian relationship.` Both formats save automatically;
+failed commands or saves leave contacts and saved data unchanged. Use [`undo`](#undoing-the-latest-deletion-undo)
+to restore the latest successful deletion.
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd contact in the displayed contact list.
-* `list` followed by `delete 1 3 5` deletes the 1st, 3rd and 5th displayed contacts.
-* `list` followed by `delete n/Alice Tan` deletes Alice Tan if exactly one displayed contact matches.
-* `delete n/  alice   tan` also matches `Alice Tan`.
-* `find Betsy` followed by `delete 1` deletes the 1st contact in the results of the `find` command.
-* `list st/former` followed by `delete 1` deletes the 1st former student in the displayed list. If that student
-  is linked to a guardian, the student-guardian relationship is also removed, but the guardian contact is kept.
+
+* `list`, then `delete 1 3 5`: delete three displayed contacts together.
+* `delete n/  alice   tan`: delete the unique displayed contact named `Alice Tan`.
+* `list st/former`, then `delete 1`: delete the first displayed former student.
 
 ### Undoing the latest deletion: `undo`
 
 Format: `undo`
 
-* Restores the latest successful deletion by index, multiple indexes or name, including original contact IDs,
-  details and student-guardian links. Bulk deletion is restored as one operation.
-* Restores the filter used before deletion and selects a restored contact visible in that view.
-* Success feedback lists the restored contacts by name and role in the same order as the displayed list, using `Restored 1 contact:` or
-  `Restored N contacts:`. If links were restored, it also reports their count, including links to hidden former
-  students. A link is counted once even if both its student and guardian were deleted.
-* Read-only commands such as `list`, `find`, `view` and `children` preserve undo availability.
-* Another successful deletion replaces the undo opportunity. Any other successful data-changing command clears it.
-* Failed commands and failed saves preserve the undo opportunity. If saving an undo fails, no data changes are
-  applied and you can retry `undo`.
-* History lasts only for the current session. Successful undo consumes it; there is no redo.
-* If nothing can be undone, the message is `No deletion is available to undo.` Extra arguments are rejected.
+Restores the latest single, bulk or name-based deletion with its original IDs, details and guardian links.
+The previous filter returns, and a restored contact visible in that view is selected.
+
+* Feedback lists restored names and roles in display order under `Restored 1 contact:` or `Restored N contacts:`.
+  Restored links include hidden students' links and are counted once per student.
+* Read-only commands and failed commands or saves preserve undo. A failed undo changes nothing and can be retried.
+* Another deletion replaces the undo opportunity; any other successful data-changing command clears it.
+* **Session-only, one use, no redo:** restarting or successfully undoing clears the history. Confirmed `clear`
+  cannot be undone.
+* Extra arguments are rejected. With no available history, the error is `No deletion is available to undo.`
 
 Example: `delete 1 3`, followed by `undo`, restores both deleted contacts and their original relationships.
 
@@ -651,40 +630,35 @@ Example: `delete 1 3`, followed by `undo`, restores both deleted contacts and th
 
 Format: `check [guardians|details|duplicates]`
 
-Checks the currently displayed contacts and reports suggestions without changing data, saving a file or resetting
-the view. Running this command does not invalidate deletion undo. Run `list`, `find NAME` or `list st/former`
-first to choose the contacts to inspect.
+Reviews **displayed contacts only**, preserving data, the current view and deletion undo. Run `list`, `find NAME`
+or `list st/former` first to choose the contacts.
 
-* `check` includes all three sections; `check guardians` reports students without linked guardians.
-* The report starts with `Data-quality report: 1 contact displayed.` or
-  `Data-quality report: N contacts displayed.`, using the number of contacts in the current view.
-* `check details` reports missing level or subject for students and missing contact methods when both phone and
-  email are absent. Guardians are not expected to have student details.
-* `check duplicates` reports pairs using the same warning rules as `add` and `edit`: the same name and role plus
-  matching phone numbers, matching emails, or a shared absent phone/email field. Phone comparison ignores spaces
-  and hyphens; email comparison ignores letter case. Different roles are not treated as duplicates.
-* Duplicate comparison considers only the displayed contacts. A guardian hidden by a filter is still recognized
-  through the student's saved link and is not reported as missing.
-* Results use the current displayed indexes and label former students. Missing optional values and duplicate
-  warnings are suggestions, not proof of incorrect data. Inspect contacts before deciding to edit, link or delete.
-* Section names ignore case. Unknown sections or multiple sections are rejected with
-  `Use check [guardians|details|duplicates].` An empty view reports that no displayed contacts can be checked.
+| Command | Reports |
+| --- | --- |
+| `check` | All three sections below |
+| `check guardians` | Students without a linked guardian; hidden guardians still count as linked |
+| `check details` | Missing student level/subject, or contacts with neither phone nor email |
+| `check duplicates` | Possible duplicate pairs, using the [Add warning rules](#duplicate-contacts-and-warnings) |
+
+Results give the displayed contact count and use current indexes, marking former students. **Suggestions are not
+proof of incorrect data:** inspect contacts before editing, linking or deleting them. Duplicate checks compare only
+displayed pairs; guardians are not expected to have level or subject details.
+
+Section names ignore case. Unknown or multiple sections give `Use check [guardians|details|duplicates].`
+An empty view reports that no displayed contacts can be checked.
 
 Example: run `find Tan`, then `check duplicates` to review matching displayed pairs.
 
 ### Clearing all entries: `clear`
 
-Clears all contacts from TutorRoster.
-
 Format: `clear confirm`
 
-This permanently deletes **all** contacts and student-guardian links, including contacts hidden by the current
-filter and former students. It cannot be undone. Back up your data file first if you may need these contacts again.
+**Permanently deletes every contact and guardian link, including hidden and former students. This cannot be undone.**
+Back up your data first if you may need it again.
 
-Entering `clear` alone, `clear 1`, or any arguments other than `confirm` rejects the command and shows:
-`This will permanently delete all contacts and student-guardian links. Use clear confirm to proceed. This cannot be undone.`
-The rejected command preserves contacts, the current view, the saved data and any existing deletion undo.
-Confirmation ignores letter case, so `clear CONFIRM` also works. Extra arguments such as `clear confirm 1` are rejected.
+The exact confirmation word is required, ignoring case (`clear CONFIRM` also works). Bare `clear`, `clear 1` and
+`clear confirm 1` are rejected with a warning and the correct format, preserving contacts, the view, saved data
+and existing deletion undo.
 
 ### Exiting the program: `exit`
 
