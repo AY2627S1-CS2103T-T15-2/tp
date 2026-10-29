@@ -40,7 +40,7 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
    * `delete 1 3 5` : Deletes the 1st, 3rd and 5th contacts in one operation.
 
-   * `clear` : Deletes all contacts.
+   * `clear confirm` : Permanently deletes all contacts after explicit confirmation.
 
    * `exit` : Exits the app.
 
@@ -71,7 +71,8 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
   email spaces are removed, while spaces inside an email remain invalid. Internal tabs and line breaks are
   still checked under each field's rules.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
+* Extraneous parameters for commands that take no parameters, such as `help` and `exit`, are ignored.
+  `clear` requires the explicit argument `confirm`; all other arguments are rejected.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -659,7 +660,15 @@ Example: run `find Tan`, then `check duplicates` to review matching displayed pa
 
 Clears all contacts from TutorRoster.
 
-Format: `clear`
+Format: `clear confirm`
+
+This permanently deletes **all** contacts and student-guardian links, including contacts hidden by the current
+filter and former students. It cannot be undone. Back up your data file first if you may need these contacts again.
+
+Entering `clear` alone, `clear 1`, or any arguments other than `confirm` rejects the command and shows:
+`This will permanently delete all contacts and student-guardian links. Use clear confirm to proceed. This cannot be undone.`
+The rejected command preserves contacts, the current view, the saved data and any existing deletion undo.
+Confirmation ignores letter case, so `clear CONFIRM` also works. Extra arguments such as `clear confirm 1` are rejected.
 
 ### Exiting the program: `exit`
 
@@ -731,7 +740,7 @@ Contacts have permanent `id` values, and a student's optional `guardianId` must 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` <br> e.g., `add r/student n/James Ho p/22224444 e/jamesho@example.com lv/Sec 3 sub/Math`
-**Clear**  | `clear`
+**Clear**  | `clear confirm` (permanent; cannot be undone)
 **Check data** | `check [guardians\|details\|duplicates]`<br> e.g., `check`, `check duplicates`
 **Delete** | `delete INDEX [INDEX...]` or `delete n/NAME`<br> e.g., `delete 3`, `delete 1 3 5`, `delete n/Alice Tan`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`

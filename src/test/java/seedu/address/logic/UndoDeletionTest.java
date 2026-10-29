@@ -146,7 +146,7 @@ public class UndoDeletionTest {
 
     @Test
     public void execute_otherSuccessfulChanges_invalidateUndoHistory() throws Exception {
-        for (String command : List.of("add r/student n/New Student", "edit 1 n/Renamed Student", "clear",
+        for (String command : List.of("add r/student n/New Student", "edit 1 n/Renamed Student", "clear confirm",
                 "archive 1", "unarchive 4", "link s/1 g/3")) {
             Model model = createModel();
             model.addPerson(new PersonBuilder().withName("Sarah Tan").withRole("guardian").build());
@@ -180,7 +180,7 @@ public class UndoDeletionTest {
         List<Person> originalContacts = List.copyOf(model.getAddressBook().getPersonList());
         String originalFile = Files.readString(file);
         failSave[0] = true;
-        for (String command : List.of("delete n/Mei Tan", "edit 1 n/Changed Name", "clear")) {
+        for (String command : List.of("delete n/Mei Tan", "edit 1 n/Changed Name", "clear confirm")) {
             assertThrows(CommandException.class, LogicManager.MESSAGE_SAVE_FAILURE, () -> logic.execute(command));
             assertEquals(originalContacts, List.copyOf(model.getAddressBook().getPersonList()));
             assertEquals(originalFile, Files.readString(file));

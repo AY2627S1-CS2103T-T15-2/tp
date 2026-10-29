@@ -11,6 +11,9 @@ import seedu.address.model.Model;
 public class ClearCommand extends Command {
 
     public static final String COMMAND_WORD = "clear";
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " confirm";
+    public static final String MESSAGE_USAGE = "This will permanently delete all contacts and student-guardian links. "
+            + "Use " + COMMAND_FORMAT + " to proceed. This cannot be undone.";
     public static final String MESSAGE_SUCCESS = "All contacts have been cleared.";
 
 

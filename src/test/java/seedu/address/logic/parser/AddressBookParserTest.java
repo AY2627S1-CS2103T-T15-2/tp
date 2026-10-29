@@ -84,8 +84,17 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_clear() throws Exception {
-        assertTrue(parser.parseCommand(ClearCommand.COMMAND_WORD) instanceof ClearCommand);
-        assertTrue(parser.parseCommand(ClearCommand.COMMAND_WORD + " 3") instanceof ClearCommand);
+        for (String command : List.of("clear confirm", "CLEAR CONFIRM", "ClEaR CoNfIrM", "clear\tconfirm\t")) {
+            assertTrue(parser.parseCommand(command) instanceof ClearCommand);
+        }
+    }
+
+    @Test
+    public void parseCommand_clearWithoutExactConfirmation_rejects() {
+        for (String command : List.of("clear", "clear 1", "clear cancel", "clear confirmed", "clear confirm 1",
+                "clear confirm confirm", "clear n/Alice", "clear \"confirm\"")) {
+            assertThrows(ParseException.class, ClearCommand.MESSAGE_USAGE, () -> parser.parseCommand(command));
+        }
     }
 
     @Test
