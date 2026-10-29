@@ -26,6 +26,12 @@ public class Email {
             "Email domain labels cannot exceed " + MAX_DOMAIN_LABEL_LENGTH + " characters.";
     public static final String MESSAGE_EMPTY =
             "Empty email parameter: Email cannot be empty when e/ is specified.";
+    public static final String MESSAGE_LOCAL_PART_EMPTY = "Email local part cannot be empty.";
+    public static final String MESSAGE_DOMAIN_EMPTY = "Email domain cannot be empty.";
+    public static final String MESSAGE_WHITESPACE = "Email address cannot contain whitespace.";
+    public static final String MESSAGE_DOMAIN_LABEL_EMPTY = "Email domain labels cannot be empty.";
+    public static final String MESSAGE_FINAL_LABEL_TOO_SHORT =
+            "Email's final domain label must contain at least two characters.";
     public static final String MESSAGE_LOCAL_CHARACTERS =
             "Email local part contains unsupported characters. Use ASCII letters (A-Z, a-z), digits (0-9), "
                     + "and '.', '_', '%', '+', or '-'.";
@@ -80,23 +86,28 @@ public class Email {
     }
 
     /**
-     * Checks presence, local-part length and whitespace before either part's character rules.
+     * Returns the first error in the local part or domain, or {@code null} if both are valid.
+     * Presence, local-part length and whitespace are checked before character rules.
      */
     private static String getAddressPartsError(String localPart, String domain) {
         if (localPart.isEmpty()) {
-            return "Email local part cannot be empty.";
+            return MESSAGE_LOCAL_PART_EMPTY;
         }
         if (localPart.length() > MAX_LOCAL_PART_LENGTH) {
             return MESSAGE_LOCAL_PART_TOO_LONG;
         }
         if (domain.isEmpty()) {
-            return "Email domain cannot be empty.";
+            return MESSAGE_DOMAIN_EMPTY;
         }
-        if (localPart.chars().anyMatch(Character::isWhitespace) || domain.chars().anyMatch(Character::isWhitespace)) {
-            return "Email address cannot contain whitespace.";
+        if (containsWhitespace(localPart) || containsWhitespace(domain)) {
+            return MESSAGE_WHITESPACE;
         }
         String localPartError = getLocalPartError(localPart);
         return localPartError != null ? localPartError : getDomainError(domain);
+    }
+
+    private static boolean containsWhitespace(String value) {
+        return value.chars().anyMatch(Character::isWhitespace);
     }
 
     private static String getLocalPartError(String localPart) {
@@ -110,7 +121,8 @@ public class Email {
     }
 
     /**
-     * Checks every label's length before validating label count and contents in order.
+     * Returns the first domain error, or {@code null} if the domain is valid.
+     * Every label's length is checked before validating label count and contents in order.
      */
     private static String getDomainError(String domain) {
         String[] domainLabels = domain.split("\\.", -1);
@@ -124,7 +136,7 @@ public class Email {
         }
         for (int i = 0; i < domainLabels.length - 1; i++) {
             if (domainLabels[i].isEmpty()) {
-                return "Email domain labels cannot be empty.";
+                return MESSAGE_DOMAIN_LABEL_EMPTY;
             }
             String labelError = getDomainLabelError(domainLabels[i]);
             if (labelError != null) {
@@ -136,10 +148,10 @@ public class Email {
 
     private static String getFinalDomainLabelError(String finalLabel) {
         if (finalLabel.isEmpty()) {
-            return "Email domain labels cannot be empty.";
+            return MESSAGE_DOMAIN_LABEL_EMPTY;
         }
         if (finalLabel.length() < 2) {
-            return "Email's final domain label must contain at least two characters.";
+            return MESSAGE_FINAL_LABEL_TOO_SHORT;
         }
         return getDomainLabelError(finalLabel);
     }

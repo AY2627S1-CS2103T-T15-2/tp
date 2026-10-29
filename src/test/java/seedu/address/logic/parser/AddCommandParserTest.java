@@ -196,7 +196,7 @@ public class AddCommandParserTest {
     public void parse_tabsInsideValues_remainInvalid() {
         String fields = " r/student n/Alex";
         assertParseFailure(parser, fields + " p/123\t456", Phone.MESSAGE_INVALID_CHARACTERS);
-        assertParseFailure(parser, fields + " e/alex\t@example.com", "Email address cannot contain whitespace.");
+        assertParseFailure(parser, fields + " e/alex\t@example.com", Email.MESSAGE_WHITESPACE);
         assertParseFailure(parser, fields + " lv/Sec\t3", Level.MESSAGE_INVALID_CHARACTERS);
         assertParseFailure(parser, fields + " sub/Pure\tMath", Subject.MESSAGE_INVALID_CHARACTERS);
         assertParseFailure(parser, " r/student n/\"Alex\tTan\"", Name.getValidationErrorMessage("Alex\tTan"));
@@ -405,15 +405,15 @@ public class AddCommandParserTest {
     @Test
     public void parse_emailInvalidValues_reportsSpecificErrors() {
         String[][] invalidEmailCases = {
-            {"@example.com", "Email local part cannot be empty."},
-            {"alex@", "Email domain cannot be empty."},
-            {"alex @example.com", "Email address cannot contain whitespace."},
+            {"@example.com", Email.MESSAGE_LOCAL_PART_EMPTY},
+            {"alex@", Email.MESSAGE_DOMAIN_EMPTY},
+            {"alex @example.com", Email.MESSAGE_WHITESPACE},
             {"alex.@example.com", Email.MESSAGE_LOCAL_PUNCTUATION},
             {"alex@example", "Email domain must contain at least two labels separated by a period."},
-            {"alex@.com", "Email domain labels cannot be empty."},
-            {"alex@example..com", "Email domain labels cannot be empty."},
+            {"alex@.com", Email.MESSAGE_DOMAIN_LABEL_EMPTY},
+            {"alex@example..com", Email.MESSAGE_DOMAIN_LABEL_EMPTY},
             {"alex@exam_ple.com", Email.MESSAGE_DOMAIN_CHARACTERS},
-            {"alex@example.c", "Email's final domain label must contain at least two characters."}
+            {"alex@example.c", Email.MESSAGE_FINAL_LABEL_TOO_SHORT}
         };
 
         for (String[] testCase : invalidEmailCases) {

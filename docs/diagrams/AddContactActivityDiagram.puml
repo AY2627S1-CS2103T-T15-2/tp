@@ -18,11 +18,11 @@ end note
 :Classify possible duplicates and\nprepare feedback before insertion;
 :Add contact to candidate and\nreset its filter to active contacts;
 :LogicManager saves the candidate;
-if () then ([save succeeded])
+if (Save succeeds?) then (yes)
   :Publish candidate data and filter\nto the live model;
   :Return result so the UI\nselects the new contact;
-else ([else])
-  :Report save failure;\nkeep live data, filter and selection;
+else (no)
+  :Report save failure\nkeep live data, filter and selection;
 endif
 stop
 @enduml
