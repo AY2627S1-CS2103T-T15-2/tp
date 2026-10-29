@@ -11,6 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.ContactId;
+import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -41,7 +42,9 @@ public class ApostropheNameTest {
             logic.execute("edit 1 n/" + editedName);
             assertEquals(editedName, logic.getPersonList().getFirst().getName().fullName);
             JsonAddressBookStorage reloadedStorage = new JsonAddressBookStorage(contactsFile);
-            assertEquals(logic.getPersonList(), reloadedStorage.readAddressBook().orElseThrow().getPersonList());
+            List<Person> reloadedContacts = reloadedStorage.readAddressBook().orElseThrow().getPersonList();
+            assertEquals(logic.getPersonList(), reloadedContacts);
+            assertEquals(originalId, reloadedContacts.getFirst().getId());
             assertEquals(originalId, logic.getPersonList().getFirst().getId());
 
             logic.execute("find D'Souza");
