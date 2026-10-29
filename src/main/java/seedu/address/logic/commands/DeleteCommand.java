@@ -129,12 +129,7 @@ public class DeleteCommand extends Command {
 
     private static long countRemovedRelationships(Model model, List<Person> personsToDelete) {
         Set<ContactId> deletedIds = personsToDelete.stream().map(Person::getId).collect(Collectors.toSet());
-        // A relationship is removed if either endpoint is deleted, counted once per student.
-        return model.getAddressBook().getPersonList().stream()
-                .filter(student -> student.getGuardianId().isPresent())
-                .filter(student -> deletedIds.contains(student.getId())
-                        || deletedIds.contains(student.getGuardianId().get()))
-                .count();
+        return RelationshipCount.countAffected(model.getAddressBook().getPersonList(), deletedIds);
     }
 
     private static String formatSuccessMessage(List<Person> deletedPersons) {

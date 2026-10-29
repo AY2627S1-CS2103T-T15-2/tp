@@ -85,7 +85,7 @@ public class UndoDeletionTest {
         Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
         logic.execute("delete 2 1");
         CommandResult result = logic.execute("undo");
-        assertEquals("Restored 2 contacts:\nMei Tan [Guardian]\nAlex Tan [Student]. "
+        assertEquals("Restored 2 contacts:\nAlex Tan [Student]\nMei Tan [Guardian]. "
                 + "Restored 2 student-guardian relationships.", result.getFeedbackToUser());
         assertEquals(List.of(guardian.getId(), student.getId(), former.getId()),
                 model.getAddressBook().getPersonList().stream().map(Person::getId).toList());
@@ -103,6 +103,27 @@ public class UndoDeletionTest {
         CommandResult result = logic.execute("undo");
 
         assertEquals("Restored 1 contact:\nUnlinked Student [Student].", result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_undoBulkDeletion_formatsNamesAndRolesInDisplayOrder() throws Exception {
+        Person zoe = new PersonBuilder().withName("Zoe").build();
+        Person amyStudent = new PersonBuilder().withName("Amy").build();
+        Person amyGuardian = new PersonBuilder().withName("Amy").withRole("guardian").build();
+        AddressBook book = new AddressBook();
+        book.setPersons(List.of(zoe, amyStudent, amyGuardian));
+        Model model = new ModelManager(book, new UserPrefs());
+        Logic logic = createLogic(model, new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")));
+        logic.execute("delete 3 2 1");
+
+        CommandResult result = logic.execute("undo");
+
+        assertEquals("Restored 3 contacts:\nAmy [Guardian]\nAmy [Student]\nZoe [Student].",
+                result.getFeedbackToUser());
+        assertEquals(List.of(amyGuardian.getId(), amyStudent.getId(), zoe.getId()),
+                model.getFilteredPersonList().stream().map(Person::getId).toList());
+        assertEquals(List.of(zoe.getId(), amyStudent.getId(), amyGuardian.getId()),
+                model.getAddressBook().getPersonList().stream().map(Person::getId).toList());
     }
 
     @Test

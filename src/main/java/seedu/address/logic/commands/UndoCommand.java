@@ -14,6 +14,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.ContactId;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.PersonDisplayOrderComparator;
 
 /** Restores the last deletion on a candidate model; LogicManager consumes history after saving. */
 public class UndoCommand extends Command {
@@ -52,18 +53,14 @@ public class UndoCommand extends Command {
     private static String formatSuccessMessage(DeletionSnapshot snapshot, Model model) {
         Set<ContactId> deletedIds = Set.copyOf(snapshot.getDeletedIds());
         List<Person> restoredContacts = model.getAddressBook().getPersonList().stream()
-                .filter(person -> deletedIds.contains(person.getId())).toList();
+                .filter(person -> deletedIds.contains(person.getId()))
+                .sorted(new PersonDisplayOrderComparator()).toList();
         String descriptions = restoredContacts.stream()
                 .map(person -> String.format("%s [%s]", person.getName(), person.getRole()))
                 .collect(Collectors.joining("\n"));
         String feedback = String.format(MESSAGE_SUCCESS, Messages.formatContactCount(restoredContacts.size()),
                 descriptions);
-        // Count each student once even when both that student and their guardian were deleted.
-        long restoredRelationships = model.getAddressBook().getPersonList().stream()
-                .filter(person -> person.getGuardianId().isPresent())
-                .filter(person -> deletedIds.contains(person.getId())
-                        || deletedIds.contains(person.getGuardianId().orElseThrow()))
-                .count();
+        long restoredRelationships = RelationshipCount.countAffected(model.getAddressBook().getPersonList(), deletedIds);
         if (restoredRelationships > 0) {
             feedback += " Restored " + restoredRelationships + (restoredRelationships == 1
                     ? " student-guardian relationship." : " student-guardian relationships.");

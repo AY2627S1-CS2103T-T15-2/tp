@@ -619,7 +619,7 @@ Format: `undo`
 * Restores the latest successful deletion by index, multiple indexes or name, including original contact IDs,
   details and student-guardian links. Bulk deletion is restored as one operation.
 * Restores the filter used before deletion and selects a restored contact visible in that view.
-* Success feedback lists the restored contacts by name and role, using `Restored 1 contact:` or
+* Success feedback lists the restored contacts by name and role in the same order as the displayed list, using `Restored 1 contact:` or
   `Restored N contacts:`. If links were restored, it also reports their count, including links to hidden former
   students. A link is counted once even if both its student and guardian were deleted.
 * Read-only commands such as `list`, `find`, `view` and `children` preserve undo availability.
