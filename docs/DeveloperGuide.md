@@ -1637,10 +1637,6 @@ for each restart. This setup is independent of the data used in the other manual
    Expected: The shown contacts are unchanged. The status message shows
    `Each of r/, st/, lv/ and sub/ may appear only once.`
 
-1. Test case: `list st/former st/former`<br>
-   Expected: The shown contacts are unchanged. The status message shows
-   `Each of r/, st/, lv/ and sub/ may appear only once.`
-
 1. Test case: `list st/active`<br>
    Expected: The same contacts and message as `list`.
 
@@ -1686,10 +1682,6 @@ for each restart. This setup is independent of the data used in the other manual
 1. Test case: `list r/guardian lv/Sec 3`<br>
    Expected: The shown contacts are unchanged. The status message shows
    `Guardians have no level or subject. Remove r/guardian, or remove lv/ and sub/.`
-
-1. Test case: `list lv/Sec 3 lv/Sec 4`<br>
-   Expected: The shown contacts are unchanged. The status message shows
-   `Each of r/, st/, lv/ and sub/ may appear only once.`
 
 1. Test case: `list lv/`<br>
    Expected: The shown contacts are unchanged. The status message shows

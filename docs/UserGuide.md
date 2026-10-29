@@ -278,7 +278,6 @@ Command | Shows
   `Guardians cannot be former. Remove r/guardian or st/former.`
 * Guardians have no level or subject, so `list r/guardian lv/Sec 3` is rejected with
   `Guardians have no level or subject. Remove r/guardian, or remove lv/ and sub/.`
-* TutorRoster also starts with guardians and active students shown.
 * Any other text after `list` is rejected; for example, `list 3` shows
   `Invalid list command. Use: list [r/ROLE] [st/STATUS] [lv/LEVEL] [sub/SUBJECT]`. If you type a role or status
   without its prefix, the message suggests the right command; for example, `list former` shows
