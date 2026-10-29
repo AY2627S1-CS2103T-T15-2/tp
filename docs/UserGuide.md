@@ -175,22 +175,23 @@ Common email mistakes:
 | `alex@example` or `alex@example.c` | Missing second label or final label too short. |
 | `.alex@example.com` or `alex..tan@example.com` | Invalid punctuation placement. |
 
-**Level (`lv/`) and subject (`sub/`)**: One value each, for students only. Each must contain **1 to 30 characters**,
-including at least one letter or digit. Letters and digits (including non-English scripts), spaces, hyphens,
-periods, plus signs, and parentheses are allowed. Repeated spaces become one space before checking length.
-Subjects additionally allow slashes (`/`) and ampersands (`&`). Quote the entire subject when it contains a
-slash or text resembling a command prefix, for example `sub/"Combined Science (Chem/Bio)"`.
-The enclosing quotation marks are removed before validation and are not saved or counted towards the limit.
-The same subject syntax works in `add`, `edit`, and `list`; `sub/English Language & Literature` needs no quotes.
-Level values retain their existing character restrictions. Use unquoted `sub/NONE` in `edit` to remove a subject.
-Examples: `lv/Sec 3`, `sub/A-Math`. The value `NONE`, ignoring case, is reserved for removing fields with `edit`.
+**Level (`lv/`) and subject (`sub/`)**: Optional fields for students only. Each value must contain **1 to 30 characters**,
+including a letter or digit. Allowed characters are letters and digits (including non-English scripts), spaces,
+hyphens, periods, plus signs and parentheses. Repeated spaces become one space before the length check.
+
+Subjects also allow `/` and `&`. Quote the entire subject if it contains a slash or prefix-like text, for example
+`sub/"Combined Science (Chem/Bio)"`. The quotes are removed before validation and are not saved or counted.
+This syntax works in `add`, `edit` and `list`; `sub/English Language & Literature` needs no quotes.
+Use unquoted level values, for example `lv/Sec 3`.
+
+`NONE` is reserved, ignoring capitalization. In `edit`, use unquoted `lv/NONE` or `sub/NONE` to remove the field.
 
 #### Duplicate contacts and warnings
 
 Checks include **all saved contacts**, including former students and contacts hidden by a filter. These rules
 apply to contacts with the **same role and name**. Exact duplicate rejection ignores name capitalization.
 Possible-duplicate warnings also recognize canonically equivalent Unicode spellings (such as composed and
-decomposed `É`), straight (`'`) and closing-curly (`’`) apostrophes, and repeated or surrounding ordinary spaces
+decomposed `É`), straight (`'`), opening-curly (`‘`) and closing-curly (`’`) apostrophes, and repeated or surrounding spaces
 in saved names.
 Accents and word boundaries remain significant: `Élise` differs from `Elise`, and `Alex Tan` differs from `AlexTan`.
 Names are saved as entered after normal command parsing. Level and subject do not affect these checks.
@@ -321,101 +322,98 @@ Command | Shows
 
 ### Marking a student as former: `archive`
 
-Marks a student who no longer takes lessons as a former student, so that they are hidden from `list`.
+Marks a student as former while keeping their details and guardian link.
 
 Format: `archive INDEX`
 
-* `INDEX` is the index shown in the displayed contact list, and must be a positive integer 1, 2, 3, ...
-* A missing index gives `Missing contact index. Use: archive INDEX`. Extra arguments, such as `archive 1 2`,
-  give `Only one contact index is allowed. Use: archive INDEX`. A single invalid value, such as `archive abc`,
-  gives `The contact index must be a positive integer shown in the list.`
-* The student keeps their details and guardian link. Their guardian stays in `list`.
-* The current search or list filter is kept and refreshed. In an active-only view, such as `list` or
-  `list r/student`, the student disappears straight away. After `list st/all` or `find NAME`, they remain visible
-  with a `Former` badge. The result names the student; for example, `Marked Alex Tan as a former student.`
-* Only students can be archived. Archiving a guardian is rejected with `Only students can be archived.`
-* Archiving a student who is already former is rejected with `Alex Tan is already a former student.`
-* An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
+* Use one positive index from the **currently displayed list**. Guardians cannot be archived.
+* The current filter is kept. The student disappears from active-only views such as `list`, but remains visible
+  with a `Former` badge after `list st/all` or `find NAME`. Their guardian remains in the active list.
+* An already-former student is rejected. Success reports `Marked NAME as a former student.`
 
-Examples:
-* `list` followed by `archive 2` marks the 2nd contact in the list as a former student, provided it is a student.
-* `find Alex` followed by `archive 1` marks the 1st search result as a former student.
+Example: `find Alex`, then `archive 1`, marks the first search result as former if it is an active student.
+
+**Common archive/unarchive errors:**
+
+| Input | Result |
+| --- | --- |
+| Missing index | `Missing contact index. Use: archive INDEX` |
+| More than one argument | `Only one contact index is allowed. Use: archive INDEX` |
+| Zero, negative or non-integer index | `The contact index must be a positive integer shown in the list.` |
+| Index beyond the displayed list | `No contact exists at index INDEX.` |
+| Guardian target | `Only students can be archived.` for `archive`; `Only students can be unarchived.` for `unarchive`. |
+| Already in the requested status | `NAME is already a former student.` for `archive`; `NAME is already an active student.` for `unarchive`. |
+
+For `unarchive`, the usage text shows `unarchive INDEX` instead. Rejected commands leave contacts unchanged.
 
 ### Marking a former student as active: `unarchive`
 
-Marks a former student as active again, for example when they return for lessons.
+Marks a returning former student as active, keeping their details and guardian link.
 
 Format: `unarchive INDEX`
 
-* Run `list st/former`, `list st/all` or `find NAME` first, since former students are hidden from `list`.
-* The current search or list filter is kept and refreshed. In a former-only view, such as `list st/former`,
-  the student disappears straight away. After `list st/all` or `find NAME`, they remain visible without the
-  `Former` badge. Any level or subject filter also continues to apply. The result names the student; for example,
-  `Marked Alex Tan as an active student.`
-* Only students can be unarchived. Unarchiving a guardian is rejected with `Only students can be unarchived.`
-* Unarchiving a student who is already active is rejected with `Alex Tan is already an active student.`
-* Index rules are the same as for `archive`.
-  Missing and extra arguments show `Use: unarchive INDEX`; only one index is accepted per command.
+* First display former students with `list st/former`, `list st/all` or `find NAME`.
+* The current filter is kept. A reactivated student disappears from a former-only view, but remains visible
+  after `list st/all` or `find NAME`, without the `Former` badge. Level and subject filters still apply.
+* Guardians and already-active students are rejected. Index rules are the same as for `archive`.
+  Success reports `Marked NAME as an active student.`
 
-Examples:
-* `list st/former` followed by `unarchive 1` marks the 1st former student as active again.
+Example: `list st/former`, then `unarchive 1`, reactivates the first displayed former student.
 
 ### Editing a contact: `edit`
 
-Edits an existing contact.
+Updates the contact at an index in the **currently displayed list**.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
-* Edits the contact at the specified `INDEX`. The index refers to the index number shown in the displayed contact list. The index **must be a positive integer** 1, 2, 3, ...
-* At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
-* If all resulting values are exactly the same as the current ones, the edit is rejected with
-  `No changes made: the new values are the same as the current ones.` This includes removing an already-absent
-  optional field. Changing only capitalization, such as `n/ALEX TAN`, counts as a change. When an edit is
-  rejected, the current view and any opportunity to undo a deletion are preserved.
-* After a successful edit, the edited contact is selected and its details are shown in the details panel.
-  Editing a former student shows `list st/former`, and editing any other contact shows `list`, so the edited contact
-  stays visible.
-* Omitting `e/` preserves the existing email, including its absence. Supplying an email uses the same validation
-  as `add`. An empty `e/` is rejected.
-* `e/NONE` removes the existing email. `NONE` ignores letter case, so `e/none` also works.
-* Omitting `p/` preserves the existing phone number, including its absence. Supplying a phone number uses the same
-  validation as `add`. An empty `p/` is rejected.
-* `p/NONE` removes the existing phone number. As with `e/NONE`, letter case is ignored.
-* A guardian must keep at least one contact method. An edit that would leave a guardian with neither a phone number
-  nor an email is rejected with `A guardian must have at least one contact method: phone or email.`
-  A student can have both removed.
-* `lv/LEVEL` and `sub/SUBJECT` set a student's level and subject, using the same rules as `add`. `lv/NONE` and
-  `sub/NONE` remove them, ignoring letter case. Omitting either keeps the existing value. Editing the level or subject
-  of a guardian is rejected with
-  `Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.`
-* A name containing a word that ends in `/`, such as `s/o`, must be wrapped in double quotes. Anything inside the
-  quotes is treated as part of the name, so `edit 1 n/"Randy p/e ratio"` sets the name to `Randy p/e ratio` without
-  reading `p/` as a phone. Unquoted, `edit 1 n/Ravi s/o Kumar` is rejected because `s/` is read as a parameter.
-  Unlike `add`, `edit` accepts embedded slashes without quotes, for example `edit 1 n/AC/DC`.
-* Each of `n/`, `p/`, `e/`, `lv/` and `sub/` may appear only once. Any other parameter, such as `r/` or `a/`, is
-  rejected with `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`.
-  The role of a contact cannot be edited.
-* A missing index, or extra text before the first parameter, is rejected with
-  `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`.
-* An index that is not a positive whole number is rejected with
-  `The contact index must be a positive integer shown in the list.` Leading zeroes are accepted, so `02` means 2.
-  An index larger than the displayed list is rejected with `No contact exists at index INDEX.`
-* An edit that would make the contact identical to another contact is rejected with
-  `This edit would create a duplicate contact.`
-* If the edited contact has the same role and name as another contact, and the two also share a phone number,
-  an email address, or a missing phone number or email, the edit still goes ahead but a warning is shown below the
-  success message, as with `add`. For example, renaming a student to the name of another student with the same phone
-  number but a different email shows `Warning: Another contact with the same role and name, and a phone number
-  matching after ignoring spaces and hyphens exists. This contact may be a duplicate, but it was updated.`
+* Use a positive index and supply at least one field. Omitted fields keep their values; empty values are rejected.
+  Each parameter may appear only once. The contact's role cannot be edited, and other parameters are rejected.
+* Values follow the [field rules](#field-rules). Quote names containing prefix-like words, such as
+  `n/"Ravi s/o Kumar"` or `n/"Randy p/e ratio"`. Embedded slashes such as `n/AC/DC` also work without quotes in `edit`.
+* Remove optional fields using the following values. `NONE` ignores capitalization, so `e/none` also works.
 
-Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st contact to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower` Edits the name of the 2nd contact to be `Betsy Crower`.
-*  `edit 2 e/NONE` Removes the email of the 2nd contact.
-*  `edit 2 p/NONE` Removes the phone number of the 2nd contact.
-*  `edit 3 lv/Sec 4 sub/NONE` Changes the level of the 3rd contact, a student, to `Sec 4` and removes their subject.
-*  `edit 3 n/"Ravi s/o Kumar"` Edits the name of the 3rd contact to be `Ravi s/o Kumar`.
+  | Field | Set or update | Remove |
+  | --- | --- | --- |
+  | Phone | `p/91234567` | `p/NONE` |
+  | Email | `e/alex@example.com` | `e/NONE` |
+  | Student level | `lv/Sec 4` | `lv/NONE` |
+  | Student subject | `sub/Physics` | `sub/NONE` |
+
+* Guardians must keep a phone number or email address and cannot have their level or subject set or removed.
+  Students may have all four optional fields removed.
+* A successful edit selects the contact and replaces the current filter with `list st/former` for a former student,
+  or `list` for any other contact. The contact keeps its ID, student status and guardian link.
+  A successful change clears the opportunity to undo an earlier deletion.
+* An unchanged edit, including removing an already-absent field, is rejected with
+  `No changes made: the new values are the same as the current ones.` Capitalization-only edits count as changes.
+  Rejected edits preserve the current view and deletion undo.
+* An exact duplicate is rejected with `This edit would create a duplicate contact.` A possible duplicate is saved
+  with a warning, using the shared [duplicate rules](#duplicate-contacts-and-warnings).
+
+**Common errors:**
+
+| Input problem | Result |
+| --- | --- |
+| Missing index or extra text before the first parameter | `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` |
+| Zero, negative or non-integer index | `The contact index must be a positive integer shown in the list.` |
+| Index beyond the displayed list | `No contact exists at index INDEX.` |
+| No field supplied | `At least one of n/, p/, e/, lv/, or sub/ must be provided.` |
+| Repeated parameter | `Each of n/, p/, e/, lv/, and sub/ may appear only once.` |
+| Unsupported parameter | `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` |
+| Removing a guardian's last contact method | `A guardian must have at least one contact method: phone or email.` |
+| Setting or removing a guardian's level or subject | `Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.` |
+
+Leading zeroes are accepted: `02` means index 2.
+
+**Examples:**
+
+| Command | Effect |
+| --- | --- |
+| `edit 1 p/91234567 e/johndoe@example.com` | Updates the first displayed contact's phone and email. |
+| `edit 2 n/Betsy Crower` | Renames the second displayed contact. |
+| `edit 2 e/NONE` | Removes their email, provided a guardian still has a phone. |
+| `edit 3 lv/Sec 4 sub/NONE` | Sets a student's level and removes their subject. |
+| `edit 3 n/"Ravi s/o Kumar"` | Sets the full name, treating `s/o` as name text. |
 
 ### Locating contacts by name: `find`
 
