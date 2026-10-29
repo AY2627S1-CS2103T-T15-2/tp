@@ -475,39 +475,29 @@ Examples:
 
 Format: `link s/STUDENT_INDEX g/GUARDIAN_INDEX`
 
-To remove only a relationship, use `link s/STUDENT_INDEX g/NONE`. `NONE` ignores letter case. Both contacts
-are kept, and other students linked to that guardian are unaffected. Only the student needs to be displayed;
-the guardian can be hidden by a filter. The removal is saved automatically. The student remains selected only
-if they still match the current filter. After `children g/INDEX`, an unlinked student disappears from that
-guardian's results and selection clears. Use `list` or `list st/all` to return to the contacts view.
-An unlinked student is rejected with `NAME has no guardian linked.`
+To remove a relationship, use `link s/STUDENT_INDEX g/NONE` (`NONE` ignores case).
 
-* Run `list` or `find NAME` first and use the indexes in the **currently displayed list**.
-* For linking or replacing a guardian, both contacts must be visible. For `g/NONE`, only the student must be visible.
-  If a search hides either contact, run `list` before linking an active student.
-  To link a former student without reactivating them, use `list st/all` to show both contacts, or `find NAME` with a
-  search term that shows both; for example, `find Tan` can show former student Alex Tan and guardian Mei Tan
-  together.
-* `s/` must identify a student. For linking or replacing a guardian, `g/` must identify a guardian;
-  for unlinking, use `g/NONE` instead of an index.
-* Indexes must be positive whole numbers. Leading zeroes are accepted: `02` means `2`.
-* Parameters may appear in either order; each must appear exactly once. Prefixes are case-sensitive.
-* Each student can have one guardian; a guardian can be linked to several students.
-* Students with the same name remain separate contacts, even if both have no phone or email.
-  Use the intended student's displayed index; linking one does not change the other student's guardian.
-* Linking to a different guardian replaces the previous relationship. Linking to the same guardian again is rejected.
-* A successful linking or replacement command selects the student and shows the guardian's current name, phone
-  and email in the detail panel. After unlinking, the student is selected only if still visible in the current filter.
-  The command box stays focused so you can immediately enter the next command.
-* The relationship is saved automatically and survives edits, reordering and restarting the application.
+* Use indexes from the **currently displayed list**. Both contacts must be visible for linking or replacement;
+  only the student must be visible for `g/NONE`. Run `list` or `find NAME` first.
+  For former students, use `list st/all` or a shared search such as `find Tan` without reactivating them.
+* `s/` must identify a student; `g/` must identify a guardian or contain `NONE`.
+  Supply each case-sensitive prefix once, in either order. Indexes must be positive whole numbers;
+  leading zeroes are accepted (`02` means `2`).
+* Each student can have one guardian; guardians can have several students. A different guardian replaces the
+  previous link; linking the same guardian again is rejected. Same-name students remain separate, even without
+  phone or email, so use the intended student's index.
+* Linking or replacement selects the student and shows the guardian's current name, phone and email.
+  The command box keeps focus. Changes save automatically and survive edits, reordering and restarts.
+* Removal keeps both contacts and other students' links. The filter remains applied: a visible student is selected
+  and shows `Guardian: None`; after `children g/INDEX`, the student disappears and selection clears.
+  Use `list` or `list st/all` to return to contacts. An absent link reports `NAME has no guardian linked.`
 
 Examples, assuming Alex Tan is student `1`, Mei Tan is guardian `2`, and Sarah Lim is guardian `3`:
 
 * `link s/1 g/2` shows `Linked student Alex Tan to guardian Mei Tan.`
-* `link g/2 s/1` has the same effect, but is rejected if that relationship already exists: `Alex Tan is already linked to Mei Tan.`
+* `link g/2 s/1` has the same effect; an existing link reports `Alex Tan is already linked to Mei Tan.`
 * `link s/1 g/3` replaces Mei Tan and shows `Changed Alex Tan’s guardian from Mei Tan to Sarah Lim.`
-* `link s/1 g/NONE` removes Alex's guardian relationship and shows `Removed guardian link from Alex Tan.`
-  When Alex remains visible, the card and details panel show `Guardian: None`. Restarting retains the unlinked state.
+* `link s/1 g/NONE` shows `Removed guardian link from Alex Tan.` The removal survives restarting.
 
 Common errors:
 
@@ -523,55 +513,51 @@ Common errors:
 | Wrong student role | `Student index must refer to a student.` |
 | Wrong guardian role | `Guardian index must refer to a guardian.` |
 
-Failed link commands leave the contacts, relationships, selected contact, detail panel and saved data unchanged.
+Failed link commands leave contacts, relationships, selection, the detail panel and saved data unchanged.
 
 ![A linked student selected with the guardian's contact details displayed](images/StudentGuardianLink.png)
 
 ### Removing a guardian link: `unlink`
 
-Removes one student's guardian association while keeping both contacts.
+Removes a student's guardian link while keeping both contacts.
 
 Format: `unlink s/STUDENT_INDEX`
 
-* Use the student's index in the **currently displayed list**. The guardian does not need to be visible.
-* The target must be a linked student. Active and former students are supported; use `list st/former` to
-  show former students first. Names, contact IDs, tuition details and other students' links are preserved.
-* A successful removal is saved automatically. The student's guardian becomes `None`.
-  The existing filter remains applied. If the student no longer matches it (for example, after `children`),
-  the student disappears from the results and selection clears. Otherwise, the student is selected.
-* A successful `unlink` clears the opportunity to undo an earlier deletion. It cannot itself be undone with
-  `undo`; use `link` to restore the association.
-* Supply lowercase `s/` exactly once, with one positive whole-number index. Leading zeroes are accepted.
-  Missing/repeated parameters, other parameters and extra text are rejected. Errors include the command format.
+* Use the linked student's **currently displayed index**; the guardian can be hidden.
+  Active and former students are supported (`list st/former` shows former students).
+  Names, contact IDs, tuition details and other students' links stay unchanged.
+* Success saves the removal and shows guardian `None`. The filter remains: if the student no longer matches
+  (for example, after `children`), they disappear and selection clears; otherwise they are selected.
+* Successful `unlink` clears deletion undo and cannot itself be undone with `undo`. Use `link` to restore the link.
+* Supply lowercase `s/` once with a positive whole-number index; leading zeroes are accepted.
+  Missing/repeated parameters, other parameters and extra text are rejected with the command format.
 * An unlinked student reports `NAME has no guardian link to remove.` A guardian target reports
   `Student index must refer to a student.` An out-of-range index reports
   `No contact exists at student index INDEX.` Failed commands and failed saves leave data unchanged.
 
-Example: if Alex Tan is the linked student at index 1, `unlink s/1` reports
+Example: for linked student Alex Tan at index 1, `unlink s/1` reports
 `Removed the guardian link from Alex Tan. Both contacts were kept.`
 
 ### Finding a guardian's students: `children`
 
-Shows every student linked to a particular guardian, including former students.
+Shows a guardian's linked students, including former students.
 
 Format: `children g/GUARDIAN_INDEX`
 
-* Run `list r/guardian` or another command that displays the guardian, then use that guardian's **current** index.
-* Results replace the previous search/list filter and contain only that guardian's linked students.
-  Both active and former students are included. The usual alphabetical contact order and former badges apply.
-* Lookup uses the guardian's permanent identity. Guardians with the same name remain separate.
-* This command does not change or save contacts and preserves deletion undo.
-* Supply lowercase `g/` exactly once, with one positive whole-number index. Leading zeroes are accepted.
-  Missing/repeated parameters, other parameters and extra text are rejected. Errors include the command format.
+* Run `list r/guardian` or otherwise display the guardian, then use their **current index**.
+* Results replace the previous filter with that guardian's active and former students, in the usual alphabetical
+  order with former badges. Same-name guardians remain separate because lookup uses permanent identity.
+* Contacts, saved data and deletion undo are unchanged.
+* Supply lowercase `g/` once with a positive whole-number index; leading zeroes are accepted.
+  Missing/repeated parameters, other parameters and extra text are rejected with the command format.
 * A student target reports `Guardian index must refer to a guardian.` An out-of-range index reports
-  `No contact exists at guardian index INDEX.` These errors leave the current view unchanged.
-* A guardian without linked students produces an empty list and
-  `No students are linked to NAME. Use list to return to contacts.`
-* Use `list` to return to guardians and active students, or `list st/all` to show every contact.
-  Before looking up another guardian, display guardians again and use their newly displayed indexes.
+  `No contact exists at guardian index INDEX.` These errors leave the view unchanged.
+* No linked students produces an empty list and `No students are linked to NAME. Use list to return to contacts.`
+* Return with `list` (guardians and active students) or `list st/all` (all contacts).
+  Display guardians again before another lookup and use their new indexes.
 
 Example: after `list r/guardian`, if Mei Tan is guardian 1 with two linked students, `children g/1` reports
-`Listed 2 students linked to Mei Tan, including former students.` The message uses `1 student` for one match.
+`Listed 2 students linked to Mei Tan, including former students.` For one match, it uses `1 student`.
 
 ### Deleting contacts: `delete`
 
@@ -670,39 +656,44 @@ Format: `exit`
 
 ### Saving the data
 
-TutorRoster automatically saves successful `add`, `edit`, `delete`, `clear`, `link`, `unlink`, `undo`, `archive` and `unarchive` commands.
-You do not need to save manually. Read-only commands do not write the data file.
+Successful `add`, `edit`, `delete`, `clear`, `link`, `unlink`, `undo`, `archive` and `unarchive` commands save automatically.
+Read-only commands do not save.
 
-If saving fails, the command reports `Changes could not be saved. No changes were made.` Contacts, relationships and the previously saved data remain unchanged.
+A failed save reports `Changes could not be saved. No changes were made.` Contacts, relationships and previously
+saved data remain unchanged.
 
 ### Editing the data file
 
-TutorRoster data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+Data is stored in `[JAR file location]/data/addressbook.json`; preferences in `[JAR file location]/preferences.json`.
+Both paths are relative to the JAR's folder, regardless of the terminal's working directory.
+Advanced users can edit the JSON data file directly.
 
-Preferences are stored in `[JAR file location]/preferences.json`. Both locations are relative to the JAR's folder,
-regardless of the terminal's working directory.
-
-If an older version saved your files in a different working directory, close TutorRoster and back up those files.
-Copy the existing `data/addressbook.json` into the `data` subfolder beside the JAR, and copy `preferences.json`
-beside the JAR, before restarting. Check for existing files at the destination before replacing them.
+To migrate files from an older version's working directory, close TutorRoster and back up both files.
+Copy `data/addressbook.json` into the `data` subfolder beside the JAR and `preferences.json` beside the JAR,
+checking for existing destination files before replacing them. Restart afterwards.
 
 <box type="warning" seamless>
 
 **Caution:**
-If the data file is invalid, TutorRoster starts with an empty list and disables data-changing commands for that session. It displays `Data changes are disabled because the data file could not be loaded. Fix the file and restart TutorRoster.` followed by `Reason:` and the specific loading or validation problem, for example `Only a student can have a level or subject.` The same explanation is shown when a data-changing command is blocked. The invalid file is preserved. Back up the file before editing it, fix the reported problem and restart the application.<br>
-An empty or whitespace-only data file is also preserved and identified explicitly. Restore a backup if contacts were expected. If you intend to start with an empty contact list, close TutorRoster, delete that empty file and restart; a missing data file starts normally.<br>
-Older files containing punctuation-only names, such as `...`, also fail name validation. Close TutorRoster,
-back up the file, and correct each affected `name` to include at least one letter or digit before restarting.
-Keep the contact IDs and guardian references unchanged; the app does not automatically rename or remove contacts.<br>
-Contacts have permanent `id` values, and a student's optional `guardianId` must refer to an existing guardian's `id`. Keep IDs unique and preserve them when editing contact details. Invalid IDs, repeated JSON fields, duplicate contacts and invalid guardian references make the file invalid. Older valid files without IDs are accepted; IDs are assigned on loading and included in the next successful save.
+An invalid data file is preserved. TutorRoster starts with an empty list and disables data-changing commands
+for the session, showing `Data changes are disabled because the data file could not be loaded. Fix the file and restart TutorRoster.`
+followed by `Reason:` and the loading or validation problem (for example, `Only a student can have a level or subject.`).
+Blocked commands repeat this explanation. Back up the file, fix the reported problem and restart.<br>
+Empty or whitespace-only files are also preserved and identified. Restore a backup if contacts were expected.
+For an intentionally empty list, close TutorRoster, delete the empty file and restart; a missing file starts normally.<br>
+Punctuation-only names such as `...` are invalid. Close TutorRoster, back up the file and give each affected `name`
+at least one letter or digit, then restart. Preserve contact IDs and guardian references; the app does not rename or remove contacts automatically.<br>
+Keep permanent `id` values unique and unchanged when editing details. A student's optional `guardianId` must refer
+to an existing guardian's `id`. Invalid IDs, repeated JSON fields, duplicate contacts or invalid guardian references
+invalidate the file. Older valid files without IDs receive them on loading and include them in the next successful save.
 </box>
 
 --------------------------------------------------------------------------------------------------------------------
 
-**Multiple copies and external changes:** If another copy saves contacts after this session loaded them, the
-next data-changing command is rejected with `Contact data changed or is being saved by another session. No changes were saved. Close other copies and restart TutorRoster to load the latest data.`
-The rejected command does not change this session's contacts or replace the saved file. Close the other copies,
-restart to load the latest contacts, then repeat the intended command. Read-only commands remain available.
+**Multiple copies and external changes:** If another copy changes the saved data or is saving when this session
+tries to save, the command reports `Contact data changed or is being saved by another session. No changes were saved. Close other copies and restart TutorRoster to load the latest data.`
+The rejection preserves this session's contacts and the saved file. Close other copies, restart to load the latest
+contacts and repeat the command. Read-only commands remain available.
 
 ## FAQ
 
