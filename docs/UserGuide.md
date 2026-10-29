@@ -619,6 +619,9 @@ Format: `undo`
 * Restores the latest successful deletion by index, multiple indexes or name, including original contact IDs,
   details and student-guardian links. Bulk deletion is restored as one operation.
 * Restores the filter used before deletion and selects a restored contact visible in that view.
+* Success feedback lists the restored contacts by name and role, using `Restored 1 contact:` or
+  `Restored N contacts:`. If links were restored, it also reports their count, including links to hidden former
+  students. A link is counted once even if both its student and guardian were deleted.
 * Read-only commands such as `list`, `find`, `view` and `children` preserve undo availability.
 * Another successful deletion replaces the undo opportunity. Any other successful data-changing command clears it.
 * Failed commands and failed saves preserve the undo opportunity. If saving an undo fails, no data changes are
@@ -637,6 +640,8 @@ the view. Running this command does not invalidate deletion undo. Run `list`, `f
 first to choose the contacts to inspect.
 
 * `check` includes all three sections; `check guardians` reports students without linked guardians.
+* The report starts with `Data-quality report: 1 contact displayed.` or
+  `Data-quality report: N contacts displayed.`, using the number of contacts in the current view.
 * `check details` reports missing level or subject for students and missing contact methods when both phone and
   email are absent. Guardians are not expected to have student details.
 * `check duplicates` reports pairs using the same warning rules as `add` and `edit`: the same name and role plus
