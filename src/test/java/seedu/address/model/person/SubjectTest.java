@@ -34,6 +34,12 @@ public class SubjectTest {
 
     @Test
     public void isValidSubject_validValues_returnsTrue() {
+        // BVA: shortest valid value, just below the upper limit, and the upper limit itself.
+        assertTrue(Subject.isValidSubject("A"));
+        assertTrue(Subject.isValidSubject("a".repeat(Subject.MAX_LENGTH - 1)));
+        assertTrue(Subject.isValidSubject("a".repeat(Subject.MAX_LENGTH)));
+
+        // EP: ordinary text, permitted punctuation, digits and non-English letters.
         assertTrue(Subject.isValidSubject("A-Math"));
         assertTrue(Subject.isValidSubject("Math"));
         assertTrue(Subject.isValidSubject("IB (HL) Year 1"));
@@ -42,11 +48,11 @@ public class SubjectTest {
         assertTrue(Subject.isValidSubject("Combined Science (Chem/Bio)"));
         assertTrue(Subject.isValidSubject("English Language & Literature"));
         assertTrue(Subject.isValidSubject("中三")); // non-English letters
-        assertTrue(Subject.isValidSubject("a".repeat(Subject.MAX_LENGTH))); // maximum length
     }
 
     @Test
     public void constructor_combiningMarks_preservesTextAndValidationLimits() {
+        // EP: combining marks attached to letters are valid; marks alone are invalid.
         for (String value : List.of("\u0ba4\u0bae\u0bbf\u0bb4\u0bcd", "\u0939\u093f\u0928\u094d\u0926\u0940",
                 "Franc\u0327ais", "e\u0301".repeat(15))) {
             assertEquals(value, new Subject(value).value);
@@ -57,6 +63,7 @@ public class SubjectTest {
 
     @Test
     public void isValidSubject_invalidValues_returnsFalse() {
+        // EP: empty, blank, punctuation-only, surrounding spaces and unsupported characters.
         assertFalse(Subject.isValidSubject("")); // empty
         assertFalse(Subject.isValidSubject("   ")); // spaces only
         assertFalse(Subject.isValidSubject("-.+()")); // no letter or digit
@@ -64,7 +71,8 @@ public class SubjectTest {
         assertFalse(Subject.isValidSubject("A-Math ")); // trailing space
         assertFalse(Subject.isValidSubject("/&")); // separators alone are not a subject
         assertFalse(Subject.isValidSubject("Sec #3")); // other symbol
-        assertFalse(Subject.isValidSubject("a".repeat(Subject.MAX_LENGTH + 1))); // too long
+        // BVA: one code point beyond the maximum, with all other constraints satisfied.
+        assertFalse(Subject.isValidSubject("a".repeat(Subject.MAX_LENGTH + 1)));
     }
 
     @Test
@@ -74,6 +82,7 @@ public class SubjectTest {
         assertEquals(Subject.MESSAGE_INVALID_CHARACTERS, Subject.getValidationErrorMessage("A#B"));
         assertEquals(Subject.MESSAGE_MISSING_ALPHANUMERIC, Subject.getValidationErrorMessage("-.+()"));
         assertEquals("Subject cannot start or end with spaces.", Subject.getValidationErrorMessage(" A "));
+        // BVA: the limit counts Unicode code points, including supplementary letters, not UTF-16 units.
         assertNull(Subject.getValidationErrorMessage("中".repeat(30)));
         assertNull(Subject.getValidationErrorMessage("\uD801\uDC00".repeat(30)));
         assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("\uD801\uDC00".repeat(31)));
@@ -81,6 +90,7 @@ public class SubjectTest {
 
     @Test
     public void getValidationErrorMessage_multipleViolations_preservesConstraintPriority() {
+        // Combination: after isolated constraints above, overlapping violations check error precedence.
         assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("&".repeat(31)));
         assertEquals(Subject.MESSAGE_INVALID_CHARACTERS, Subject.getValidationErrorMessage(" # "));
         assertEquals(Subject.MESSAGE_MISSING_ALPHANUMERIC, Subject.getValidationErrorMessage(" --- "));
@@ -114,6 +124,7 @@ public class SubjectTest {
 
     @Test
     public void isSameValue_greekSigmaVariants_matchesBothDirections() {
+        // All combinations: all 3 x 3 pairs of uppercase, ordinary lowercase and final sigma.
         for (String first : List.of("\u039f\u03a3", "\u03bf\u03c3", "\u03bf\u03c2")) {
             for (String second : List.of("\u039f\u03a3", "\u03bf\u03c3", "\u03bf\u03c2")) {
                 assertTrue(new Subject(first).isSameValue(new Subject(second)), first + " vs " + second);

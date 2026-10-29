@@ -16,6 +16,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -583,12 +584,15 @@ public class EditCommandTest {
         addressBook.addPerson(guardian);
         Model guardianModel = new ModelManager(addressBook, new UserPrefs());
 
-        EditCommand setLevel = new EditCommand(INDEX_FIRST_PERSON,
-                new EditPersonDescriptorBuilder().withLevel("Sec 3").build());
-        assertCommandFailure(setLevel, guardianModel, EditCommand.MESSAGE_GUARDIAN_STUDENT_DETAILS);
-
-        EditCommand removeSubject = new EditCommand(INDEX_FIRST_PERSON,
-                new EditPersonDescriptorBuilder().withoutSubject().build());
-        assertCommandFailure(removeSubject, guardianModel, EditCommand.MESSAGE_GUARDIAN_STUDENT_DETAILS);
+        // EP: guardians cannot edit student details, even when the value is valid for a student.
+        // All combinations: level/subject x set/remove, with only one field specified per command.
+        for (EditPersonDescriptor descriptor : List.of(
+                new EditPersonDescriptorBuilder().withLevel("Sec 3").build(),
+                new EditPersonDescriptorBuilder().withoutLevel().build(),
+                new EditPersonDescriptorBuilder().withSubject("Math").build(),
+                new EditPersonDescriptorBuilder().withoutSubject().build())) {
+            assertCommandFailure(new EditCommand(INDEX_FIRST_PERSON, descriptor), guardianModel,
+                    EditCommand.MESSAGE_GUARDIAN_STUDENT_DETAILS);
+        }
     }
 }
