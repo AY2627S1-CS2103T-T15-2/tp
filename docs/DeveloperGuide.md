@@ -478,6 +478,10 @@ fields. It validates supplied values in the fixed order role, name, phone, email
 the order in which parameters appear.
 The shared tokenizer recognizes prefixes at the start of the arguments or after `Character.isWhitespace`
 characters, including tabs and line breaks, while preserving internal value whitespace and quoted names.
+Before dispatch, `AddressBookParser` uses `StringUtil#normalizeSpaceSeparators` to replace Unicode `Zs` characters
+with ordinary spaces throughout the input, including quoted values. This includes non-breaking, figure and narrow
+non-breaking spaces from pasted text. Tabs and line breaks remain unchanged for the existing tokenizer and field
+validation rules. Normalizing at this boundary keeps Add, Edit, Find, List and name-based Delete consistent.
 Command dispatch accepts the same separators and preserves multiline arguments for field validation.
 Unknown prefixes, repeated prefixes and unclosed quotes are syntax errors reported before field-value validation.
 The parser checks for a missing role, validates the role, then checks for a missing name and unexpected preamble
@@ -541,6 +545,10 @@ checks possible duplicates in this order: a phone number that matches after spac
 address that matches case-insensitively; then a contact method that is absent from both contacts. It displays only the
 first matching warning, appends it after the normal success message, and still adds the contact. Contacts with
 different roles or names do not receive these warnings.
+
+`Person#hasSamePhoneIgnoringFormatting` applies the same space-separator normalization before removing spaces and
+hyphens, so phone warnings and the duplicate report also recognize existing saved numbers containing Unicode spaces.
+This comparison does not rewrite those saved values or broaden exact duplicate identity.
 
 `DuplicateWarning#classify` owns the warning priority shared by Add and Edit and returns `PHONE`, `EMAIL`, `GENERAL`
 or `NONE`. Each command supplies its own wording; Add also logs the selected warning. Edit excludes the contact
@@ -1192,6 +1200,26 @@ The failed command should remain in the command box, which keeps focus.
 1. Test case: `add r/student n/"Ravi lv/Sec sub/Math"`.<br>
    Expected: The entire quoted text is saved as the name, with no level or subject set. Repeat with pasted tabs
    between parameters instead of spaces; the result is unchanged. A tab inside the quoted name is rejected.
+
+### Pasted space separators
+
+Use an empty disposable data folder for each case. The gaps inside `Bea Lim`, `9333 3333`, `Sec 3` and
+`Alex Tan` below are non-breaking spaces (U+00A0); copy the commands to retain them.
+
+1. Enter `add r/student n/Bea Lim p/93333333`, then
+   `add r/student n/Bea Lim p/9333 3333 e/b@x.com`, then
+   `add r/student n/Bea Lim p/9333 3333 e/c@x.com`.<br>
+   Expected: Both later additions show the phone-match warning. `check duplicates` reports three pairs.
+   The second contact is saved as `Bea Lim` with phone `9333 3333` using ordinary spaces. Restart and verify
+   that the names, phone values and duplicate report are retained.
+
+1. Enter `add r/student n/Alex Tan lv/Sec 3 sub/Math`, then `list lv/Sec 3`, then `find Alex Tan`.<br>
+   Expected: Alex is added and both queries show that contact. `edit 1 lv/Sec 4` updates the level to `Sec 4`.
+   `delete n/Alex Tan` deletes the contact successfully.
+
+1. Paste a non-breaking space after the email in `add r/guardian n/Mei Tan e/mei@example.com`.<br>
+   Expected: Mei is added with email `mei@example.com`. Moving that space inside the email, immediately before
+   `@`, gives `Email address cannot contain whitespace.` without changing the contacts or saved data.
 
 ### Deleting contacts
 

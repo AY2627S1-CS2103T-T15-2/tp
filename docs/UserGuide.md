@@ -63,6 +63,11 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
 
+* Pasted Unicode space separators, including non-breaking spaces, are treated as ordinary spaces throughout
+  commands, including quoted values. Names, levels and subjects follow their usual space rules; surrounding
+  email spaces are removed, while spaces inside an email remain invalid. Internal tabs and line breaks are
+  still checked under each field's rules.
+
 * Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
@@ -181,6 +186,9 @@ these checks.
 | Email matches, ignoring capitalization | Added with an email warning. |
 | Phone is missing from both contacts, or email is missing from both | Added with a general warning. |
 | None of the above | Added without a warning. |
+
+Phone warnings and `check duplicates` also ignore Unicode space separators in phone numbers already saved in the
+data file. Those saved phone values are preserved.
 
 Exact duplicates ignore email capitalization and treat two omitted values as matching. **Internal phone spaces and
 hyphens remain significant for rejection**: `p/9123 4567` and `p/91234567` produce a warning instead.
