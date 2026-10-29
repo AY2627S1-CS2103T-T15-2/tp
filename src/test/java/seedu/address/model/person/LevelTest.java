@@ -36,6 +36,8 @@ public class LevelTest {
     public void isValidLevel_validValues_returnsTrue() {
         // BVA: shortest valid value, just below the upper limit, and the upper limit itself.
         assertTrue(Level.isValidLevel("A"));
+        // EP and BVA: a digit alone satisfies the content rule at the minimum valid length.
+        assertTrue(Level.isValidLevel("3"));
         assertTrue(Level.isValidLevel("a".repeat(Level.MAX_LENGTH - 1)));
         assertTrue(Level.isValidLevel("a".repeat(Level.MAX_LENGTH)));
 
