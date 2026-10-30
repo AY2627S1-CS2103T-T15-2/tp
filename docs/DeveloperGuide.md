@@ -107,7 +107,9 @@ Here's a (partial) class diagram of the `Logic` component:
 `XYZCommand` represents the concrete commands listed in the diagram. `ArchiveCommand` and `UnarchiveCommand`
 instead extend the abstract `StudentStatusCommand`, which shares their student-status validation and update logic.
 
-The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
+The sequence diagram below focuses on parsing and command execution for `delete 1`. Model `c` is the candidate
+used by the [shared execution and saving policy](#executing-and-saving-changes). Resolving the displayed index,
+copying the candidate, saving, publishing and recording deletion history are omitted from this focused view.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
 
@@ -120,7 +122,7 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
+1. This produces a concrete `Command`, which `LogicManager` executes using the shared read-only or data-changing flow.
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
@@ -187,92 +189,50 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Executing and saving changes
+
+`LogicManager` parses each command and checks `Command.isDataChanging()`. Read-only commands run on the live
+model without saving. Data-changing commands follow one shared policy:
+
+1. Reject changes if the contact-data file failed to load.
+2. Copy the live data and preferences to a candidate `ModelManager`, retaining the current filter.
+3. Execute and validate the command on the candidate, then save it through `Storage#saveAddressBook`.
+4. Only after saving succeeds, publish the candidate's data and filter to the live model and update deletion history.
+
+A successful deletion records a snapshot; undo consumes it; other successful data changes clear it. Validation
+and save failures leave live contacts, relationships, filters and deletion history unchanged. Ordinary save failures
+report `Changes could not be saved. No changes were made.` Conflicting external saves have a separate recovery
+message. See [Saving contacts and relationships](#saving-contacts-and-relationships) for atomic file replacement,
+locking and load-failure protection. Feature-specific rules are described below.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+This is a future design adapted from AB3, **not the current deletion-only undo implementation** described
+[below](#undoing-the-latest-deletion). It would support undoing and redoing multiple kinds of data changes.
 
-* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
+A proposed `VersionedAddressBook` would extend `AddressBook`, storing snapshots in `addressBookStateList` and
+tracking the current snapshot with `currentStatePointer`. Its operations would be exposed through `Model`:
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
+| Operation | Proposed behaviour |
+| --- | --- |
+| `commitAddressBook()` | Append a successfully changed state and advance the pointer, discarding any redo history |
+| `undoAddressBook()` | Move to the previous snapshot; reject when already at the first |
+| `redoAddressBook()` | Move to the next snapshot; reject when already at the latest |
 
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
+Read-only and failed commands would not commit snapshots. For example, after a deletion and an addition,
+undoing would restore the post-deletion state. A new successful change would replace the abandoned redo branch.
 
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
+<puml src="diagrams/UndoRedoState3.puml" alt="Proposed snapshot history after undoing an addition" />
 
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
-
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
-
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
-
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
-
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
-
-<box type="info" seamless>
-
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
-</box>
-
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
-
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
-
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
-</box>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
-
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
-</box>
-
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
-
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
-
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
-
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
-
-The following activity diagram summarizes what happens when a user executes a new command:
-
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
+<puml src="diagrams/CommitActivityDiagram.puml" width="250" alt="Proposed commit decision flow" />
 
 #### Design considerations:
 
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire address book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
+Whole-address-book snapshots simplify restoration at the cost of memory. Command-specific inverse operations
+could use less memory, but each command would need its own correct reversal logic, including relationship changes.
+The current deletion undo uses one snapshot; it does not expose the proposed general undo/redo API.
 
 ### Undoing the latest deletion
 
@@ -295,11 +255,9 @@ This deletion-specific implementation is separate from the proposed general undo
 
 `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` changes the name, phone number, email address,
 level or subject of a displayed contact. Only a student can have a level or subject.
-The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
-first displayed contact `p`, assumed to be a student with a phone number. Because edit changes data, `LogicManager`
-copies the live model `m`'s data and preferences into a candidate `c` and applies the current filter to `c` before
-executing the command. It saves `c` through `Storage` before publishing both its data and filter to `m`.
-If the save fails, the live contacts, view and deletion-undo history stay unchanged.
+The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, removing the first displayed
+student `p`'s phone. Candidate `c` and live model `m` follow the shared
+[execution and saving policy](#executing-and-saving-changes).
 
 <puml src="diagrams/EditSequenceDiagram.puml" alt="Interactions inside the Logic component for the `edit 1 p/NONE` command" />
 
@@ -341,9 +299,8 @@ The command prepares its success feedback and any duplicate warning before chang
 guardian. Thus editing a former student shows the former-student view; other edits show guardians and active
 students. The previous search, role, level or subject filter is replaced so the edited contact remains visible.
 
-After saving succeeds, `LogicManager` publishes the candidate data and filter, clears deletion-undo history, and
-returns the prepared `CommandResult`. Its contact ID lets `MainWindow` select the edited contact and refresh the
-details panel. A rejected edit or a failed save leaves the live contacts, filter and undo opportunity unchanged.
+After the shared save flow succeeds, the result's contact ID lets `MainWindow` select the edited contact and
+refresh its details panel.
 
 **Design considerations.**
 
@@ -396,14 +353,9 @@ If the student was selected, the UI clears the selection and detail panel when t
 When the student remains in the view, as with `find` or `list st/all`, the existing selection is retained
 and its details are refreshed. The details panel shows the status as `Role: Student [Former]`.
 
-**Saving and failure handling.** Both commands declare themselves data-changing. `LogicManager` creates a
-candidate model containing the live data, preferences and current filter, then executes the command on that copy.
-It saves the candidate through `Storage#saveAddressBook` before publishing its data and filter to the live model.
-A validation failure or failed save leaves the live contacts, relationships and filter unchanged. A save failure
-reports `Changes could not be saved. No changes were made.`; see
-[Saving contacts and relationships](#saving-contacts-and-relationships) for the storage mechanism.
-Successful status changes clear the previous deletion's undo history, following the rule described under
-[Undoing the latest deletion](#undoing-the-latest-deletion).
+**Saving and failure handling.** Both commands use the shared
+[execution and saving policy](#executing-and-saving-changes). A successful status change clears deletion undo;
+validation and save failures preserve it.
 
 **Design considerations.**
 
@@ -457,9 +409,8 @@ the student's ID; the UI clears selection if the preserved filter now excludes t
 
 <puml src="diagrams/UnlinkSequenceDiagram.puml" alt="Unlink execution with save-before-publish failure handling" />
 
-As a data-changing command, unlink uses `LogicManager`'s candidate-model flow. Only a successful save publishes
-the candidate and clears deletion undo. Validation errors, load failures and save failures preserve live data
-and any previous undo opportunity. This provides one persistence policy for linking, unlinking and other edits.
+Unlink uses the shared [execution and saving policy](#executing-and-saving-changes), including preservation of
+live data and deletion undo on failure.
 
 **Guardian lookup.** `ChildrenCommand` first resolves and validates a guardian in the current displayed list,
 then replaces the model predicate with `GuardianChildrenPredicate`. The predicate stores a `ContactId` and
@@ -696,7 +647,9 @@ observable. Existing same-role records differing only in
 capitalization may therefore fail duplicate validation on loading. IDs and guardian links remain independent of
 duplicate identity.
 
-Each command declares whether it changes data through `Command.isDataChanging()`. `LogicManager` executes data-changing commands on a candidate model carrying the original filter. It saves that candidate before replacing the live model. An unsuccessful command or save therefore cannot change the live contacts, relationships or displayed list. `JsonAddressBookStorage` writes a temporary file in the destination directory and atomically replaces the data file; it fails safely if atomic replacement is unavailable. Read-only commands do not save data.
+Following the [execution and saving policy](#executing-and-saving-changes), `JsonAddressBookStorage` writes a
+temporary file in the destination directory and atomically replaces the data file. If atomic replacement is
+unavailable, saving fails safely without publishing the candidate.
 
 Each successful load retains the exact file bytes parsed into that session's model (including whether the
 file was missing). Before saving, storage acquires an exclusive operating-system lock on the sibling
