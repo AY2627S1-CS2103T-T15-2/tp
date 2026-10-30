@@ -93,6 +93,17 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 * Index numbers used by commands such as `edit` and `delete` refer to this displayed order.
 </box>
 
+### Common command rules
+
+* **Indexes** refer to the currently displayed, sorted list. Use positive whole numbers; leading zeroes are
+  accepted (`02` means 2). Display the intended contacts first, and recheck indexes after the list changes.
+* A zero, negative or non-integer `INDEX` gives `The contact index must be a positive integer shown in the list.`
+  An index beyond the list gives `No contact exists at index INDEX.` Relationship commands identify the student
+  or guardian index in their own messages. Missing targets and other syntax errors show command-specific guidance.
+* **Rejected commands and failed saves** leave live contacts, relationships, the current view and saved data
+  unchanged. They also preserve any deletion undo. Correct the reported problem and retry; see
+  [Saving the data](#saving-the-data) and the recovery guidance that follows.
+
 ### Viewing help: `help`
 
 Opens a command reference listing the available commands and their formats. For full instructions, examples and
@@ -243,8 +254,7 @@ Other errors explain the reason, for example:
 Level and subject errors distinguish excessive length, unsupported characters and values without any letters or
 digits. Email errors distinguish unsupported characters from punctuation placement, such as consecutive periods.
 
-Correct the indicated problem and try again. On failure, contacts, selection, and saved data stay unchanged;
-the command remains for correction. For saving errors, see [Saving the data](#saving-the-data).
+On failure, the command remains for correction; the [common failure guarantees](#common-command-rules) apply.
 
 ### Listing contacts: `list`
 
@@ -264,13 +274,9 @@ Command | Shows
 `list lv/Sec 3 sub/A-Math` | Active Sec 3 students who take A-Math
 `list sub/Physics st/all` | All students who take Physics, active and former
 
-* Former students are hidden; see [Marking a student as former](#marking-a-student-as-former-archive).
-* `r/ROLE` shows only contacts with that role. `ROLE` must be `student` or `guardian`, and ignores letter case.
-* `st/STATUS` chooses which contacts to show by status. `STATUS` must be `active`, `former` or `all`, and ignores
-  letter case:
-  * `st/active` shows guardians and active students. This is the default, so `list st/active` is the same as `list`.
-  * `st/former` shows only former students.
-  * `st/all` shows every contact, whatever its status.
+* `ROLE` accepts `student` or `guardian`; `STATUS` accepts `active`, `former` or `all`, ignoring letter case.
+  The default is `active`, so former students are hidden unless you supply `st/former` or `st/all`.
+  See [archiving](#marking-a-student-as-former-archive) for changing student status.
 * `lv/LEVEL` and `sub/SUBJECT` show only students with that level and subject. Letter case and spaces are
   ignored, so `lv/sec3` matches a student at `Sec 3`. The whole value must match: `sub/Math` does not match
   `A-Math`. The same accented spelling matches across input methods. Accents remain significant, so `Français`
@@ -280,7 +286,6 @@ Command | Shows
   `list sub/"Art n/Design"`. Without the quotation marks, `n/` is read as an unknown parameter and the command is
   rejected.
 * Parameters can be given in any order, and each can appear only once. A contact must match all of them.
-  Without `st/`, former students are hidden, so add `st/all` to include them.
 * Guardians are never former, so `list r/guardian st/former` is rejected with
   `Guardians cannot be former. Remove r/guardian or st/former.`
 * Guardians have no level or subject, so `list r/guardian lv/Sec 3` is rejected with
@@ -330,7 +335,7 @@ Marks a student as former while keeping their details and guardian link.
 
 Format: `archive INDEX`
 
-* Use one positive index from the **currently displayed list**. Guardians cannot be archived.
+* Use one displayed index, following the [common index rules](#common-command-rules). Guardians cannot be archived.
 * The current filter is kept. The student disappears from active-only views such as `list`, but remains visible
   with a `Former` badge after `list st/all` or `find NAME`. Their guardian remains in the active list.
 * An already-former student is rejected. Success reports `Marked NAME as a former student.`
@@ -343,12 +348,11 @@ Example: `find Alex`, then `archive 1`, marks the first search result as former 
 | --- | --- |
 | Missing index | `Missing contact index. Use: archive INDEX` |
 | More than one argument | `Only one contact index is allowed. Use: archive INDEX` |
-| Zero, negative or non-integer index | `The contact index must be a positive integer shown in the list.` |
-| Index beyond the displayed list | `No contact exists at index INDEX.` |
 | Guardian target | `Only students can be archived.` for `archive`; `Only students can be unarchived.` for `unarchive`. |
 | Already in the requested status | `NAME is already a former student.` for `archive`; `NAME is already an active student.` for `unarchive`. |
 
-For `unarchive`, the usage text shows `unarchive INDEX` instead. Rejected commands leave contacts unchanged.
+For `unarchive`, the usage text shows `unarchive INDEX` instead. Other index errors follow the
+[common rules](#common-command-rules).
 
 ### Marking a former student as active: `unarchive`
 
@@ -370,7 +374,8 @@ Updates the contact at an index in the **currently displayed list**.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
-* Use a positive index and supply at least one field. Omitted fields keep their values; empty values are rejected.
+* Follow the [common index rules](#common-command-rules) and supply at least one field.
+  Omitted fields keep their values; empty values are rejected.
   Each parameter may appear only once. The contact's role cannot be edited, and other parameters are rejected.
 * Values follow the [field rules](#field-rules). Quote names containing prefix-like words, such as
   `n/"Ravi s/o Kumar"` or `n/"Randy p/e ratio"`. Embedded slashes such as `n/AC/DC` also work without quotes in `edit`.
@@ -399,15 +404,11 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 | Input problem | Result |
 | --- | --- |
 | Missing index or extra text before the first parameter | `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` |
-| Zero, negative or non-integer index | `The contact index must be a positive integer shown in the list.` |
-| Index beyond the displayed list | `No contact exists at index INDEX.` |
 | No field supplied | `At least one of n/, p/, e/, lv/, or sub/ must be provided.` |
 | Repeated parameter | `Each of n/, p/, e/, lv/, and sub/ may appear only once.` |
 | Unsupported parameter | `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` |
 | Removing a guardian's last contact method | `A guardian must have at least one contact method: phone or email.` |
 | Setting or removing a guardian's level or subject | `Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.` |
-
-Leading zeroes are accepted: `02` means index 2.
 
 **Examples:**
 
@@ -450,12 +451,7 @@ Shows the full details of the specified contact in the details panel.
 
 Format: `view INDEX`
 
-* Selects the contact at the specified `INDEX` in the list.
-* The index refers to the index number shown in the displayed contact list.
-* The index **must be a positive integer** 1, 2, 3, ...
-* A value that is not a positive integer is rejected with
-  `The contact index must be a positive integer shown in the list.`
-* An index outside the displayed list is rejected with `No contact exists at index INDEX.`
+* Selects the contact at `INDEX`, following the [common index rules](#common-command-rules).
 * The details panel shows the contact's name with a `Student` or `Guardian` badge, and a `Former` badge for a former
   student. Below the name, the details panel groups the contact's details into sections:
   * **Details**: the contact's role, phone number and email address.
