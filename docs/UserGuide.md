@@ -434,13 +434,15 @@ Format: `find NAME`
   Vowel signs in scripts such as Devanagari are part of the name and must match; for example, `किरण` does not match
   `करण`.
 * The search considers only names.
+* Type the name only, without `n/`. Everything after `find` is treated as part of the name, so `find n/Alex`
+  matches only names containing the text `n/Alex`, not every name containing `Alex`.
 * Former students are included in the results with a `Former` badge.
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.
 * The result shows the number of matches; for example, `Found 2 contacts matching: li.`
 * If no contact matches, `No contacts found matching: NAME` is shown.
 * Matching contacts are shown in the same format as `list`.
 
-Examples:
+Examples, assuming your contacts include Alex Yeoh, Charlotte Oliveiro and David Li:
 * `find ale` returns `Alex Yeoh`
 * `find li` returns `Charlotte Oliveiro` and `David Li`
 
