@@ -89,19 +89,28 @@ public class EditCommandParser implements Parser<EditCommand> {
     /**
      * Throws if the preamble or any value contains a word ending in {@code /} that is not an edit prefix.
      * Text inside a quoted name or subject is skipped, so it may contain such words.
-     * Inside an unquoted name, the error also suggests quoting the name.
+     * Inside an unquoted name or subject, the error also suggests quoting that value.
      */
     private static void verifyNoUnknownPrefixes(ArgumentMultimap argMultimap) throws ParseException {
         throwIfUnknownPrefix(argMultimap.getPreamble(), EditCommand.MESSAGE_UNKNOWN_PARAMETER);
         for (Prefix prefix : EDIT_PREFIXES) {
             for (String value : argMultimap.getAllValues(prefix)) {
-                boolean isUnquotedName = prefix.equals(PREFIX_NAME) && !value.stripLeading().startsWith("\"");
-                String errorMessage = isUnquotedName
-                        ? EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_NAME_SLASH
-                        : EditCommand.MESSAGE_UNKNOWN_PARAMETER;
-                throwIfUnknownPrefix(prefix.getPrefix() + extractTextOutsideQuotes(prefix, value), errorMessage);
+                throwIfUnknownPrefix(prefix.getPrefix() + extractTextOutsideQuotes(prefix, value),
+                        unknownPrefixMessage(prefix, value));
             }
         }
+    }
+
+    /** Suggests quoting when the unknown prefix is inside an unquoted name or subject. */
+    private static String unknownPrefixMessage(Prefix prefix, String value) {
+        if (value.stripLeading().startsWith("\"")) {
+            return EditCommand.MESSAGE_UNKNOWN_PARAMETER;
+        } else if (prefix.equals(PREFIX_NAME)) {
+            return EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_NAME_SLASH;
+        } else if (prefix.equals(PREFIX_SUBJECT)) {
+            return EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_SUBJECT_SLASH;
+        }
+        return EditCommand.MESSAGE_UNKNOWN_PARAMETER;
     }
 
     private static String extractTextOutsideQuotes(Prefix prefix, String value) {

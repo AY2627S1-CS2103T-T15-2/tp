@@ -62,6 +62,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter. Use: " + COMMAND_FORMAT;
     public static final String MESSAGE_UNKNOWN_PARAMETER_OR_NAME_SLASH = MESSAGE_UNKNOWN_PARAMETER + "."
             + AddCommand.MESSAGE_NAME_SLASH_HINT;
+    public static final String MESSAGE_UNKNOWN_PARAMETER_OR_SUBJECT_SLASH = MESSAGE_UNKNOWN_PARAMETER + "."
+            + AddCommand.MESSAGE_SUBJECT_SLASH_HINT;
     public static final String MESSAGE_REPEATED_PARAMETER = "Each of " + PREFIX_NAME + ", " + PREFIX_PHONE
             + ", " + PREFIX_EMAIL + ", " + PREFIX_LEVEL + ", and " + PREFIX_SUBJECT
             + " may appear only once.";

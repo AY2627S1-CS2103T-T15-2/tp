@@ -111,6 +111,13 @@ public class EditCommandParserTest {
         // unknown prefix after a quoted name
         assertParseFailure(parser, "1 n/\"Alex Tan\" a/15", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
 
+        // unknown prefix inside an unquoted subject suggests quoting the subject
+        assertParseFailure(parser, "1 sub/Combined Science (Chem/Bio)",
+                EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_SUBJECT_SLASH);
+
+        // unknown prefix after a quoted subject
+        assertParseFailure(parser, "1 sub/\"Combined Science (Chem/Bio)\" a/15", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
+
         // unknown prefix is reported before an invalid index
         assertParseFailure(parser, "0 r/guardian", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
     }

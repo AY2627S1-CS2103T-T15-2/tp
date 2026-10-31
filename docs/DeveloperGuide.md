@@ -308,7 +308,7 @@ quoted name such as `n/"Randy p/e ratio"` keeps any prefix-like text inside the 
 
 1. No unknown parameter. Any word ending in `/` outside a quoted name, other than `n/`, `p/`, `e/`, `lv/` or `sub/`, is rejected
    with `Unknown parameter`. This is why an unquoted name such as `Ravi s/o Kumar` must be quoted. When the word is
-   inside an unquoted name, the message also suggests quoting the name, as `add` does.
+   inside an unquoted name or subject, the message also suggests quoting that value, as `add` does.
 2. No repeated parameter. Each of `n/`, `p/`, `e/`, `lv/` and `sub/` may appear once.
 3. A valid index. A missing index, or extra text before the first parameter, gives `Invalid edit command`. A value
    that is not a positive integer gives `The contact index must be a positive integer shown in the list.`
