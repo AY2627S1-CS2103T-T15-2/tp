@@ -63,7 +63,6 @@ public class NameTest {
         assertFalse(Name.isValidName("Alex!")); // unsupported exclamation mark
         assertFalse(Name.isValidName("Alex~Tan")); // unsupported tilde
         assertFalse(Name.isValidName("Alex_Tan")); // unsupported underscore
-        assertFalse(Name.isValidName("Alex, Tan")); // unsupported comma
         assertFalse(Name.isValidName("\"Alex\"")); // quotation marks are syntax, not part of a name
         assertFalse(Name.isValidName("a".repeat(Name.MAX_LENGTH + 1))); // exceeds maximum length
 
@@ -77,6 +76,7 @@ public class NameTest {
         assertTrue(Name.isValidName("Mary-Anne O'Brien")); // hyphen and straight apostrophe
         assertTrue(Name.isValidName("Mary-Anne O’Brien")); // typographic apostrophe
         assertTrue(Name.isValidName("J. R. R. Tolkien")); // periods
+        assertTrue(Name.isValidName("Alex, Tan")); // comma
         assertTrue(Name.isValidName("李小龍")); // Unicode letters
         assertTrue(Name.isValidName("Jose\u0301")); // combining mark
         assertTrue(Name.isValidName("a".repeat(Name.MAX_LENGTH))); // maximum length
@@ -84,7 +84,8 @@ public class NameTest {
 
     @Test
     public void validation_noLettersOrDigits_rejectsPunctuationAndCombiningMarks() {
-        for (String name : List.of("...", "-", "---", "'", "///", "'-./’", " . - ’ ", "\u0301", "-\u0301.")) {
+        for (String name : List.of("...", "-", "---", "'", "///", "'-./’", " . - ’ ", "\u0301", "-\u0301.",
+                "(", ")", ",", "(),")) {
             assertFalse(Name.isValidName(name));
             assertEquals(Name.MESSAGE_MISSING_ALPHANUMERIC, Name.getValidationErrorMessage(name));
             assertThrows(IllegalArgumentException.class, () -> new Name(name));
@@ -106,7 +107,15 @@ public class NameTest {
         assertEquals("Name cannot exceed " + Name.MAX_LENGTH + " characters.",
                 Name.getValidationErrorMessage(".".repeat(Name.MAX_LENGTH + 1)));
         assertEquals("Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                + "hyphens, periods, middle dots (·), and slashes.", Name.getValidationErrorMessage("!"));
+                + "hyphens, periods, middle dots (·), parentheses, commas, and slashes.",
+                Name.getValidationErrorMessage("!"));
+    }
+
+    @Test
+    public void constructor_parenthesesAndCommas_preservesSpelling() {
+        for (String name : List.of("Tan Wei Ming (David)", "Lee Ah Kow, Jr.", "Alex (Al), Jr.")) {
+            assertEquals(name, new Name(name).fullName);
+        }
     }
 
     @Test
