@@ -114,12 +114,15 @@ Format: `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 **Role and name are required.** Students may have phone, email, both, or neither. Guardians must have at least
 one contact method. Level and subject are optional and available **only for students**.
 
+See [Field rules](#field-rules), [Duplicate contacts and warnings](#duplicate-contacts-and-warnings),
+or [Correcting an unsuccessful add](#correcting-an-unsuccessful-add) for details.
+
 Examples:
 
 | To add... | Enter |
 | --- | --- |
 | A student with phone and email | `add r/student n/Alex Tan p/91234567 e/alex@example.com` |
-| A student with level and subject | `add r/student n/Alex Tan lv/Sec 3 sub/Math` |
+| A student with level and subject | `add r/student n/Chloe Lee lv/Sec 3 sub/Math` |
 | A student without contact details | `add r/student n/Ben Lim` |
 | A guardian with email only | `add r/guardian n/Mei Tan e/mei@example.com` |
 | A student whose name contains `/` | `add r/student n/"Ravi s/o Kumar" p/98765432` |
@@ -128,13 +131,11 @@ The command word and its prefixes (`r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`) accept
 `ADD R/student N/Alex Tan Lv/Sec 3 SuB/Math`. Parameter values retain their capitalization.
 Parameters may appear in any order, once each. Omit an optional field's prefix if unused;
 an empty prefix such as `p/` is rejected.
-Whitespace before a prefix, including pasted tabs or line breaks, separates parameters just like a space.
-Whitespace inside a value follows that field's rules; for example, a tab inside a phone number is rejected.
 Omitted phone and email values display as `Not provided`.
 
 On success, the contact is saved and selected, and its details appear in the detail panel. Guardians and active
-students are shown, clearing any search or list filter. Former students remain hidden. The command box clears and
-stays focused. The first example reports `Added contact: Alex Tan [Student].`
+students are shown, clearing any search or list filter. Former students remain hidden.
+The first example reports `Added contact: Alex Tan [Student].`
 
 #### Field rules
 
@@ -172,36 +173,29 @@ characters such as tabs and line breaks.
   letters, digits, and single hyphens between letters or digits. Each label is limited to **63 characters**.
   The final label needs at least two characters.
 
-Common email mistakes:
+**Level (`lv/`) and subject (`sub/`)**
 
-| Invalid input | Reason |
-| --- | --- |
-| `alex @example.com` | Internal whitespace. |
-| `@example.com` | Missing part before `@`. |
-| `alex@.com` or `alex@example..com` | Empty domain label. |
-| `alex@example` or `alex@example.c` | Missing second label or final label too short. |
-| `.alex@example.com` or `alex..tan@example.com` | Invalid punctuation placement. |
-
-**Level (`lv/`) and subject (`sub/`)**: Optional fields for students only. Each value must contain **1 to 30 characters**,
-including a letter or digit. Allowed characters are letters and digits (including non-English scripts), spaces,
-hyphens, periods, plus signs and parentheses. Repeated spaces become one space before the length check.
-
-Subjects also allow `/` and `&`. Quote the entire subject if it contains a slash or prefix-like text, for example
-`sub/"Combined Science (Chem/Bio)"`. The quotes are removed before validation and are not saved or counted.
-This syntax works in `add`, `edit` and `list`; `sub/English Language & Literature` needs no quotes.
-Use unquoted level values, for example `lv/Sec 3`.
-
-`NONE` is reserved, ignoring capitalization. In `edit`, use unquoted `lv/NONE` or `sub/NONE` to remove the field.
+* Optional and available **only for students**.
+* Each value must contain **1 to 30 characters**, including at least one letter or digit.
+* Both accept letters, digits, spaces, hyphens, periods, plus signs and parentheses.
+  Repeated spaces become one before the length check.
+* **Subjects also accept `/` and `&`.** Quote the entire subject if it contains a slash or text resembling a parameter,
+  for example `sub/"Combined Science (Chem/Bio)"`. The quotes are not saved or counted toward the limit.
+  This syntax works in `add`, `edit` and `list`; `sub/English Language & Literature` needs no quotes.
+* Use unquoted level values, for example `lv/Sec 3`.
+* `NONE` is reserved, ignoring capitalization. In `edit`, use unquoted `lv/NONE` or `sub/NONE` to remove the field.
 
 #### Duplicate contacts and warnings
 
-Checks include **all saved contacts**, including former students and contacts hidden by a filter. These rules
-apply to contacts with the **same role and name**. Exact duplicate rejection ignores name capitalization.
-Possible-duplicate warnings also recognize canonically equivalent Unicode spellings (such as composed and
-decomposed `É`), straight (`'`), opening-curly (`‘`) and closing-curly (`’`) apostrophes, and repeated or surrounding spaces
-in saved names.
-Accents and word boundaries remain significant: `Élise` differs from `Elise`, and `Alex Tan` differs from `AlexTan`.
-Names are saved as entered after normal command parsing. Level and subject do not affect these checks.
+Checks include **all saved contacts**, including former students and contacts hidden by a filter.
+Only contacts with the **same role and name** are compared. Level and subject do not affect these checks.
+
+* **Exact duplicates:** Name matching ignores capitalization. If phone and email also match, with at least
+  one contact method present, the contact is rejected.
+* **Possible duplicates:** Warning checks additionally treat equivalent accented spellings, straight and curly
+  apostrophes, and repeated or surrounding spaces as matching names. Accents and spaces between words still matter:
+  `Élise` differs from `Elise`, and `Alex Tan` differs from `AlexTan`. **The contact is saved with a warning**
+  when a warning condition in the table below is met.
 
 | Condition, checked in this order | Result |
 | --- | --- |
@@ -211,39 +205,24 @@ Names are saved as entered after normal command parsing. Level and subject do no
 | Phone is missing from both contacts, or email is missing from both | Added with a general warning. |
 | None of the above | Added without a warning. |
 
-Phone warnings and `check duplicates` also ignore Unicode space separators in phone numbers already saved in the
-data file. Those saved phone values are preserved.
+Exact duplicate checks ignore email capitalization and treat two omitted phone or email values as matching.
+Phone formatting still matters: `9123 4567` and `91234567` trigger a warning instead of rejection when the role
+and name match.
 
-Exact duplicates ignore email capitalization and treat two omitted values as matching. **Internal phone spaces and
-hyphens remain significant for rejection**: `p/9123 4567` and `p/91234567` produce a warning instead.
-
-Two students named `Ben Lim` with no phone or email are both saved, with a general warning for the second.
-Different roles or names trigger no duplicate checks. Only the highest-priority warning is shown, after the success
-message; **a warning does not prevent saving**.
+Two students named `Ben Lim` with no phone or email can both be saved; the second receives a general warning.
+If several warning conditions apply, only the highest-priority warning is shown after the success message.
 
 #### Correcting an unsuccessful add
 
-Missing required fields, empty values, repeated parameters, and unknown prefixes such as `a/15` are rejected.
-A missing role or name error identifies the field and shows the command format. Unknown-parameter errors identify
-the invalid prefix and list valid ones; repeated-parameter errors name the repeated prefix. A slash in an unquoted
-name also prompts you to quote the entire name.
-
-After parameter syntax checks, field values are checked in the order `r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`.
-For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first.
-For guardians, the contact-method requirement is checked after phone and email; any `lv/` or `sub/` is then rejected.
-
-Other errors explain the reason, for example:
+If the command is rejected, the error message explains what to correct. For example:
 
 * `add r/guardian n/Mei Tan` reports `A guardian must have at least one contact method: phone or email.`
 * `add r/guardian n/Mei Tan p/91234567 lv/Sec 3` reports
   `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
 * `add r/student n/Alex Tan p/` reports `Empty phone parameter: Phone cannot be empty when p/ is specified.`
-* `add r/student n/Alex Tan sub/---` reports `Subject must contain at least one letter or digit.`
 
-Level and subject errors distinguish excessive length, unsupported characters and values without any letters or
-digits. Email errors distinguish unsupported characters from punctuation placement, such as consecutive periods.
-
-Correct the indicated problem and try again. On failure, contacts, selection, and saved data stay unchanged;
+Correct the indicated problem and try again. If several problems exist, fix each reported error in turn.
+On failure, contacts, selection, and saved data stay unchanged;
 the command remains for correction. For saving errors, see [Saving the data](#saving-the-data).
 
 ### Listing contacts: `list`
@@ -745,3 +724,4 @@ Action     | Format, Examples
 **Undo deletion** | `undo`<br> Restores the latest successful deletion in the current session.
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
+**Exit**   | `exit`
