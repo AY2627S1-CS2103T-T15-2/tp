@@ -89,14 +89,28 @@ public class EditCommandParser implements Parser<EditCommand> {
     /**
      * Throws if the preamble or any value contains a word ending in {@code /} that is not an edit prefix.
      * Text inside a quoted name or subject is skipped, so it may contain such words.
+     * Inside an unquoted name or subject, the error also suggests quoting that value.
      */
     private static void verifyNoUnknownPrefixes(ArgumentMultimap argMultimap) throws ParseException {
-        throwIfUnknownPrefix(argMultimap.getPreamble());
+        throwIfUnknownPrefix(argMultimap.getPreamble(), EditCommand.MESSAGE_UNKNOWN_PARAMETER);
         for (Prefix prefix : EDIT_PREFIXES) {
             for (String value : argMultimap.getAllValues(prefix)) {
-                throwIfUnknownPrefix(prefix.getPrefix() + extractTextOutsideQuotes(prefix, value));
+                throwIfUnknownPrefix(prefix.getPrefix() + extractTextOutsideQuotes(prefix, value),
+                        unknownPrefixMessage(prefix, value));
             }
         }
+    }
+
+    /** Suggests quoting when the unknown prefix is inside an unquoted name or subject. */
+    private static String unknownPrefixMessage(Prefix prefix, String value) {
+        if (value.stripLeading().startsWith("\"")) {
+            return EditCommand.MESSAGE_UNKNOWN_PARAMETER;
+        } else if (prefix.equals(PREFIX_NAME)) {
+            return EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_NAME_SLASH;
+        } else if (prefix.equals(PREFIX_SUBJECT)) {
+            return EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_SUBJECT_SLASH;
+        }
+        return EditCommand.MESSAGE_UNKNOWN_PARAMETER;
     }
 
     private static String extractTextOutsideQuotes(Prefix prefix, String value) {
@@ -104,12 +118,12 @@ public class EditCommandParser implements Parser<EditCommand> {
                 ? ParserUtil.textOutsideQuotedValue(value) : value;
     }
 
-    private static void throwIfUnknownPrefix(String text) throws ParseException {
+    private static void throwIfUnknownPrefix(String text, String errorMessage) throws ParseException {
         Matcher prefixMatcher = PARAMETER_PREFIX.matcher(text);
         while (prefixMatcher.find()) {
             String word = prefixMatcher.group(1);
             if (EDIT_PREFIXES.stream().noneMatch(prefix -> prefix.getPrefix().equals(word))) {
-                throw new ParseException(EditCommand.MESSAGE_UNKNOWN_PARAMETER);
+                throw new ParseException(errorMessage);
             }
         }
     }

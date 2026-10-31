@@ -100,13 +100,23 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 a/123 Main Street", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
         assertParseFailure(parser, "1 t/", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
 
+        // unknown prefix after an unquoted name also suggests quoting the name
+        assertParseFailure(parser, "1 n/Alex a/15", EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_NAME_SLASH);
+
         // unknown prefix after a field
-        assertParseFailure(parser, "1 n/Alex a/15", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
+        assertParseFailure(parser, "1 n/Alex" + PHONE_DESC_AMY + " a/15", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
         assertParseFailure(parser, "1" + PHONE_DESC_AMY + " t/friends", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
         assertParseFailure(parser, "1" + EMAIL_DESC_AMY + " x/1", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
 
         // unknown prefix after a quoted name
         assertParseFailure(parser, "1 n/\"Alex Tan\" a/15", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
+
+        // unknown prefix inside an unquoted subject suggests quoting the subject
+        assertParseFailure(parser, "1 sub/Combined Science (Chem/Bio)",
+                EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_SUBJECT_SLASH);
+
+        // unknown prefix after a quoted subject
+        assertParseFailure(parser, "1 sub/\"Combined Science (Chem/Bio)\" a/15", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
 
         // unknown prefix is reported before an invalid index
         assertParseFailure(parser, "0 r/guardian", EditCommand.MESSAGE_UNKNOWN_PARAMETER);
@@ -310,7 +320,7 @@ public class EditCommandParserTest {
         assertParseSuccess(parser, targetIndex.getOneBased() + " n/\"Ravi s/o Kumar\"",
                 new EditCommand(targetIndex, descriptor));
         assertParseFailure(parser, targetIndex.getOneBased() + " n/Ravi s/o Kumar",
-                EditCommand.MESSAGE_UNKNOWN_PARAMETER);
+                EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_NAME_SLASH);
     }
 
     @Test
