@@ -146,7 +146,7 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 
 * Enter **1 to 70 characters**, including at least one letter or digit.
 * Names may contain letters and numbers from non-English scripts, spaces, apostrophes (`'`, `‘`, `’`),
-  hyphens, periods, middle dots (`·`), and slashes.
+  hyphens, periods, middle dots (`·`), parentheses (`(`, `)`), commas, and slashes.
 * Surrounding spaces are removed, including inside enclosing quotes. Repeated spaces become one before checking
   the length. Capitalization and punctuation are preserved.
 
