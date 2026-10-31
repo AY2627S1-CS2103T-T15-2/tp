@@ -26,7 +26,9 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
    Use a folder where you have permission to create and update files. Avoid write-protected folders.
 
 1. Open a terminal, run `java -version` to check the Java version, then `cd` to the folder containing the JAR file
-   and run `java -jar "tutorroster.jar"`. Double-clicking the JAR might not work on some systems.<br>
+   and run `java -jar` followed by the JAR's file name in quotes, for example `java -jar "tutorroster.jar"`
+   (use `"[CS2103T-T15-2][TutorRoster].jar"` instead if your copy has that name).
+   Double-clicking the JAR might not work on some systems.<br>
    The application opens with your saved contacts, or an empty list if there is no data file yet.<br>
    ![Ui](images/Ui.png)
 
@@ -710,7 +712,8 @@ contacts and repeat the command. Read-only commands remain available.
    data-changing command, so you do not need to add a dummy contact first.
 4. Copy the source `addressbook.json` into that destination `data` subfolder, keeping its filename. Copy the whole
    file without changing contact IDs or guardian IDs, so that guardian relationships are retained.
-5. Open a terminal in the destination TutorRoster home folder and run `java -jar "tutorroster.jar"`. Launching from
+5. Open a terminal in the destination TutorRoster home folder and run `java -jar` with the JAR's file name in quotes, as in
+   [Quick start](#quick-start). Launching from
    this folder ensures the relative data path refers to the file you copied. Check the contacts and guardian links;
    use `list st/former` to check former students as well.
 
@@ -724,7 +727,8 @@ contacts and repeat the command. Read-only commands remain available.
    unexpected behavior. Leave fullscreen mode before opening the Help window.
 
 1. **Linux with Wayland:** If launch fails with a `Gdk-CRITICAL` error, try running
-   `GDK_BACKEND=x11 java -jar "tutorroster.jar"` from the folder containing the JAR file.
+   `GDK_BACKEND=x11 java -jar "tutorroster.jar"` from the folder containing the JAR file, replacing
+   `tutorroster.jar` with your JAR's file name if it differs.
 
 --------------------------------------------------------------------------------------------------------------------
 
