@@ -2,44 +2,37 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <HBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <GridPane HBox.hgrow="ALWAYS">
-    <columnConstraints>
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10" prefWidth="150" />
-    </columnConstraints>
-    <VBox alignment="CENTER_LEFT" spacing="2" GridPane.columnIndex="0">
-      <padding>
-        <Insets top="8" right="10" bottom="8" left="12" />
-      </padding>
-      <HBox spacing="6" alignment="CENTER_LEFT" fillHeight="false">
-        <Label fx:id="id" styleClass="cell_big_label">
-          <minWidth>
-            <!-- Ensures that the label text is never truncated -->
-            <Region fx:constant="USE_PREF_SIZE" />
-          </minWidth>
-        </Label>
-        <Label fx:id="name" text="\$first" styleClass="cell_big_label" wrapText="true" />
-        <Label fx:id="roleBadge" styleClass="badge">
-          <minWidth>
-            <Region fx:constant="USE_PREF_SIZE" />
-          </minWidth>
-        </Label>
-        <Label fx:id="formerBadge" styleClass="badge, badge-former">
-          <minWidth>
-            <Region fx:constant="USE_PREF_SIZE" />
-          </minWidth>
-        </Label>
-      </HBox>
-      <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" wrapText="true" />
-      <Label fx:id="email" styleClass="cell_small_label" text="\$email" wrapText="true" />
-      <Label fx:id="guardian" styleClass="cell_small_label" text="\$guardian" wrapText="true" />
-      <Label fx:id="studentDetails" styleClass="cell_small_label" text="\$studentDetails" wrapText="true" />
-    </VBox>
-  </GridPane>
+  <VBox alignment="CENTER_LEFT" spacing="2" HBox.hgrow="ALWAYS">
+    <padding>
+      <Insets top="8" right="10" bottom="8" left="12" />
+    </padding>
+    <HBox spacing="6" alignment="CENTER_LEFT" fillHeight="false">
+      <Label fx:id="id" styleClass="cell_big_label">
+        <minWidth>
+          <!-- Ensures that the label text is never truncated -->
+          <Region fx:constant="USE_PREF_SIZE" />
+        </minWidth>
+      </Label>
+      <Label fx:id="name" text="\$first" styleClass="cell_big_label" wrapText="true" />
+      <Label fx:id="roleBadge" styleClass="badge">
+        <minWidth>
+          <Region fx:constant="USE_PREF_SIZE" />
+        </minWidth>
+      </Label>
+      <Label fx:id="formerBadge" styleClass="badge, badge-former">
+        <minWidth>
+          <Region fx:constant="USE_PREF_SIZE" />
+        </minWidth>
+      </Label>
+    </HBox>
+    <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" wrapText="true" />
+    <Label fx:id="email" styleClass="cell_small_label" text="\$email" wrapText="true" />
+    <Label fx:id="guardian" styleClass="cell_small_label" text="\$guardian" wrapText="true" />
+    <Label fx:id="studentDetails" styleClass="cell_small_label" text="\$studentDetails" wrapText="true" />
+  </VBox>
 </HBox>
