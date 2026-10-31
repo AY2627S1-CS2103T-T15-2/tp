@@ -46,7 +46,7 @@ public class GuiSettingsTest {
     @Test
     public void fitWithin_noPosition_shrunkWithoutPosition() {
         GuiSettings fittedSettings = new GuiSettings().fitWithin(SMALL_SCREEN);
-        assertEquals(740, fittedSettings.getWindowWidth());
+        assertEquals(SMALL_SCREEN.getWidth(), fittedSettings.getWindowWidth());
         assertEquals(480, fittedSettings.getWindowHeight());
         assertNull(fittedSettings.getWindowCoordinates());
     }

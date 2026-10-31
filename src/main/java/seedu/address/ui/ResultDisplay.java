@@ -20,7 +20,7 @@ import javafx.scene.text.TextBoundsType;
 public class ResultDisplay extends UiPart<Region> {
 
     public static final String ERROR_STYLE_CLASS = "error";
-    static final double MAXIMUM_SCENE_HEIGHT_RATIO = 0.25;
+    static final double MAXIMUM_SCENE_HEIGHT_RATIO = 0.4;
     static final double DEFAULT_MAXIMUM_HEIGHT = 200;
 
     private static final String FXML = "ResultDisplay.fxml";
