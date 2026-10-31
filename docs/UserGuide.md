@@ -404,6 +404,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 | No field supplied | `At least one of n/, p/, e/, lv/, or sub/ must be provided.` |
 | Repeated parameter | `Each of n/, p/, e/, lv/, and sub/ may appear only once.` |
 | Unsupported parameter | `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` |
+| Unquoted name containing a prefix-like word, such as `n/Ravi s/o Kumar` | The unsupported-parameter message, followed by `If '/' is part of the name, enclose the entire name in double quotes.` |
 | Removing a guardian's last contact method | `A guardian must have at least one contact method: phone or email.` |
 | Setting or removing a guardian's level or subject | `Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.` |
 

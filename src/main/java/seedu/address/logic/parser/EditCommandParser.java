@@ -89,12 +89,17 @@ public class EditCommandParser implements Parser<EditCommand> {
     /**
      * Throws if the preamble or any value contains a word ending in {@code /} that is not an edit prefix.
      * Text inside a quoted name or subject is skipped, so it may contain such words.
+     * Inside an unquoted name, the error also suggests quoting the name.
      */
     private static void verifyNoUnknownPrefixes(ArgumentMultimap argMultimap) throws ParseException {
-        throwIfUnknownPrefix(argMultimap.getPreamble());
+        throwIfUnknownPrefix(argMultimap.getPreamble(), EditCommand.MESSAGE_UNKNOWN_PARAMETER);
         for (Prefix prefix : EDIT_PREFIXES) {
             for (String value : argMultimap.getAllValues(prefix)) {
-                throwIfUnknownPrefix(prefix.getPrefix() + extractTextOutsideQuotes(prefix, value));
+                boolean isUnquotedName = prefix.equals(PREFIX_NAME) && !value.stripLeading().startsWith("\"");
+                String errorMessage = isUnquotedName
+                        ? EditCommand.MESSAGE_UNKNOWN_PARAMETER_OR_NAME_SLASH
+                        : EditCommand.MESSAGE_UNKNOWN_PARAMETER;
+                throwIfUnknownPrefix(prefix.getPrefix() + extractTextOutsideQuotes(prefix, value), errorMessage);
             }
         }
     }
@@ -104,12 +109,12 @@ public class EditCommandParser implements Parser<EditCommand> {
                 ? ParserUtil.textOutsideQuotedValue(value) : value;
     }
 
-    private static void throwIfUnknownPrefix(String text) throws ParseException {
+    private static void throwIfUnknownPrefix(String text, String errorMessage) throws ParseException {
         Matcher prefixMatcher = PARAMETER_PREFIX.matcher(text);
         while (prefixMatcher.find()) {
             String word = prefixMatcher.group(1);
             if (EDIT_PREFIXES.stream().noneMatch(prefix -> prefix.getPrefix().equals(word))) {
-                throw new ParseException(EditCommand.MESSAGE_UNKNOWN_PARAMETER);
+                throw new ParseException(errorMessage);
             }
         }
     }
