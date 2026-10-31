@@ -264,18 +264,18 @@ Command | Shows
 `list lv/Sec 3 sub/A-Math` | Active Sec 3 students who take A-Math
 `list sub/Physics st/all` | All students who take Physics, active and former
 
-* Former students are hidden; see [Marking a student as former](#marking-a-student-as-former-archive).
+* By default, former students are hidden; see [Marking a student as former](#marking-a-student-as-former-archive).
 * `r/ROLE` shows only contacts with that role. `ROLE` must be `student` or `guardian`, and ignores letter case.
 * `st/STATUS` chooses which contacts to show by status. `STATUS` must be `active`, `former` or `all`, and ignores
   letter case:
   * `st/active` shows guardians and active students. This is the default, so `list st/active` is the same as `list`.
   * `st/former` shows only former students.
   * `st/all` shows every contact, whatever its status.
-* `lv/LEVEL` and `sub/SUBJECT` show only students with that level and subject. Letter case and spaces are
-  ignored, so `lv/sec3` matches a student at `Sec 3`. The whole value must match: `sub/Math` does not match
-  `A-Math`. The same accented spelling matches across input methods. Accents remain significant, so `Français`
-  does not match `Francais`. Students without a level or subject are not shown. `LEVEL` and `SUBJECT` follow the
-  same rules as in `add`, and `NONE` cannot be used.
+* `lv/LEVEL` shows only students at that level, and `sub/SUBJECT` only students taking that subject. Letter case
+  and spaces are ignored, so `lv/sec3` matches a student at `Sec 3`. The whole value must match: `sub/Math` does
+  not match `A-Math`. The same accented spelling matches across input methods. Accents remain significant, so `Français`
+  does not match `Francais`. A student without a level never matches `lv/`, and one without a subject never matches
+  `sub/`. `LEVEL` and `SUBJECT` follow the same rules as in `add`, and `NONE` cannot be used.
 * Quote a subject that contains text resembling a parameter, as in `add`; for example,
   `list sub/"Art n/Design"`. Without the quotation marks, `n/` is read as an unknown parameter and the command is
   rejected.
@@ -434,13 +434,15 @@ Format: `find NAME`
   Vowel signs in scripts such as Devanagari are part of the name and must match; for example, `किरण` does not match
   `करण`.
 * The search considers only names.
+* Type the name only, without `n/`. Everything after `find` is treated as part of the name, so `find n/Alex`
+  matches only names containing the text `n/Alex`, not every name containing `Alex`.
 * Former students are included in the results with a `Former` badge.
 * `NAME` cannot be blank; `find` with no name shows `Invalid find command. Use: find NAME`.
 * The result shows the number of matches; for example, `Found 2 contacts matching: li.`
 * If no contact matches, `No contacts found matching: NAME` is shown.
 * Matching contacts are shown in the same format as `list`.
 
-Examples:
+Examples, assuming your contacts include Alex Yeoh, Charlotte Oliveiro and David Li:
 * `find ale` returns `Alex Yeoh`
 * `find li` returns `Charlotte Oliveiro` and `David Li`
 

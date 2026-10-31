@@ -1721,7 +1721,7 @@ for each restart. This setup is independent of the data used in the other manual
 
 1. Test case: `list`<br>
    Expected: The contacts are shown in alphabetical order: Alex Yeoh, Bernice Yu, Charlotte Oliveiro, then David Li.
-   Each card shows the name followed by the role, for example `Alex Yeoh [Student]`, and shows `Not provided` for a
+   Each card shows the name with a `Student` or `Guardian` badge, and shows `Not provided` for a
    missing phone or email. Student cards also show `Guardian: None`, and guardian cards have no guardian line.
 
 1. Test case: `link s/1 g/2`<br>
