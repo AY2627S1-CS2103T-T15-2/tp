@@ -221,6 +221,14 @@ Two students named `Ben Lim` with no phone or email are both saved, with a gener
 Different roles or names trigger no duplicate checks. Only the highest-priority warning is shown, after the success
 message; **a warning does not prevent saving**.
 
+**Detection limits:**
+
+* A student without phone or email is not flagged against a same-name student who has both.
+* Phone matching ignores spaces and hyphens, but retains country codes. For example, `+65 9123 4567` and
+  `91234567` do not trigger a phone warning.
+
+Use `find NAME` to inspect such contacts manually; `check duplicates` uses the same detection rules.
+
 #### Correcting an unsuccessful add
 
 Missing required fields, empty values, repeated parameters, and unknown prefixes such as `a/15` are rejected.
