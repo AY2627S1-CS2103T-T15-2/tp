@@ -16,7 +16,7 @@ We are a team based in the [School of Computing, National University of Singapor
 [[github](https://github.com/seahjiale)]
 
 * Role: Developer
-* Responsibilities: Scheduling and tracking
+* Responsibilities : Scheduling and tracking 
 
 ### Lu Ziyue
 
@@ -49,7 +49,7 @@ We are a team based in the [School of Computing, National University of Singapor
 
 <img src="images/lim-04.png" width="200px">
 
-[[github](https://github.com/lim-04)]
+[[github](http://github.com/lim-04)]
 
 * Role: Developer
 * Responsibilities: Code Quality
