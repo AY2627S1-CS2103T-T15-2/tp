@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
 import static seedu.address.testutil.JavaFxTestUtil.waitForLayout;
@@ -15,9 +16,13 @@ import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import javafx.event.ActionEvent;
+import javafx.geometry.Orientation;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.Region;
+import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
@@ -80,43 +85,107 @@ public class MainWindowTest {
     }
 
     @Test
-    public void executeCommand_missingRoleAtMinimumWindowSize_feedbackRemainsReadable() throws Exception {
-        FutureTask<Stage> createWindow = new FutureTask<>(this::showMinimumSizedMainWindow);
+    public void executeCommand_missingRoleAtMinimumWindowSize_showsWholeMessage() throws Exception {
+        assertMissingAddFieldIsReadable("add", AddCommandParser.MESSAGE_MISSING_ROLE);
+    }
+
+    @Test
+    public void executeCommand_missingNameAtMinimumWindowSize_showsWholeMessage() throws Exception {
+        assertMissingAddFieldIsReadable("add r/student", AddCommandParser.MESSAGE_MISSING_NAME);
+    }
+
+    private void assertMissingAddFieldIsReadable(String commandText, String expectedMessage) throws Exception {
+        FutureTask<Stage> createWindow = new FutureTask<>(() -> showMainWindow(1100, 500));
         runOnJavaFxThread(createWindow);
         Stage stage = createWindow.get();
         try {
             waitForLayout(stage.getScene().getRoot());
             runOnJavaFxThread(() -> {
                 TextField command = (TextField) stage.getScene().lookup("#commandTextField");
-                command.setText("add");
+                command.setText(commandText);
                 command.fireEvent(new ActionEvent());
             });
             waitForLayout(stage.getScene().getRoot());
-            runOnJavaFxThread(() -> assertFeedbackIsReadable(stage));
+            runOnJavaFxThread(() -> assertFeedbackIsReadable(stage, expectedMessage));
         } finally {
             runOnJavaFxThread(stage::close);
         }
     }
 
-    private Stage showMinimumSizedMainWindow() {
-        MainWindow window = createMainWindow(new GuiSettings(600, 400, 0, 0));
+    @Test
+    public void executeCommand_missingRoleAtDefaultWindowSize_growsWithinHeightCap() throws Exception {
+        GuiSettings defaults = new GuiSettings();
+        FutureTask<Stage> createWindow = new FutureTask<>(() ->
+                showMainWindow(defaults.getWindowWidth(), defaults.getWindowHeight()));
+        runOnJavaFxThread(createWindow);
+        Stage stage = createWindow.get();
+        try {
+            waitForLayout(stage.getScene().getRoot());
+            FutureTask<Double> initialHeight = new FutureTask<>(() -> {
+                TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
+                return feedback.getHeight();
+            });
+            runOnJavaFxThread(initialHeight);
+            double emptyHeight = initialHeight.get();
+            runOnJavaFxThread(() -> {
+                TextField command = (TextField) stage.getScene().lookup("#commandTextField");
+                command.setText("add");
+                command.fireEvent(new ActionEvent());
+            });
+            waitForLayout(stage.getScene().getRoot());
+            runOnJavaFxThread(() -> {
+                TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
+                assertEquals(AddCommandParser.MESSAGE_MISSING_ROLE, feedback.getText());
+                assertTrue(feedback.getHeight() > emptyHeight);
+                assertTrue(feedback.getHeight() <= stage.getScene().getHeight()
+                        * ResultDisplay.MAXIMUM_SCENE_HEIGHT_RATIO + 2);
+                assertMessageDoesNotWrap(feedback);
+                assertNoVerticalScrollBar(feedback);
+            });
+        } finally {
+            runOnJavaFxThread(stage::close);
+        }
+    }
+
+    private Stage showMainWindow(double width, double height) {
+        MainWindow window = createMainWindow(new GuiSettings(width, height, 0, 0));
         window.fillInnerParts();
         Stage stage = window.getPrimaryStage();
         stage.setOpacity(0);
         stage.show();
-        stage.setWidth(600);
-        stage.setHeight(400);
+        stage.setWidth(width);
+        stage.setHeight(height);
         return stage;
     }
 
-    private void assertFeedbackIsReadable(Stage stage) {
+    private void assertFeedbackIsReadable(Stage stage, String expectedMessage) {
         TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
-        assertEquals(600, stage.getWidth(), 1);
-        assertEquals(400, stage.getHeight(), 1);
-        assertEquals(AddCommandParser.MESSAGE_MISSING_ROLE, feedback.getText());
+        assertEquals(1100, stage.getWidth(), 1);
+        assertEquals(500, stage.getHeight(), 1);
+        assertEquals(expectedMessage, feedback.getText());
         assertTrue(feedback.getHeight() >= 40, "Feedback height: " + feedback.getHeight());
         assertTrue(feedback.lookup(".viewport").getBoundsInLocal().getHeight() > 0);
         assertTrue(feedback.isWrapText());
+        assertMessageDoesNotWrap(feedback);
+        assertNoVerticalScrollBar(feedback);
+    }
+
+    private void assertNoVerticalScrollBar(TextArea feedback) {
+        assertFalse(feedback.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                .anyMatch(bar -> bar.getOrientation() == Orientation.VERTICAL && bar.isVisible()),
+                "The full add error should fit without scrolling");
+    }
+
+    private void assertMessageDoesNotWrap(TextArea feedback) {
+        Region content = (Region) feedback.lookup(".content");
+        double availableWidth = feedback.lookup(".viewport").getBoundsInLocal().getWidth()
+                - content.getInsets().getLeft() - content.getInsets().getRight();
+        feedback.getText().lines().forEach(line -> {
+            Text measurement = new Text(line);
+            measurement.setFont(feedback.getFont());
+            assertTrue(measurement.getLayoutBounds().getWidth() <= availableWidth,
+                    "Line should fit without wrapping: " + line);
+        });
     }
 
     /**
