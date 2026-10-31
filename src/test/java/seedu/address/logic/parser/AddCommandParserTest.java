@@ -165,6 +165,8 @@ public class AddCommandParserTest {
             String error = String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "a/");
             if (field.startsWith("n/")) {
                 error += AddCommand.MESSAGE_NAME_SLASH_HINT;
+            } else if (field.startsWith("sub/")) {
+                error += AddCommand.MESSAGE_SUBJECT_SLASH_HINT;
             }
             assertParseFailure(parser, " " + field + " a/15", error);
         }
@@ -240,6 +242,33 @@ public class AddCommandParserTest {
         }
         assertParseFailure(parser, " r/student n/Alex sub/\"Math p/Applied",
                 ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
+    }
+
+    @Test
+    public void parse_unknownParameterInUnquotedSubject_suggestsQuotingSubject() {
+        for (String prefix : List.of("sub/", "SUB/", "SuB/")) {
+            assertParseFailure(parser, " r/student n/Kai " + prefix + "Combined Science (Chem/Bio)",
+                    String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "(Chem/")
+                            + AddCommand.MESSAGE_SUBJECT_SLASH_HINT);
+        }
+    }
+
+    @Test
+    public void parse_unknownParameterAfterQuotedSubject_omitsSubjectHint() {
+        assertParseFailure(parser, " r/student n/Kai sub/  \"Combined Science (Chem/Bio)\" x/unknown",
+                String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "x/"));
+        assertParseFailure(parser, " r/student n/Kai sub/Math p/123 x/unknown",
+                String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "x/"));
+    }
+
+    @Test
+    public void parse_slashInSubject_acceptsQuotedValuesAndEmbeddedSlashes() {
+        for (String value : List.of("\"Combined Science (Chem/Bio)\"", "Chem/Bio")) {
+            String expectedSubject = value.replace("\"", "");
+            Person expected = new PersonBuilder(AMY).withName("Kai").withoutPhone().withoutEmail()
+                    .withSubject(expectedSubject).build();
+            assertParseSuccess(parser, " r/student n/Kai sub/" + value, new AddCommand(expected));
+        }
     }
 
     @Test
