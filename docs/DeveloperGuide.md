@@ -490,34 +490,30 @@ responsibilities and the design choices behind them.
 
 #### Parsing and validation
 
-`AddCommandParser` requires `r/ROLE` and `n/NAME`; phone, email, level and subject are optional. Its `parse` method
-delegates syntax handling to `tokenizeArguments` and field parsing to `parsePerson`. Syntax errors are reported
-before field-value errors. Fields are checked in the fixed order role, name, phone, email, level, then subject,
-regardless of parameter order. Missing role and name checks precede their respective value checks; unexpected
-preamble is rejected before name validation.
+**Validation order.** `AddCommandParser#parse` delegates syntax checks to `tokenizeArguments` and field parsing
+to `parsePerson`. Role and name are required. Syntax checks precede field validation, which follows role, name,
+phone, email, level and subject order regardless of input order. Role-specific checks run after phone and email
+validation, before student details. This keeps the first reported error predictable.
 
-`AddCommandParser` and the quote-aware path in `ArgumentTokenizer` use `ArgumentTokenScanner` to share quote and
-token-boundary recognition. Prefixes begin at the start of the arguments or after `Character.isWhitespace`
-characters, including tabs and line breaks. Internal value whitespace is preserved for field validation.
-Add recognizes prefixes without regard to letter case and normalizes only those prefixes before tokenization.
-Field values, including prefix-like text inside quoted values, keep their original capitalization.
+**Parameter recognition.** `AddCommandParser` and the quote-aware path in `ArgumentTokenizer` share
+`ArgumentTokenScanner`, keeping token boundaries and quoted values consistent. Prefixes start at the beginning
+of the arguments or after `Character.isWhitespace` characters. Add normalizes recognized prefixes without
+changing field capitalization. Command dispatch lowercases only the command word using `Locale.ROOT`.
+
 Before dispatch, `AddressBookParser` uses `StringUtil#normalizeSpaceSeparators` to replace Unicode `Zs` characters
 with ordinary spaces throughout the input, including quoted values. This includes non-breaking, figure and narrow
 non-breaking spaces from pasted text. Tabs and line breaks remain unchanged for the existing tokenizer and field
 validation rules. Normalizing at this boundary keeps Add, Edit, Find, List and name-based Delete consistent.
-For case-insensitive dispatch, only the command word is lowercased using `Locale.ROOT`.
-For Add, the scanner skips a quoted name or subject only when the first non-whitespace character after `n/` or
-`sub/` is a straight double quote. Quotes in phone text remain literal and cannot hide later parameters.
-Centralizing these rules keeps unknown-parameter detection consistent with tokenization.
-`AddCommandParser` still formats Add-specific errors and name-quoting hints.
-Callers inspect each position before advancing, so an unknown parameter before an unclosed
-quoted value is reported first.
 
-`ParserUtil#parseName` trims surrounding whitespace before and after removing enclosing quotes, including Java
-whitespace such as em spaces, tabs and line breaks. Only repeated ordinary spaces inside the name are collapsed;
-internal tabs and other unsupported whitespace fail validation. Add requires quotes around every name containing
-`/`, including `AC/DC`; Edit accepts unquoted embedded slashes. If an unknown parameter follows an unquoted name,
-the Add error includes a name-quoting hint. Repeated prefixes are rejected in the fixed field order above.
+**Quoted values.** The scanner protects a name or subject only when its first non-whitespace value character is
+a straight double quote. Quotes elsewhere remain literal, so phone text cannot hide later parameters.
+`AddCommandParser` supplies command-specific errors; an unknown parameter before an unclosed quoted value
+is reported first.
+
+**Name normalization.** `ParserUtil#parseName` removes enclosing quotes, trims surrounding whitespace and
+collapses repeated ordinary spaces. Internal unsupported whitespace fails validation. Add requires quotes around
+every name containing `/`; Edit also accepts unquoted embedded slashes. The Add parser supplies a quoting hint
+when an unknown parameter follows an unquoted name.
 See the [UG field rules and error examples](UserGuide.md#adding-a-contact-add) for the user-facing constraints.
 
 `Name` requires at least one Unicode letter or number after checking blank input, length and supported characters.
@@ -644,7 +640,7 @@ under [Saving contacts and relationships](#saving-contacts-and-relationships).
 displaying the command feedback, keeping window operations in the UI component. Help is read-only: it does not
 save contact data, replace the current filter or clear deletion undo.
 
-The sequence below focuses on dispatching an already parsed `help` command and reusing the Help window.
+The sequence below shows how executing `help` reuses the Help window.
 Parsing and routine feedback updates are omitted.
 
 <puml src="diagrams/HelpSequenceDiagram.puml" width="680" alt="Help execution returning a UI flag and reusing the existing Help window" />
@@ -1321,6 +1317,22 @@ contains the complete field rules and ordinary error examples.
    Repeat the apostrophe workflow with straight (`'`) and closing curly (`’`) apostrophes as controls.
    `edit 1 n/'` must fail without modifying the saved contact.
 
+
+### Feedback wrapping and resizing
+
+Prerequisites: launch TutorRoster with the main window visible. These checks do not require saved contacts.
+
+1. Run `list` to show a short result, then enter `add n/Feedback Test` without a role.<br>
+   Expected: The missing-role error includes the Add format and example. The feedback area grows as needed,
+   up to its height limit, and wraps the text without horizontal scrolling. No contact is added.
+
+1. Reduce the main window to its minimum size while the error is displayed, then scroll through the message.<br>
+   Expected: Text rewraps, the feedback height adapts to the available space, and vertical scrolling allows
+   the full error to be read. Enlarge the window again and check that the layout readjusts.
+
+1. Scroll to the end of the error, then run `list` again.<br>
+   Expected: The feedback area shrinks for the short result, the error styling is removed, and the new message
+   starts at the top rather than retaining the previous scroll position.
 
 ### Equivalent names in duplicate warnings
 
