@@ -150,8 +150,9 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 * Surrounding spaces are removed, including inside enclosing quotes. Repeated spaces become one before checking
   the length. Capitalization and punctuation are preserved.
 
-**Names containing `/` must be enclosed in straight double quotes**, for example `n/"Ravi s/o Kumar"`
-or `n/"AC/DC"`. The enclosing quotes are not saved.
+**In `add`, names containing `/` must be enclosed in straight double quotes**, for example `n/"Ravi s/o Kumar"`
+or `n/"AC/DC"`. `edit` needs the quotes only when a word in the name looks like a parameter, such as `s/o` in
+`Ravi s/o Kumar`, so `edit 1 n/AC/DC` also works. Quoting is always accepted. The enclosing quotes are not saved.
 
 Text resembling a parameter stays part of a quoted name: `n/"Ravi p/e ratio"` does not supply a phone number.
 Names made entirely of punctuation, such as `...` or `-`, are rejected with
