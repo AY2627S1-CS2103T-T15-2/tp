@@ -27,6 +27,12 @@
   [Shadow](https://github.com/GradleUp/shadow), [Checkstyle](https://checkstyle.org/) and
   [JaCoCo](https://www.jacoco.org/jacoco/).
 
+**Notable uses of AI:**
+
+* Yang Zhi used Claude Code and OpenAI Codex to draft and review code, tests and documentation for the edit,
+  level/subject and student status features, and for preliminary pull request reviews. All output was reviewed
+  and edited before merging.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
@@ -1027,7 +1033,8 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 
 1. Tutor requests to find a contact by name.
 2. TutorRoster displays matching contacts and their indexes.
-3. Tutor requests to edit a contact using its displayed index and supplies the new name, phone number, or email address.
+3. Tutor requests to edit a contact using its displayed index and supplies the new name, phone number, email address,
+   or, for a student, level or subject.
 4. TutorRoster saves the changes and displays the updated contact. Unspecified fields and existing student-guardian relationships remain unchanged.
 
    Use case ends.
@@ -1064,15 +1071,21 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 
   Use case resumes at step 3.
 
-* **3d. The updated contact would duplicate another existing contact.**
+* **3d. The tutor tries to set or remove a guardian's level or subject.**
 
-  3d1. TutorRoster reports the duplicate and leaves the contact unchanged.
+  3d1. TutorRoster explains that only students can have a level or subject and leaves the contact unchanged.
 
   Use case resumes at step 3.
 
-* **3e. The requested edit would leave every stored value unchanged.**
+* **3e. The updated contact would duplicate another existing contact.**
 
-  3e1. TutorRoster reports that no changes were made. The contact, displayed list and any deletion undo remain
+  3e1. TutorRoster reports the duplicate and leaves the contact unchanged.
+
+  Use case resumes at step 3.
+
+* **3f. The requested edit would leave every stored value unchanged.**
+
+  3f1. TutorRoster reports that no changes were made. The contact, displayed list and any deletion undo remain
   unchanged.
 
   Use case resumes at step 3.
@@ -1229,7 +1242,8 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
+   1. Open a terminal in that folder and run `java -jar` with the JAR's file name in quotes, for example
+      `java -jar "[CS2103T-T15-2][TutorRoster].jar"`.<br>
       Expected: The GUI opens with an empty contact list, no selected contact and the command box focused.
       No data file is created until the first successful data-changing command. The window size may not be optimal.
 
@@ -1237,7 +1251,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with the same command.<br>
        Expected: The most recent window size and location are retained.
 
 ### Viewing help
@@ -1469,52 +1483,55 @@ and prior deletion undo remain intact. A confirmed clear follows the existing ca
 
 ### Editing a contact
 
+Run these cases in order; each step relies on the contacts and indexes left by the previous one.
+
 1. Prerequisites: start with an empty contact list, for example by running `clear confirm`. Then add three contacts:
    `add r/student n/Bernice Yu p/99272758`, `add r/guardian n/David Li p/91031282` and
-   `add r/student n/Irfan Ibrahim e/irfan@example.com`.
+   `add r/student n/Irfan Ibrahim e/irfan@example.com`. They are displayed as Bernice Yu, David Li, Irfan Ibrahim.
 
 1. Test case: `edit 1 n/Alex Yeoh p/91234567`<br>
-   Expected: The first contact's name and phone are updated. The status message shows
-   `Updated contact: Alex Yeoh [ROLE].` The edited contact is selected and the detail panel shows the new details.
+   Expected: `Updated contact: Alex Yeoh [Student].` Alex Yeoh is selected and the detail panel shows the new
+   name and phone.
 
-1. Test case: `edit 1 p/NONE` on a student<br>
-   Expected: The phone number is removed and shows `Not provided`.
+1. Test case: `edit 1 p/NONE`<br>
+   Expected: Alex Yeoh's phone is removed and shows `Not provided`.
 
-1. Test case: on a guardian with a phone number and no email, `edit INDEX p/NONE`<br>
+1. Test case: `edit 2 p/NONE` (David Li, a guardian with a phone and no email)<br>
    Expected: No change. The status message shows
    `A guardian must have at least one contact method: phone or email.`
 
-1. Test case: `find` a name, then `edit 1 n/New Name`<br>
-   Expected: The first search result is edited. Editing an active student or guardian resets the view to guardians
-   and active students. Editing a former student resets it to the former-student view, so the edited record remains
-   visible. The previous name search is cleared.
+1. Test case: `find Alex`, then `edit 1 n/Alex Tan`<br>
+   Expected: Alex Yeoh becomes Alex Tan. The search is cleared and the list again shows guardians and active
+   students, with Alex Tan selected. (Editing a former student shows the former-student view instead.)
 
-1. Test case: `edit 1 n/"Ravi s/o Kumar"`<br>
-   Expected: The name becomes `Ravi s/o Kumar`. Without the quotes, the command is rejected with `Unknown parameter`.
+1. Test case: `edit 1 n/Ravi s/o Kumar`, then `edit 1 n/"Ravi s/o Kumar"`<br>
+   Expected: The first is rejected with `Unknown parameter. Use: ...`, because `s/` is read as a parameter.
+   The second renames Alex Tan to `Ravi s/o Kumar`. The list is now David Li, Irfan Ibrahim, Ravi s/o Kumar.
 
-1. Test case: `add r/student n/Roy Balakrishnan p/92624417 e/irfan@example.com`, then `edit INDEX n/Irfan Ibrahim`
-   using Roy's index.<br>
-   Expected: The name is updated. Below the success message, a warning says another contact with the same role and
-   name, and the same email address exists, and that the contact may be a duplicate but was updated.
+1. Test case: `add r/student n/Roy Balakrishnan p/92624417 e/irfan@example.com`, then `edit 4 n/Irfan Ibrahim`<br>
+   Expected: Roy (index 4) is renamed. The success message is followed by
+   `Warning: Another contact with the same role and name, and the same email address exists. This contact may be a
+   duplicate, but it was updated.`
 
 1. Incorrect commands to try, each leaving the contacts unchanged:
-   * Editing a contact with only its current values, for example `edit INDEX n/NAME` using its current name, gives
-     `No changes made: the new values are the same as the current ones.` The current view and deletion undo remain
-     unchanged.
+   * `edit 1 p/91031282` (David Li's current phone) gives
+     `No changes made: the new values are the same as the current ones.` The view and deletion undo are unchanged.
    * `edit 1` gives `At least one of n/, p/, e/, lv/, or sub/ must be provided.`
    * `edit n/Alex` gives `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
    * `edit 0 n/Alex` gives `The contact index must be a positive integer shown in the list.`
    * `edit 999 n/Alex` gives `No contact exists at index 999.`
    * `edit 1 r/guardian` gives `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
    * `edit 1 n/A n/B` gives `Each of n/, p/, e/, lv/, and sub/ may appear only once.`
-   * Editing a contact so that it matches another contact's role, name, phone and email gives
-     `This edit would create a duplicate contact.`
+   * `edit 1 lv/Sec 3` (a guardian) gives
+     `Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.`
+   * Editing one Irfan Ibrahim to have the other's phone and email, for example
+     `edit 2 p/92624417 e/irfan@example.com`, gives `This edit would create a duplicate contact.`
 
 ### Archiving and unarchiving students
 
 Use a separate, disposable application folder with an empty contact list. Run these cases in order so the
-displayed indexes are predictable. Launch with Java 25 using `java -jar "tutorroster.jar"`; use the same folder
-for each restart. This setup is independent of the data used in the other manual-testing sections.
+displayed indexes are predictable. Launch with Java 25 using `java -jar` and the JAR's file name in quotes;
+use the same folder for each restart. This setup is independent of the data used in the other manual-testing sections.
 
 1. Prepare a linked student and guardian:
    1. `add r/student n/Ava Tan p/98765432 e/ava@example.com lv/Sec 3 sub/Math`
