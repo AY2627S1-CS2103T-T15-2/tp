@@ -457,6 +457,8 @@ Format: `view INDEX`
 * The index **must be a positive integer** 1, 2, 3, ...
 * A value that is not a positive integer is rejected with
   `The contact index must be a positive integer shown in the list.`
+* A missing index is rejected with `Missing contact index. Use: view INDEX`, and anything after the index, as in
+  `view 1 2`, with `Only one contact index is allowed. Use: view INDEX`.
 * An index outside the displayed list is rejected with `No contact exists at index INDEX.`
 * The details panel shows the contact's name with a `Student` or `Guardian` badge, and a `Former` badge for a former
   student. Below the name, the details panel groups the contact's details into sections:
