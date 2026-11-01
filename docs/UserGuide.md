@@ -177,7 +177,7 @@ characters such as tabs and line breaks.
 
 * Optional and available **only for students**.
 * Each value must contain **1 to 30 characters**, including at least one letter or digit.
-* Both accept letters, digits, spaces, hyphens, periods, plus signs and parentheses.
+* Both accept Unicode letters and digits, spaces, hyphens, periods, plus signs and parentheses.
   Repeated spaces become one before the length check.
 * **Subjects also accept `/` and `&`.** Quote the entire subject if it contains a slash or text resembling a parameter,
   for example `sub/"Combined Science (Chem/Bio)"`. The quotes are not saved or counted toward the limit.
