@@ -221,7 +221,7 @@ If the command is rejected, the error message explains what to correct. For exam
   `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
 * `add r/student n/Alex Tan p/` reports `Empty phone parameter: Phone cannot be empty when p/ is specified.`
 
-Correct the indicated problem and try again. If several problems exist, fix each reported error in turn.
+Only the first problem is reported. Fix it and retry to see whether any other problems remain.
 On failure, contacts, selection, and saved data stay unchanged;
 the command remains for correction. For saving errors, see [Saving the data](#saving-the-data).
 
