@@ -1916,3 +1916,59 @@ Use a disposable application folder and keep a backup of its data file before te
 
    Automated `LinkPersistenceTest` and `LinkUiTest` also exercise failed saves using a storage implementation that
    throws `IOException`, without requiring file-permission changes.
+
+--------------------------------------------------------------------------------------------------------------------
+
+## **Appendix: Effort**
+
+This appendix compares TutorRoster with AddressBook-Level3 (AB3), the code base it started from.
+
+### Difficulty level
+
+AB3 manages one entity type, a person, with independent fields and no links between records. TutorRoster keeps
+two roles, students and guardians, with different rules. A student may have no phone number or email address, but a
+guardian must have at least one. Only students have a level, a subject and an active or former status. A student
+can be linked to one guardian, and one guardian can have several students. Every command that changes data must keep
+those links valid, so most features had to consider their effect on related contacts as well as on the target.
+
+### Challenges faced
+
+* **Keeping links consistent.** Names and display indexes change after edits, sorting and filtering, so links refer
+  to a permanent `ContactId` instead. Edit, archive and relinking keep both IDs. Deleting a guardian clears the link
+  on all of its students, including former students hidden by the current filter, and `undo` restores those links.
+  Loading rejects duplicate IDs and links that point to a missing contact or to a non-guardian.
+* **Never losing data on a failed save.** AB3 updates the live model and then saves. TutorRoster applies each
+  data-changing command to a candidate copy, saves it, and only then publishes it, so a save failure leaves both the
+  displayed data and the file unchanged. Undo follows the same rule and keeps its history until a restore saves.
+* **Same-name contacts.** Two students can share a name and have no contact details, so their fields are equal.
+  `UniquePersonList` therefore finds update and removal targets by ID, not by field equality.
+* **Forgiving but strict input.** Names may contain `/`, which collides with parameter prefixes, so names and
+  subjects can be quoted and the error messages suggest quoting when a value looks like a parameter. Pasted Unicode
+  spaces and equivalent names are normalised for duplicate warnings, while the data file is validated strictly so
+  that hand edits cannot bypass the rules enforced by commands.
+
+### Effort required
+
+* **New commands:** `archive`, `unarchive`, `view`, `link`, `unlink`, `children`, `undo` and `check`.
+* **Reworked AB3 commands:** `add` and `edit` with role-specific fields, quoting and duplicate warnings; `list` with
+  role, status, level and subject filters; `find` with substring matching; `delete` with bulk and name-based targets;
+  and `help` with a command reference.
+* **Model, storage and UI:** contact IDs and guardian references, a fixed display order, JSON validation of the new
+  fields and links, and a detail panel that shows a student's linked guardian, even when the guardian is outside
+  the current list.
+* **Size and testing:** at v1.6, production code has grown from about 4,700 lines in AB3 to about 9,100 lines, and
+  test code from about 4,600 to about 17,000 lines, with about 970 JUnit tests. The tests cover parsing errors,
+  link and deletion rules, failed saves, data file loading and UI selection.
+
+### Achievements
+
+A tutor can record a student and their guardian, link them, and move from either contact to the other in a few
+commands. Former students stay out of the default list without being deleted, `check` reports missing or doubtful
+contact details, and error messages name the field that is wrong and show the expected format. A failed save never loses
+data, and an invalid data file is reported instead of being silently overwritten.
+
+### Reuse
+
+TutorRoster reuses and adapts the AB3 code, documentation structure and UML diagrams, as stated in the
+[Acknowledgements](#acknowledgements). The other projects listed there are used as libraries and tools, not copied
+into the code base.
