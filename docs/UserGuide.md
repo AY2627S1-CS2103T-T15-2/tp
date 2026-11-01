@@ -99,9 +99,11 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 
 * **Indexes** refer to the currently displayed, sorted list. Use positive whole numbers; leading zeroes are
   accepted (`02` means 2). Display the intended contacts first, and recheck indexes after the list changes.
-* A zero, negative or non-integer `INDEX` gives `The contact index must be a positive integer shown in the list.`
-  An index beyond the list gives `No contact exists at index INDEX.` Relationship commands identify the student
-  or guardian index in their own messages. Missing targets and other syntax errors show command-specific guidance.
+* A zero, negative or non-integer `INDEX` gives `The contact index must be a positive integer shown in the list.`,
+  except for relationship commands: `link` uses student- or guardian-specific messages, while `unlink` and
+  `children` show their own index error and usage guidance. An index beyond the list gives
+  `No contact exists at index INDEX.`, with relationship commands identifying the student or guardian index.
+  Missing targets and other syntax errors show command-specific guidance.
 * **Rejected commands and failed saves** leave live contacts, relationships, the current view and saved data
   unchanged. They also preserve any deletion undo. Correct the reported problem and retry; see
   [Saving the data](#saving-the-data) and the recovery guidance that follows.
