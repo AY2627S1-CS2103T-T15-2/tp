@@ -91,6 +91,8 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
   `o`, `ł` with `l`, `æ` with `ae` and `ß` with `ss`. A name without accents is displayed before the same
   name with accents.
 * Index numbers used by commands such as `edit` and `delete` refer to this displayed order.
+* Adding or renaming a contact re-sorts the list, so contacts can move to different index numbers. Check the
+  index again before your next command; for example, after `edit 2 n/Zara Lim`, Zara may no longer be contact 2.
 </box>
 
 ### Viewing help: `help`
