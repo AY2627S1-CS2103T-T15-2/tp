@@ -91,8 +91,9 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
   `o`, `ł` with `l`, `æ` with `ae` and `ß` with `ss`. A name without accents is displayed before the same
   name with accents.
 * Index numbers used by commands such as `edit` and `delete` refer to this displayed order.
-* Adding or renaming a contact re-sorts the list, so contacts can move to different index numbers. Check the
-  index again before your next command; for example, after `edit 2 n/Zara Lim`, Zara may no longer be contact 2.
+* Adding or editing a contact re-sorts the list and resets any search or filter, so contacts can move to different
+  index numbers. Check the index again before your next command; for example, after `edit 2 n/Zara Lim`, Zara may
+  no longer be contact 2.
 </box>
 
 ### Viewing help: `help`
@@ -226,8 +227,10 @@ message; **a warning does not prevent saving**.
 
 **Detection limits:**
 
-* A student without phone or email is not flagged against a same-name student who has both.
-* Phone matching ignores spaces and hyphens, but retains country codes. For example, `+65 9123 4567` and
+* Same-name contacts are compared only when a phone or email matches, or both lack a phone or both lack an email.
+  So a student with no phone or email is not flagged against one who has both, and a student with only a phone
+  is not flagged against one with only an email.
+* Phone matching ignores spaces and hyphens, but not country codes. For example, `+65 9123 4567` and
   `91234567` do not trigger a phone warning.
 
 Use `find NAME` to inspect such contacts manually; `check duplicates` uses the same detection rules.
