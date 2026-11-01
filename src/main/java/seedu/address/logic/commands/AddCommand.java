@@ -60,6 +60,8 @@ public class AddCommand extends Command {
                     + "and sub/SUBJECT.";
     public static final String MESSAGE_NAME_SLASH_HINT =
             " If '/' is part of the name, enclose the entire name in double quotes.";
+    public static final String MESSAGE_SUBJECT_SLASH_HINT =
+            " If '/' is part of the subject, enclose the entire subject in double quotes.";
     public static final String MESSAGE_INVALID_PARAMETER_OR_NAME_SLASH = MESSAGE_INVALID_PARAMETER
             + MESSAGE_NAME_SLASH_HINT;
 

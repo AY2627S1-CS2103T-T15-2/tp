@@ -91,6 +91,8 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
   `o`, `ł` with `l`, `æ` with `ae` and `ß` with `ss`. A name without accents is displayed before the same
   name with accents.
 * Index numbers used by commands such as `edit` and `delete` refer to this displayed order.
+* Adding or renaming a contact re-sorts the list, so contacts can move to different index numbers. Check the
+  index again before your next command; for example, after `edit 2 n/Zara Lim`, Zara may no longer be contact 2.
 </box>
 
 ### Viewing help: `help`
@@ -221,6 +223,14 @@ hyphens remain significant for rejection**: `p/9123 4567` and `p/91234567` produ
 Two students named `Ben Lim` with no phone or email are both saved, with a general warning for the second.
 Different roles or names trigger no duplicate checks. Only the highest-priority warning is shown, after the success
 message; **a warning does not prevent saving**.
+
+**Detection limits:**
+
+* A student without phone or email is not flagged against a same-name student who has both.
+* Phone matching ignores spaces and hyphens, but retains country codes. For example, `+65 9123 4567` and
+  `91234567` do not trigger a phone warning.
+
+Use `find NAME` to inspect such contacts manually; `check duplicates` uses the same detection rules.
 
 #### Correcting an unsuccessful add
 
@@ -458,6 +468,8 @@ Format: `view INDEX`
 * The index **must be a positive integer** 1, 2, 3, ...
 * A value that is not a positive integer is rejected with
   `The contact index must be a positive integer shown in the list.`
+* A missing index is rejected with `Missing contact index. Use: view INDEX`, and anything after the index, as in
+  `view 1 2`, with `Only one contact index is allowed. Use: view INDEX`.
 * An index outside the displayed list is rejected with `No contact exists at index INDEX.`
 * The details panel shows the contact's name with a `Student` or `Guardian` badge, and a `Former` badge for a former
   student. Below the name, the details panel groups the contact's details into sections:
