@@ -89,7 +89,13 @@
         "checking-subject-punctuation": "Checking subject punctuation",
         "linking-students-to-guardians": "Linking students to guardians",
         "removing-links-and-finding-a-guardian-s-students": "Removing links and finding a guardian's students",
-        "saving-data": "Saving data"
+        "saving-data": "Saving data",
+        "appendix-effort": "Appendix: Effort",
+        "difficulty-level": "Difficulty level",
+        "challenges-faced": "Challenges faced",
+        "effort-required": "Effort required",
+        "achievements": "Achievements",
+        "reuse": "Reuse"
       },
       "headingKeywords": {}
     },
