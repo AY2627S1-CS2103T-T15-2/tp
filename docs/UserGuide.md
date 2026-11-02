@@ -55,7 +55,8 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 **Notes about the command format:**<br>
 
 * Command words ignore letter case, so `add`, `ADD` and `AdD` are equivalent.
-  Add's parameter prefixes also ignore letter case; use the documented lowercase prefixes for other commands.
+  The parameter prefixes of `add` and `list` also ignore letter case; use the documented lowercase prefixes for
+  other commands.
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
@@ -91,7 +92,23 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
   `o`, `ł` with `l`, `æ` with `ae` and `ß` with `ss`. A name without accents is displayed before the same
   name with accents.
 * Index numbers used by commands such as `edit` and `delete` refer to this displayed order.
+* Adding or editing a contact re-sorts the list and resets any search or filter, so contacts can move to different
+  index numbers. Check the index again before your next command; for example, after `edit 2 n/Zara Lim`, Zara may
+  no longer be contact 2.
 </box>
+
+### Common command rules
+
+* **Indexes** refer to the currently displayed, sorted list. Use positive whole numbers; leading zeroes are
+  accepted (`02` means 2). Display the intended contacts first, and recheck indexes after the list changes.
+* A zero, negative or non-integer `INDEX` gives `The contact index must be a positive integer shown in the list.`,
+  except for relationship commands: `link` uses student- or guardian-specific messages, while `unlink` and
+  `children` show their own index error and usage guidance. An index beyond the list gives
+  `No contact exists at index INDEX.`, with relationship commands identifying the student or guardian index.
+  Missing targets and other syntax errors show command-specific guidance.
+* **Rejected commands and failed saves** leave live contacts, relationships, the current view and saved data
+  unchanged. They also preserve any deletion undo. Correct the reported problem and retry; see
+  [Saving the data](#saving-the-data) and the recovery guidance that follows.
 
 ### Viewing help: `help`
 
@@ -114,12 +131,15 @@ Format: `add r/ROLE n/NAME [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 **Role and name are required.** Students may have phone, email, both, or neither. Guardians must have at least
 one contact method. Level and subject are optional and available **only for students**.
 
+See [Field rules](#field-rules), [Duplicate contacts and warnings](#duplicate-contacts-and-warnings),
+or [Correcting an unsuccessful add](#correcting-an-unsuccessful-add) for details.
+
 Examples:
 
 | To add... | Enter |
 | --- | --- |
 | A student with phone and email | `add r/student n/Alex Tan p/91234567 e/alex@example.com` |
-| A student with level and subject | `add r/student n/Alex Tan lv/Sec 3 sub/Math` |
+| A student with level and subject | `add r/student n/Chloe Lee lv/Sec 3 sub/Math` |
 | A student without contact details | `add r/student n/Ben Lim` |
 | A guardian with email only | `add r/guardian n/Mei Tan e/mei@example.com` |
 | A student whose name contains `/` | `add r/student n/"Ravi s/o Kumar" p/98765432` |
@@ -128,13 +148,11 @@ The command word and its prefixes (`r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`) accept
 `ADD R/student N/Alex Tan Lv/Sec 3 SuB/Math`. Parameter values retain their capitalization.
 Parameters may appear in any order, once each. Omit an optional field's prefix if unused;
 an empty prefix such as `p/` is rejected.
-Whitespace before a prefix, including pasted tabs or line breaks, separates parameters just like a space.
-Whitespace inside a value follows that field's rules; for example, a tab inside a phone number is rejected.
 Omitted phone and email values display as `Not provided`.
 
 On success, the contact is saved and selected, and its details appear in the detail panel. Guardians and active
-students are shown, clearing any search or list filter. Former students remain hidden. The command box clears and
-stays focused. The first example reports `Added contact: Alex Tan [Student].`
+students are shown, clearing any search or list filter. Former students remain hidden.
+The first example reports `Added contact: Alex Tan [Student].`
 
 #### Field rules
 
@@ -146,12 +164,13 @@ Surrounding whitespace is removed from field values. Capitalization is preserved
 
 * Enter **1 to 70 characters**, including at least one letter or digit.
 * Names may contain letters and numbers from non-English scripts, spaces, apostrophes (`'`, `‘`, `’`),
-  hyphens, periods, middle dots (`·`), and slashes.
+  hyphens, periods, middle dots (`·`), parentheses (`(`, `)`), commas, and slashes.
 * Surrounding spaces are removed, including inside enclosing quotes. Repeated spaces become one before checking
   the length. Capitalization and punctuation are preserved.
 
-**Names containing `/` must be enclosed in straight double quotes**, for example `n/"Ravi s/o Kumar"`
-or `n/"AC/DC"`. The enclosing quotes are not saved.
+**In `add`, names containing `/` must be enclosed in straight double quotes**, for example `n/"Ravi s/o Kumar"`
+or `n/"AC/DC"`. `edit` needs the quotes only when a word in the name looks like a parameter, such as `s/o` in
+`Ravi s/o Kumar`, so `edit 1 n/AC/DC` also works. Quoting is always accepted. The enclosing quotes are not saved.
 
 Text resembling a parameter stays part of a quoted name: `n/"Ravi p/e ratio"` does not supply a phone number.
 Names made entirely of punctuation, such as `...` or `-`, are rejected with
@@ -182,26 +201,29 @@ Common email mistakes:
 | `alex@example` or `alex@example.c` | Missing second label or final label too short. |
 | `.alex@example.com` or `alex..tan@example.com` | Invalid punctuation placement. |
 
-**Level (`lv/`) and subject (`sub/`)**: Optional fields for students only. Each value must contain **1 to 30 characters**,
-including a letter or digit. Allowed characters are letters and digits (including non-English scripts), spaces,
-hyphens, periods, plus signs and parentheses. Repeated spaces become one space before the length check.
+**Level (`lv/`) and subject (`sub/`)**
 
-Subjects also allow `/` and `&`. Quote the entire subject if it contains a slash or prefix-like text, for example
-`sub/"Combined Science (Chem/Bio)"`. The quotes are removed before validation and are not saved or counted.
-This syntax works in `add`, `edit` and `list`; `sub/English Language & Literature` needs no quotes.
-Use unquoted level values, for example `lv/Sec 3`.
-
-`NONE` is reserved, ignoring capitalization. In `edit`, use unquoted `lv/NONE` or `sub/NONE` to remove the field.
+* Optional and available **only for students**.
+* Each value must contain **1 to 30 characters**, including at least one letter or digit.
+* Both accept Unicode letters and digits, spaces, hyphens, periods, plus signs and parentheses.
+  Repeated spaces become one before the length check.
+* **Subjects also accept `/` and `&`.** Quote the entire subject if it contains a slash or text resembling a parameter,
+  for example `sub/"Combined Science (Chem/Bio)"`. The quotes are not saved or counted toward the limit.
+  This syntax works in `add`, `edit` and `list`; `sub/English Language & Literature` needs no quotes.
+* Use unquoted level values, for example `lv/Sec 3`.
+* `NONE` is reserved, ignoring capitalization. In `edit`, use unquoted `lv/NONE` or `sub/NONE` to remove the field.
 
 #### Duplicate contacts and warnings
 
-Checks include **all saved contacts**, including former students and contacts hidden by a filter. These rules
-apply to contacts with the **same role and name**. Exact duplicate rejection ignores name capitalization.
-Possible-duplicate warnings also recognize canonically equivalent Unicode spellings (such as composed and
-decomposed `É`), straight (`'`), opening-curly (`‘`) and closing-curly (`’`) apostrophes, and repeated or surrounding spaces
-in saved names.
-Accents and word boundaries remain significant: `Élise` differs from `Elise`, and `Alex Tan` differs from `AlexTan`.
-Names are saved as entered after normal command parsing. Level and subject do not affect these checks.
+Checks include **all saved contacts**, including former students and contacts hidden by a filter.
+Only contacts with the **same role and name** are compared. Level and subject do not affect these checks.
+
+* **Exact duplicates:** Name matching ignores capitalization. If phone and email also match, with at least
+  one contact method present, the contact is rejected.
+* **Possible duplicates:** Warning checks additionally treat equivalent accented spellings, straight and curly
+  apostrophes, and repeated or surrounding spaces as matching names. Accents and spaces between words still matter:
+  `Élise` differs from `Elise`, and `Alex Tan` differs from `AlexTan`. **The contact is saved with a warning**
+  when a warning condition in the table below is met.
 
 | Condition, checked in this order | Result |
 | --- | --- |
@@ -211,40 +233,43 @@ Names are saved as entered after normal command parsing. Level and subject do no
 | Phone is missing from both contacts, or email is missing from both | Added with a general warning. |
 | None of the above | Added without a warning. |
 
-Phone warnings and `check duplicates` also ignore Unicode space separators in phone numbers already saved in the
-data file. Those saved phone values are preserved.
+Exact duplicate checks ignore email capitalization and treat two omitted phone or email values as matching.
+Phone formatting still matters: `9123 4567` and `91234567` trigger a warning instead of rejection when the role
+and name match.
 
-Exact duplicates ignore email capitalization and treat two omitted values as matching. **Internal phone spaces and
-hyphens remain significant for rejection**: `p/9123 4567` and `p/91234567` produce a warning instead.
+Two students named `Ben Lim` with no phone or email can both be saved; the second receives a general warning.
+If several warning conditions apply, only the highest-priority warning is shown after the success message.
 
-Two students named `Ben Lim` with no phone or email are both saved, with a general warning for the second.
-Different roles or names trigger no duplicate checks. Only the highest-priority warning is shown, after the success
-message; **a warning does not prevent saving**.
+**Detection limits:**
+
+* Same-name contacts are compared only when a phone or email matches, or both lack a phone or both lack an email.
+  So a student with no phone or email is not flagged against one who has both, and a student with only a phone
+  is not flagged against one with only an email.
+* Phone matching ignores spaces and hyphens, but not country codes. For example, `+65 9123 4567` and
+  `91234567` do not trigger a phone warning.
+
+Use `find NAME` to inspect such contacts manually; `check duplicates` uses the same detection rules.
 
 #### Correcting an unsuccessful add
 
-Missing required fields, empty values, repeated parameters, and unknown prefixes such as `a/15` are rejected.
-A missing role or name error identifies the field and shows the command format. Unknown-parameter errors identify
-the invalid prefix and list valid ones; repeated-parameter errors name the repeated prefix. A slash in an unquoted
-name also prompts you to quote the entire name.
-
-After parameter syntax checks, field values are checked in the order `r/`, `n/`, `p/`, `e/`, `lv/`, `sub/`.
-For example, `add p/12 n/Alex Tan r/teacher` reports the invalid role first.
-For guardians, the contact-method requirement is checked after phone and email; any `lv/` or `sub/` is then rejected.
-
-Other errors explain the reason, for example:
+If the command is rejected, the error message explains what to correct. For example:
 
 * `add r/guardian n/Mei Tan` reports `A guardian must have at least one contact method: phone or email.`
 * `add r/guardian n/Mei Tan p/91234567 lv/Sec 3` reports
   `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
 * `add r/student n/Alex Tan p/` reports `Empty phone parameter: Phone cannot be empty when p/ is specified.`
-* `add r/student n/Alex Tan sub/---` reports `Subject must contain at least one letter or digit.`
 
-Level and subject errors distinguish excessive length, unsupported characters and values without any letters or
-digits. Email errors distinguish unsupported characters from punctuation placement, such as consecutive periods.
+If an unknown parameter appears inside an unquoted name or subject containing `/`, the error suggests quoting
+the whole value.
 
-Correct the indicated problem and try again. On failure, contacts, selection, and saved data stay unchanged;
-the command remains for correction. For saving errors, see [Saving the data](#saving-the-data).
+For example, `add r/student n/Kai sub/Combined Science (Chem/Bio)` reports:
+
+> Invalid parameter: (Chem/. Valid parameters are r/ROLE, n/NAME, p/PHONE, e/EMAIL, lv/LEVEL, and sub/SUBJECT. If '/' is part of the subject, enclose the entire subject in double quotes.
+
+Retry with `add r/student n/Kai sub/"Combined Science (Chem/Bio)"`.
+
+Only the first problem is reported. Fix it and retry to see whether any other problems remain.
+On failure, the command remains for correction; the [common failure guarantees](#common-command-rules) apply.
 
 ### Listing contacts: `list`
 
@@ -264,13 +289,9 @@ Command | Shows
 `list lv/Sec 3 sub/A-Math` | Active Sec 3 students who take A-Math
 `list sub/Physics st/all` | All students who take Physics, active and former
 
-* By default, former students are hidden; see [Marking a student as former](#marking-a-student-as-former-archive).
-* `r/ROLE` shows only contacts with that role. `ROLE` must be `student` or `guardian`, and ignores letter case.
-* `st/STATUS` chooses which contacts to show by status. `STATUS` must be `active`, `former` or `all`, and ignores
-  letter case:
-  * `st/active` shows guardians and active students. This is the default, so `list st/active` is the same as `list`.
-  * `st/former` shows only former students.
-  * `st/all` shows every contact, whatever its status.
+* `ROLE` accepts `student` or `guardian`; `STATUS` accepts `active`, `former` or `all`, ignoring letter case.
+  The default is `active`, so former students are hidden unless you supply `st/former` or `st/all`.
+  See [archiving](#marking-a-student-as-former-archive) for changing student status.
 * `lv/LEVEL` shows only students at that level, and `sub/SUBJECT` only students taking that subject. Letter case
   and spaces are ignored, so `lv/sec3` matches a student at `Sec 3`. The whole value must match: `sub/Math` does
   not match `A-Math`. The same accented spelling matches across input methods. Accents remain significant, so `Français`
@@ -280,7 +301,6 @@ Command | Shows
   `list sub/"Art n/Design"`. Without the quotation marks, `n/` is read as an unknown parameter and the command is
   rejected.
 * Parameters can be given in any order, and each can appear only once. A contact must match all of them.
-  Without `st/`, former students are hidden, so add `st/all` to include them.
 * Guardians are never former, so `list r/guardian st/former` is rejected with
   `Guardians cannot be former. Remove r/guardian or st/former.`
 * Guardians have no level or subject, so `list r/guardian lv/Sec 3` is rejected with
@@ -330,7 +350,7 @@ Marks a student as former while keeping their details and guardian link.
 
 Format: `archive INDEX`
 
-* Use one positive index from the **currently displayed list**. Guardians cannot be archived.
+* Use one displayed index, following the [common index rules](#common-command-rules). Guardians cannot be archived.
 * The current filter is kept. The student disappears from active-only views such as `list`, but remains visible
   with a `Former` badge after `list st/all` or `find NAME`. Their guardian remains in the active list.
 * An already-former student is rejected. Success reports `Marked NAME as a former student.`
@@ -343,12 +363,11 @@ Example: `find Alex`, then `archive 1`, marks the first search result as former 
 | --- | --- |
 | Missing index | `Missing contact index. Use: archive INDEX` |
 | More than one argument | `Only one contact index is allowed. Use: archive INDEX` |
-| Zero, negative or non-integer index | `The contact index must be a positive integer shown in the list.` |
-| Index beyond the displayed list | `No contact exists at index INDEX.` |
 | Guardian target | `Only students can be archived.` for `archive`; `Only students can be unarchived.` for `unarchive`. |
 | Already in the requested status | `NAME is already a former student.` for `archive`; `NAME is already an active student.` for `unarchive`. |
 
-For `unarchive`, the usage text shows `unarchive INDEX` instead. Rejected commands leave contacts unchanged.
+For `unarchive`, the usage text shows `unarchive INDEX` instead. Other index errors follow the
+[common rules](#common-command-rules).
 
 ### Marking a former student as active: `unarchive`
 
@@ -370,7 +389,8 @@ Updates the contact at an index in the **currently displayed list**.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 
-* Use a positive index and supply at least one field. Omitted fields keep their values; empty values are rejected.
+* Follow the [common index rules](#common-command-rules) and supply at least one field.
+  Omitted fields keep their values; empty values are rejected.
   Each parameter may appear only once. The contact's role cannot be edited, and other parameters are rejected.
 * Values follow the [field rules](#field-rules). Quote names containing prefix-like words, such as
   `n/"Ravi s/o Kumar"` or `n/"Randy p/e ratio"`. Embedded slashes such as `n/AC/DC` also work without quotes in `edit`.
@@ -399,8 +419,6 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 | Input problem | Result |
 | --- | --- |
 | Missing index or extra text before the first parameter | `Invalid edit command. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` |
-| Zero, negative or non-integer index | `The contact index must be a positive integer shown in the list.` |
-| Index beyond the displayed list | `No contact exists at index INDEX.` |
 | No field supplied | `At least one of n/, p/, e/, lv/, or sub/ must be provided.` |
 | Repeated parameter | `Each of n/, p/, e/, lv/, and sub/ may appear only once.` |
 | Unsupported parameter | `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` |
@@ -408,8 +426,6 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 | Unquoted subject containing a prefix-like word, such as `sub/Combined Science (Chem/Bio)` | The unsupported-parameter message, followed by `If '/' is part of the subject, enclose the entire subject in double quotes.` |
 | Removing a guardian's last contact method | `A guardian must have at least one contact method: phone or email.` |
 | Setting or removing a guardian's level or subject | `Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.` |
-
-Leading zeroes are accepted: `02` means index 2.
 
 **Examples:**
 
@@ -454,12 +470,9 @@ Shows the full details of the specified contact in the details panel.
 
 Format: `view INDEX`
 
-* Selects the contact at the specified `INDEX` in the list.
-* The index refers to the index number shown in the displayed contact list.
-* The index **must be a positive integer** 1, 2, 3, ...
-* A value that is not a positive integer is rejected with
-  `The contact index must be a positive integer shown in the list.`
-* An index outside the displayed list is rejected with `No contact exists at index INDEX.`
+* Selects the contact at `INDEX`, following the [common index rules](#common-command-rules).
+* A missing index is rejected with `Missing contact index. Use: view INDEX`, and anything after the index, as in
+  `view 1 2`, with `Only one contact index is allowed. Use: view INDEX`.
 * The details panel shows the contact's name with a `Student` or `Guardian` badge, and a `Former` badge for a former
   student. Below the name, the details panel groups the contact's details into sections:
   * **Details**: the contact's role, phone number and email address.
@@ -749,3 +762,4 @@ Action     | Format, Examples
 **Undo deletion** | `undo`<br> Restores the latest successful deletion in the current session.
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
+**Exit**   | `exit`

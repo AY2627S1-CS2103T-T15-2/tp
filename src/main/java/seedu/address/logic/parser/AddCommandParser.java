@@ -45,8 +45,8 @@ public class AddCommandParser implements Parser<AddCommand> {
      * Parses the given {@code String} of arguments in the context of {@code AddCommand}
      * and returns an {@code AddCommand} object for execution.
      *
-     * @throws NullPointerException if {@code args} is null
-     * @throws ParseException if the user input does not conform to the expected format
+     * @throws NullPointerException if {@code args} is null.
+     * @throws ParseException if the user input does not conform to the expected format.
      */
     @Override
     public AddCommand parse(String args) throws ParseException {

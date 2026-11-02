@@ -27,6 +27,12 @@
   [Shadow](https://github.com/GradleUp/shadow), [Checkstyle](https://checkstyle.org/) and
   [JaCoCo](https://www.jacoco.org/jacoco/).
 
+**AI assistance**
+
+* Seah Jia Le used OpenAI Codex to assist with implementing and refining Add, Help, input validation and
+  feedback-display changes, writing tests, debugging, reviewing pull requests, and improving the User and
+  Developer Guides.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
@@ -107,7 +113,9 @@ Here's a (partial) class diagram of the `Logic` component:
 `XYZCommand` represents the concrete commands listed in the diagram. `ArchiveCommand` and `UnarchiveCommand`
 instead extend the abstract `StudentStatusCommand`, which shares their student-status validation and update logic.
 
-The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
+The sequence diagram below focuses on parsing and command execution for `delete 1`. Model `c` is the candidate
+used by the [shared execution and saving policy](#executing-and-saving-changes). Resolving the displayed index,
+copying the candidate, saving, publishing and recording deletion history are omitted from this focused view.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
 
@@ -120,7 +128,7 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
+1. This produces a concrete `Command`, which `LogicManager` executes using the shared read-only or data-changing flow.
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
@@ -187,92 +195,50 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Executing and saving changes
+
+`LogicManager` parses each command and checks `Command.isDataChanging()`. Read-only commands run on the live
+model without saving. Data-changing commands follow one shared policy:
+
+1. Reject changes if the contact-data file failed to load.
+2. Copy the live data and preferences to a candidate `ModelManager`, retaining the current filter.
+3. Execute and validate the command on the candidate, then save it through `Storage#saveAddressBook`.
+4. Only after saving succeeds, publish the candidate's data and filter to the live model and update deletion history.
+
+A successful deletion records a snapshot; undo consumes it; other successful data changes clear it. Validation
+and save failures leave live contacts, relationships, filters and deletion history unchanged. Ordinary save failures
+report `Changes could not be saved. No changes were made.` Conflicting external saves have a separate recovery
+message. See [Saving contacts and relationships](#saving-contacts-and-relationships) for atomic file replacement,
+locking and load-failure protection. Feature-specific rules are described below.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+This is a future design adapted from AB3, **not the current deletion-only undo implementation** described
+[below](#undoing-the-latest-deletion). It would support undoing and redoing multiple kinds of data changes.
 
-* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
+A proposed `VersionedAddressBook` would extend `AddressBook`, storing snapshots in `addressBookStateList` and
+tracking the current snapshot with `currentStatePointer`. Its operations would be exposed through `Model`:
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
+| Operation | Proposed behaviour |
+| --- | --- |
+| `commitAddressBook()` | Append a successfully changed state and advance the pointer, discarding any redo history |
+| `undoAddressBook()` | Move to the previous snapshot; reject when already at the first |
+| `redoAddressBook()` | Move to the next snapshot; reject when already at the latest |
 
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
+Read-only and failed commands would not commit snapshots. For example, after a deletion and an addition,
+undoing would restore the post-deletion state. A new successful change would replace the abandoned redo branch.
 
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
+<puml src="diagrams/UndoRedoState3.puml" alt="Proposed snapshot history after undoing an addition" />
 
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
-
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
-
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
-
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
-
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
-
-<box type="info" seamless>
-
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
-</box>
-
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
-
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
-
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
-</box>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
-
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
-</box>
-
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
-
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
-
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
-
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
-
-The following activity diagram summarizes what happens when a user executes a new command:
-
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
+<puml src="diagrams/CommitActivityDiagram.puml" width="250" alt="Proposed commit decision flow" />
 
 #### Design considerations:
 
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire address book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
+Whole-address-book snapshots simplify restoration at the cost of memory. Command-specific inverse operations
+could use less memory, but each command would need its own correct reversal logic, including relationship changes.
+The current deletion undo uses one snapshot; it does not expose the proposed general undo/redo API.
 
 ### Undoing the latest deletion
 
@@ -295,11 +261,9 @@ This deletion-specific implementation is separate from the proposed general undo
 
 `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` changes the name, phone number, email address,
 level or subject of a displayed contact. Only a student can have a level or subject.
-The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, which removes the phone number of the
-first displayed contact `p`, assumed to be a student with a phone number. Because edit changes data, `LogicManager`
-copies the live model `m`'s data and preferences into a candidate `c` and applies the current filter to `c` before
-executing the command. It saves `c` through `Storage` before publishing both its data and filter to `m`.
-If the save fails, the live contacts, view and deletion-undo history stay unchanged.
+The role cannot be edited. The sequence diagram below shows `edit 1 p/NONE`, removing the first displayed
+student `p`'s phone. Candidate `c` and live model `m` follow the shared
+[execution and saving policy](#executing-and-saving-changes).
 
 <puml src="diagrams/EditSequenceDiagram.puml" alt="Interactions inside the Logic component for the `edit 1 p/NONE` command" />
 
@@ -342,9 +306,8 @@ The command prepares its success feedback and any duplicate warning before chang
 guardian. Thus editing a former student shows the former-student view; other edits show guardians and active
 students. The previous search, role, level or subject filter is replaced so the edited contact remains visible.
 
-After saving succeeds, `LogicManager` publishes the candidate data and filter, clears deletion-undo history, and
-returns the prepared `CommandResult`. Its contact ID lets `MainWindow` select the edited contact and refresh the
-details panel. A rejected edit or a failed save leaves the live contacts, filter and undo opportunity unchanged.
+After the shared save flow succeeds, the result's contact ID lets `MainWindow` select the edited contact and
+refresh its details panel.
 
 **Design considerations.**
 
@@ -397,14 +360,9 @@ If the student was selected, the UI clears the selection and detail panel when t
 When the student remains in the view, as with `find` or `list st/all`, the existing selection is retained
 and its details are refreshed. The details panel shows the status as `Role: Student [Former]`.
 
-**Saving and failure handling.** Both commands declare themselves data-changing. `LogicManager` creates a
-candidate model containing the live data, preferences and current filter, then executes the command on that copy.
-It saves the candidate through `Storage#saveAddressBook` before publishing its data and filter to the live model.
-A validation failure or failed save leaves the live contacts, relationships and filter unchanged. A save failure
-reports `Changes could not be saved. No changes were made.`; see
-[Saving contacts and relationships](#saving-contacts-and-relationships) for the storage mechanism.
-Successful status changes clear the previous deletion's undo history, following the rule described under
-[Undoing the latest deletion](#undoing-the-latest-deletion).
+**Saving and failure handling.** Both commands use the shared
+[execution and saving policy](#executing-and-saving-changes). A successful status change clears deletion undo;
+validation and save failures preserve it.
 
 **Design considerations.**
 
@@ -458,9 +416,8 @@ the student's ID; the UI clears selection if the preserved filter now excludes t
 
 <puml src="diagrams/UnlinkSequenceDiagram.puml" alt="Unlink execution with save-before-publish failure handling" />
 
-As a data-changing command, unlink uses `LogicManager`'s candidate-model flow. Only a successful save publishes
-the candidate and clears deletion undo. Validation errors, load failures and save failures preserve live data
-and any previous undo opportunity. This provides one persistence policy for linking, unlinking and other edits.
+Unlink uses the shared [execution and saving policy](#executing-and-saving-changes), including preservation of
+live data and deletion undo on failure.
 
 **Guardian lookup.** `ChildrenCommand` first resolves and validates a guardian in the current displayed list,
 then replaces the model predicate with `GuardianChildrenPredicate`. The predicate stores a `ContactId` and
@@ -491,34 +448,30 @@ responsibilities and the design choices behind them.
 
 #### Parsing and validation
 
-`AddCommandParser` requires `r/ROLE` and `n/NAME`; phone, email, level and subject are optional. Its `parse` method
-delegates syntax handling to `tokenizeArguments` and field parsing to `parsePerson`. Syntax errors are reported
-before field-value errors. Fields are checked in the fixed order role, name, phone, email, level, then subject,
-regardless of parameter order. Missing role and name checks precede their respective value checks; unexpected
-preamble is rejected before name validation.
+**Validation order.** `AddCommandParser#parse` delegates syntax checks to `tokenizeArguments` and field parsing
+to `parsePerson`. Role and name are required. Syntax checks precede field validation, which follows role, name,
+phone, email, level and subject order regardless of input order. Role-specific checks run after phone and email
+validation, before student details. This keeps the first reported error predictable.
 
-`AddCommandParser` and the quote-aware path in `ArgumentTokenizer` use `ArgumentTokenScanner` to share quote and
-token-boundary recognition. Prefixes begin at the start of the arguments or after `Character.isWhitespace`
-characters, including tabs and line breaks. Internal value whitespace is preserved for field validation.
-Add recognizes prefixes without regard to letter case and normalizes only those prefixes before tokenization.
-Field values, including prefix-like text inside quoted values, keep their original capitalization.
+**Parameter recognition.** `AddCommandParser` and the quote-aware path in `ArgumentTokenizer` share
+`ArgumentTokenScanner`, keeping token boundaries and quoted values consistent. Prefixes start at the beginning
+of the arguments or after `Character.isWhitespace` characters. Add normalizes recognized prefixes without
+changing field capitalization. Command dispatch lowercases only the command word using `Locale.ROOT`.
+
 Before dispatch, `AddressBookParser` uses `StringUtil#normalizeSpaceSeparators` to replace Unicode `Zs` characters
 with ordinary spaces throughout the input, including quoted values. This includes non-breaking, figure and narrow
 non-breaking spaces from pasted text. Tabs and line breaks remain unchanged for the existing tokenizer and field
 validation rules. Normalizing at this boundary keeps Add, Edit, Find, List and name-based Delete consistent.
-For case-insensitive dispatch, only the command word is lowercased using `Locale.ROOT`.
-For Add, the scanner skips a quoted name or subject only when the first non-whitespace character after `n/` or
-`sub/` is a straight double quote. Quotes in phone text remain literal and cannot hide later parameters.
-Centralizing these rules keeps unknown-parameter detection consistent with tokenization.
-`AddCommandParser` still formats Add-specific errors and name-quoting hints.
-Callers inspect each position before advancing, so an unknown parameter before an unclosed
-quoted value is reported first.
 
-`ParserUtil#parseName` trims surrounding whitespace before and after removing enclosing quotes, including Java
-whitespace such as em spaces, tabs and line breaks. Only repeated ordinary spaces inside the name are collapsed;
-internal tabs and other unsupported whitespace fail validation. Add requires quotes around every name containing
-`/`, including `AC/DC`; Edit accepts unquoted embedded slashes. If an unknown parameter follows an unquoted name,
-the Add error includes a name-quoting hint. Repeated prefixes are rejected in the fixed field order above.
+**Quoted values.** The scanner protects a name or subject only when its first non-whitespace value character is
+a straight double quote. Quotes elsewhere remain literal, so phone text cannot hide later parameters.
+`AddCommandParser` supplies command-specific errors; an unknown parameter before an unclosed quoted value
+is reported first.
+
+**Name normalization.** `ParserUtil#parseName` removes enclosing quotes, trims surrounding whitespace and
+collapses repeated ordinary spaces. Internal unsupported whitespace fails validation. Add requires quotes around
+every name containing `/`; Edit also accepts unquoted embedded slashes. The Add parser supplies a quoting hint
+when an unknown parameter follows an unquoted name.
 See the [UG field rules and error examples](UserGuide.md#adding-a-contact-add) for the user-facing constraints.
 
 `Name` requires at least one Unicode letter or number after checking blank input, length and supported characters.
@@ -645,7 +598,7 @@ under [Saving contacts and relationships](#saving-contacts-and-relationships).
 displaying the command feedback, keeping window operations in the UI component. Help is read-only: it does not
 save contact data, replace the current filter or clear deletion undo.
 
-The sequence below focuses on dispatching an already parsed `help` command and reusing the Help window.
+The sequence below shows how executing `help` reuses the Help window.
 Parsing and routine feedback updates are omitted.
 
 <puml src="diagrams/HelpSequenceDiagram.puml" width="680" alt="Help execution returning a UI flag and reusing the existing Help window" />
@@ -697,7 +650,9 @@ observable. Existing same-role records differing only in
 capitalization may therefore fail duplicate validation on loading. IDs and guardian links remain independent of
 duplicate identity.
 
-Each command declares whether it changes data through `Command.isDataChanging()`. `LogicManager` executes data-changing commands on a candidate model carrying the original filter. It saves that candidate before replacing the live model. An unsuccessful command or save therefore cannot change the live contacts, relationships or displayed list. `JsonAddressBookStorage` writes a temporary file in the destination directory and atomically replaces the data file; it fails safely if atomic replacement is unavailable. Read-only commands do not save data.
+Following the [execution and saving policy](#executing-and-saving-changes), `JsonAddressBookStorage` writes a
+temporary file in the destination directory and atomically replaces the data file. If atomic replacement is
+unavailable, saving fails safely without publishing the candidate.
 
 Each successful load retains the exact file bytes parsed into that session's model (including whether the
 file was missing). Before saving, storage acquires an exclusive operating-system lock on the sibling
@@ -741,7 +696,9 @@ only former students, and `ContactFilter.ALL_CONTACTS` shows everyone. `Model#PR
 `Model#PREDICATE_SHOW_FORMER_STUDENTS` refer to the first two filters, so the rules for which contacts are active live
 in one class.
 
-`ListCommandParser` checks the input as shown in the activity diagram below, and stops at the first problem it finds.
+`ListCommandParser` first changes the list prefixes to lowercase, using `ArgumentTokenScanner` as `add` does, so
+`R/student` is read as `r/student`. It then checks the input as shown in the activity diagram below, and stops at
+the first problem it finds.
 
 <puml src="diagrams/ListParserActivityDiagram.puml" width="400" alt="Checks made by ListCommandParser" />
 
@@ -1322,6 +1279,22 @@ contains the complete field rules and ordinary error examples.
    Repeat the apostrophe workflow with straight (`'`) and closing curly (`’`) apostrophes as controls.
    `edit 1 n/'` must fail without modifying the saved contact.
 
+
+### Feedback wrapping and resizing
+
+Prerequisites: launch TutorRoster with the main window visible. These checks do not require saved contacts.
+
+1. Run `list` to show a short result, then enter `add n/Feedback Test` without a role.<br>
+   Expected: The missing-role error includes the Add format and example. The feedback area grows as needed,
+   up to its height limit, and wraps the text without horizontal scrolling. No contact is added.
+
+1. Reduce the main window to its minimum size while the error is displayed, then scroll through the message.<br>
+   Expected: Text rewraps, the feedback height adapts to the available space, and vertical scrolling allows
+   the full error to be read. Enlarge the window again and check that the layout readjusts.
+
+1. Scroll to the end of the error, then run `list` again.<br>
+   Expected: The feedback area shrinks for the short result, the error styling is removed, and the new message
+   starts at the top rather than retaining the previous scroll position.
 
 ### Equivalent names in duplicate warnings
 
@@ -1917,3 +1890,59 @@ Use a disposable application folder and keep a backup of its data file before te
 
    Automated `LinkPersistenceTest` and `LinkUiTest` also exercise failed saves using a storage implementation that
    throws `IOException`, without requiring file-permission changes.
+
+--------------------------------------------------------------------------------------------------------------------
+
+## **Appendix: Effort**
+
+This appendix compares TutorRoster with AddressBook-Level3 (AB3), the code base it started from.
+
+### Difficulty level
+
+AB3 manages one entity type, a person, with independent fields and no links between records. TutorRoster keeps
+two roles, students and guardians, with different rules. A student may have no phone number or email address, but a
+guardian must have at least one. Only students have a level, a subject and an active or former status. A student
+can be linked to one guardian, and one guardian can have several students. Every command that changes data must keep
+those links valid, so most features had to consider their effect on related contacts as well as on the target.
+
+### Challenges faced
+
+* **Keeping links consistent.** Names and display indexes change after edits, sorting and filtering, so links refer
+  to a permanent `ContactId` instead. Edit, archive and relinking keep both IDs. Deleting a guardian clears the link
+  on all of its students, including former students hidden by the current filter, and `undo` restores those links.
+  Loading rejects duplicate IDs and links that point to a missing contact or to a non-guardian.
+* **Never losing data on a failed save.** AB3 updates the live model and then saves. TutorRoster applies each
+  data-changing command to a candidate copy, saves it, and only then publishes it, so a save failure leaves both the
+  displayed data and the file unchanged. Undo follows the same rule and keeps its history until a restore saves.
+* **Same-name contacts.** Two students can share a name and have no contact details, so their fields are equal.
+  `UniquePersonList` therefore finds update and removal targets by ID, not by field equality.
+* **Forgiving but strict input.** Names may contain `/`, which collides with parameter prefixes, so names and
+  subjects can be quoted and the error messages suggest quoting when a value looks like a parameter. Pasted Unicode
+  spaces and equivalent names are normalised for duplicate warnings, while the data file is validated strictly so
+  that hand edits cannot bypass the rules enforced by commands.
+
+### Effort required
+
+* **New commands:** `archive`, `unarchive`, `view`, `link`, `unlink`, `children`, `undo` and `check`.
+* **Reworked AB3 commands:** `add` and `edit` with role-specific fields, quoting and duplicate warnings; `list` with
+  role, status, level and subject filters; `find` with substring matching; `delete` with bulk and name-based targets;
+  and `help` with a command reference.
+* **Model, storage and UI:** contact IDs and guardian references, a fixed display order, JSON validation of the new
+  fields and links, and a detail panel that shows a student's linked guardian, even when the guardian is outside
+  the current list.
+* **Size and testing:** at v1.6, production code has grown from about 4,700 lines in AB3 to about 9,100 lines, and
+  test code from about 4,600 to about 17,000 lines, with about 970 JUnit tests. The tests cover parsing errors,
+  link and deletion rules, failed saves, data file loading and UI selection.
+
+### Achievements
+
+A tutor can record a student and their guardian, link them, and move from either contact to the other in a few
+commands. Former students stay out of the default list without being deleted, `check` reports missing or doubtful
+contact details, and error messages name the field that is wrong and show the expected format. A failed save never loses
+data, and an invalid data file is reported instead of being silently overwritten.
+
+### Reuse
+
+TutorRoster reuses and adapts the AB3 code, documentation structure and UML diagrams, as stated in the
+[Acknowledgements](#acknowledgements). The other projects listed there are used as libraries and tools, not copied
+into the code base.
