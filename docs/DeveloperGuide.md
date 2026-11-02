@@ -29,6 +29,9 @@
 
 **AI assistance**
 
+* Loh Yang Jie used OpenAI Codex to draft and review code, tests and documentation for contact deletion,
+  bulk and name-based deletion, deletion undo and data-quality reports, and to assist with debugging,
+  preliminary pull-request reviews and UML diagrams.
 * Lu Ziyue used OpenAI Codex/ChatGPT to assist with guardian linking, unlink and children lookup,
   storage validation and recovery, tests, debugging, pull-request review, and the User and Developer Guides.
 * Seah Jia Le used OpenAI Codex to assist with implementing and refining Add, Help, input validation and
