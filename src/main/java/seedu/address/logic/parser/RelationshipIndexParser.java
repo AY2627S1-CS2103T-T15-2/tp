@@ -17,12 +17,9 @@ final class RelationshipIndexParser {
         String normalized = " " + args.trim().replaceAll("\\s+", " ");
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(normalized, prefix);
         if (!arguments.getPreamble().isEmpty() || arguments.getAllValues(prefix).size() != 1) {
-            throw new ParseException("Supply " + prefix + " exactly once. Usage: " + usage);
+            throw new ParseException("Invalid " + usage.split(" ")[0] + " command. Use: " + usage
+                    + ", with lowercase " + prefix + " given once.");
         }
-        try {
-            return ParserUtil.parseIndex(arguments.getValue(prefix).orElseThrow());
-        } catch (ParseException exception) {
-            throw new ParseException(ParserUtil.MESSAGE_INVALID_INDEX + " Usage: " + usage, exception);
-        }
+        return ParserUtil.parseSingleIndex(arguments.getValue(prefix).orElseThrow(), usage);
     }
 }
