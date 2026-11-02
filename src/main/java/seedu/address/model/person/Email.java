@@ -34,14 +34,14 @@ public class Email {
             "Email's final domain label must contain at least two characters.";
     public static final String MESSAGE_LOCAL_CHARACTERS =
             "Email local part contains unsupported characters. Use ASCII letters (A-Z, a-z), digits (0-9), "
-                    + "and '.', '_', '%', '+', or '-'.";
+                    + "and these symbols: ! # $ % & ' * + - / = ? ^ _ ` { | } ~ .";
     public static final String MESSAGE_LOCAL_PUNCTUATION =
             "Email local part cannot start or end with a period, or contain consecutive periods.";
     public static final String MESSAGE_DOMAIN_CHARACTERS =
             "Email domain labels contain unsupported characters. Use ASCII letters (A-Z, a-z), digits (0-9), "
                     + "and hyphens only.";
     public static final String MESSAGE_DOMAIN_PUNCTUATION =
-            "Email domain hyphens must appear singly between letters or digits.";
+            "Email domain labels cannot start or end with a hyphen.";
     public final String value;
 
     /**
@@ -111,7 +111,7 @@ public class Email {
     }
 
     private static String getLocalPartError(String localPart) {
-        if (hasUnsupportedCharacters(localPart, "._%+-")) {
+        if (hasUnsupportedCharacters(localPart, ".!#$%&'*+-/=?^_`{|}~")) {
             return MESSAGE_LOCAL_CHARACTERS;
         }
         if (!isValidLocalPart(localPart)) {
@@ -168,7 +168,7 @@ public class Email {
         if (hasUnsupportedCharacters(label, "-")) {
             return MESSAGE_DOMAIN_CHARACTERS;
         }
-        return isValidPart(label, "-") ? null : MESSAGE_DOMAIN_PUNCTUATION;
+        return label.startsWith("-") || label.endsWith("-") ? MESSAGE_DOMAIN_PUNCTUATION : null;
     }
 
     private static boolean hasUnsupportedCharacters(String part, String allowedPunctuation) {
@@ -179,26 +179,6 @@ public class Email {
             }
         }
         return false;
-    }
-
-    /**
-     * Returns true if {@code part} contains only ASCII letters and digits, with each character from
-     * {@code allowedPunctuation} appearing singly between two letters or digits.
-     * Uses a loop instead of a regex so long inputs cannot overflow the stack.
-     */
-    private static boolean isValidPart(String part, String allowedPunctuation) {
-        boolean isPreviousAlphanumeric = false;
-        for (int i = 0; i < part.length(); i++) {
-            char character = part.charAt(i);
-            if (isAsciiAlphanumeric(character)) {
-                isPreviousAlphanumeric = true;
-            } else if (isPreviousAlphanumeric && allowedPunctuation.indexOf(character) >= 0) {
-                isPreviousAlphanumeric = false;
-            } else {
-                return false;
-            }
-        }
-        return isPreviousAlphanumeric;
     }
 
     private static boolean isAsciiAlphanumeric(char character) {

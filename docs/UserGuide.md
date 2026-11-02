@@ -183,15 +183,20 @@ as text but do not count. Labels, multiple numbers, spaces, and punctuation are 
 `p/(HP) +65 1234 5678 1111-3333 (Office)`. The `+` may appear anywhere. Do not include `@`, `/`, or control
 characters such as tabs and line breaks.
 
-**Email (`e/`)**: At most **254 characters**. TutorRoster checks the format, not whether the mailbox exists:
+**Email (`e/`)**: At most **254 characters**. TutorRoster supports the unquoted email format described below;
+it checks the format, not whether the mailbox exists:
 
 * Exactly one `@`, a non-empty part on each side, and no internal whitespace.
-* Before `@`: English letters (`A-Z`, `a-z`), digits (`0-9`), and `.`, `_`, `%`, `+`, or `-`.
+* Before `@`: English letters (`A-Z`, `a-z`), digits (`0-9`), and these symbols:
+  <code>! # $ % &amp; ' * + - / = ? ^ _ &#96; { | } ~ .</code>
   The local part is limited to **64 characters**. Periods cannot appear at the beginning or end, or consecutively.
-  Other listed punctuation may appear consecutively or at either end.
+  Other listed punctuation may appear consecutively or at either end. For example, `mei.o'brien@example.com` is accepted.
+  A slash stays inside the value: use `e/alex/tan@example.com` without adding spaces around `/`.
 * After `@`: at least two non-empty labels separated by periods, as in `example.com`. Labels allow English
-  letters, digits, and single hyphens between letters or digits. Each label is limited to **63 characters**.
-  The final label needs at least two characters.
+  letters, digits, and hyphens. Hyphens may repeat inside a label, as in `alex@school--mail.com`, but cannot
+  start or end a label. Each label is limited to **63 characters**. The final label needs at least two characters.
+* Double-quoted local parts such as `"mei tan"@example.com`, address literals such as `mei@[192.0.2.1]`,
+  non-English characters and other punctuation are not supported. Use the format above without enclosing quotes.
 
 Common email mistakes:
 
