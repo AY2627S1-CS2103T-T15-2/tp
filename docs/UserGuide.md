@@ -26,7 +26,9 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
    Use a folder where you have permission to create and update files. Avoid write-protected folders.
 
 1. Open a terminal, run `java -version` to check the Java version, then `cd` to the folder containing the JAR file
-   and run `java -jar "tutorroster.jar"`. Double-clicking the JAR might not work on some systems.<br>
+   and run `java -jar` followed by the JAR's file name in quotes, for example `java -jar "tutorroster.jar"`
+   (use `"[CS2103T-T15-2][TutorRoster].jar"` instead if your copy has that name).
+   Double-clicking the JAR might not work on some systems.<br>
    The application opens with your saved contacts, or an empty list if there is no data file yet.<br>
    ![Ui](images/Ui.png)
 
@@ -422,6 +424,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]`
 | No field supplied | `At least one of n/, p/, e/, lv/, or sub/ must be provided.` |
 | Repeated parameter | `Each of n/, p/, e/, lv/, and sub/ may appear only once.` |
 | Unsupported parameter | `Unknown parameter. Use: edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [lv/LEVEL] [sub/SUBJECT]` |
+| Unquoted name containing a prefix-like word, such as `n/Ravi s/o Kumar` | The unsupported-parameter message, followed by `If '/' is part of the name, enclose the entire name in double quotes.` |
+| Unquoted subject containing a prefix-like word, such as `sub/Combined Science (Chem/Bio)` | The unsupported-parameter message, followed by `If '/' is part of the subject, enclose the entire subject in double quotes.` |
 | Removing a guardian's last contact method | `A guardian must have at least one contact method: phone or email.` |
 | Setting or removing a guardian's level or subject | `Only students can have a level or subject. Remove lv/ and sub/ when editing a guardian.` |
 
@@ -696,6 +700,8 @@ followed by `Reason:` and the loading or validation problem (for example, `Only 
 Blocked commands repeat this explanation. Back up the file, fix the reported problem and restart.<br>
 Empty or whitespace-only files are also preserved and identified. Restore a backup if contacts were expected.
 For an intentionally empty list, close TutorRoster, delete the empty file and restart; a missing file starts normally.<br>
+A missing or null `persons` list reports `The data file has no persons list.` Restore a backup if contacts were expected.
+An intentionally empty data file must contain `{"persons": []}`; `{}` and `{"persons": null}` are invalid.<br>
 Punctuation-only names such as `...` are invalid. Close TutorRoster, back up the file and give each affected `name`
 at least one letter or digit, then restart. Preserve contact IDs and guardian references; the app does not rename or remove contacts automatically.<br>
 Keep permanent `id` values unique and unchanged when editing details. A student's optional `guardianId` must refer
@@ -723,9 +729,11 @@ contacts and repeat the command. Read-only commands remain available.
    data-changing command, so you do not need to add a dummy contact first.
 4. Copy the source `addressbook.json` into that destination `data` subfolder, keeping its filename. Copy the whole
    file without changing contact IDs or guardian IDs, so that guardian relationships are retained.
-5. Open a terminal in the destination TutorRoster home folder and run `java -jar "tutorroster.jar"`. Launching from
-   this folder ensures the relative data path refers to the file you copied. Check the contacts and guardian links;
-   use `list st/former` to check former students as well.
+5. Open a terminal in the destination TutorRoster home folder and run `java -jar` with the JAR's file name in quotes,
+   as in [Quick start](#quick-start). TutorRoster always reads `data/addressbook.json` from the folder containing
+   the JAR, not from the terminal's current folder, so the copied file is loaded only if it is in the `data`
+   subfolder beside that JAR. Check the contacts and guardian links; use `list st/former` to check former students
+   as well.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -737,7 +745,8 @@ contacts and repeat the command. Read-only commands remain available.
    unexpected behavior. Leave fullscreen mode before opening the Help window.
 
 1. **Linux with Wayland:** If launch fails with a `Gdk-CRITICAL` error, try running
-   `GDK_BACKEND=x11 java -jar "tutorroster.jar"` from the folder containing the JAR file.
+   `GDK_BACKEND=x11 java -jar "tutorroster.jar"` from the folder containing the JAR file, replacing
+   `tutorroster.jar` with your JAR's file name if it differs.
 
 --------------------------------------------------------------------------------------------------------------------
 
