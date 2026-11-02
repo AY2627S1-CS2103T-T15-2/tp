@@ -40,9 +40,9 @@
 * Loh Yang Zhi used Claude Code and OpenAI Codex to draft and review code, tests and documentation for the edit,
   level/subject and student status features, and for preliminary pull request reviews. All output was reviewed
   and edited before merging.
-* Jeff Lim used Claude to assist with list filtering by role, status, level and subject, the view command,
-  accent-insensitive name matching and ordering, the contact list and details panel UI, tests, debugging,
-  code-quality reviews of pull requests, and the User and Developer Guides.
+* Lim Jun Hong Jeff used Claude to assist with list filtering by role, status, level and subject, the view
+  command, accent-insensitive name matching and ordering, the contact list and details panel UI, tests,
+  debugging, code-quality reviews of pull requests, and the User and Developer Guides.
 
 --------------------------------------------------------------------------------------------------------------------
 
