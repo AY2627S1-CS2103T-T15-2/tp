@@ -31,7 +31,6 @@
 
 * Lu Ziyue used OpenAI Codex/ChatGPT to assist with guardian linking, unlink and children lookup,
   storage validation and recovery, tests, debugging, pull-request review, and the User and Developer Guides.
-
 * Seah Jia Le used OpenAI Codex to assist with implementing and refining Add, Help, input validation and
   feedback-display changes, writing tests, debugging, reviewing pull requests, and improving the User and
   Developer Guides.
@@ -1126,7 +1125,7 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 
 1. Tutor requests to add a contact, supplying its role, name and any optional contact or tuition details.
 2. TutorRoster validates the details and checks existing contacts for duplicates.
-3. TutorRoster saves the contact, displays guardians and active students, selects the new contact and reports success.
+3. TutorRoster saves the contact and reports success.
 
    Use case ends.
 
@@ -1158,9 +1157,9 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 
 * **2b. The details meet a possible-duplicate warning condition but are not an exact duplicate.**
 
-  2b1. TutorRoster retains the request and prepares the applicable warning.
+  2b1. TutorRoster saves the contact and reports success with a possible-duplicate warning.
 
-  Use case resumes at step 3, reporting the warning with the success message.
+  Use case ends. If the save fails, extension 3a applies.
 
 * **3a. TutorRoster cannot save the contact.**
 

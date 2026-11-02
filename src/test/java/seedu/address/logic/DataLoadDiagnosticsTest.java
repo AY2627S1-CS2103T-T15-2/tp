@@ -115,7 +115,6 @@ public class DataLoadDiagnosticsTest {
         }
     }
 
-
     @Test
     public void startup_invalidGuardianFields_explainsValidationRule() throws Exception {
         String invalidData = "{\"persons\":[{\"name\":\"Mei Tan\",\"phone\":\"91234567\","

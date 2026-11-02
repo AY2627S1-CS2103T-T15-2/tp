@@ -64,7 +64,8 @@ public class JsonAddressBookStorageTest {
 
             assertThrows(DataLoadingException.class, storage::readAddressBook);
             assertTrue(storage.isDataFileLoadFailed());
-            assertEquals("The data file has no persons list.", storage.getDataFileLoadFailureReason().orElseThrow());
+            assertEquals(JsonSerializableAddressBook.MESSAGE_MISSING_PERSONS,
+                    storage.getDataFileLoadFailureReason().orElseThrow());
             assertThrows(IOException.class, () -> storage.saveAddressBook(new AddressBook()));
             assertEquals(invalidData, Files.readString(filePath));
         }

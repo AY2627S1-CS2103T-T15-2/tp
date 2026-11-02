@@ -26,6 +26,7 @@ class JsonSerializableAddressBook {
     public static final String MESSAGE_DUPLICATE_PERSON = "Contact list contains duplicate contacts.";
     public static final String MESSAGE_DUPLICATE_ID = "Contacts contain duplicate IDs.";
     public static final String MESSAGE_INVALID_RELATIONSHIP = "A student link must refer to an existing guardian.";
+    public static final String MESSAGE_MISSING_PERSONS = "The data file has no persons list.";
 
     private final List<JsonAdaptedPerson> persons;
 
@@ -53,7 +54,7 @@ class JsonSerializableAddressBook {
      */
     public AddressBook toModelType() throws IllegalValueException {
         if (persons == null) {
-            throw new IllegalValueException("The data file has no persons list.");
+            throw new IllegalValueException(MESSAGE_MISSING_PERSONS);
         }
         AddressBook addressBook = new AddressBook();
         Map<ContactId, Person> contacts = new HashMap<>();
