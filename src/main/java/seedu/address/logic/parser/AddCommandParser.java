@@ -193,9 +193,11 @@ public class AddCommandParser implements Parser<AddCommand> {
 
     private static String formatUnknownParameterError(String prefix, Prefix currentField, String currentFieldValue) {
         String errorMessage = String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, prefix);
-        boolean isNameValueQuoted = currentFieldValue.stripLeading().startsWith("\"");
-        if (currentField == PREFIX_NAME && !isNameValueQuoted) {
+        boolean isFieldValueQuoted = currentFieldValue.stripLeading().startsWith("\"");
+        if (currentField == PREFIX_NAME && !isFieldValueQuoted) {
             errorMessage += AddCommand.MESSAGE_NAME_SLASH_HINT;
+        } else if (currentField == PREFIX_SUBJECT && !isFieldValueQuoted) {
+            errorMessage += AddCommand.MESSAGE_SUBJECT_SLASH_HINT;
         }
         return errorMessage;
     }

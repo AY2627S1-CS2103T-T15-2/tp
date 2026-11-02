@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.JavaFxTestUtil.runOnJavaFxThread;
 import static seedu.address.testutil.JavaFxTestUtil.waitForLayout;
@@ -15,7 +16,12 @@ import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import javafx.event.ActionEvent;
+import javafx.geometry.Bounds;
+import javafx.geometry.Orientation;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Screen;
@@ -80,43 +86,136 @@ public class MainWindowTest {
     }
 
     @Test
-    public void executeCommand_missingRoleAtMinimumWindowSize_feedbackRemainsReadable() throws Exception {
-        FutureTask<Stage> createWindow = new FutureTask<>(this::showMinimumSizedMainWindow);
+    public void executeCommand_missingRoleAtMinimumWindowSize_keepsMessageAccessible() throws Exception {
+        assertMissingAddFieldIsReadable("add", AddCommandParser.MESSAGE_MISSING_ROLE);
+    }
+
+    @Test
+    public void executeCommand_missingNameAtMinimumWindowSize_keepsMessageAccessible() throws Exception {
+        assertMissingAddFieldIsReadable("add r/student", AddCommandParser.MESSAGE_MISSING_NAME);
+    }
+
+    private void assertMissingAddFieldIsReadable(String commandText, String expectedMessage) throws Exception {
+        FutureTask<Stage> createWindow = new FutureTask<>(() -> showMainWindow(600, 400));
         runOnJavaFxThread(createWindow);
         Stage stage = createWindow.get();
         try {
             waitForLayout(stage.getScene().getRoot());
             runOnJavaFxThread(() -> {
                 TextField command = (TextField) stage.getScene().lookup("#commandTextField");
-                command.setText("add");
+                command.setText(commandText);
                 command.fireEvent(new ActionEvent());
             });
             waitForLayout(stage.getScene().getRoot());
-            runOnJavaFxThread(() -> assertFeedbackIsReadable(stage));
+            runOnJavaFxThread(() -> assertFeedbackIsReadable(stage, expectedMessage));
         } finally {
             runOnJavaFxThread(stage::close);
         }
     }
 
-    private Stage showMinimumSizedMainWindow() {
-        MainWindow window = createMainWindow(new GuiSettings(600, 400, 0, 0));
+    @Test
+    public void executeCommand_missingRoleAtDefaultWindowSize_growsWithinHeightCap() throws Exception {
+        GuiSettings defaults = new GuiSettings();
+        FutureTask<Stage> createWindow = new FutureTask<>(() ->
+                showMainWindow(defaults.getWindowWidth(), defaults.getWindowHeight()));
+        runOnJavaFxThread(createWindow);
+        Stage stage = createWindow.get();
+        try {
+            waitForLayout(stage.getScene().getRoot());
+            FutureTask<Double> initialHeight = new FutureTask<>(() -> {
+                TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
+                return feedback.getHeight();
+            });
+            runOnJavaFxThread(initialHeight);
+            double emptyHeight = initialHeight.get();
+            runOnJavaFxThread(() -> {
+                TextField command = (TextField) stage.getScene().lookup("#commandTextField");
+                command.setText("add");
+                command.fireEvent(new ActionEvent());
+            });
+            waitForLayout(stage.getScene().getRoot());
+            runOnJavaFxThread(() -> {
+                TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
+                assertEquals(AddCommandParser.MESSAGE_MISSING_ROLE, feedback.getText());
+                assertTrue(feedback.getHeight() > emptyHeight);
+                assertTrue(feedback.getHeight() <= stage.getScene().getHeight()
+                        * ResultDisplay.MAXIMUM_SCENE_HEIGHT_RATIO + 2);
+                assertNoHorizontalScrollBar(feedback);
+            });
+        } finally {
+            runOnJavaFxThread(stage::close);
+        }
+    }
+
+    @Test
+    public void executeCommand_longCheckAtDefaultWindowSize_keepsTwoContactsVisible() throws Exception {
+        GuiSettings defaults = new GuiSettings();
+        FutureTask<Stage> createWindow = new FutureTask<>(() ->
+                showMainWindow(defaults.getWindowWidth(), defaults.getWindowHeight()));
+        runOnJavaFxThread(createWindow);
+        Stage stage = createWindow.get();
+        try {
+            runOnJavaFxThread(() -> {
+                TextField command = (TextField) stage.getScene().lookup("#commandTextField");
+                for (int i = 1; i <= 5; i++) {
+                    command.setText("add r/student n/Student " + i);
+                    command.fireEvent(new ActionEvent());
+                }
+                command.setText("check");
+                command.fireEvent(new ActionEvent());
+            });
+            waitForLayout(stage.getScene().getRoot());
+            runOnJavaFxThread(() -> {
+                TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
+                assertNoHorizontalScrollBar(feedback);
+                assertTrue(feedback.getHeight() <= stage.getScene().getHeight()
+                        * ResultDisplay.MAXIMUM_SCENE_HEIGHT_RATIO + 2);
+                ListView<?> contacts = (ListView<?>) stage.getScene().lookup("#personListView");
+                assertEquals(5, contacts.getItems().size());
+                Bounds listBounds = contacts.localToScene(contacts.getBoundsInLocal());
+                long visibleCards = contacts.lookupAll(".list-cell").stream()
+                        .filter(node -> node instanceof ListCell<?> cell && !cell.isEmpty())
+                        .map(node -> node.lookup("#cardPane"))
+                        .filter(node -> {
+                            Bounds bounds = node.localToScene(node.getBoundsInLocal());
+                            return bounds.getMinY() >= listBounds.getMinY()
+                                    && bounds.getMaxY() <= listBounds.getMaxY();
+                        }).count();
+                assertTrue(visibleCards >= 2, "Fully visible contacts: " + visibleCards);
+            });
+        } finally {
+            runOnJavaFxThread(stage::close);
+        }
+    }
+
+    private Stage showMainWindow(double width, double height) {
+        MainWindow window = createMainWindow(new GuiSettings(width, height, 0, 0));
         window.fillInnerParts();
         Stage stage = window.getPrimaryStage();
         stage.setOpacity(0);
         stage.show();
-        stage.setWidth(600);
-        stage.setHeight(400);
+        stage.setWidth(width);
+        stage.setHeight(height);
         return stage;
     }
 
-    private void assertFeedbackIsReadable(Stage stage) {
+    private void assertFeedbackIsReadable(Stage stage, String expectedMessage) {
         TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
         assertEquals(600, stage.getWidth(), 1);
         assertEquals(400, stage.getHeight(), 1);
-        assertEquals(AddCommandParser.MESSAGE_MISSING_ROLE, feedback.getText());
+        assertEquals(expectedMessage, feedback.getText());
         assertTrue(feedback.getHeight() >= 40, "Feedback height: " + feedback.getHeight());
         assertTrue(feedback.lookup(".viewport").getBoundsInLocal().getHeight() > 0);
         assertTrue(feedback.isWrapText());
+        assertNoHorizontalScrollBar(feedback);
+        feedback.setScrollTop(Double.MAX_VALUE);
+        assertTrue(feedback.getScrollTop() > 0, "Long errors remain accessible by scrolling");
+    }
+
+    private void assertNoHorizontalScrollBar(TextArea feedback) {
+        assertFalse(feedback.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                .anyMatch(bar -> bar.getOrientation() == Orientation.HORIZONTAL && bar.isVisible()),
+                "Wrapped feedback should not require horizontal scrolling");
     }
 
     /**

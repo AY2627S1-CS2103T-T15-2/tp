@@ -165,6 +165,8 @@ public class AddCommandParserTest {
             String error = String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "a/");
             if (field.startsWith("n/")) {
                 error += AddCommand.MESSAGE_NAME_SLASH_HINT;
+            } else if (field.startsWith("sub/")) {
+                error += AddCommand.MESSAGE_SUBJECT_SLASH_HINT;
             }
             assertParseFailure(parser, " " + field + " a/15", error);
         }
@@ -240,6 +242,33 @@ public class AddCommandParserTest {
         }
         assertParseFailure(parser, " r/student n/Alex sub/\"Math p/Applied",
                 ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
+    }
+
+    @Test
+    public void parse_unknownParameterInUnquotedSubject_suggestsQuotingSubject() {
+        for (String prefix : List.of("sub/", "SUB/", "SuB/")) {
+            assertParseFailure(parser, " r/student n/Kai " + prefix + "Combined Science (Chem/Bio)",
+                    String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "(Chem/")
+                            + AddCommand.MESSAGE_SUBJECT_SLASH_HINT);
+        }
+    }
+
+    @Test
+    public void parse_unknownParameterAfterQuotedSubject_omitsSubjectHint() {
+        assertParseFailure(parser, " r/student n/Kai sub/  \"Combined Science (Chem/Bio)\" x/unknown",
+                String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "x/"));
+        assertParseFailure(parser, " r/student n/Kai sub/Math p/123 x/unknown",
+                String.format(AddCommand.MESSAGE_UNKNOWN_PARAMETER, "x/"));
+    }
+
+    @Test
+    public void parse_slashInSubject_acceptsQuotedValuesAndEmbeddedSlashes() {
+        for (String value : List.of("\"Combined Science (Chem/Bio)\"", "Chem/Bio")) {
+            String expectedSubject = value.replace("\"", "");
+            Person expected = new PersonBuilder(AMY).withName("Kai").withoutPhone().withoutEmail()
+                    .withSubject(expectedSubject).build();
+            assertParseSuccess(parser, " r/student n/Kai sub/" + value, new AddCommand(expected));
+        }
     }
 
     @Test
@@ -398,7 +427,7 @@ public class AddCommandParserTest {
         // invalid name
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ROLE_DESC_BOB, "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, middle dots (·), and slashes.");
+                        + "hyphens, periods, middle dots (·), parentheses, commas, and slashes.");
 
         // invalid phone
         assertParseFailure(parser, NAME_DESC_BOB + INVALID_PHONE_DESC + EMAIL_DESC_BOB
@@ -425,14 +454,14 @@ public class AddCommandParserTest {
         assertParseFailure(parser, INVALID_NAME_DESC + INVALID_PHONE_DESC + EMAIL_DESC_BOB
                 + ROLE_DESC_BOB,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, middle dots (·), and slashes.");
+                        + "hyphens, periods, middle dots (·), parentheses, commas, and slashes.");
 
         // invalid fields are checked in documented parameter order, regardless of input order
         assertParseFailure(parser, INVALID_EMAIL_DESC + INVALID_PHONE_DESC + INVALID_NAME_DESC + INVALID_ROLE_DESC,
                 Role.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, INVALID_EMAIL_DESC + INVALID_PHONE_DESC + INVALID_NAME_DESC + ROLE_DESC_BOB,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, middle dots (·), and slashes.");
+                        + "hyphens, periods, middle dots (·), parentheses, commas, and slashes.");
         assertParseFailure(parser, INVALID_EMAIL_DESC + INVALID_PHONE_DESC + NAME_DESC_BOB + ROLE_DESC_BOB,
                 Phone.MESSAGE_TOO_FEW_DIGITS);
 
@@ -521,7 +550,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser, " " + PREFIX_NAME + "\"   \"" + otherFields, "Name cannot be blank.");
         assertParseFailure(parser, " " + PREFIX_NAME + "Alex@Tan" + otherFields,
                 "Name contains unsupported characters. Use letters, digits, spaces, apostrophes, "
-                        + "hyphens, periods, middle dots (·), and slashes.");
+                        + "hyphens, periods, middle dots (·), parentheses, commas, and slashes.");
         assertParseFailure(parser, " " + PREFIX_NAME + "a".repeat(Name.MAX_LENGTH + 1) + otherFields,
                 "Name cannot exceed " + Name.MAX_LENGTH + " characters.");
     }
