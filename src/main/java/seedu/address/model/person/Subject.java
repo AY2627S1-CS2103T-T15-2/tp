@@ -9,7 +9,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Subject {
 
-    public static final int MAX_LENGTH = 30;
+    public static final int MAX_LENGTH = 100;
     public static final String MESSAGE_EMPTY =
             "Empty subject parameter: Subject cannot be empty when sub/ is specified.";
     public static final String MESSAGE_CONSTRAINTS = "Subject must contain 1 to " + MAX_LENGTH

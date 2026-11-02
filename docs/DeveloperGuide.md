@@ -501,8 +501,9 @@ values, then rejects student-only prefixes before parsing their values. The `Per
 role constraints independently of parsing, so other creation paths cannot bypass them. `EditCommand` checks the
 resulting contact against the same contact-method requirement.
 
-`Level` and `Subject` are optional student-only value types. Both allow 1 to 30 Unicode code points, with at least
-one letter or digit. Both support Unicode letters, combining marks, digits, spaces, hyphens, periods, plus signs
+`Level` and `Subject` are optional student-only value types. Levels allow 1 to 30 Unicode code points; subjects
+allow 1 to 100, with at least one letter or digit required in either field. Both support Unicode letters,
+combining marks, digits, spaces, hyphens, periods, plus signs
 and parentheses; subjects additionally support slashes and ampersands. `ParserUtil` trims their values, collapses
 repeated ordinary spaces and removes enclosing subject quotes. `StudentDetailValidator` rejects `NONE`, which
 Edit reserves for removing a field, including when loading saved data. Empty command values receive field-specific

@@ -297,8 +297,8 @@ public class ParserUtilTest {
     public void parseStudentDetails_invalidValues_reportsFailedConstraint() {
         assertThrows(ParseException.class, "Level cannot exceed 30 characters.", ()
                 -> ParserUtil.parseLevel("a".repeat(31)));
-        assertThrows(ParseException.class, "Subject cannot exceed 30 characters.", ()
-                -> ParserUtil.parseSubject("a".repeat(31)));
+        assertThrows(ParseException.class, "Subject cannot exceed 100 characters.", ()
+                -> ParserUtil.parseSubject("a".repeat(101)));
         assertThrows(ParseException.class, "Level must contain at least one letter or digit.", ()
                 -> ParserUtil.parseLevel(" -. + () "));
         assertThrows(ParseException.class, "Subject must contain at least one letter or digit.", ()
