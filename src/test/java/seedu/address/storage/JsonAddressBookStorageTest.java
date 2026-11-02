@@ -55,6 +55,34 @@ public class JsonAddressBookStorageTest {
         assertThrows(NullPointerException.class, () -> readAddressBook(null));
     }
 
+    @Test
+    public void read_missingOrNullPersons_rejectsAndPreservesFile() throws Exception {
+        Path filePath = testFolder.resolve("missing-persons.json");
+        for (String invalidData : new String[]{"{}", "{\"persons\": null}"}) {
+            Files.writeString(filePath, invalidData);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertTrue(storage.isDataFileLoadFailed());
+            assertEquals("The data file has no persons list.", storage.getDataFileLoadFailureReason().orElseThrow());
+            assertThrows(IOException.class, () -> storage.saveAddressBook(new AddressBook()));
+            assertEquals(invalidData, Files.readString(filePath));
+        }
+    }
+
+    @Test
+    public void read_emptyPersons_loadsEmptyAddressBook() throws Exception {
+        Path filePath = testFolder.resolve("empty-persons.json");
+        String validData = "{\"persons\": []}";
+        Files.writeString(filePath, validData);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        assertEquals(new AddressBook(), new AddressBook(storage.readAddressBook().orElseThrow()));
+        assertFalse(storage.isDataFileLoadFailed());
+        assertTrue(storage.getDataFileLoadFailureReason().isEmpty());
+        assertEquals(validData, Files.readString(filePath));
+    }
+
     private java.util.Optional<ReadOnlyAddressBook> readAddressBook(String filePath) throws Exception {
         return new JsonAddressBookStorage(Paths.get(filePath)).readAddressBook(addToTestDataPathIfNotNull(filePath));
     }

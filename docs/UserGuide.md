@@ -696,6 +696,8 @@ followed by `Reason:` and the loading or validation problem (for example, `Only 
 Blocked commands repeat this explanation. Back up the file, fix the reported problem and restart.<br>
 Empty or whitespace-only files are also preserved and identified. Restore a backup if contacts were expected.
 For an intentionally empty list, close TutorRoster, delete the empty file and restart; a missing file starts normally.<br>
+A missing or null `persons` list reports `The data file has no persons list.` Restore a backup if contacts were expected.
+An intentionally empty data file must contain `{"persons": []}`; `{}` and `{"persons": null}` are invalid.<br>
 Punctuation-only names such as `...` are invalid. Close TutorRoster, back up the file and give each affected `name`
 at least one letter or digit, then restart. Preserve contact IDs and guardian references; the app does not rename or remove contacts automatically.<br>
 Keep permanent `id` values unique and unchanged when editing details. A student's optional `guardianId` must refer

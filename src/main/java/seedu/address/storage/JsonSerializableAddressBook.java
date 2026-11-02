@@ -27,14 +27,14 @@ class JsonSerializableAddressBook {
     public static final String MESSAGE_DUPLICATE_ID = "Contacts contain duplicate IDs.";
     public static final String MESSAGE_INVALID_RELATIONSHIP = "A student link must refer to an existing guardian.";
 
-    private final List<JsonAdaptedPerson> persons = new ArrayList<>();
+    private final List<JsonAdaptedPerson> persons;
 
     /**
      * Constructs a {@code JsonSerializableAddressBook} with the given persons.
      */
     @JsonCreator
     public JsonSerializableAddressBook(@JsonProperty("persons") List<JsonAdaptedPerson> persons) {
-        this.persons.addAll(persons);
+        this.persons = persons == null ? null : new ArrayList<>(persons);
     }
 
     /**
@@ -43,7 +43,7 @@ class JsonSerializableAddressBook {
      * @param source future changes to this will not affect the created {@code JsonSerializableAddressBook}.
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
-        persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
+        persons = source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList());
     }
 
     /**
@@ -52,6 +52,9 @@ class JsonSerializableAddressBook {
      * @throws IllegalValueException if there were any data constraints violated.
      */
     public AddressBook toModelType() throws IllegalValueException {
+        if (persons == null) {
+            throw new IllegalValueException("The data file has no persons list.");
+        }
         AddressBook addressBook = new AddressBook();
         Map<ContactId, Person> contacts = new HashMap<>();
         for (JsonAdaptedPerson jsonAdaptedPerson : persons) {
