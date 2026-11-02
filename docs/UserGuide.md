@@ -725,10 +725,11 @@ contacts and repeat the command. Read-only commands remain available.
    data-changing command, so you do not need to add a dummy contact first.
 4. Copy the source `addressbook.json` into that destination `data` subfolder, keeping its filename. Copy the whole
    file without changing contact IDs or guardian IDs, so that guardian relationships are retained.
-5. Open a terminal in the destination TutorRoster home folder and run `java -jar` with the JAR's file name in quotes, as in
-   [Quick start](#quick-start). Launching from
-   this folder ensures the relative data path refers to the file you copied. Check the contacts and guardian links;
-   use `list st/former` to check former students as well.
+5. Open a terminal in the destination TutorRoster home folder and run `java -jar` with the JAR's file name in quotes,
+   as in [Quick start](#quick-start). TutorRoster always reads `data/addressbook.json` from the folder containing
+   the JAR, not from the terminal's current folder, so the copied file is loaded only if it is in the `data`
+   subfolder beside that JAR. Check the contacts and guardian links; use `list st/former` to check former students
+   as well.
 
 --------------------------------------------------------------------------------------------------------------------
 
