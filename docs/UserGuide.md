@@ -583,10 +583,11 @@ display your targets.
 
 * **By index:** supply unique positive integers in any order. All refer to the original displayed list;
   earlier deletions do not shift later targets. If any index is invalid, repeated or out of range, nothing is deleted.
-* **By name:** supply one non-empty full name, without index targets. Matching ignores capitalization and repeated
-  or surrounding spaces and matches equivalent Unicode spellings of accented letters; accents, punctuation and
-  word order must match. Partial names do not match. Digits after
-  `n/` belong to the name, so `delete n/Alex 2` searches for `Alex 2`.
+* **By name:** supply one non-empty full name, without index targets. Matching ignores capitalization, repeated
+  or surrounding spaces, and differences between straight and curly apostrophes. The same accented letter typed
+  in a different Unicode form still matches, but different accents do not: `José` does not match `Josè` or `Jose`.
+  Other punctuation and word order must match; partial names do not match. Digits after `n/` belong to the name,
+  so `delete n/Alex 2` searches for `Alex 2`.
 * If several displayed contacts match a name, the error lists their indexes and roles. Use an index to choose one;
   no contact is deleted automatically.
 

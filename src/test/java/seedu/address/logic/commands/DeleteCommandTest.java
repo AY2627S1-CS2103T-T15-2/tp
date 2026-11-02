@@ -95,6 +95,20 @@ public class DeleteCommandTest {
     }
 
     @Test
+    public void execute_apostropheVariants_reportsAmbiguityWithoutDeleting() {
+        Model duplicateModel = new ModelManager();
+        duplicateModel.addPerson(new PersonBuilder().withName("O'Brien").build());
+        duplicateModel.addPerson(new PersonBuilder().withName("O\u2019Brien").withRole("guardian").build());
+        List<Person> displayed = List.copyOf(duplicateModel.getFilteredPersonList());
+        String choices = "1 [" + displayed.get(0).getRole() + "]\n2 [" + displayed.get(1).getRole() + "]";
+
+        assertCommandFailure(new DeleteCommand(new Name("O'Brien")), duplicateModel,
+                String.format(DeleteCommand.MESSAGE_AMBIGUOUS_NAME, "O'Brien", choices));
+        assertEquals(displayed.stream().map(Person::getId).toList(),
+                duplicateModel.getFilteredPersonList().stream().map(Person::getId).toList());
+    }
+
+    @Test
     public void execute_duplicateName_reportsDisplayedIndexesWithoutDeleting() {
         Model duplicateModel = new ModelManager();
         duplicateModel.addPerson(new PersonBuilder().withName("Alice Tan").build());
