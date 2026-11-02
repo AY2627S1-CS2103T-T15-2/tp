@@ -30,14 +30,15 @@ public class EditCommandParser implements Parser<EditCommand> {
 
     /**
      * Parses the given {@code String} of arguments in the context of the EditCommand
-     * and returns an EditCommand object for execution.
+     * and returns an EditCommand object for execution. Prefixes may be in any letter case.
      * @throws ParseException if the user input does not conform to the expected format
      */
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenizeWithQuotedValues(args, List.of(PREFIX_NAME, PREFIX_SUBJECT), PREFIX_NAME,
-                        PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL, PREFIX_SUBJECT);
+        List<Prefix> quotedValuePrefixes = List.of(PREFIX_NAME, PREFIX_SUBJECT);
+        String lowerCasedArgs = ArgumentTokenizer.toLowerCasePrefixes(args, quotedValuePrefixes, EDIT_PREFIXES);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithQuotedValues(lowerCasedArgs,
+                quotedValuePrefixes, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL, PREFIX_SUBJECT);
 
         verifyNoUnknownPrefixes(argMultimap);
         verifyNoRepeatedPrefixes(argMultimap);
