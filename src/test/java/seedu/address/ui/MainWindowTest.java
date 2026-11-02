@@ -155,6 +155,7 @@ public class MainWindowTest {
         runOnJavaFxThread(createWindow);
         Stage stage = createWindow.get();
         try {
+            waitForLayout(stage.getScene().getRoot());
             runOnJavaFxThread(() -> {
                 TextField command = (TextField) stage.getScene().lookup("#commandTextField");
                 for (int i = 1; i <= 5; i++) {
@@ -164,6 +165,9 @@ public class MainWindowTest {
                 command.setText("check");
                 command.fireEvent(new ActionEvent());
             });
+            waitForLayout(stage.getScene().getRoot());
+            // Check available space from the top, independently of Add's deferred selection scrolling.
+            runOnJavaFxThread(() -> ((ListView<?>) stage.getScene().lookup("#personListView")).scrollTo(0));
             waitForLayout(stage.getScene().getRoot());
             runOnJavaFxThread(() -> {
                 TextArea feedback = (TextArea) stage.getScene().lookup("#resultDisplay");
