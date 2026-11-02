@@ -96,13 +96,13 @@ public class EditCommandParser implements Parser<EditCommand> {
         for (Prefix prefix : EDIT_PREFIXES) {
             for (String value : argMultimap.getAllValues(prefix)) {
                 throwIfUnknownPrefix(prefix.getPrefix() + extractTextOutsideQuotes(prefix, value),
-                        unknownPrefixMessage(prefix, value));
+                        getUnknownPrefixMessage(prefix, value));
             }
         }
     }
 
     /** Suggests quoting when the unknown prefix is inside an unquoted name or subject. */
-    private static String unknownPrefixMessage(Prefix prefix, String value) {
+    private static String getUnknownPrefixMessage(Prefix prefix, String value) {
         if (value.stripLeading().startsWith("\"")) {
             return EditCommand.MESSAGE_UNKNOWN_PARAMETER;
         } else if (prefix.equals(PREFIX_NAME)) {

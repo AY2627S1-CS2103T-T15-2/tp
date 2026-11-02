@@ -123,6 +123,15 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_quotedSubjectWithSlash_keepsWholeSubject() {
+        // the enclosing quotes are removed, so the saved subject has none
+        EditPersonDescriptor descriptor =
+                new EditPersonDescriptorBuilder().withSubject("Combined Science (Chem/Bio)").build();
+        assertParseSuccess(parser, "1 sub/\"Combined Science (Chem/Bio)\"",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
     public void parse_slashInsideWord_success() {
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("AC/DC").build();
         assertParseSuccess(parser, "1 n/AC/DC", new EditCommand(INDEX_FIRST_PERSON, descriptor));
