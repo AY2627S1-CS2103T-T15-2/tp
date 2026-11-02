@@ -173,6 +173,16 @@ characters such as tabs and line breaks.
   letters, digits, and single hyphens between letters or digits. Each label is limited to **63 characters**.
   The final label needs at least two characters.
 
+Common email mistakes:
+
+| Invalid input | Reason |
+| --- | --- |
+| `alex @example.com` | Internal whitespace. |
+| `@example.com` | Missing part before `@`. |
+| `alex@.com` or `alex@example..com` | Empty domain label. |
+| `alex@example` or `alex@example.c` | Missing second label or final label too short. |
+| `.alex@example.com` or `alex..tan@example.com` | Invalid punctuation placement. |
+
 **Level (`lv/`) and subject (`sub/`)**
 
 * Optional and available **only for students**.
@@ -220,6 +230,9 @@ If the command is rejected, the error message explains what to correct. For exam
 * `add r/guardian n/Mei Tan p/91234567 lv/Sec 3` reports
   `Only students can have a level or subject. Remove lv/ and sub/ when adding a guardian.`
 * `add r/student n/Alex Tan p/` reports `Empty phone parameter: Phone cannot be empty when p/ is specified.`
+
+If an unknown parameter appears inside an unquoted name or subject containing `/`, the error suggests quoting
+the whole value.
 
 Only the first problem is reported. Fix it and retry to see whether any other problems remain.
 On failure, contacts, selection, and saved data stay unchanged;

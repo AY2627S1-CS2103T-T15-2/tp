@@ -27,6 +27,12 @@
   [Shadow](https://github.com/GradleUp/shadow), [Checkstyle](https://checkstyle.org/) and
   [JaCoCo](https://www.jacoco.org/jacoco/).
 
+**AI assistance**
+
+* Seah Jia Le used OpenAI Codex to assist with implementing and refining Add, Help, input validation and
+  feedback-display changes, writing tests, debugging, reviewing pull requests, and improving the User and
+  Developer Guides.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
