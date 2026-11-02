@@ -29,6 +29,8 @@
 
 **AI assistance**
 
+* Lu Ziyue used OpenAI Codex/ChatGPT to assist with guardian linking, unlink and children lookup,
+  storage validation and recovery, tests, debugging, pull-request review, and the User and Developer Guides.
 * Seah Jia Le used OpenAI Codex to assist with implementing and refining Add, Help, input validation and
   feedback-display changes, writing tests, debugging, reviewing pull requests, and improving the User and
   Developer Guides.
@@ -1114,6 +1116,54 @@ For all use cases below, the **System** is `TutorRoster` and the **Actor** is th
 * **4a. TutorRoster cannot save the removal.**
 
   4a1. TutorRoster displays an error, preserving existing contacts, relationships and saved data.
+
+  Use case ends.
+
+#### UC05: Add a contact
+
+**MSS**
+
+1. Tutor requests to add a contact, supplying its role, name and any optional contact or tuition details.
+2. TutorRoster validates the details and checks existing contacts for duplicates.
+3. TutorRoster saves the contact and reports success.
+
+   Use case ends.
+
+**Extensions**
+
+* **1a. A required field is missing, a supplied value is invalid, or the request contains an unsupported or repeated parameter.**
+
+  1a1. TutorRoster explains the first problem and leaves existing contacts unchanged.
+
+  Use case resumes at step 1.
+
+* **1b. The requested guardian has neither a phone number nor an email address.**
+
+  1b1. TutorRoster explains that a guardian needs at least one contact method and makes no changes.
+
+  Use case resumes at step 1.
+
+* **1c. The requested guardian has a level or subject.**
+
+  1c1. TutorRoster explains that only students can have tuition details and makes no changes.
+
+  Use case resumes at step 1.
+
+* **2a. An exact duplicate contact already exists, including among former or filtered-out contacts.**
+
+  2a1. TutorRoster reports the duplicate and does not add the contact.
+
+  Use case resumes at step 1.
+
+* **2b. The details meet a possible-duplicate warning condition but are not an exact duplicate.**
+
+  2b1. TutorRoster saves the contact and reports success with a possible-duplicate warning.
+
+  Use case ends. If the save fails, extension 3a applies.
+
+* **3a. TutorRoster cannot save the contact.**
+
+  3a1. TutorRoster reports the save failure. Existing contacts, relationships, the current view, deletion undo and saved data remain unchanged.
 
   Use case ends.
 

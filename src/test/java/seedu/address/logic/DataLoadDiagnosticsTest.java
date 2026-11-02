@@ -97,6 +97,25 @@ public class DataLoadDiagnosticsTest {
     }
 
     @Test
+    public void startupAndBlockedChange_missingOrNullPersons_showPlainReasonAndPreserveFile() throws Exception {
+        for (String invalidData : List.of("{}", "{\"persons\": null}")) {
+            StorageManager storage = loadInvalidData(invalidData);
+            byte[] originalBytes = Files.readAllBytes(getContactsFile());
+            Logic logic = createLogic(storage);
+
+            String warning = logic.getStartupMessage().orElseThrow();
+            assertEquals(LogicManager.MESSAGE_DATA_LOAD_FAILURE
+                    + " Reason: The data file has no persons list.", warning);
+            CommandException failure = assertThrows(CommandException.class, () ->
+                    logic.execute("add r/student n/Alex Tan"));
+            assertEquals(warning, failure.getMessage());
+            assertEquals(ListCommand.MESSAGE_NO_CONTACTS, logic.execute("list").getFeedbackToUser());
+            assertTrue(logic.getPersonList().isEmpty());
+            assertArrayEquals(originalBytes, Files.readAllBytes(getContactsFile()));
+        }
+    }
+
+    @Test
     public void startup_invalidGuardianFields_explainsValidationRule() throws Exception {
         String invalidData = "{\"persons\":[{\"name\":\"Mei Tan\",\"phone\":\"91234567\","
                 + "\"role\":\"GUARDIAN\",\"level\":\"Sec 3\"}]}";
