@@ -311,7 +311,7 @@ public class AddCommandParserTest {
         assertParseSuccess(parser, NAME_DESC_AMY + ROLE_DESC_AMY
                 + " lv/" + "a".repeat(28) + "    b sub/" + "a".repeat(28) + "    b", new AddCommand(expected));
         assertParseFailure(parser, " r/student n/Alex lv/" + "a".repeat(31), Level.MESSAGE_TOO_LONG);
-        assertParseFailure(parser, " r/student n/Alex sub/" + "a".repeat(31), Subject.MESSAGE_TOO_LONG);
+        assertParseFailure(parser, " r/student n/Alex sub/" + "a".repeat(101), Subject.MESSAGE_TOO_LONG);
         assertParseFailure(parser, " r/student n/Alex lv/" + "a".repeat(20_000), Level.MESSAGE_TOO_LONG);
     }
 

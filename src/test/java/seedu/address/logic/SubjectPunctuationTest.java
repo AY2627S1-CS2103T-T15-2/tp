@@ -82,7 +82,7 @@ public class SubjectPunctuationTest {
                 "edit 1 sub/\"NONE\"",
                 "edit 1 sub/\"/&\"",
                 "edit 1 sub/\"Math#Science\"",
-                "edit 1 sub/\"" + "a".repeat(31) + "\"")) {
+                "edit 1 sub/\"" + "a".repeat(101) + "\"")) {
             assertThrows(ParseException.class, () -> logic.execute(command));
             assertEquals(saved, Files.readString(file));
             assertEquals(originalContacts, List.copyOf(model.getAddressBook().getPersonList()));

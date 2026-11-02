@@ -56,11 +56,11 @@ public class SubjectTest {
     public void constructor_combiningMarks_preservesTextAndValidationLimits() {
         // EP: combining marks attached to letters are valid; marks alone are invalid.
         for (String value : List.of("\u0ba4\u0bae\u0bbf\u0bb4\u0bcd", "\u0939\u093f\u0928\u094d\u0926\u0940",
-                "Franc\u0327ais", "e\u0301".repeat(15))) {
+                "Franc\u0327ais", "e\u0301".repeat(50))) {
             assertEquals(value, new Subject(value).value);
         }
         assertEquals(Subject.MESSAGE_MISSING_ALPHANUMERIC, Subject.getValidationErrorMessage("\u0301\u0327"));
-        assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("e\u0301".repeat(15) + "a"));
+        assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("e\u0301".repeat(50) + "a"));
     }
 
     @Test
@@ -80,20 +80,20 @@ public class SubjectTest {
     @Test
     public void getValidationErrorMessage_reportsSpecificConstraint() {
         assertThrows(NullPointerException.class, () -> Subject.getValidationErrorMessage(null));
-        assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("a".repeat(31)));
+        assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("a".repeat(101)));
         assertEquals(Subject.MESSAGE_INVALID_CHARACTERS, Subject.getValidationErrorMessage("A#B"));
         assertEquals(Subject.MESSAGE_MISSING_ALPHANUMERIC, Subject.getValidationErrorMessage("-.+()"));
         assertEquals("Subject cannot start or end with spaces.", Subject.getValidationErrorMessage(" A "));
         // BVA: the limit counts Unicode code points, including supplementary letters, not UTF-16 units.
-        assertNull(Subject.getValidationErrorMessage("中".repeat(30)));
-        assertNull(Subject.getValidationErrorMessage("\uD801\uDC00".repeat(30)));
-        assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("\uD801\uDC00".repeat(31)));
+        assertNull(Subject.getValidationErrorMessage("中".repeat(100)));
+        assertNull(Subject.getValidationErrorMessage("\uD801\uDC00".repeat(100)));
+        assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("\uD801\uDC00".repeat(101)));
     }
 
     @Test
     public void getValidationErrorMessage_multipleViolations_preservesConstraintPriority() {
         // Combination: after isolated constraints above, overlapping violations check error precedence.
-        assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("&".repeat(31)));
+        assertEquals(Subject.MESSAGE_TOO_LONG, Subject.getValidationErrorMessage("&".repeat(101)));
         assertEquals(Subject.MESSAGE_INVALID_CHARACTERS, Subject.getValidationErrorMessage(" # "));
         assertEquals(Subject.MESSAGE_MISSING_ALPHANUMERIC, Subject.getValidationErrorMessage(" --- "));
     }
