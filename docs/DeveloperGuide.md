@@ -693,7 +693,9 @@ only former students, and `ContactFilter.ALL_CONTACTS` shows everyone. `Model#PR
 `Model#PREDICATE_SHOW_FORMER_STUDENTS` refer to the first two filters, so the rules for which contacts are active live
 in one class.
 
-`ListCommandParser` checks the input as shown in the activity diagram below, and stops at the first problem it finds.
+`ListCommandParser` first changes the list prefixes to lowercase, using `ArgumentTokenScanner` as `add` does, so
+`R/student` is read as `r/student`. It then checks the input as shown in the activity diagram below, and stops at
+the first problem it finds.
 
 <puml src="diagrams/ListParserActivityDiagram.puml" width="400" alt="Checks made by ListCommandParser" />
 
