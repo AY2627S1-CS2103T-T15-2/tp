@@ -64,6 +64,51 @@ public class DeleteCommandTest {
     }
 
     @Test
+    public void execute_canonicallyEquivalentName_deletesOnlyDisplayedMatch() throws Exception {
+        Person hidden = new PersonBuilder().withName("Jose\u0301 Tan").build();
+        Person displayed = new PersonBuilder().withName("Jos\u00e9 Tan").withRole("guardian").build();
+        Model filteredModel = new ModelManager();
+        filteredModel.addPerson(hidden);
+        filteredModel.addPerson(displayed);
+        filteredModel.updateFilteredPersonList(person -> person.getId().equals(displayed.getId()));
+
+        CommandResult result = new DeleteCommand(new Name("  JOSE\u0301   TAN  ")).execute(filteredModel);
+
+        assertEquals("Deleted contact: Jos\u00e9 Tan [Guardian].", result.getFeedbackToUser());
+        assertTrue(filteredModel.getFilteredPersonList().isEmpty());
+        assertEquals(List.of(hidden.getId()), filteredModel.getAddressBook().getPersonList().stream()
+                .map(Person::getId).toList());
+    }
+
+    @Test
+    public void execute_canonicallyEquivalentNames_reportsAmbiguityWithoutDeleting() {
+        Model duplicateModel = new ModelManager();
+        duplicateModel.addPerson(new PersonBuilder().withName("Jos\u00e9 Tan").build());
+        duplicateModel.addPerson(new PersonBuilder().withName("Jose\u0301 Tan").withRole("guardian").build());
+        List<Person> displayed = List.copyOf(duplicateModel.getFilteredPersonList());
+        String choices = "1 [" + displayed.get(0).getRole() + "]\n2 [" + displayed.get(1).getRole() + "]";
+
+        assertCommandFailure(new DeleteCommand(new Name("Jos\u00e9 Tan")), duplicateModel,
+                String.format(DeleteCommand.MESSAGE_AMBIGUOUS_NAME, "Jos\u00e9 Tan", choices));
+        assertEquals(displayed.stream().map(Person::getId).toList(),
+                duplicateModel.getFilteredPersonList().stream().map(Person::getId).toList());
+    }
+
+    @Test
+    public void execute_apostropheVariants_reportsAmbiguityWithoutDeleting() {
+        Model duplicateModel = new ModelManager();
+        duplicateModel.addPerson(new PersonBuilder().withName("O'Brien").build());
+        duplicateModel.addPerson(new PersonBuilder().withName("O\u2019Brien").withRole("guardian").build());
+        List<Person> displayed = List.copyOf(duplicateModel.getFilteredPersonList());
+        String choices = "1 [" + displayed.get(0).getRole() + "]\n2 [" + displayed.get(1).getRole() + "]";
+
+        assertCommandFailure(new DeleteCommand(new Name("O'Brien")), duplicateModel,
+                String.format(DeleteCommand.MESSAGE_AMBIGUOUS_NAME, "O'Brien", choices));
+        assertEquals(displayed.stream().map(Person::getId).toList(),
+                duplicateModel.getFilteredPersonList().stream().map(Person::getId).toList());
+    }
+
+    @Test
     public void execute_duplicateName_reportsDisplayedIndexesWithoutDeleting() {
         Model duplicateModel = new ModelManager();
         duplicateModel.addPerson(new PersonBuilder().withName("Alice Tan").build());

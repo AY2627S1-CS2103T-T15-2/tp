@@ -19,19 +19,15 @@ public final class PersonLookup {
 
     /**
      * Returns all contacts whose full names match {@code name}, ignoring letter case and repeated or
-     * surrounding spaces. Only the supplied contacts are searched, in their original order.
+     * surrounding spaces, canonical Unicode representation and curly versus straight apostrophes.
+     * Only the supplied contacts are searched, in their original order.
      * Callers targeting displayed contacts must supply the current displayed list.
-     * Accents, punctuation and word order remain significant; partial names do not match.
+     * Different accents, other punctuation and word order remain significant; partial names do not match.
      */
     public static List<Person> findByExactName(Collection<Person> persons, Name name) {
         requireAllNonNull(persons, name);
-        String normalizedName = normalizeSpaces(name.fullName);
         return persons.stream()
-                .filter(person -> normalizeSpaces(person.getName().fullName).equalsIgnoreCase(normalizedName))
+                .filter(person -> person.getName().isSameNameForDuplicateWarning(name))
                 .toList();
-    }
-
-    private static String normalizeSpaces(String name) {
-        return name.strip().replaceAll(" +", " ");
     }
 }

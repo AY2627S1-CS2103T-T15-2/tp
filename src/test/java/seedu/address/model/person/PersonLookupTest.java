@@ -43,6 +43,43 @@ public class PersonLookupTest {
     }
 
     @Test
+    public void findByExactName_canonicalSpellingsDiffer_returnsOriginalContact() {
+        List<String> spellings = List.of("Jos\u00e9 Tan", "Jose\u0301 Tan");
+        for (String storedName : spellings) {
+            Person contact = new PersonBuilder().withName(storedName).build();
+            for (String lookupName : spellings) {
+                List<Person> matches = PersonLookup.findByExactName(List.of(contact), new Name(lookupName));
+                assertEquals(1, matches.size());
+                assertSame(contact, matches.getFirst());
+                assertEquals(storedName, contact.getName().fullName);
+            }
+            assertTrue(PersonLookup.findByExactName(List.of(contact), new Name("Jose Tan")).isEmpty());
+            assertTrue(PersonLookup.findByExactName(List.of(contact), new Name("Jos\u00e8 Tan")).isEmpty());
+        }
+    }
+
+    @Test
+    public void findByExactName_caseDependentComposition_returnsOriginalContact() {
+        for (String storedName : List.of("\u01f0 Tan", "J\u030c Tan")) {
+            Person contact = new PersonBuilder().withName(storedName).build();
+            for (String lookupName : List.of("\u01f0 Tan", "J\u030c Tan")) {
+                assertSame(contact, PersonLookup.findByExactName(List.of(contact), new Name(lookupName)).getFirst());
+            }
+        }
+    }
+
+    @Test
+    public void findByExactName_apostropheVariants_returnsOriginalContact() {
+        for (String storedName : List.of("O'Brien", "O\u2018Brien", "O\u2019Brien")) {
+            Person contact = new PersonBuilder().withName(storedName).build();
+            for (String lookupName : List.of("O'Brien", "O\u2018Brien", "O\u2019Brien")) {
+                assertSame(contact, PersonLookup.findByExactName(List.of(contact), new Name(lookupName)).getFirst());
+                assertEquals(storedName, contact.getName().fullName);
+            }
+        }
+    }
+
+    @Test
     public void findByExactName_multipleMatches_returnsAllInSuppliedOrder() {
         Person student = new PersonBuilder().withName("Alice Tan").build();
         Person guardian = new PersonBuilder().withName("ALICE TAN").withRole("guardian").build();
@@ -66,7 +103,7 @@ public class PersonLookupTest {
     public void findByExactName_accentsAndPunctuationDiffer_returnsEmpty() {
         Person contact = new PersonBuilder().withName("Élise O’Brien").build();
         assertTrue(PersonLookup.findByExactName(List.of(contact), new Name("Elise O’Brien")).isEmpty());
-        assertTrue(PersonLookup.findByExactName(List.of(contact), new Name("Élise O'Brien")).isEmpty());
+        assertTrue(PersonLookup.findByExactName(List.of(contact), new Name("Élise O-Brien")).isEmpty());
     }
 
     @Test
