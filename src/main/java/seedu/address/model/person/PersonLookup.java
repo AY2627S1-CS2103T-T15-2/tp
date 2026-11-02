@@ -2,6 +2,7 @@ package seedu.address.model.person;
 
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.text.Normalizer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -19,19 +20,20 @@ public final class PersonLookup {
 
     /**
      * Returns all contacts whose full names match {@code name}, ignoring letter case and repeated or
-     * surrounding spaces. Only the supplied contacts are searched, in their original order.
+     * surrounding spaces and canonical Unicode representation. Only the supplied contacts are searched,
+     * in their original order.
      * Callers targeting displayed contacts must supply the current displayed list.
      * Accents, punctuation and word order remain significant; partial names do not match.
      */
     public static List<Person> findByExactName(Collection<Person> persons, Name name) {
         requireAllNonNull(persons, name);
-        String normalizedName = normalizeSpaces(name.fullName);
+        String normalizedName = normalizeName(name.fullName);
         return persons.stream()
-                .filter(person -> normalizeSpaces(person.getName().fullName).equalsIgnoreCase(normalizedName))
+                .filter(person -> normalizeName(person.getName().fullName).equalsIgnoreCase(normalizedName))
                 .toList();
     }
 
-    private static String normalizeSpaces(String name) {
-        return name.strip().replaceAll(" +", " ");
+    private static String normalizeName(String name) {
+        return Normalizer.normalize(name.strip().replaceAll(" +", " "), Normalizer.Form.NFC);
     }
 }

@@ -43,6 +43,22 @@ public class PersonLookupTest {
     }
 
     @Test
+    public void findByExactName_canonicalSpellingsDiffer_returnsOriginalContact() {
+        List<String> spellings = List.of("Jos\u00e9 Tan", "Jose\u0301 Tan");
+        for (String storedName : spellings) {
+            Person contact = new PersonBuilder().withName(storedName).build();
+            for (String lookupName : spellings) {
+                List<Person> matches = PersonLookup.findByExactName(List.of(contact), new Name(lookupName));
+                assertEquals(1, matches.size());
+                assertSame(contact, matches.getFirst());
+                assertEquals(storedName, contact.getName().fullName);
+            }
+            assertTrue(PersonLookup.findByExactName(List.of(contact), new Name("Jose Tan")).isEmpty());
+            assertTrue(PersonLookup.findByExactName(List.of(contact), new Name("Jos\u00e8 Tan")).isEmpty());
+        }
+    }
+
+    @Test
     public void findByExactName_multipleMatches_returnsAllInSuppliedOrder() {
         Person student = new PersonBuilder().withName("Alice Tan").build();
         Person guardian = new PersonBuilder().withName("ALICE TAN").withRole("guardian").build();
