@@ -35,7 +35,7 @@ public class EmailTest {
 
     @Test
     public void getValidationErrorMessage_distinguishesCharactersFromPunctuation() {
-        for (String local : List.of("alex!tan", "alex'", "aléx", "alex..tan!")) {
+        for (String local : List.of("alex:tan", "alex’", "aléx", "alex..tan[", "\"alex\"", "alex]tan", "alex\\tan")) {
             assertEquals(Email.MESSAGE_LOCAL_CHARACTERS,
                     Email.getValidationErrorMessage(local + "@example.com"));
         }
@@ -46,9 +46,9 @@ public class EmailTest {
         for (String domain : List.of("exam_ple.com", "example.c_m", "exämple.com", "exam--ple!.com")) {
             assertEquals(Email.MESSAGE_DOMAIN_CHARACTERS, Email.getValidationErrorMessage("alex@" + domain));
         }
-        for (String domain : List.of("-example.com", "example-.com", "exam--ple.com", "example.-com",
-                "example.com-", "example.co--m")) {
-            assertEquals("Email domain hyphens must appear singly between letters or digits.",
+        for (String domain : List.of("-example.com", "example-.com", "--example.com", "example.-com",
+                "example.com-", "example.com--", "example.--")) {
+            assertEquals("Email domain labels cannot start or end with a hyphen.",
                     Email.getValidationErrorMessage("alex@" + domain));
         }
     }
@@ -56,10 +56,37 @@ public class EmailTest {
     @Test
     public void constructor_supportedLocalPunctuation_preservesEmail() {
         for (String local : List.of("mei__tan", "mei+_tan", "mei++__tan", "mei%+tan", "_mei", "mei_",
-                "+mei", "mei+", "%mei", "mei%", "-mei", "mei-", "++__", "_._", "mei._tan", "mei_.tan")) {
+                "+mei", "mei+", "%mei", "mei%", "-mei", "mei-", "++__", "_._", "mei._tan", "mei_.tan",
+                "mei.o'brien", "'mei", "mei'", "mei''tan")) {
             String email = local + "@example.com";
             assertTrue(Email.isValidEmail(email), email);
             assertEquals(email, new Email(email).value);
+        }
+    }
+
+    @Test
+    public void constructor_unquotedLocalSymbols_preservesEmail() {
+        for (char symbol : "!#$%&'*+-/=?^_`{|}~".toCharArray()) {
+            for (String local : List.of(symbol + "alex", "alex" + symbol, "alex" + symbol + symbol + "tan")) {
+                String email = local + "@example.com";
+                assertEquals(email, new Email(email).value);
+            }
+        }
+    }
+
+    @Test
+    public void constructor_repeatedInternalDomainHyphens_preservesEmail() {
+        for (String email : List.of("alex@school--mail.com", "alex@school---mail.com", "alex@example.co--m",
+                "alex@xn--bcher-kva.example")) {
+            assertEquals(email, new Email(email).value);
+        }
+    }
+
+    @Test
+    public void isValidEmail_unsupportedAddressFormats_rejected() {
+        for (String email : List.of("\"mei tan\"@example.com", "mei@[192.0.2.1]", "mei.o’brien@example.com",
+                "mei@example_com", "mei@school--.com", "mei@--school.com")) {
+            assertFalse(Email.isValidEmail(email), email);
         }
     }
 

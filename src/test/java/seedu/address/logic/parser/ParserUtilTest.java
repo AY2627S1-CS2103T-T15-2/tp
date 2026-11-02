@@ -256,7 +256,7 @@ public class ParserUtilTest {
                 -> ParserUtil.parseEmail("alex@exam_ple.com"));
         assertThrows(ParseException.class,
                 Email.MESSAGE_LOCAL_CHARACTERS, ()
-                -> ParserUtil.parseEmail("alex!@example.com"));
+                -> ParserUtil.parseEmail("alex[@example.com"));
         assertThrows(ParseException.class, Email.MESSAGE_WHITESPACE, ()
                 -> ParserUtil.parseEmail("alex\t@example.com"));
         assertThrows(ParseException.class, Email.MESSAGE_DOMAIN_LABEL_EMPTY, ()
