@@ -13,6 +13,9 @@ import seedu.address.logic.commands.ViewCommand;
 
 public class ViewCommandParserTest {
 
+    private static final String MESSAGE_MISSING_INDEX = "Missing contact index. Use: view INDEX";
+    private static final String MESSAGE_MULTIPLE_INDEXES = "Only one contact index is allowed. Use: view INDEX";
+
     private ViewCommandParser parser = new ViewCommandParser();
 
     @Test
@@ -42,9 +45,21 @@ public class ViewCommandParserTest {
         assertParseFailure(parser, "1.5", Messages.MESSAGE_INVALID_CONTACT_INDEX);
         // Boundary: one more than the largest valid index
         assertParseFailure(parser, Long.toString(Integer.MAX_VALUE + 1L), Messages.MESSAGE_INVALID_CONTACT_INDEX);
+    }
+
+    @Test
+    public void parse_missingIndex_throwsParseException() {
         // EP: empty input
-        assertParseFailure(parser, "", Messages.MESSAGE_INVALID_CONTACT_INDEX);
-        // EP: more than one index
-        assertParseFailure(parser, "1 2", Messages.MESSAGE_INVALID_CONTACT_INDEX);
+        assertParseFailure(parser, "", MESSAGE_MISSING_INDEX);
+        // EP: only spaces
+        assertParseFailure(parser, "   ", MESSAGE_MISSING_INDEX);
+    }
+
+    @Test
+    public void parse_moreThanOneArgument_throwsParseException() {
+        // Boundary: two indexes, one more than allowed
+        assertParseFailure(parser, "1 2", MESSAGE_MULTIPLE_INDEXES);
+        // EP: an index followed by extra text
+        assertParseFailure(parser, "1 abc", MESSAGE_MULTIPLE_INDEXES);
     }
 }

@@ -5,9 +5,7 @@
 
 # About Us
 
-We are a team based in the [School of Computing, National University of Singapore](http://www.comp.nus.edu.sg).
-
-You can reach us at the email `seer[at]comp.nus.edu.sg`
+We are a team based in the [School of Computing, National University of Singapore](https://www.comp.nus.edu.sg).
 
 ## Project team
 
@@ -18,7 +16,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/seahjiale)]
 
 * Role: Developer
-* Responsibilities : Scheduling and tracking 
+* Responsibilities: Scheduling and tracking
 
 ### Lu Ziyue
 
@@ -51,7 +49,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 <img src="images/lim-04.png" width="200px">
 
-[[github](http://github.com/lim-04)]
+[[github](https://github.com/lim-04)]
 
 * Role: Developer
 * Responsibilities: Code Quality

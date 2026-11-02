@@ -218,7 +218,27 @@ public class ListCommandParserTest {
         assertParseFailure(parser, " n/Alex", ListCommand.MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " r/student n/Alex", ListCommand.MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " s/former", ListCommand.MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " R/student", ListCommand.MESSAGE_INVALID_FORMAT);
+        // EP: an unknown prefix in uppercase stays unknown
+        assertParseFailure(parser, " N/Alex", ListCommand.MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
+    public void parse_prefixesInAnyLetterCase_sameAsLowercasePrefixes() {
+        // EP: each prefix in uppercase
+        assertParseSuccess(parser, " R/student", new ListCommand(filterOf(Role.STUDENT, StudentStatus.ACTIVE)));
+        assertParseSuccess(parser, " ST/former", new ListCommand(ContactFilter.FORMER_STUDENTS));
+        // EP: mixed-case prefixes, with level and subject values keeping their letter case
+        assertParseSuccess(parser, " Lv/Sec 3 SuB/A-Math",
+                new ListCommand(new ContactFilter(Optional.empty(), Optional.of(StudentStatus.ACTIVE),
+                        Optional.of(new Level("Sec 3")), Optional.of(new Subject("A-Math")))));
+        // EP: uppercase prefix-like text inside a quoted subject is part of the subject
+        assertParseSuccess(parser, " SUB/\"Art N/Design\"",
+                new ListCommand(new ContactFilter(Optional.empty(), Optional.of(StudentStatus.ACTIVE),
+                        Optional.empty(), Optional.of(new Subject("Art N/Design")))));
+        // EP: the same prefix in two letter cases is still repeated
+        assertParseFailure(parser, " r/student R/guardian", ListCommand.MESSAGE_REPEATED_PARAMETER);
+        // EP: errors refer to the lowercase prefix
+        assertParseFailure(parser, " R/guardian ST/former", ListCommand.MESSAGE_GUARDIAN_NOT_FORMER);
     }
 
     @Test
