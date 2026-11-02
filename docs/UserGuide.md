@@ -57,8 +57,8 @@ up to date and retrieve them quickly, with a graphical contact list and a panel 
 **Notes about the command format:**<br>
 
 * Command words ignore letter case, so `add`, `ADD` and `AdD` are equivalent.
-  The parameter prefixes of `add` and `list` also ignore letter case; use the documented lowercase prefixes for
-  other commands.
+  The parameter prefixes of `add`, `edit` and `list` also ignore letter case; use the documented lowercase prefixes
+  for other commands.
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.

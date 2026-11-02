@@ -22,6 +22,22 @@ public class ArgumentTokenizerTest {
     private final Prefix hatQ = new Prefix("^Q");
 
     @Test
+    public void toLowerCasePrefixes_knownPrefixes_lowercasesOnlyThosePrefixes() throws Exception {
+        List<Prefix> prefixes = List.of(nSlash, pSlash);
+        // EP: known prefixes in any case become lowercase; values and unknown prefixes keep their case
+        assertEquals("1 n/Alex Tan p/9123 E/x",
+                ArgumentTokenizer.toLowerCasePrefixes("1 N/Alex Tan P/9123 E/x", List.of(nSlash), prefixes));
+        // EP: text inside a quoted value is unchanged
+        assertEquals("n/\"Ravi P/e\" p/1",
+                ArgumentTokenizer.toLowerCasePrefixes("N/\"Ravi P/e\" P/1", List.of(nSlash), prefixes));
+        // EP: a slash later in a word is not a prefix
+        assertEquals("n/AC/DC", ArgumentTokenizer.toLowerCasePrefixes("N/AC/DC", List.of(nSlash), prefixes));
+        // EP: an unclosed quoted value is rejected
+        assertThrows(ParseException.class, ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE, () ->
+                ArgumentTokenizer.toLowerCasePrefixes("N/\"Ravi", List.of(nSlash), prefixes));
+    }
+
+    @Test
     public void tokenize_whitespaceSeparators_preservesInternalWhitespace() {
         for (String separator : List.of(" ", "\t", "\n", "\r\n", "\u2003", " \t ")) {
             ArgumentMultimap arguments = ArgumentTokenizer.tokenize(

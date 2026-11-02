@@ -42,7 +42,8 @@ public class ListCommandParser implements Parser<ListCommand> {
      *     an invalid role, status, level or subject, or a guardian with former status, a level or a subject.
      */
     public ListCommand parse(String args) throws ParseException {
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithQuotedValue(toLowerCasePrefixes(args),
+        String lowerCasedArgs = ArgumentTokenizer.toLowerCasePrefixes(args, List.of(PREFIX_SUBJECT), LIST_PREFIXES);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithQuotedValue(lowerCasedArgs,
                 PREFIX_SUBJECT, PREFIX_ROLE, PREFIX_STATUS, PREFIX_LEVEL, PREFIX_SUBJECT);
         throwIfUnknownPrefix(argMultimap.getPreamble());
         for (Prefix prefix : LIST_PREFIXES) {
@@ -73,25 +74,6 @@ public class ListCommandParser implements Parser<ListCommand> {
             throw new ParseException(ListCommand.MESSAGE_GUARDIAN_NO_STUDENT_DETAIL);
         }
         return new ListCommand(new ContactFilter(role, status, level, subject));
-    }
-
-    /**
-     * Returns {@code args} with each list prefix in lowercase, so that {@code R/student} is read as
-     * {@code r/student}. Field values, unknown prefixes and text inside a quoted subject are unchanged.
-     */
-    private static String toLowerCasePrefixes(String args) throws ParseException {
-        ArgumentTokenScanner scanner = new ArgumentTokenScanner(args, List.of(PREFIX_SUBJECT), true);
-        StringBuilder lowerCasedArgs = new StringBuilder(args);
-        while (scanner.hasNext()) {
-            String typedPrefix = scanner.getParameterPrefix();
-            LIST_PREFIXES.stream()
-                    .filter(prefix -> prefix.getPrefix().equalsIgnoreCase(typedPrefix))
-                    .findFirst()
-                    .ifPresent(prefix -> lowerCasedArgs.replace(scanner.getTokenStart(),
-                            scanner.getTokenStart() + prefix.getPrefix().length(), prefix.getPrefix()));
-            scanner.advance();
-        }
-        return lowerCasedArgs.toString();
     }
 
     private static void throwIfUnknownPrefix(String args) throws ParseException {

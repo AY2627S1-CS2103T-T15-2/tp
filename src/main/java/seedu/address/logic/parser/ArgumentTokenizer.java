@@ -56,6 +56,28 @@ public class ArgumentTokenizer {
     }
 
     /**
+     * Returns {@code argsString} with each of the given prefixes in lowercase, so that {@code N/Alex} is read as
+     * {@code n/Alex}. Field values, unknown prefixes and text inside the quoted values are unchanged.
+     *
+     * @throws ParseException if a quoted value has no closing quotation mark
+     */
+    public static String toLowerCasePrefixes(String argsString, List<Prefix> quotedValuePrefixes,
+            List<Prefix> prefixes) throws ParseException {
+        ArgumentTokenScanner scanner = new ArgumentTokenScanner(argsString, quotedValuePrefixes, true);
+        StringBuilder lowerCasedArgs = new StringBuilder(argsString);
+        while (scanner.hasNext()) {
+            String typedPrefix = scanner.getParameterPrefix();
+            prefixes.stream()
+                    .filter(prefix -> prefix.getPrefix().equalsIgnoreCase(typedPrefix))
+                    .findFirst()
+                    .ifPresent(prefix -> lowerCasedArgs.replace(scanner.getTokenStart(),
+                            scanner.getTokenStart() + prefix.getPrefix().length(), prefix.getPrefix()));
+            scanner.advance();
+        }
+        return lowerCasedArgs.toString();
+    }
+
+    /**
      * Finds all zero-based prefix positions in the given arguments string.
      *
      * @param argsString Arguments string of the form: {@code preamble <prefix>value <prefix>value ...}

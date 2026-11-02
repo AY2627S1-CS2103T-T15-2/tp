@@ -333,6 +333,27 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_prefixesInAnyLetterCase_success() {
+        // EP: every edit prefix in uppercase or mixed case, with values keeping their capitalization
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Alex Lim")
+                .withPhone("91234567").withEmail("alex@example.com").withLevel("Sec 3").withSubject("Math").build();
+        assertParseSuccess(parser, "1 N/Alex Lim P/91234567 E/alex@example.com LV/Sec 3 SuB/Math",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+
+        // EP: prefix-like text inside a quoted name keeps its capitalization and creates no field
+        descriptor = new EditPersonDescriptorBuilder().withName("Randy P/E Ratio").build();
+        assertParseSuccess(parser, "1 N/\"Randy P/E Ratio\"", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+
+        // EP: an uppercase subject prefix still keeps its quoted value whole
+        descriptor = new EditPersonDescriptorBuilder().withSubject("Combined Science (Chem/Bio)").build();
+        assertParseSuccess(parser, "1 SUB/\"Combined Science (Chem/Bio)\"",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+
+        // EP: the same prefix in two letter cases is a repeated parameter
+        assertParseFailure(parser, "1 n/Alex N/Bob", EditCommand.MESSAGE_REPEATED_PARAMETER);
+    }
+
+    @Test
     public void parse_malformedQuotedName_failure() {
         assertParseFailure(parser, "1 n/\"Randy p/e ratio", ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTED_VALUE);
         assertParseFailure(parser, "1 n/Randy\"", ParserUtil.MESSAGE_INVALID_NAME_QUOTES);

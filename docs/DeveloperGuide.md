@@ -272,7 +272,8 @@ student `p`'s phone. Candidate `c` and live model `m` follow the shared
 
 <puml src="diagrams/EditSequenceDiagram.puml" alt="Interactions inside the Logic component for the `edit 1 p/NONE` command" />
 
-**Parsing.** `EditCommandParser` tokenizes the arguments with `ArgumentTokenizer#tokenizeWithQuotedValue`, so a
+**Parsing.** `EditCommandParser` changes its prefixes to lowercase with `ArgumentTokenizer#toLowerCasePrefixes`, so
+`N/Alex` is read as `n/Alex`. It then tokenizes the arguments with `ArgumentTokenizer#tokenizeWithQuotedValue`, so a
 quoted name such as `n/"Randy p/e ratio"` keeps any prefix-like text inside the quotes. It then checks, in order:
 
 1. No unknown parameter. Any word ending in `/` outside a quoted name, other than `n/`, `p/`, `e/`, `lv/` or `sub/`, is rejected
@@ -701,8 +702,9 @@ only former students, and `ContactFilter.ALL_CONTACTS` shows everyone. `Model#PR
 `Model#PREDICATE_SHOW_FORMER_STUDENTS` refer to the first two filters, so the rules for which contacts are active live
 in one class.
 
-`ListCommandParser` first changes the list prefixes to lowercase, using `ArgumentTokenScanner` as `add` does, so
-`R/student` is read as `r/student`. It then checks the input as shown in the activity diagram below, and stops at
+`ListCommandParser` first changes the list prefixes to lowercase with `ArgumentTokenizer#toLowerCasePrefixes`, which
+uses `ArgumentTokenScanner` as `add` does, so `R/student` is read as `r/student`. `EditCommandParser` uses the same
+method for the edit prefixes. It then checks the input as shown in the activity diagram below, and stops at
 the first problem it finds.
 
 <puml src="diagrams/ListParserActivityDiagram.puml" width="400" alt="Checks made by ListCommandParser" />
